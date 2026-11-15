@@ -30,6 +30,7 @@ import {
   Clock,
   Search,
   Check,
+  Zap,
 } from "lucide-react";
 import MerchantScannerModal, { CustomerSummary } from "@/components/MerchantScannerModal";
 import StandPreviewModal from "@/components/StandPreviewModal";
@@ -295,6 +296,49 @@ export default function MerchantDashboardClient({
       console.error("Error saving automation setting:", err);
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  // Test Merchant Automations Trigger
+  const [testingCron, setTestingCron] = useState(false);
+  const [cronTestMessage, setCronTestMessage] = useState<string | null>(null);
+
+  const handleTestCronForMerchant = async () => {
+    setTestingCron(true);
+    setCronTestMessage(null);
+    try {
+      const res = await fetch("/api/cron/automations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(10000),
+        body: JSON.stringify({
+          merchantId: merchant.id,
+          forceDemo: true,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCronTestMessage(`تم تشغيل الأتمتة بنجاح! (${data.stats.totalNotifications} إشعار أرسل)`);
+        setPeekNotification({
+          isOpen: true,
+          shopName: merchant.name,
+          title: "توحشناك! 🎁 (رسالة استرجاع تجريبية)",
+          message: `توحشناك ${merchant.customerPrefix}! هادي كثر من 15 يوم ما بانتيش عندنا في ${merchant.name}. دوز هاد السيمانة وعندك طابع هدية 🎁`,
+        });
+        if (data.stats && data.stats.creditsDeducted > 0) {
+          setMerchant((prev) => ({
+            ...prev,
+            credits: Math.max(0, prev.credits - data.stats.creditsDeducted),
+          }));
+        }
+      } else {
+        setCronTestMessage("تعذر تشغيل الاختبار: " + (data.error || "خطأ غير معروف"));
+      }
+    } catch (err) {
+      console.error("Test cron error:", err);
+      setCronTestMessage("حدث خطأ أثناء تجربة الأتمتة");
+    } finally {
+      setTestingCron(false);
     }
   };
 
@@ -935,6 +979,25 @@ export default function MerchantDashboardClient({
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Test Automations Trigger Button */}
+            <div className="pt-2 border-t border-white/10 space-y-2">
+              <button
+                type="button"
+                disabled={testingCron}
+                onClick={handleTestCronForMerchant}
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition disabled:opacity-50"
+              >
+                <Zap className="w-4 h-4" />
+                <span>{testingCron ? "جاري تجربة الأتمتة..." : "⚡ جرّب إرسال الرسائل الأوتوماتيكية دابا"}</span>
+              </button>
+
+              {cronTestMessage && (
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] text-center font-medium">
+                  {cronTestMessage}
+                </div>
+              )}
             </div>
           </div>
         )}

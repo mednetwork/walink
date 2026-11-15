@@ -67,7 +67,7 @@ export default async function HomePage() {
       <main className="relative z-10 max-w-5xl mx-auto px-4 py-12 sm:py-16 text-center space-y-10">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
           <Sparkles className="w-4 h-4" />
-          <span>المرحلة الثانية مكتملة بنجاح • Phase 2 Customer Pass & Onboarding Live</span>
+          <span>المرحلة الرابعة مكتملة بنجاح • Phase 4 Push & Cron Automations Live</span>
         </div>
 
         <div className="space-y-4 max-w-3xl mx-auto">
@@ -104,7 +104,7 @@ export default async function HomePage() {
         </div>
 
         {/* Developer Launchpad Quick Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 text-right">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 text-right">
           {/* Box 1: Super Admin */}
           <Link
             href="/admin"
@@ -118,54 +118,34 @@ export default async function HomePage() {
               <ArrowLeft className="w-3.5 h-3.5 text-emerald-400 group-hover:-translate-x-1 transition-transform" />
             </h2>
             <p className="text-[11px] text-white/60 mt-1 leading-relaxed">
-              إدارة المحلات وشحن الكريدي ومعاينة الستاند الذكي.
+              إدارة المحلات، شحن الكريدي، ومعاينة ستاند الكاونتر الذكي.
             </p>
             <span className="mt-3 inline-block font-mono text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg">
               /admin
             </span>
           </Link>
 
-          {/* Box 2: Customer Onboarding */}
+          {/* Box 2: Automations Engine */}
           <Link
-            href="/join/cafe-atlas"
-            className="glass-panel glass-card-hover p-5 rounded-3xl block group border-blue-500/20"
+            href="/admin/automations"
+            className="glass-panel glass-card-hover p-5 rounded-3xl block group border-emerald-500/20"
           >
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <Smartphone className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400/20 to-emerald-600/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <Sparkles className="w-5 h-5" />
             </div>
             <h2 className="font-bold text-sm text-white flex items-center justify-between">
-              <span>انضمام الزبون (NFC/QR)</span>
-              <ArrowLeft className="w-3.5 h-3.5 text-blue-400 group-hover:-translate-x-1 transition-transform" />
+              <span>محرك الأتمتة</span>
+              <ArrowLeft className="w-3.5 h-3.5 text-emerald-400 group-hover:-translate-x-1 transition-transform" />
             </h2>
             <p className="text-[11px] text-white/60 mt-1 leading-relaxed">
-              تسجيل في 5 ثوانٍ مع طابع ترحيبي مجاني كادو 🎁.
+              استرجاع 15 يوم، تحفيز المكافأة، وتشغيل Cron بنقرة واحدة.
             </p>
-            <span className="mt-3 inline-block font-mono text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-lg">
-              /join/cafe-atlas
+            <span className="mt-3 inline-block font-mono text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg">
+              /admin/automations
             </span>
           </Link>
 
-          {/* Box 3: Live Customer Pass Hub */}
-          <Link
-            href="/pass/pass-atlas-4821"
-            className="glass-panel glass-card-hover p-5 rounded-3xl block group border-purple-500/20"
-          >
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <Gift className="w-5 h-5" />
-            </div>
-            <h2 className="font-bold text-sm text-white flex items-center justify-between">
-              <span>الكارط الحية (ليلى التازي)</span>
-              <ArrowLeft className="w-3.5 h-3.5 text-purple-400 group-hover:-translate-x-1 transition-transform" />
-            </h2>
-            <p className="text-[11px] text-white/60 mt-1 leading-relaxed">
-              رنة Apple Wallet، رادار 100m، ورمز QR للمسح.
-            </p>
-            <span className="mt-3 inline-block font-mono text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-lg">
-              /pass/pass-atlas-4821
-            </span>
-          </Link>
-
-          {/* Box 4: Merchant Portal Placeholder */}
+          {/* Box 3: Merchant Portal */}
           <Link
             href="/m/cafe-atlas"
             className="glass-panel glass-card-hover p-5 rounded-3xl block group border-amber-500/20"
@@ -178,10 +158,50 @@ export default async function HomePage() {
               <ArrowLeft className="w-3.5 h-3.5 text-amber-400 group-hover:-translate-x-1 transition-transform" />
             </h2>
             <p className="text-[11px] text-white/60 mt-1 leading-relaxed">
-              ماسح الكاميرا السريع وطبع الطوابع (المرحلة 3).
+              ماسح الكاميرا، زيادة الطوابع، وحملات البروموسيون المباشرة.
             </p>
             <span className="mt-3 inline-block font-mono text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg">
               /m/cafe-atlas
+            </span>
+          </Link>
+
+          {/* Box 4: Live Customer Pass Hub */}
+          <Link
+            href="/pass/pass-atlas-4821"
+            className="glass-panel glass-card-hover p-5 rounded-3xl block group border-purple-500/20"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <Gift className="w-5 h-5" />
+            </div>
+            <h2 className="font-bold text-sm text-white flex items-center justify-between">
+              <span>الكارط الحية (ليلى)</span>
+              <ArrowLeft className="w-3.5 h-3.5 text-purple-400 group-hover:-translate-x-1 transition-transform" />
+            </h2>
+            <p className="text-[11px] text-white/60 mt-1 leading-relaxed">
+              رنة Apple Wallet، رادار 100m، واستقبال الإشعارات.
+            </p>
+            <span className="mt-3 inline-block font-mono text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-lg">
+              /pass/pass-atlas-4821
+            </span>
+          </Link>
+
+          {/* Box 5: Customer Onboarding */}
+          <Link
+            href="/join/cafe-atlas"
+            className="glass-panel glass-card-hover p-5 rounded-3xl block group border-blue-500/20"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <h2 className="font-bold text-sm text-white flex items-center justify-between">
+              <span>انضمام الزبون</span>
+              <ArrowLeft className="w-3.5 h-3.5 text-blue-400 group-hover:-translate-x-1 transition-transform" />
+            </h2>
+            <p className="text-[11px] text-white/60 mt-1 leading-relaxed">
+              تسجيل في 5 ثوانٍ مع طابع ترحيبي مجاني كادو 🎁.
+            </p>
+            <span className="mt-3 inline-block font-mono text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-lg">
+              /join/cafe-atlas
             </span>
           </Link>
         </div>
@@ -214,6 +234,30 @@ export default async function HomePage() {
                 </span>
               </div>
               <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/20 px-2.5 py-0.5 rounded-md">
+                مكتملة ✓
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="font-bold text-white">
+                  المرحلة 3: تطبيق التاجر المتجاوب (/m/[slug])، الماسح بالكاميرا، الـ CRM، والبروموسيون
+                </span>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/20 px-2.5 py-0.5 rounded-md">
+                مكتملة ✓
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="font-bold text-white">
+                  المرحلة 4: محرك الإشعارات الفورية (Service Worker)، بروتوكول Apple PassKit الرسمي، ومحرك الأتمتة والـ Cron
+                </span>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/20 px-2.5 py-0.5 rounded-md">
                 مكتملة الآن ✓
               </span>
             </div>
@@ -221,25 +265,9 @@ export default async function HomePage() {
             <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-white/60">
               <div className="flex items-center gap-2.5">
                 <Clock className="w-4 h-4 text-white/40" />
-                <span>المرحلة 3: لوحة التاجر السريعة (/m/[slug]) والماسح بالكاميرا / PIN</span>
-              </div>
-              <span className="text-[10px] text-white/40">المرحلة القادمة</span>
-            </div>
-
-            <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-white/60">
-              <div className="flex items-center gap-2.5">
-                <Clock className="w-4 h-4 text-white/40" />
-                <span>المرحلة 4: محرك الرادار Geofencing (100m) وأتمتة استرجاع الزبائن الغابرين</span>
-              </div>
-              <span className="text-[10px] text-white/40">قادمة</span>
-            </div>
-
-            <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-white/60">
-              <div className="flex items-center gap-2.5">
-                <Clock className="w-4 h-4 text-white/40" />
                 <span>المرحلة 5: الصفحة التسويقية الرئيسية، حاسبة الأرباح، وربط الدفع</span>
               </div>
-              <span className="text-[10px] text-white/40">قادمة</span>
+              <span className="text-[10px] text-white/40">المرحلة القادمة</span>
             </div>
           </div>
         </div>

@@ -76,11 +76,22 @@ interface CampaignData {
   createdAt: string | Date;
 }
 
+interface NotificationData {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  actionUrl: string | null;
+  isRead: boolean;
+  createdAt: string | Date;
+}
+
 interface CustomerPassHubClientProps {
   initialCustomer: CustomerData;
   initialMerchant: MerchantData;
   initialTransactions: TransactionData[];
   initialCampaign: CampaignData | null;
+  initialNotifications?: NotificationData[];
 }
 
 interface NotificationBanner {
@@ -89,6 +100,7 @@ interface NotificationBanner {
   message: string;
   time: string;
   icon: "stamp" | "reward" | "radar" | "gift";
+  actionUrl?: string;
 }
 
 export default function CustomerPassHubClient({
@@ -96,6 +108,7 @@ export default function CustomerPassHubClient({
   initialMerchant,
   initialTransactions,
   initialCampaign,
+  initialNotifications = [],
 }: CustomerPassHubClientProps) {
   const [customer, setCustomer] = useState<CustomerData>(initialCustomer);
   const [merchant] = useState<MerchantData>(initialMerchant);
@@ -122,6 +135,23 @@ export default function CustomerPassHubClient({
   const prevStampsRef = useRef<number>(customer.stamps);
   const prevRewardsRef = useRef<number>(customer.rewardsRedeemed);
   const prevCampaignIdRef = useRef<string | null>(initialCampaign?.id || null);
+  const lastKnownNotificationIdRef = useRef<string | null>(
+    initialNotifications.length > 0 ? initialNotifications[0].id : null
+  );
+
+  // Register PWA Service Worker on mount
+  useEffect(() => {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          console.log("Service Worker registered successfully:", reg.scope);
+        })
+        .catch((err) => {
+          console.warn("Service Worker registration warning:", err);
+        });
+    }
+  }, []);
 
   // Trigger floating iOS 18 glass notification banner
   const showBanner = useCallback((banner: NotificationBanner) => {
@@ -228,6 +258,45 @@ export default function CustomerPassHubClient({
             });
           }
 
+          // 4. Detect New Persisted Push Notifications from Queue (Win-Back, Review, Birthday, Radar, Stamp)
+          if (Array.isArray(data.notifications) && data.notifications.length > 0) {
+            const latestNotif = data.notifications[0] as NotificationData;
+            if (lastKnownNotificationIdRef.current === null) {
+              lastKnownNotificationIdRef.current = latestNotif.id;
+            } else if (latestNotif.id !== lastKnownNotificationIdRef.current) {
+              lastKnownNotificationIdRef.current = latestNotif.id;
+
+              let bannerIcon: "stamp" | "reward" | "radar" | "gift" = "gift";
+              if (latestNotif.type === "STAMP") bannerIcon = "stamp";
+              else if (latestNotif.type === "REWARD" || latestNotif.type === "REVIEW") bannerIcon = "reward";
+              else if (latestNotif.type === "RADAR") bannerIcon = "radar";
+
+              showBanner({
+                id: latestNotif.id,
+                title: latestNotif.title,
+                message: latestNotif.body,
+                time: "الآن",
+                icon: bannerIcon,
+                actionUrl: latestNotif.actionUrl || undefined,
+              });
+
+              // Also trigger native OS push through Service Worker if active
+              if (
+                typeof window !== "undefined" &&
+                "serviceWorker" in navigator &&
+                navigator.serviceWorker.controller
+              ) {
+                navigator.serviceWorker.controller.postMessage({
+                  type: "SHOW_NOTIFICATION",
+                  title: latestNotif.title,
+                  body: latestNotif.body,
+                  url: latestNotif.actionUrl || window.location.href,
+                  icon: "/favicon.ico",
+                });
+              }
+            }
+          }
+
           setCustomer(data.customer);
           if (data.transactions) setTransactions(data.transactions);
           if (data.latestCampaign) setLatestCampaign(data.latestCampaign);
@@ -295,19 +364,30 @@ export default function CustomerPassHubClient({
   };
 
   // 100m Radar Simulator
-  const handleSimulateRadar = () => {
+  const handleSimulateRadar = async () => {
     setSimulatingRadar(true);
+
+    try {
+      // Trigger radar server-side to persist in Notification queue
+      await fetch(`/api/pass/${customer.passSerial}/radar`, {
+        method: "POST",
+        signal: AbortSignal.timeout(8000),
+      });
+    } catch (err) {
+      console.warn("Radar simulator server trigger warning:", err);
+    }
 
     setTimeout(() => {
       setSimulatingRadar(false);
       showBanner({
-        id: "radar-ping",
+        id: `radar-ping-${Date.now()}`,
         title: `📍 رادار القرب 100m: ${merchant.name}`,
         message: merchant.radarMessage,
         time: "الآن",
         icon: "radar",
+        actionUrl: `/pass/${customer.passSerial}`,
       });
-    }, 1500);
+    }, 1200);
   };
 
   // Fetch PassKit Apple Wallet JSON
@@ -356,6 +436,19 @@ export default function CustomerPassHubClient({
               <p className="text-[11px] text-white/80 mt-0.5 leading-relaxed">
                 {activeBanner.message}
               </p>
+              {activeBanner.actionUrl && (
+                <div className="mt-2">
+                  <a
+                    href={activeBanner.actionUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 font-bold text-[11px] hover:bg-amber-300 transition-colors shadow-sm"
+                  >
+                    <span>فتح الرابط ⭐</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
             </div>
 
             <button

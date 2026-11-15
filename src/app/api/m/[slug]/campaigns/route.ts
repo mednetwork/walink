@@ -63,7 +63,17 @@ export async function POST(
       );
     }
 
-    // Atomic transaction: deduct credits and create campaign record
+    // Identify target customers to generate individual notifications
+    const targetCustomers = merchant.customers.filter((c) => {
+      if (audience === "QUIET") return new Date(c.lastVisitAt) <= fourteenDaysAgo;
+      if (audience === "NEAR_REWARD") return c.stamps === merchant.stampsRequired - 1;
+      if (audience === "VIP") return c.totalVisits >= 10;
+      return true; // ALL
+    });
+
+    const customersToNotify = targetCustomers.length > 0 ? targetCustomers : merchant.customers.slice(0, 1);
+
+    // Atomic transaction: deduct credits, create campaign record, and push notifications
     const [updatedMerchant, campaign] = await prisma.$transaction([
       prisma.merchant.update({
         where: { id: merchant.id },
@@ -84,6 +94,20 @@ export async function POST(
         },
       }),
     ]);
+
+    // Create Notification records for target customers
+    for (const c of customersToNotify) {
+      await prisma.notification.create({
+        data: {
+          merchantId: merchant.id,
+          customerId: c.id,
+          type: "PROMO",
+          title: merchant.name,
+          body: message.trim(),
+          createdAt: now,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

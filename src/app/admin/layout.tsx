@@ -28,6 +28,12 @@ export default function AdminLayout({
       active: pathname === "/admin",
     },
     {
+      href: "/admin/automations",
+      label: "محرك الأتمتة",
+      icon: Sparkles,
+      active: pathname === "/admin/automations",
+    },
+    {
       href: "/admin/merchants/new",
       label: "إضافة محل جديد",
       icon: PlusCircle,

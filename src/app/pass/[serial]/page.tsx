@@ -85,6 +85,19 @@ export default async function CustomerPassPage({ params }: PassPageProps) {
     orderBy: { createdAt: "desc" },
   });
 
+  // Fetch latest notifications for this customer or merchant broadcast
+  const notifications = await prisma.notification.findMany({
+    where: {
+      merchantId: customer.merchantId,
+      OR: [
+        { customerId: customer.id },
+        { customerId: null },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+  });
+
   // Serialize dates for Client Component
   const serializedCustomer = {
     id: customer.id,
@@ -137,12 +150,23 @@ export default async function CustomerPassPage({ params }: PassPageProps) {
       }
     : null;
 
+  const serializedNotifications = notifications.map((n) => ({
+    id: n.id,
+    type: n.type,
+    title: n.title,
+    body: n.body,
+    actionUrl: n.actionUrl,
+    isRead: n.isRead,
+    createdAt: n.createdAt.toISOString(),
+  }));
+
   return (
     <CustomerPassHubClient
       initialCustomer={serializedCustomer}
       initialMerchant={serializedMerchant}
       initialTransactions={serializedTransactions}
       initialCampaign={serializedCampaign}
+      initialNotifications={serializedNotifications}
     />
   );
 }

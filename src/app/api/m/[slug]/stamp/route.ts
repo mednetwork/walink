@@ -18,6 +18,8 @@ export async function POST(
         name: true,
         rewardName: true,
         stampsRequired: true,
+        googleMapsUrl: true,
+        autoReview: true,
         isActive: true,
       },
     });
@@ -103,7 +105,7 @@ export async function POST(
       // Redeem reward
       const newStamps = Math.max(0, customer.stamps - merchant.stampsRequired);
 
-      const [updatedCustomer, transaction] = await prisma.$transaction([
+      const [updatedCustomer, transaction, notification] = await prisma.$transaction([
         prisma.customer.update({
           where: { id: customer.id },
           data: {
@@ -122,7 +124,32 @@ export async function POST(
             createdAt: now,
           },
         }),
+        prisma.notification.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "REWARD",
+            title: merchant.name,
+            body: `🎉 مبروك! ${merchant.rewardName} ديالك واجد. وريه فالكونطوار.`,
+            createdAt: now,
+          },
+        }),
       ]);
+
+      // If merchant has autoReview enabled, schedule/create Google review notification
+      if (merchant.autoReview) {
+        await prisma.notification.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "REVIEW",
+            title: `قيّم تجربتك فـ ${merchant.name}`,
+            body: "شكراً على الزيارة! عجباتك الخدمة؟ خلي لينا 5 نجمات فـ Google Maps ⭐",
+            actionUrl: merchant.googleMapsUrl || "https://maps.google.com",
+            createdAt: new Date(now.getTime() + 1000),
+          },
+        });
+      }
 
       return NextResponse.json({
         success: true,
@@ -130,11 +157,16 @@ export async function POST(
         message: `مبروك! تم تسليم المكافأة (${merchant.rewardName}) لـ ${customer.name} بنجاح 🎁`,
         customer: updatedCustomer,
         transaction,
+        notification,
       });
     }
 
     // Default Action: STAMP
-    const [updatedCustomer, transaction] = await prisma.$transaction([
+    const nextStamps = customer.stamps + 1;
+    const isRewardUnlocked = nextStamps >= merchant.stampsRequired;
+    const stampsLeft = Math.max(0, merchant.stampsRequired - nextStamps);
+
+    const [updatedCustomer, transaction, notification] = await prisma.$transaction([
       prisma.customer.update({
         where: { id: customer.id },
         data: {
@@ -153,9 +185,34 @@ export async function POST(
           createdAt: now,
         },
       }),
+      prisma.notification.create({
+        data: {
+          merchantId: merchant.id,
+          customerId: customer.id,
+          type: isRewardUnlocked ? "REWARD" : "STAMP",
+          title: merchant.name,
+          body: isRewardUnlocked
+            ? `🎉 مبروك! جمعتي كاع الطوابع! ${merchant.rewardName} ديالك واجد.`
+            : `تزاد ليك طابع جديد! باقي ليك ${stampsLeft} وتاخد ${merchant.rewardName}.`,
+          createdAt: now,
+        },
+      }),
     ]);
 
-    const isRewardUnlocked = updatedCustomer.stamps >= merchant.stampsRequired;
+    // If reward unlocked and autoReview is true, add review notification
+    if (isRewardUnlocked && merchant.autoReview) {
+      await prisma.notification.create({
+        data: {
+          merchantId: merchant.id,
+          customerId: customer.id,
+          type: "REVIEW",
+          title: `عجباتك الخدمة فـ ${merchant.name}؟ ⭐`,
+          body: "خلي لينا تقييم 5 نجوم على Google Maps وخود هدية في الزيارة الجاية!",
+          actionUrl: merchant.googleMapsUrl || "https://maps.google.com",
+          createdAt: new Date(now.getTime() + 1000),
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -166,6 +223,7 @@ export async function POST(
         : `تمت إضافة طابع جديد لـ ${customer.name} بنجاح (${updatedCustomer.stamps}/${merchant.stampsRequired}).`,
       customer: updatedCustomer,
       transaction,
+      notification,
     });
   } catch (error: unknown) {
     console.error("Error processing stamp/redeem action:", error);

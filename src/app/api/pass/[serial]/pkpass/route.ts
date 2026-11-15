@@ -38,12 +38,16 @@ export async function GET(
 
     const bgColor = hexToRgb(merchant.primaryColor || "#5b3519");
 
+    const origin = req.nextUrl.origin || "https://walink.ma";
+
     // Official Apple Wallet PassKit storeCard Schema
     const passJson = {
       formatVersion: 1,
       passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || "pass.ma.walink.loyalty",
       serialNumber: customer.passSerial,
       teamIdentifier: process.env.APPLE_TEAM_ID || "WALINKMA01",
+      webServiceURL: `${origin}/api/apple`,
+      authenticationToken: customer.passSerial,
       organizationName: merchant.name,
       description: `كارط الوفاء - ${merchant.name}`,
       logoText: merchant.name,
@@ -85,6 +89,7 @@ export async function GET(
             key: "stamps_count",
             label: "الطوابع",
             value: `${customer.stamps} / ${merchant.stampsRequired}`,
+            changeMessage: "تزاد ليك طابع! مجموع طوابعك: %@",
             textAlignment: "PKTextAlignmentRight",
           },
         ],

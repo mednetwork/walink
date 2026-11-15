@@ -54,6 +54,19 @@ export async function GET(
       orderBy: { createdAt: "desc" },
     });
 
+    // Fetch latest notifications for this customer or merchant broadcast
+    const notifications = await prisma.notification.findMany({
+      where: {
+        merchantId: customer.merchantId,
+        OR: [
+          { customerId: customer.id },
+          { customerId: null },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    });
+
     return NextResponse.json({
       customer: {
         id: customer.id,
@@ -71,6 +84,7 @@ export async function GET(
       merchant: customer.merchant,
       transactions: customer.transactions,
       latestCampaign,
+      notifications,
     });
   } catch (error: unknown) {
     console.error("Error fetching pass data:", error);
