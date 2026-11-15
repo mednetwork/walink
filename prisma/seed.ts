@@ -36,11 +36,16 @@ async function main() {
       primaryColor: "#5b3519",
       bgGradient: "linear-gradient(150deg,#6b4226 0%,#3d2414 100%)",
       stampsRequired: 5,
-      rewardName: "قهوة فابور",
-      customerPrefix: "آ السي",
+      rewardName: "قهوة مجانية",
+      customerPrefix: "عزيزي",
+      loyaltyMode: "BOTH",
+      cashbackRate: 10,
+      welcomeCashback: 5,
+      minCashbackRedeem: 0,
+      currency: "DH",
       latitude: 33.5731,
       longitude: -7.5898,
-      radarMessage: "راك دايز من حدانا! دوز مرحبا بيك، الكارط ديالك واجدة.",
+      radarMessage: "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة لجمع الأختام والكاش باك.",
       googleMapsUrl: "https://maps.google.com/?q=cafe+atlas+casablanca",
       plan: "GROWTH",
       credits: 1000,
@@ -55,7 +60,7 @@ async function main() {
 
   console.log(`✅ Created Merchant: ${cafeAtlas.name} (${cafeAtlas.slug})`);
 
-  // Seed 6 Moroccan Customers for Café Atlas
+  // Seed 6 Moroccan Customers for Café Atlas (Both STAMPS and CASHBACK)
   const customersData = [
     {
       name: "ليلى التازي",
@@ -63,7 +68,11 @@ async function main() {
       birthday: "1995-04-12",
       passSerial: "pass-atlas-4821",
       memberCode: "4821",
+      loyaltyType: "STAMPS",
       stamps: 4,
+      cashbackBalance: 0,
+      totalCashbackEarned: 0,
+      totalSpent: 400,
       totalVisits: 16,
       rewardsRedeemed: 3,
       lastVisitAt: hoursAgo(2),
@@ -75,7 +84,11 @@ async function main() {
       birthday: "1998-08-23",
       passSerial: "pass-atlas-7193",
       memberCode: "7193",
+      loyaltyType: "STAMPS",
       stamps: 2,
+      cashbackBalance: 0,
+      totalCashbackEarned: 0,
+      totalSpent: 250,
       totalVisits: 14,
       rewardsRedeemed: 2,
       lastVisitAt: daysAgo(2),
@@ -87,7 +100,11 @@ async function main() {
       birthday: "1991-11-05",
       passSerial: "pass-atlas-3058",
       memberCode: "3058",
+      loyaltyType: "STAMPS",
       stamps: 3,
+      cashbackBalance: 0,
+      totalCashbackEarned: 0,
+      totalSpent: 180,
       totalVisits: 9,
       rewardsRedeemed: 1,
       lastVisitAt: daysAgo(1),
@@ -99,7 +116,11 @@ async function main() {
       birthday: "2000-01-30",
       passSerial: "pass-atlas-8912",
       memberCode: "8912",
+      loyaltyType: "STAMPS",
       stamps: 1,
+      cashbackBalance: 0,
+      totalCashbackEarned: 0,
+      totalSpent: 90,
       totalVisits: 5,
       rewardsRedeemed: 0,
       lastVisitAt: daysAgo(6),
@@ -111,10 +132,14 @@ async function main() {
       birthday: "1993-06-17",
       passSerial: "pass-atlas-6240",
       memberCode: "6240",
-      stamps: 4,
+      loyaltyType: "CASHBACK",
+      stamps: 0,
+      cashbackBalance: 35.50,
+      totalCashbackEarned: 55.50,
+      totalSpent: 555,
       totalVisits: 11,
-      rewardsRedeemed: 2,
-      lastVisitAt: daysAgo(19), // Inactive / غابر
+      rewardsRedeemed: 1,
+      lastVisitAt: daysAgo(3),
       walletType: "APPLE",
     },
     {
@@ -123,10 +148,14 @@ async function main() {
       birthday: "1989-12-09",
       passSerial: "pass-atlas-1537",
       memberCode: "1537",
-      stamps: 2,
-      totalVisits: 3,
-      rewardsRedeemed: 0,
-      lastVisitAt: daysAgo(26), // Inactive / غابر
+      loyaltyType: "CASHBACK",
+      stamps: 0,
+      cashbackBalance: 70.00,
+      totalCashbackEarned: 120.00,
+      totalSpent: 1200,
+      totalVisits: 18,
+      rewardsRedeemed: 2,
+      lastVisitAt: daysAgo(1),
       walletType: "WEBPASS",
     },
   ];
@@ -139,41 +168,80 @@ async function main() {
       },
     });
 
-    // Create initial card transaction
-    await prisma.transaction.create({
-      data: {
-        merchantId: cafeAtlas.id,
-        customerId: customer.id,
-        type: "CARD_CREATED",
-        stampsDelta: 0,
-        note: "تفعيل الكارط الرقمية لأول مرة",
-        createdAt: daysAgo(30),
-      },
-    });
-
-    // Create recent visit stamp transactions
-    await prisma.transaction.create({
-      data: {
-        merchantId: cafeAtlas.id,
-        customerId: customer.id,
-        type: "STAMP_ADDED",
-        stampsDelta: 1,
-        note: "إضافة طابع - زيارة قهوة الصباح",
-        createdAt: c.lastVisitAt,
-      },
-    });
-
-    if (c.rewardsRedeemed > 0) {
+    if (c.loyaltyType === "STAMPS") {
+      // Create initial card transaction
       await prisma.transaction.create({
         data: {
           merchantId: cafeAtlas.id,
           customerId: customer.id,
-          type: "REWARD_REDEEMED",
-          stampsDelta: -cafeAtlas.stampsRequired,
-          note: `استفادة من مكافأة: ${cafeAtlas.rewardName}`,
-          createdAt: daysAgo(10),
+          type: "CARD_CREATED",
+          stampsDelta: 1,
+          note: "تفعيل بطاقة الأختام الرقمية",
+          createdAt: daysAgo(30),
         },
       });
+
+      // Create recent visit stamp transactions
+      await prisma.transaction.create({
+        data: {
+          merchantId: cafeAtlas.id,
+          customerId: customer.id,
+          type: "STAMP_ADDED",
+          stampsDelta: 1,
+          note: "إضافة ختم - زيارة قهوة الصباح",
+          createdAt: c.lastVisitAt,
+        },
+      });
+
+      if (c.rewardsRedeemed > 0) {
+        await prisma.transaction.create({
+          data: {
+            merchantId: cafeAtlas.id,
+            customerId: customer.id,
+            type: "REWARD_REDEEMED",
+            stampsDelta: -cafeAtlas.stampsRequired,
+            note: `استفادة من مكافأة: ${cafeAtlas.rewardName}`,
+            createdAt: daysAgo(10),
+          },
+        });
+      }
+    } else {
+      // Cashback customer transactions
+      await prisma.transaction.create({
+        data: {
+          merchantId: cafeAtlas.id,
+          customerId: customer.id,
+          type: "CARD_CREATED",
+          cashbackDelta: 5.0,
+          note: "تفعيل بطاقة كاش باك + هدية ترحيبية 5 دراهم",
+          createdAt: daysAgo(30),
+        },
+      });
+
+      await prisma.transaction.create({
+        data: {
+          merchantId: cafeAtlas.id,
+          customerId: customer.id,
+          type: "CASHBACK_EARNED",
+          billAmount: 150.0,
+          cashbackDelta: 15.0,
+          note: "استرداد كاش باك 10% على فاتورة 150 درهم",
+          createdAt: c.lastVisitAt,
+        },
+      });
+
+      if (c.rewardsRedeemed > 0) {
+        await prisma.transaction.create({
+          data: {
+            merchantId: cafeAtlas.id,
+            customerId: customer.id,
+            type: "CASHBACK_REDEEMED",
+            cashbackDelta: -20.0,
+            note: "خصم 20 درهم من رصيد الكاش باك",
+            createdAt: daysAgo(5),
+          },
+        });
+      }
     }
   }
 
@@ -183,8 +251,8 @@ async function main() {
   await prisma.campaign.create({
     data: {
       merchantId: cafeAtlas.id,
-      title: "عرض نهاية الأسبوع للزبائن الغابرين",
-      message: "توحشناك في Café Atlas! دوز نهاية هذا الأسبوع وخود طابع مضاعف مع القهوة ديالك ☕️",
+      title: "عرض نهاية الأسبوع للعملاء الغائبين",
+      message: "اشتقنا لزيارتك في Café Atlas! تفضل بزيارتنا هذا الأسبوع واحصل على ختم مضاعف أو كاش باك إضافي مع قهوتك ☕️",
       audience: "QUIET",
       sentCount: 18,
       returnedCount: 6,
@@ -208,11 +276,16 @@ async function main() {
       primaryColor: "#1e3a8a",
       bgGradient: "linear-gradient(150deg,#1e3a8a 0%,#0f172a 100%)",
       stampsRequired: 6,
-      rewardName: "حسانة فابور",
-      customerPrefix: "آ السي",
+      rewardName: "حلاقة مجانية",
+      customerPrefix: "عزيزي",
+      loyaltyMode: "STAMPS",
+      cashbackRate: 10,
+      welcomeCashback: 0,
+      minCashbackRedeem: 0,
+      currency: "DH",
       latitude: 34.0209,
       longitude: -6.8416,
-      radarMessage: "قريب من صالون أنس؟ واش وقت حسانة جديدة؟ مرحبا بيك!",
+      radarMessage: "أنت بالقرب من صالون أنس؟ حان وقت تصفيف شعر أنيق، مرحباً بك!",
       googleMapsUrl: "https://maps.google.com/?q=barber+anas+rabat",
       plan: "STARTER",
       credits: 200,
@@ -236,7 +309,11 @@ async function main() {
       birthday: "1994-03-15",
       passSerial: "pass-anas-5512",
       memberCode: "5512",
+      loyaltyType: "STAMPS",
       stamps: 3,
+      cashbackBalance: 0,
+      totalCashbackEarned: 0,
+      totalSpent: 150,
       totalVisits: 7,
       rewardsRedeemed: 1,
       lastVisitAt: daysAgo(4),
@@ -250,7 +327,7 @@ async function main() {
       customerId: anasCustomer.id,
       type: "STAMP_ADDED",
       stampsDelta: 1,
-      note: "طابع حلاقة شعر ولحية",
+      note: "ختم حلاقة شعر ولحية",
       createdAt: daysAgo(4),
     },
   });

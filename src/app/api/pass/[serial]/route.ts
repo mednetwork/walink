@@ -32,6 +32,10 @@ export async function GET(
             autoReview: true,
             autoRadar: true,
             autoWinback: true,
+            loyaltyMode: true,
+            cashbackRate: true,
+            welcomeCashback: true,
+            currency: true,
           },
         },
         transactions: {

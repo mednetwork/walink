@@ -9,18 +9,18 @@ export async function POST(
   try {
     const { slug } = params;
     const body = await req.json();
-    const { name, phone, birthday } = body;
+    const { name, phone, birthday, loyaltyType: requestedLoyaltyType } = body;
 
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json(
-        { error: "يرجى كتابة الاسم ديالك" },
+        { error: "يرجى كتابة الاسم الكامل" },
         { status: 400 }
       );
     }
 
     if (!phone || typeof phone !== "string") {
       return NextResponse.json(
-        { error: "يرجى كتابة رقم الهاتف" },
+        { error: "يرجى إدخال رقم الهاتف" },
         { status: 400 }
       );
     }
@@ -28,26 +28,36 @@ export async function POST(
     const normalizedPhone = normalizeMoroccanPhone(phone);
     if (!isValidMoroccanPhone(normalizedPhone)) {
       return NextResponse.json(
-        { error: "رقم الهاتف غير صحيح. يرجى إدخال رقم مغربي (مثلاً: 0612345678 أو 0712345678)" },
+        { error: "رقم الهاتف غير صحيح. يرجى إدخال رقم هاتف صالح (مثلاً: 0612345678)" },
         { status: 400 }
       );
     }
 
     const merchant = await prisma.merchant.findUnique({
       where: { slug },
-      select: { id: true, name: true, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        loyaltyMode: true,
+        welcomeCashback: true,
+        currency: true,
+        cashbackRate: true,
+        stampsRequired: true,
+        rewardName: true,
+      },
     });
 
     if (!merchant) {
       return NextResponse.json(
-        { error: "المحل التجاري غير موجود" },
+        { error: "المتجر التجاري غير موجود" },
         { status: 404 }
       );
     }
 
     if (!merchant.isActive) {
       return NextResponse.json(
-        { error: "هذا المحل غير نشط حالياً" },
+        { error: "هذا المتجر غير نشط حالياً" },
         { status: 400 }
       );
     }
@@ -66,8 +76,17 @@ export async function POST(
       return NextResponse.json({
         existing: true,
         passSerial: existingCustomer.passSerial,
-        message: "مرحباً بك مجدداً! تم استرجاع بطاقتك وطوابعك بنجاح.",
+        message: "مرحباً بعودتك! تم العثور على بطاقتك بنجاح.",
       });
+    }
+
+    // Determine customer loyaltyType based on merchant mode
+    let effectiveLoyaltyType: "STAMPS" | "CASHBACK" = "STAMPS";
+    if (merchant.loyaltyMode === "CASHBACK") {
+      effectiveLoyaltyType = "CASHBACK";
+    } else if (merchant.loyaltyMode === "BOTH") {
+      effectiveLoyaltyType =
+        requestedLoyaltyType === "CASHBACK" ? "CASHBACK" : "STAMPS";
     }
 
     // Generate unique 4-digit member code
@@ -91,7 +110,10 @@ export async function POST(
       memberCode = Date.now().toString().slice(-4);
     }
 
-    // Create new customer with 1 Welcome Stamp!
+    const isCashback = effectiveLoyaltyType === "CASHBACK";
+    const welcomeBonus = isCashback ? Number(merchant.welcomeCashback || 0) : 0;
+
+    // Create new customer
     const newCustomer = await prisma.customer.create({
       data: {
         merchantId: merchant.id,
@@ -99,7 +121,10 @@ export async function POST(
         phone: normalizedPhone,
         birthday: birthday ? String(birthday).trim() : null,
         memberCode,
-        stamps: 1, // 1 welcome stamp gift!
+        loyaltyType: effectiveLoyaltyType,
+        stamps: isCashback ? 0 : 1, // 1 welcome stamp gift for STAMPS
+        cashbackBalance: welcomeBonus,
+        totalCashbackEarned: welcomeBonus,
         totalVisits: 1,
         walletType: "WEBPASS",
       },
@@ -111,8 +136,11 @@ export async function POST(
         merchantId: merchant.id,
         customerId: newCustomer.id,
         type: "CARD_CREATED",
-        stampsDelta: 1,
-        note: "تسجيل الكارط + أول طابع ترحيبي هدية 🎁",
+        stampsDelta: isCashback ? 0 : 1,
+        cashbackDelta: isCashback ? welcomeBonus : 0,
+        note: isCashback
+          ? `تفعيل بطاقة كاش باك + هدية ترحيبية ${welcomeBonus} ${merchant.currency}`
+          : "تفعيل بطاقة الأختام + أول ختم ترحيبي هدية 🎁",
       },
     });
 
@@ -120,14 +148,15 @@ export async function POST(
       {
         existing: false,
         passSerial: newCustomer.passSerial,
-        message: "تم تفعيل بطاقتك بنجاح وحصلت على أول طابع هدية!",
+        message: isCashback
+          ? `تم تفعيل بطاقة الكاش باك بنجاح وحصلت على ${welcomeBonus} ${merchant.currency} كهدية ترحيبية!`
+          : "تم تفعيل بطاقتك بنجاح وحصلت على أول ختم هدية!",
       },
       { status: 201 }
     );
   } catch (error: unknown) {
     console.error("Error in customer onboarding join API:", error);
-    const msg = error instanceof Error ? error.message : "تعذر تسجيل الزبون";
+    const msg = error instanceof Error ? error.message : "تعذر تسجيل العميل";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-

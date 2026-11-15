@@ -44,6 +44,11 @@ interface MerchantFormData {
   stampsRequired: number;
   rewardName: string;
   customerPrefix: string;
+  loyaltyMode: string;
+  cashbackRate: number;
+  welcomeCashback: number;
+  minCashbackRedeem: number;
+  currency: string;
   latitude: number | null;
   longitude: number | null;
   radarMessage: string;
@@ -79,13 +84,18 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
     bgGradient:
       initialData?.bgGradient || "linear-gradient(150deg,#6b4226 0%,#3d2414 100%)",
     stampsRequired: initialData?.stampsRequired || 5,
-    rewardName: initialData?.rewardName || "قهوة فابور",
-    customerPrefix: initialData?.customerPrefix || "آ السي",
+    rewardName: initialData?.rewardName || "قهوة مجانية",
+    customerPrefix: initialData?.customerPrefix || "عزيزي",
+    loyaltyMode: initialData?.loyaltyMode || "BOTH",
+    cashbackRate: initialData?.cashbackRate ?? 10,
+    welcomeCashback: initialData?.welcomeCashback ?? 5,
+    minCashbackRedeem: initialData?.minCashbackRedeem ?? 0,
+    currency: initialData?.currency || "DH",
     latitude: initialData?.latitude ?? 33.5731,
     longitude: initialData?.longitude ?? -7.5898,
     radarMessage:
       initialData?.radarMessage ||
-      "راك دايز من حدانا! دوز مرحبا بيك، الكارط ديالك واجدة.",
+      "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة لجمع الأختام والكاش باك.",
     googleMapsUrl: initialData?.googleMapsUrl || "",
     plan: initialData?.plan || "GROWTH",
     credits: initialData?.credits ?? 1000,
@@ -101,6 +111,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
   const [error, setError] = useState<string | null>(null);
   const [isStandModalOpen, setIsStandModalOpen] = useState<boolean>(false);
   const [previewStamps, setPreviewStamps] = useState<number>(3);
+  const [previewLoyaltyType, setPreviewLoyaltyType] = useState<"STAMPS" | "CASHBACK">("STAMPS");
 
   // Auto-slug generator on name change if not manually edited in create mode
   const handleNameChange = (val: string) => {
@@ -341,13 +352,118 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
           <div className="glass-panel p-6 rounded-3xl space-y-4">
             <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
               <Award className="w-4 h-4 text-amber-400" />
-              <span>3. إعدادات بطاقة الوفاء والمكافأة</span>
+              <span>3. إعدادات برنامج الولاء والمكافآت (أختام / كاش باك)</span>
             </h3>
+
+            {/* Loyalty Mode Selector */}
+            <div className="space-y-1.5 pb-3 border-b border-white/10">
+              <label className="text-xs font-semibold text-white/80 block">
+                نظام الولاء المعتمد للمتجر:
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  {
+                    id: "BOTH",
+                    label: "النظامان معاً",
+                    sub: "العميل يختار عند التسجيل",
+                  },
+                  {
+                    id: "STAMPS",
+                    label: "نظام الأختام فقط",
+                    sub: "اجمع أختام واحصل على مكافأة",
+                  },
+                  {
+                    id: "CASHBACK",
+                    label: "نظام الكاش باك فقط",
+                    sub: "استرجع نسبة % من كل فاتورة",
+                  },
+                ].map((mode) => (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, loyaltyMode: mode.id })
+                    }
+                    className={`p-3 rounded-2xl border text-start transition ${
+                      formData.loyaltyMode === mode.id
+                        ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 ring-1 ring-emerald-500/30"
+                        : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="font-bold text-xs block text-white">
+                      {mode.label}
+                    </span>
+                    <span className="text-[10px] text-white/50">{mode.sub}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cashback Specific Fields (If BOTH or CASHBACK) */}
+            {(formData.loyaltyMode === "BOTH" ||
+              formData.loyaltyMode === "CASHBACK") && (
+              <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-amber-300 mb-1 block">
+                    نسبة الكاش باك (%) *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={formData.cashbackRate}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        cashbackRate: parseFloat(e.target.value) || 10,
+                      })
+                    }
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-amber-300 mb-1 block">
+                    هدية الترحيب للكاش باك (DH)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.welcomeCashback}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        welcomeCashback: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-amber-300 mb-1 block">
+                    الحد الأدنى للصرف (DH)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.minCashbackRedeem}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        minCashbackRedeem: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-semibold text-white/80 mb-1.5 block">
-                  عدد الطوابع للحصول على المكافأة ({formData.stampsRequired})
+                  عدد الأختام للحصول على المكافأة ({formData.stampsRequired})
                 </label>
                 <input
                   type="range"
@@ -363,9 +479,9 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   className="w-full accent-emerald-500 cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] text-white/50 font-mono mt-1">
-                  <span>3 طوابع</span>
+                  <span>3 أختام</span>
                   <span>5 (موصى به)</span>
-                  <span>10 طوابع</span>
+                  <span>10 أختام</span>
                 </div>
               </div>
 
@@ -380,7 +496,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   onChange={(e) =>
                     setFormData({ ...formData, rewardName: e.target.value })
                   }
-                  placeholder="قهوة فابور، حسانة فابور، غسلة فابور..."
+                  placeholder="قهوة مجانية، حلاقة مجانية، وجبة مجانية..."
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-amber-300 font-semibold focus:outline-none focus:border-amber-400 transition"
                 />
               </div>
@@ -697,28 +813,56 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
               </button>
             </div>
 
-            {/* Test Stamps Slider */}
-            <div className="mb-4 p-3 bg-white/[0.02] rounded-2xl border border-white/5 flex items-center justify-between">
-              <span className="text-[11px] text-white/60">
-                تجربة عدد الطوابع في المعاينة:
-              </span>
-              <div className="flex items-center gap-1.5">
-                {Array.from({ length: formData.stampsRequired + 1 }).map((_, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setPreviewStamps(idx)}
-                    className={`w-6 h-6 rounded-lg text-[10px] font-mono font-bold transition ${
-                      previewStamps === idx
-                        ? "bg-emerald-500 text-slate-950 shadow-md"
-                        : "bg-white/5 text-white/50 hover:bg-white/10"
-                    }`}
-                  >
-                    {idx}
-                  </button>
-                ))}
-              </div>
+            {/* Loyalty Pass Type Toggle for Preview */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-white/5 rounded-2xl mb-3 text-xs">
+              <button
+                type="button"
+                onClick={() => setPreviewLoyaltyType("STAMPS")}
+                className={`py-1.5 rounded-xl font-bold transition ${
+                  previewLoyaltyType === "STAMPS"
+                    ? "bg-emerald-500 text-slate-950 shadow"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                معاينة بطاقة الأختام
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewLoyaltyType("CASHBACK")}
+                className={`py-1.5 rounded-xl font-bold transition ${
+                  previewLoyaltyType === "CASHBACK"
+                    ? "bg-amber-400 text-slate-950 shadow"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                معاينة بطاقة الكاش باك
+              </button>
             </div>
+
+            {/* Test Stamps Slider (Only for STAMPS preview) */}
+            {previewLoyaltyType === "STAMPS" && (
+              <div className="mb-4 p-3 bg-white/[0.02] rounded-2xl border border-white/5 flex items-center justify-between">
+                <span className="text-[11px] text-white/60">
+                  تجربة عدد الأختام في المعاينة:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: formData.stampsRequired + 1 }).map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setPreviewStamps(idx)}
+                      className={`w-6 h-6 rounded-lg text-[10px] font-mono font-bold transition ${
+                        previewStamps === idx
+                          ? "bg-emerald-500 text-slate-950 shadow-md"
+                          : "bg-white/5 text-white/50 hover:bg-white/10"
+                      }`}
+                    >
+                      {idx}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Realistic iPhone Mockup Frame */}
             <div className="relative mx-auto w-[310px] sm:w-[340px] bg-[#111827] rounded-[48px] p-4 border-[6px] border-slate-700 shadow-2xl shadow-black/80">
@@ -740,9 +884,13 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                 niche={formData.niche}
                 primaryColor={formData.primaryColor}
                 bgGradient={formData.bgGradient}
+                loyaltyType={previewLoyaltyType}
                 stamps={previewStamps}
                 stampsRequired={formData.stampsRequired}
                 rewardName={formData.rewardName || "المكافأة"}
+                cashbackRate={formData.cashbackRate}
+                cashbackBalance={formData.welcomeCashback}
+                currency={formData.currency}
                 memberCode="4821"
                 compact={true}
               />

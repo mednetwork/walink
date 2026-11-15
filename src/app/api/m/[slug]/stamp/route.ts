@@ -9,7 +9,13 @@ export async function POST(
   try {
     const { slug } = params;
     const body = await req.json();
-    const { customerId, identifier, action = "STAMP" } = body;
+    const {
+      customerId,
+      identifier,
+      action = "STAMP",
+      billAmount,
+      redeemAmount,
+    } = body;
 
     const merchant = await prisma.merchant.findUnique({
       where: { slug },
@@ -18,6 +24,11 @@ export async function POST(
         name: true,
         rewardName: true,
         stampsRequired: true,
+        loyaltyMode: true,
+        cashbackRate: true,
+        welcomeCashback: true,
+        minCashbackRedeem: true,
+        currency: true,
         googleMapsUrl: true,
         autoReview: true,
         isActive: true,
@@ -26,7 +37,7 @@ export async function POST(
 
     if (!merchant || !merchant.isActive) {
       return NextResponse.json(
-        { error: "المحل التجاري غير موجود أو غير نشط" },
+        { error: "المتجر غير موجود أو غير نشط حالياً" },
         { status: 404 }
       );
     }
@@ -94,15 +105,178 @@ export async function POST(
 
     if (!customer) {
       return NextResponse.json(
-        { error: "لم يتم العثور على الزبون. تأكد من مسح الرمز أو كتابة الكود الصحيح." },
+        { error: "لم يتم العثور على العميل. تأكد من مسح الرمز أو إدخال الكود الصحيح." },
         { status: 404 }
       );
     }
 
     const now = new Date();
+    const currency = merchant.currency || "DH";
 
+    // Action 1: SWITCH_TYPE (Toggle customer between STAMPS and CASHBACK)
+    if (action === "SWITCH_TYPE") {
+      const targetType = customer.loyaltyType === "CASHBACK" ? "STAMPS" : "CASHBACK";
+      const updated = await prisma.customer.update({
+        where: { id: customer.id },
+        data: { loyaltyType: targetType },
+      });
+
+      return NextResponse.json({
+        success: true,
+        action: "SWITCH_TYPE",
+        message: `تم تحويل برنامج العميل إلى: ${
+          targetType === "CASHBACK" ? "نظام الكاش باك" : "نظام الأختام"
+        }`,
+        customer: updated,
+      });
+    }
+
+    // Action 2: CASHBACK_EARN (Add cashback from purchase bill)
+    if (action === "CASHBACK_EARN") {
+      const bill = Number(billAmount || 0);
+      if (isNaN(bill) || bill <= 0) {
+        return NextResponse.json(
+          { error: "يرجى إدخال مبلغ فاتورة صحيح أكبر من صفر" },
+          { status: 400 }
+        );
+      }
+
+      const earned = Number(((bill * merchant.cashbackRate) / 100).toFixed(2));
+      const newBalance = Number(((customer.cashbackBalance || 0) + earned).toFixed(2));
+
+      const [updatedCustomer, transaction, notification] = await prisma.$transaction([
+        prisma.customer.update({
+          where: { id: customer.id },
+          data: {
+            cashbackBalance: { increment: earned },
+            totalCashbackEarned: { increment: earned },
+            totalSpent: { increment: bill },
+            totalVisits: { increment: 1 },
+            lastVisitAt: now,
+          },
+        }),
+        prisma.transaction.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "CASHBACK_EARNED",
+            billAmount: bill,
+            cashbackDelta: earned,
+            note: `كاش باك ${merchant.cashbackRate}% على فاتورة ${bill} ${currency}`,
+            createdAt: now,
+          },
+        }),
+        prisma.notification.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "STAMP",
+            title: merchant.name,
+            body: `💰 تمت إضافة +${earned} ${currency} كاش باك إلى بطاقتك! رصيدك المتاح: ${newBalance} ${currency}.`,
+            createdAt: now,
+          },
+        }),
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        action: "CASHBACK_EARN",
+        message: `تمت إضافة +${earned} ${currency} (${merchant.cashbackRate}%) لـ ${customer.name} بنجاح!`,
+        earned,
+        bill,
+        customer: updatedCustomer,
+        transaction,
+        notification,
+      });
+    }
+
+    // Action 3: CASHBACK_REDEEM (Deduct from available cashback balance)
+    if (action === "CASHBACK_REDEEM") {
+      const toRedeem = Number(redeemAmount || 0);
+      if (isNaN(toRedeem) || toRedeem <= 0) {
+        return NextResponse.json(
+          { error: "يرجى إدخال مبلغ صحيح للخصم" },
+          { status: 400 }
+        );
+      }
+
+      const currentBal = Number(customer.cashbackBalance || 0);
+      if (toRedeem > currentBal) {
+        return NextResponse.json(
+          { error: `الرصيد المتاح (${currentBal} ${currency}) أقل من المبلغ المطلوب خصمه.` },
+          { status: 400 }
+        );
+      }
+
+      if (merchant.minCashbackRedeem > 0 && currentBal < merchant.minCashbackRedeem) {
+        return NextResponse.json(
+          {
+            error: `الحد الأدنى للبدء في استخدام الكاش باك هو ${merchant.minCashbackRedeem} ${currency}.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      const remainingBal = Number((currentBal - toRedeem).toFixed(2));
+
+      const [updatedCustomer, transaction, notification] = await prisma.$transaction([
+        prisma.customer.update({
+          where: { id: customer.id },
+          data: {
+            cashbackBalance: { decrement: toRedeem },
+            rewardsRedeemed: { increment: 1 },
+            lastVisitAt: now,
+          },
+        }),
+        prisma.transaction.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "CASHBACK_REDEEMED",
+            cashbackDelta: -toRedeem,
+            note: `خصم ${toRedeem} ${currency} من رصيد الكاش باك`,
+            createdAt: now,
+          },
+        }),
+        prisma.notification.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "REWARD",
+            title: merchant.name,
+            body: `🎉 تم استخدام ${toRedeem} ${currency} من رصيدك. رصيدك المتبقي: ${remainingBal} ${currency}.`,
+            createdAt: now,
+          },
+        }),
+      ]);
+
+      if (merchant.autoReview) {
+        await prisma.notification.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "REVIEW",
+            title: `كيف كانت تجربتك في ${merchant.name}؟ ⭐`,
+            body: "شكراً لزيارتك! شاركنا تقييمك بـ 5 نجوم على خرائط Google وساعد الآخرين على اكتشافنا.",
+            actionUrl: merchant.googleMapsUrl || "https://maps.google.com",
+            createdAt: new Date(now.getTime() + 1000),
+          },
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        action: "CASHBACK_REDEEM",
+        message: `تم خصم ${toRedeem} ${currency} من رصيد ${customer.name} بنجاح. الرصيد المتبقي: ${remainingBal} ${currency}.`,
+        redeemed: toRedeem,
+        customer: updatedCustomer,
+        transaction,
+        notification,
+      });
+    }
+
+    // Action 4: REDEEM STAMP REWARD
     if (action === "REDEEM") {
-      // Redeem reward
       const newStamps = Math.max(0, customer.stamps - merchant.stampsRequired);
 
       const [updatedCustomer, transaction, notification] = await prisma.$transaction([
@@ -120,7 +294,7 @@ export async function POST(
             customerId: customer.id,
             type: "REWARD_REDEEMED",
             stampsDelta: -merchant.stampsRequired,
-            note: `استلام الكادو: ${merchant.rewardName} 🎁`,
+            note: `تسليم المكافأة: ${merchant.rewardName} 🎁`,
             createdAt: now,
           },
         }),
@@ -130,21 +304,20 @@ export async function POST(
             customerId: customer.id,
             type: "REWARD",
             title: merchant.name,
-            body: `🎉 مبروك! ${merchant.rewardName} ديالك واجد. وريه فالكونطوار.`,
+            body: `🎉 مبروك! مكافأة ${merchant.rewardName} جاهزة لاستلامها.`,
             createdAt: now,
           },
         }),
       ]);
 
-      // If merchant has autoReview enabled, schedule/create Google review notification
       if (merchant.autoReview) {
         await prisma.notification.create({
           data: {
             merchantId: merchant.id,
             customerId: customer.id,
             type: "REVIEW",
-            title: `قيّم تجربتك فـ ${merchant.name}`,
-            body: "شكراً على الزيارة! عجباتك الخدمة؟ خلي لينا 5 نجمات فـ Google Maps ⭐",
+            title: `كيف كانت تجربتك في ${merchant.name}؟ ⭐`,
+            body: "شكراً لزيارتك! شاركنا تقييمك بـ 5 نجوم على خرائط Google وساعد الآخرين على اكتشافنا.",
             actionUrl: merchant.googleMapsUrl || "https://maps.google.com",
             createdAt: new Date(now.getTime() + 1000),
           },
@@ -161,7 +334,7 @@ export async function POST(
       });
     }
 
-    // Default Action: STAMP
+    // Action 5: ADD STAMP (Default)
     const nextStamps = customer.stamps + 1;
     const isRewardUnlocked = nextStamps >= merchant.stampsRequired;
     const stampsLeft = Math.max(0, merchant.stampsRequired - nextStamps);
@@ -181,7 +354,7 @@ export async function POST(
           customerId: customer.id,
           type: "STAMP_ADDED",
           stampsDelta: 1,
-          note: "طابع جديد ☕️",
+          note: "ختم زيارة جديد ☕️",
           createdAt: now,
         },
       }),
@@ -192,22 +365,21 @@ export async function POST(
           type: isRewardUnlocked ? "REWARD" : "STAMP",
           title: merchant.name,
           body: isRewardUnlocked
-            ? `🎉 مبروك! جمعتي كاع الطوابع! ${merchant.rewardName} ديالك واجد.`
-            : `تزاد ليك طابع جديد! باقي ليك ${stampsLeft} وتاخد ${merchant.rewardName}.`,
+            ? `🎉 مبروك! اكتملت أختامك! مكافأة ${merchant.rewardName} جاهزة للاستلام.`
+            : `تمت إضافة ختم جديد! متبقي لديك ${stampsLeft} أختام للحصول على ${merchant.rewardName}.`,
           createdAt: now,
         },
       }),
     ]);
 
-    // If reward unlocked and autoReview is true, add review notification
     if (isRewardUnlocked && merchant.autoReview) {
       await prisma.notification.create({
         data: {
           merchantId: merchant.id,
           customerId: customer.id,
           type: "REVIEW",
-          title: `عجباتك الخدمة فـ ${merchant.name}؟ ⭐`,
-          body: "خلي لينا تقييم 5 نجوم على Google Maps وخود هدية في الزيارة الجاية!",
+          title: `هل أعجبتك الخدمة في ${merchant.name}؟ ⭐`,
+          body: "شاركنا تقييمك بـ 5 نجوم على Google Maps وساعد الآخرين على اكتشافنا!",
           actionUrl: merchant.googleMapsUrl || "https://maps.google.com",
           createdAt: new Date(now.getTime() + 1000),
         },
@@ -219,16 +391,15 @@ export async function POST(
       action: "STAMP",
       isRewardUnlocked,
       message: isRewardUnlocked
-        ? `🎉 ممتاز! ${customer.name} جمع كاع الطوابع (${updatedCustomer.stamps}/${merchant.stampsRequired}) والكادو واجد!`
-        : `تمت إضافة طابع جديد لـ ${customer.name} بنجاح (${updatedCustomer.stamps}/${merchant.stampsRequired}).`,
+        ? `🎉 ممتاز! ${customer.name} جمع كافة الأختام (${updatedCustomer.stamps}/${merchant.stampsRequired}) والمكافأة جاهزة!`
+        : `تمت إضافة ختم جديد لـ ${customer.name} بنجاح (${updatedCustomer.stamps}/${merchant.stampsRequired}).`,
       customer: updatedCustomer,
       transaction,
       notification,
     });
   } catch (error: unknown) {
-    console.error("Error processing stamp/redeem action:", error);
+    console.error("Error processing stamp/cashback action:", error);
     const msg = error instanceof Error ? error.message : "تعذر تسجيل العملية";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-

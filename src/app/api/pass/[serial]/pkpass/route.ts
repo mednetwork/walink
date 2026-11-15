@@ -7,6 +7,17 @@ export async function GET(
 ) {
   try {
     const { serial } = params;
+    const urlLang = req.nextUrl.searchParams.get("lang");
+    const acceptLang = req.headers.get("accept-language") || "";
+
+    let locale = "ar";
+    if (urlLang === "fr" || (!urlLang && acceptLang.toLowerCase().includes("fr"))) {
+      locale = "fr";
+    } else if (urlLang === "es" || (!urlLang && acceptLang.toLowerCase().includes("es"))) {
+      locale = "es";
+    } else if (urlLang === "ar") {
+      locale = "ar";
+    }
 
     const customer = await prisma.customer.findUnique({
       where: { passSerial: serial },
@@ -37,8 +48,92 @@ export async function GET(
     };
 
     const bgColor = hexToRgb(merchant.primaryColor || "#5b3519");
-
     const origin = req.nextUrl.origin || "https://walink.ma";
+
+    const isCashback = customer.loyaltyType === "CASHBACK";
+    const currency = merchant.currency || "DH";
+
+    // Localized Apple Pass strings
+    const passStrings = {
+      description:
+        locale === "ar"
+          ? `بطاقة ولاء - ${merchant.name}`
+          : locale === "fr"
+          ? `Carte de fidélité - ${merchant.name}`
+          : `Tarjeta de fidelidad - ${merchant.name}`,
+      headerLabel: isCashback
+        ? locale === "ar"
+          ? "نسبة الاسترداد"
+          : "CASHBACK"
+        : locale === "ar"
+        ? "الأختام"
+        : locale === "fr"
+        ? "TAMPONS"
+        : "SELLOS",
+      headerValue: isCashback
+        ? `${merchant.cashbackRate}%`
+        : `${customer.stamps} / ${merchant.stampsRequired}`,
+      primaryLabel: isCashback
+        ? locale === "ar"
+          ? "الرصيد المتاح"
+          : locale === "fr"
+          ? "SOLDE DISPONIBLE"
+          : "SALDO DISPONIBLE"
+        : locale === "ar"
+        ? "المكافأة القادمة"
+        : locale === "fr"
+        ? "RÉCOMPENSE"
+        : "RECOMPENSA",
+      primaryValue: isCashback
+        ? `${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
+        : merchant.rewardName,
+      changeMsg: isCashback
+        ? locale === "ar"
+          ? "تم تحديث رصيدك: %@"
+          : locale === "fr"
+          ? "Solde fidélité mis à jour : %@"
+          : "Saldo actualizado: %@"
+        : locale === "ar"
+        ? "تمت إضافة ختم جديد! مجموع أختامك: %@"
+        : locale === "fr"
+        ? "Nouveau tampon ajouté ! Total : %@"
+        : "¡Nuevo sello añadido! Total: %@",
+      holderLabel:
+        locale === "ar"
+          ? "حامل البطاقة"
+          : locale === "fr"
+          ? "Titulaire"
+          : "Titular",
+      memberLabel:
+        locale === "ar"
+          ? "رقم العضوية"
+          : locale === "fr"
+          ? "N° Membre"
+          : "N° Socio",
+      aboutLabel:
+        locale === "ar"
+          ? "عن المتجر"
+          : locale === "fr"
+          ? "À propos"
+          : "Acerca del comercio",
+      termsLabel:
+        locale === "ar"
+          ? "الشروط والأحكام"
+          : locale === "fr"
+          ? "Conditions"
+          : "Condiciones",
+      termsValue: isCashback
+        ? locale === "ar"
+          ? `استرجع ${merchant.cashbackRate}% من قيمة كل فاتورة كرصيد متاح للاستخدام في مشترياتك القادمة.`
+          : locale === "fr"
+          ? `Récupérez ${merchant.cashbackRate}% du montant de chaque achat en solde fidélité déductible.`
+          : `Recupera el ${merchant.cashbackRate}% de cada compra en saldo para tus próximas visitas.`
+        : locale === "ar"
+        ? `اجمع ${merchant.stampsRequired} أختام واستفد فورياً من ${merchant.rewardName}. صالحة بدون تاريخ انتهاء.`
+        : locale === "fr"
+        ? `Cumulez ${merchant.stampsRequired} tampons et profitez de ${merchant.rewardName} offert.`
+        : `Acumula ${merchant.stampsRequired} sellos y disfruta de ${merchant.rewardName} gratis.`,
+    };
 
     // Official Apple Wallet PassKit storeCard Schema
     const passJson = {
@@ -49,11 +144,11 @@ export async function GET(
       webServiceURL: `${origin}/api/apple`,
       authenticationToken: customer.passSerial,
       organizationName: merchant.name,
-      description: `كارط الوفاء - ${merchant.name}`,
+      description: passStrings.description,
       logoText: merchant.name,
       foregroundColor: "rgb(255, 255, 255)",
       backgroundColor: bgColor,
-      labelColor: "rgb(251, 191, 36)", // Gold accents
+      labelColor: isCashback ? "rgb(251, 191, 36)" : "rgb(52, 211, 153)",
       // 100m Geofencing Radar Locations
       locations:
         merchant.latitude && merchant.longitude
@@ -63,7 +158,11 @@ export async function GET(
                 longitude: merchant.longitude,
                 relevantText:
                   merchant.radarMessage ||
-                  "راك دايز من حدانا! دوز مرحبا بيك، الكارط ديالك واجدة.",
+                  (locale === "ar"
+                    ? "أنت بالقرب منا! تفضل بزيارتنا، بطاقتك ومكافآتك جاهزة."
+                    : locale === "fr"
+                    ? "Vous êtes tout près ! Passez nous voir, votre carte vous attend."
+                    : "¡Estás muy cerca! Pasa a visitarnos, tus beneficios te esperan."),
                 maxDistance: 100, // 100m radar boundary!
               },
             ]
@@ -86,29 +185,29 @@ export async function GET(
       storeCard: {
         headerFields: [
           {
-            key: "stamps_count",
-            label: "الطوابع",
-            value: `${customer.stamps} / ${merchant.stampsRequired}`,
-            changeMessage: "تزاد ليك طابع! مجموع طوابعك: %@",
+            key: "program_header",
+            label: passStrings.headerLabel,
+            value: passStrings.headerValue,
             textAlignment: "PKTextAlignmentRight",
           },
         ],
         primaryFields: [
           {
-            key: "reward_name",
-            label: "المكافأة القادمة",
-            value: merchant.rewardName,
+            key: "main_field",
+            label: passStrings.primaryLabel,
+            value: passStrings.primaryValue,
+            changeMessage: passStrings.changeMsg,
           },
         ],
         secondaryFields: [
           {
             key: "customer_name",
-            label: "حامل البطاقة",
+            label: passStrings.holderLabel,
             value: customer.name,
           },
           {
             key: "member_code",
-            label: "رقم العضوية",
+            label: passStrings.memberLabel,
             value: `#${customer.memberCode}`,
             textAlignment: "PKTextAlignmentRight",
           },
@@ -116,18 +215,18 @@ export async function GET(
         backFields: [
           {
             key: "shop_info",
-            label: "عن المحل",
+            label: passStrings.aboutLabel,
             value: `${merchant.name} - ${merchant.city}`,
           },
           {
             key: "terms",
-            label: "شروط برنامج الوفاء",
-            value: `اجمع ${merchant.stampsRequired} طوابع واستفد فورياً من ${merchant.rewardName}. الكارط صالحة بدون تاريخ انتهاء.`,
+            label: passStrings.termsLabel,
+            value: passStrings.termsValue,
           },
           {
             key: "support",
-            label: "منصة والينك",
-            value: "walink.ma - بطاقات الوفاء الذكية بالمغرب",
+            label: "Walink",
+            value: "walink.ma - Smart Digital Loyalty Cards",
           },
         ],
       },
@@ -137,6 +236,7 @@ export async function GET(
       mode: "smart_pass",
       customerName: customer.name,
       merchantName: merchant.name,
+      loyaltyType: customer.loyaltyType,
       passSerial: customer.passSerial,
       memberCode: customer.memberCode,
       geofence: {
@@ -153,4 +253,3 @@ export async function GET(
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-

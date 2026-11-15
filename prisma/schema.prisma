@@ -19,11 +19,16 @@ model Merchant {
   primaryColor    String        @default("#5b3519")
   bgGradient      String        @default("linear-gradient(150deg,#6b4226 0%,#3d2414 100%)")
   stampsRequired  Int           @default(5)
-  rewardName      String        @default("قهوة فابور")
-  customerPrefix  String        @default("آ السي") // e.g., "آ السي" or "آ لالة"
+  rewardName      String        @default("قهوة مجانية")
+  customerPrefix  String        @default("عزيزي")
+  loyaltyMode     String        @default("BOTH") // "STAMPS", "CASHBACK", or "BOTH"
+  cashbackRate    Float         @default(10)     // e.g., 10 means 10% cashback
+  welcomeCashback Float         @default(5)      // e.g., 5 MAD welcome bonus on signup (0 if disabled)
+  minCashbackRedeem Float       @default(0)      // Minimum balance required to redeem cashback
+  currency        String        @default("DH")   // "DH", "MAD", "€"
   latitude        Float?        @default(33.5731)
   longitude       Float?        @default(-7.5898)
-  radarMessage    String        @default("راك دايز من حدانا! دوز مرحبا بيك، الكارط ديالك واجدة.")
+  radarMessage    String        @default("أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.")
   googleMapsUrl   String?
   plan            String        @default("GROWTH") // STARTER, GROWTH, MULTI
   credits         Int           @default(1000)
@@ -53,6 +58,10 @@ model Customer {
   passSerial        String        @unique @default(cuid())
   memberCode        String        // 4-digit display ID e.g. "4821"
   stamps            Int           @default(0)
+  loyaltyType       String        @default("STAMPS") // STAMPS or CASHBACK
+  cashbackBalance   Float         @default(0)        // Current spendable cashback balance
+  totalCashbackEarned Float       @default(0)        // Lifetime cashback earned
+  totalSpent        Float         @default(0)        // Lifetime bill amount spent at merchant
   totalVisits       Int           @default(1)
   rewardsRedeemed   Int           @default(0)
   lastVisitAt       DateTime      @default(now())
@@ -70,15 +79,17 @@ model Customer {
 }
 
 model Transaction {
-  id          String    @id @default(cuid())
-  merchantId  String
-  merchant    Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  customerId  String
-  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  type        String    // STAMP_ADDED, REWARD_REDEEMED, CARD_CREATED
-  stampsDelta Int       @default(1)
-  note        String?
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(cuid())
+  merchantId    String
+  merchant      Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type          String    // STAMP_ADDED, REWARD_REDEEMED, CARD_CREATED, CASHBACK_EARNED, CASHBACK_REDEEMED
+  stampsDelta   Int       @default(1)
+  billAmount    Float?    // Original purchase bill amount (for CASHBACK_EARNED)
+  cashbackDelta Float?    // +amount earned or -amount redeemed
+  note          String?
+  createdAt     DateTime  @default(now())
 
   @@index([merchantId, createdAt])
 }

@@ -28,8 +28,8 @@ export async function generateMetadata({
   }
 
   return {
-    title: `كارط الوفاء - ${merchant.name} (${merchant.city}) | Walink`,
-    description: `سجل دابا فـ بطاقة الوفاء ديال ${merchant.name} وخود مكافأة ${merchant.rewardName}. بدون أي تطبيق!`,
+    title: `بطاقة الولاء - ${merchant.name} (${merchant.city}) | Walink`,
+    description: `سجّل الآن في بطاقة الولاء الخاصة بـ ${merchant.name} واحصل على مكافأة ${merchant.rewardName}. بدون تطبيق!`,
   };
 }
 
@@ -49,6 +49,10 @@ export default async function CustomerJoinPage({ params }: JoinPageProps) {
       stampsRequired: true,
       rewardName: true,
       customerPrefix: true,
+      loyaltyMode: true,
+      cashbackRate: true,
+      welcomeCashback: true,
+      currency: true,
       isActive: true,
     },
   });

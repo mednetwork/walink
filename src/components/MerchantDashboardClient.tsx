@@ -36,6 +36,8 @@ import MerchantScannerModal, { CustomerSummary } from "@/components/MerchantScan
 import StandPreviewModal from "@/components/StandPreviewModal";
 import LockScreenPeekModal from "@/components/LockScreenPeekModal";
 import MerchantCreditsModal from "@/components/MerchantCreditsModal";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useI18n } from "@/lib/i18n/context";
 import { formatTimeAgoArabic } from "@/lib/utils";
 
 interface CustomerData {
@@ -44,7 +46,11 @@ interface CustomerData {
   phone: string;
   memberCode: string;
   passSerial: string;
+  loyaltyType?: "STAMPS" | "CASHBACK";
   stamps: number;
+  cashbackBalance?: number;
+  totalCashbackEarned?: number;
+  totalSpent?: number;
   totalVisits: number;
   rewardsRedeemed: number;
   lastVisitAt: string | Date;
@@ -54,6 +60,8 @@ interface TransactionData {
   id: string;
   type: string;
   stampsDelta: number;
+  billAmount?: number | null;
+  cashbackDelta?: number | null;
   note: string | null;
   createdAt: string | Date;
   customer: {
@@ -90,6 +98,11 @@ interface MerchantDashboardClientProps {
     customerPrefix: string;
     plan: string;
     credits: number;
+    loyaltyMode?: string;
+    cashbackRate?: number;
+    welcomeCashback?: number;
+    minCashbackRedeem?: number;
+    currency?: string;
     autoWinback: boolean;
     autoBirthday: boolean;
     autoReview: boolean;
@@ -119,6 +132,8 @@ export default function MerchantDashboardClient({
   initialCampaigns,
   initialMetrics,
 }: MerchantDashboardClientProps) {
+  const { locale, dir, t, isRTL } = useI18n();
+
   // PIN Gate State
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -467,6 +482,8 @@ export default function MerchantDashboardClient({
           </div>
 
           <div className="flex items-center gap-2">
+            <LanguageSwitcher size="sm" />
+
             {/* Live Credits Counter Pill */}
             <button
               type="button"
@@ -498,7 +515,13 @@ export default function MerchantDashboardClient({
             className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-500/25 transition-all hover:scale-[1.01] active:scale-[0.99]"
           >
             <Camera className="w-5 h-5 stroke-[2.5]" />
-            <span>📷 سكاني كارط الكليان / زيد طابع</span>
+            <span>
+              {locale === "ar"
+                ? "📷 مسح بطاقة العميل / إضافة ختم أو كاش باك"
+                : locale === "fr"
+                ? "📷 Scanner la carte / Tampon ou Cashback"
+                : "📷 Escanear tarjeta / Sello o Cashback"}
+            </span>
           </button>
         </div>
 
@@ -691,12 +714,13 @@ export default function MerchantDashboardClient({
                 filteredCustomers.map((c) => {
                   const isQuiet = new Date(c.lastVisitAt) <= new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
                   const isVip = c.totalVisits >= 10;
+                  const isCashbackCust = c.loyaltyType === "CASHBACK";
                   return (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => setIsScannerOpen(true)}
-                      className="w-full text-right p-3 rounded-2xl glass-panel border border-white/10 hover:border-emerald-500/30 flex items-center justify-between text-xs transition"
+                      className="w-full text-start p-3 rounded-2xl glass-panel border border-white/10 hover:border-emerald-500/30 flex items-center justify-between text-xs transition"
                     >
                       <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-xl bg-white/10 text-white font-bold flex items-center justify-center">
@@ -715,22 +739,30 @@ export default function MerchantDashboardClient({
                         </div>
                       </div>
 
-                      <div className="text-left flex items-center gap-2">
+                      <div className="text-end flex items-center gap-2">
                         <span
                           className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
                             isVip
                               ? "bg-amber-400/20 text-amber-300 border border-amber-400/30"
                               : isQuiet
                               ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                              : isCashbackCust
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                               : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                           }`}
                         >
-                          {isVip ? "VIP" : isQuiet ? "غبر" : "نشيط"}
+                          {isVip ? "VIP" : isQuiet ? "غائب" : isCashbackCust ? "كاش باك" : "أختام"}
                         </span>
-                        <div className="text-right">
-                          <span className="font-mono font-bold text-emerald-400 text-xs block">
-                            {c.stamps}/{merchant.stampsRequired}
-                          </span>
+                        <div className="text-end">
+                          {isCashbackCust ? (
+                            <span className="font-mono font-bold text-amber-300 text-xs block">
+                              {Number(c.cashbackBalance || 0).toFixed(2)} {merchant.currency || "DH"}
+                            </span>
+                          ) : (
+                            <span className="font-mono font-bold text-emerald-400 text-xs block">
+                              {c.stamps}/{merchant.stampsRequired}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </button>
@@ -1057,8 +1089,13 @@ export default function MerchantDashboardClient({
         slug={merchant.slug}
         rewardName={merchant.rewardName}
         stampsRequired={merchant.stampsRequired}
+        loyaltyMode={merchant.loyaltyMode}
+        cashbackRate={merchant.cashbackRate}
+        currency={merchant.currency}
+        minCashbackRedeem={merchant.minCashbackRedeem}
         customers={customers}
         onActionComplete={handleActionComplete}
+        locale={locale}
       />
 
       <StandPreviewModal

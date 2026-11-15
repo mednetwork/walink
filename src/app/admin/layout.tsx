@@ -13,6 +13,7 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function AdminLayout({
   children,
@@ -36,13 +37,13 @@ export default function AdminLayout({
     },
     {
       href: "/admin/outreach",
-      label: "قنص الكليان والطلبات",
+      label: "استوديو المبيعات",
       icon: Target,
       active: pathname === "/admin/outreach",
     },
     {
       href: "/admin/merchants/new",
-      label: "إضافة محل جديد",
+      label: "إضافة متجر جديد",
       icon: PlusCircle,
       active: pathname === "/admin/merchants/new",
     },
@@ -98,6 +99,8 @@ export default function AdminLayout({
 
           {/* Right Header Status Badges & Quick Action */}
           <div className="flex items-center gap-3">
+            <LanguageSwitcher size="sm" />
+
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -111,7 +114,7 @@ export default function AdminLayout({
               className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <PlusCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">إضافة محل جديد</span>
+              <span className="hidden sm:inline">إضافة متجر جديد</span>
               <span className="sm:hidden">إضافة</span>
             </Link>
           </div>

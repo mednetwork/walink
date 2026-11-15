@@ -3,130 +3,94 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import "./landing.css";
+import { useI18n } from "@/lib/i18n/context";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 // Moroccan Cities Datalist
 const MOROCCAN_CITIES = [
-  "الدار البيضاء",
-  "الرباط",
-  "مراكش",
-  "طنجة",
-  "أكادير",
-  "فاس",
-  "مكناس",
-  "وجدة",
-  "القنيطرة",
-  "تطوان",
-  "تمارة",
-  "سلا",
-  "الجديدة",
-  "المحمدية",
-  "بني ملال",
-  "خريبكة",
-  "الناظور",
-  "تازة",
-  "المضيق",
+  "الدار البيضاء / Casablanca",
+  "الرباط / Rabat",
+  "مراكش / Marrakech",
+  "طنجة / Tanger",
+  "أكادير / Agadir",
+  "فاس / Fès",
+  "مكناس / Meknès",
+  "وجدة / Oujda",
+  "القنيطرة / Kénitra",
+  "تطوان / Tétouan",
+  "تمارة / Témara",
+  "سلا / Salé",
+  "الجديدة / El Jadida",
+  "المحمدية / Mohammédia",
+  "بني ملال / Béni Mellal",
+  "خريبكة / Khouribga",
+  "الناظور / Nador",
+  "تازة / Taza",
+  "المضيق / M'diq",
 ];
 
 // Niche Definitions
-interface NicheData {
+interface NicheMeta {
   id: string;
-  name: string;
-  label: string;
   icon: string;
   pc: string;
   grad: string;
-  reward: string;
-  prefix: string;
-  defaultName: string;
 }
 
-const NICHES_DICT: Record<string, NicheData> = {
+const NICHES_META: Record<string, NicheMeta> = {
   cafe: {
     id: "cafe",
-    name: "مقهى / كافي",
-    label: "كافي",
     icon: "i-coffee",
     pc: "#6b4226",
     grad: "linear-gradient(150deg, #6b4226 0%, #3d2414 100%)",
-    reward: "قهوة فابور",
-    prefix: "السي/للا",
-    defaultName: "Café Atlas",
   },
   barber: {
     id: "barber",
-    name: "صالون حلاقة",
-    label: "حلاق",
     icon: "i-scissors",
     pc: "#1e3a5f",
     grad: "linear-gradient(150deg, #1e3a5f 0%, #0d1b2a 100%)",
-    reward: "حسانة فابور",
-    prefix: "السي",
-    defaultName: "Barber Anas",
   },
   snack: {
     id: "snack",
-    name: "مطعم / سناك",
-    label: "سناك",
     icon: "i-utensils",
     pc: "#b45309",
     grad: "linear-gradient(150deg, #b45309 0%, #78350f 100%)",
-    reward: "وجبة فابور",
-    prefix: "السي/للا",
-    defaultName: "Snack Marrakech",
   },
   carwash: {
     id: "carwash",
-    name: "لافاچ سيارات",
-    label: "لافاچ",
     icon: "i-car",
     pc: "#0e7490",
     grad: "linear-gradient(150deg, #0e7490 0%, #155e75 100%)",
-    reward: "غسلة فابور",
-    prefix: "السي/للا",
-    defaultName: "Lavaj Royal",
   },
   beauty: {
     id: "beauty",
-    name: "صالون تجميل",
-    label: "تجميل",
     icon: "i-sparkles",
     pc: "#be185d",
     grad: "linear-gradient(150deg, #be185d 0%, #831843 100%)",
-    reward: "سوان فابور",
-    prefix: "للا",
-    defaultName: "Salon Noor",
   },
   laundry: {
     id: "laundry",
-    name: "مصبانة وتصبين",
-    label: "مصبانة",
     icon: "i-laundry",
     pc: "#6d28d9",
     grad: "linear-gradient(150deg, #6d28d9 0%, #4c1d95 100%)",
-    reward: "تصبين فابور",
-    prefix: "السي/للا",
-    defaultName: "Pressing Atlas",
   },
   other: {
     id: "other",
-    name: "محل تجاري آخر",
-    label: "محل آخر",
     icon: "i-store",
     pc: "#047857",
     grad: "linear-gradient(150deg, #047857 0%, #064e3b 100%)",
-    reward: "كادو فابور",
-    prefix: "الزبون المحترم",
-    defaultName: "Boutique Casablanca",
   },
 };
 
 const PLANS_DATA: Record<string, { title: string; price: string; numPrice: number }> = {
-  starter: { title: "Starter", price: "1,900", numPrice: 1900 },
-  growth: { title: "Growth (الأكثر طلباً)", price: "2,400", numPrice: 2400 },
-  multi: { title: "Multi-Branch", price: "4,900", numPrice: 4900 },
+  starter: { title: "Starter", price: "1,500", numPrice: 1500 },
+  growth: { title: "Growth", price: "2,400", numPrice: 2400 },
+  multi: { title: "Multi-Branch", price: "3,900", numPrice: 3900 },
 };
 
 export default function LandingPage() {
+  const { t, locale, dir } = useI18n();
+
   // --- Audio Context Engine ---
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -141,7 +105,9 @@ export default function LandingPage() {
       }
     }
     if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
-      audioCtxRef.current.resume().catch(() => {});
+      audioCtxRef.current.resume().catch((err) => {
+        console.warn("Audio resume error:", err);
+      });
     }
     return audioCtxRef.current;
   };
@@ -217,6 +183,8 @@ export default function LandingPage() {
   // --- States ---
   const [currentNiche, setCurrentNiche] = useState<string>("cafe");
   const [shopInput, setShopInput] = useState<string>("Café Atlas");
+  const [demoLoyaltyType, setDemoLoyaltyType] = useState<"STAMPS" | "CASHBACK">("STAMPS");
+  const [cashbackBalance, setCashbackBalance] = useState<number>(35.50);
   const [currentTab, setCurrentTab] = useState<"pass" | "dash">("pass");
   const [tabBSeen, setTabBSeen] = useState<boolean>(false);
   const [stampsCount, setStampsCount] = useState<number>(3);
@@ -237,7 +205,7 @@ export default function LandingPage() {
   const [ownerSubTab, setOwnerSubTab] = useState<"home" | "cl" | "promo" | "auto">("home");
   const [ownerCredits, setOwnerCredits] = useState<number>(1000);
   const [ownerTpl, setOwnerTpl] = useState<string>("w");
-  const [ownerMsg, setOwnerMsg] = useState<string>("عرض الويكاند: -20% هاد السبت والحد ف Café Atlas");
+  const [ownerMsg, setOwnerMsg] = useState<string>("عرض خاص لنهاية الأسبوع: -20% في Café Atlas");
   const [ownerAud, setOwnerAud] = useState<string>("all");
   const [ownerSentCount, setOwnerSentCount] = useState<number>(0);
   const [ownerPeek, setOwnerPeek] = useState<{ title: string; body: string } | null>(null);
@@ -251,18 +219,18 @@ export default function LandingPage() {
   // Hero Notifications Cycling
   const [heroCycleIdx, setHeroCycleIdx] = useState<number>(0);
 
-  // Demo Interactions Tracker (for Smart Nudge)
+  // Demo Interactions Tracker
   const [demoClicks, setDemoClicks] = useState<number>(0);
 
   // ROI Sliders
-  const [roiCount, setRoiCount] = useState<number>(5);
-  const [roiSpend, setRoiSpend] = useState<number>(25);
+  const [roiCount, setRoiCount] = useState<number>(8);
+  const [roiSpend, setRoiSpend] = useState<number>(35);
 
   // Modal / Checkout
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalPlan, setModalPlan] = useState<string>("growth");
   const [modalNiche, setModalNiche] = useState<string>("cafe");
-  const [modalCity, setModalCity] = useState<string>("الدار البيضاء");
+  const [modalCity, setModalCity] = useState<string>("الدار البيضاء / Casablanca");
   const [modalPhone, setModalPhone] = useState<string>("");
   const [modalShop, setModalShop] = useState<string>("Café Atlas");
   const [modalErrors, setModalErrors] = useState<{ shop?: boolean; city?: boolean }>({});
@@ -272,7 +240,8 @@ export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [showMbar, setShowMbar] = useState<boolean>(false);
 
-  const activeNiche = NICHES_DICT[currentNiche] || NICHES_DICT.cafe;
+  const activeMeta = NICHES_META[currentNiche] || NICHES_META.cafe;
+  const activeNicheInfo = t.niches[currentNiche] || t.niches.cafe;
 
   // Sync modal shop and niche with demo
   useEffect(() => {
@@ -293,7 +262,7 @@ export default function LandingPage() {
         setShopInput(qName);
         setModalShop(qName);
       }
-      if (qType && NICHES_DICT[qType.toLowerCase()]) {
+      if (qType && NICHES_META[qType.toLowerCase()]) {
         setCurrentNiche(qType.toLowerCase());
         setModalNiche(qType.toLowerCase());
       }
@@ -322,48 +291,48 @@ export default function LandingPage() {
       {
         icon: "i-coffee",
         ap: "linear-gradient(135deg,#6b4226,#3d2414)",
-        title: "طابع جديد تزاد فـ الكارط! ☕️",
-        text: `وصلتي لـ 4 من 5 طوابع فـ ${shopInput}. باقي ليك طابع واحد!`,
-      },
-      {
-        icon: "i-gift",
-        ap: "linear-gradient(135deg,#D97706,#B45309)",
-        title: "🏆 مبروك! قهوتك فابور واجدة دابا",
-        text: `جمعتي 5/5 طوابع فـ ${shopInput}! بصحتك المكافأة.`,
-      },
-      {
-        icon: "i-star",
-        ap: "linear-gradient(135deg,#2563EB,#1D4ED8)",
-        title: "⭐ كيف جاتك القهوة؟ خلي لينا تقييم فـ Google",
-        text: `رأيك كيهمنا بزاف فـ ${shopInput}! كليكي هنا للمشاركة.`,
+        title: t.hero.notification1,
+        text: `${activeNicheInfo.prefix || ""} ${shopInput} — 4 / 5`,
       },
       {
         icon: "i-pin",
         ap: "linear-gradient(135deg,#059669,#047857)",
-        title: `📍 راك دايز من حدا ${shopInput} دابا`,
-        text: "الكارط ديالك واجدة فـ Apple Wallet! دوز خود قهوتك وجمع طابع جديد ☕",
+        title: t.hero.notification2,
+        text: t.engines.radarLockBody,
+      },
+      {
+        icon: "i-coins",
+        ap: "linear-gradient(135deg,#D97706,#B45309)",
+        title: t.hero.notification3,
+        text: `${shopInput} • +10% Cashback`,
+      },
+      {
+        icon: "i-star",
+        ap: "linear-gradient(135deg,#2563EB,#1D4ED8)",
+        title: t.engines.reviewsLockTitle,
+        text: t.engines.reviewsLockBody,
       },
       {
         icon: "i-back",
         ap: "linear-gradient(135deg,#DC2626,#991B1B)",
-        title: `🎁 توحشناك فـ ${shopInput}!`,
-        text: "هادي كثر من 15 يوم ما شفناك! دوز هاد السيمانة وعندك طابع هدية.",
+        title: t.engines.winbackLockTitle,
+        text: t.engines.winbackLockBody,
       },
       {
         icon: "i-mega",
         ap: "linear-gradient(135deg,#4F46E5,#3730A3)",
-        title: `📣 عرض الويكاند من ${shopInput}`,
-        text: "تخفيض 20% على جميع الطلبات هاد السبت والحد!",
+        title: t.engines.pushLockTitle,
+        text: t.engines.pushLockBody,
       },
     ],
-    [shopInput]
+    [t, activeNicheInfo.prefix, shopInput]
   );
 
   useEffect(() => {
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       setHeroCycleIdx((p) => (p + 1) % heroNotifs.length);
     }, 3800);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [heroNotifs.length]);
 
   // Push floating banner to phone view
@@ -379,7 +348,7 @@ export default function LandingPage() {
       appColor,
       title,
       text,
-      time: "الآن",
+      time: locale === "ar" ? "الآن" : locale === "fr" ? "Maintenant" : "Ahora",
     });
     setDemoClicks((c) => c + 1);
 
@@ -402,27 +371,48 @@ export default function LandingPage() {
       showBanner(
         "i-gift",
         "linear-gradient(135deg,#D97706,#B45309)",
-        "🏆 مبروك! الكادو ديالك واجد!",
-        `جمعتي كاع الطوابع! خود ${activeNiche.reward} ديالك فـ ${shopInput}.`
+        t.pass.rewardUnlockedTitle,
+        t.pass.rewardUnlockedBody
       );
       setTimeout(() => {
         showBanner(
           "i-star",
           "linear-gradient(135deg,#2563EB,#1D4ED8)",
-          "⭐ تقييم 5 نجوم فـ خرائط Google",
-          `عجباتك الخدمة فـ ${shopInput}؟ شارك رأيك فـ Google Maps فـ ثواني!`
+          t.engines.reviewsLockTitle,
+          t.engines.reviewsLockBody
         );
       }, 2400);
     } else {
       playDing();
       triggerVibrate();
       showBanner(
-        activeNiche.icon,
-        activeNiche.grad,
-        "طابع جديد تزاد فـ الكارط! ☕️",
-        `وصلتي لـ ${next} من 5 طوابع فـ ${shopInput}.`
+        activeMeta.icon,
+        activeMeta.grad,
+        t.pass.stampAddedTitle,
+        t.pass.stampAddedBody.replace("{left}", String(5 - next))
       );
     }
+  };
+
+  // Cashback Add Action
+  const handleCashbackAdd = () => {
+    const added = 15;
+    const newBal = cashbackBalance + added;
+    setCashbackBalance(newBal);
+    setPassShine(true);
+    setTimeout(() => setPassShine(false), 1400);
+    playDing();
+    triggerVibrate();
+    showBanner(
+      "i-coins",
+      "linear-gradient(135deg,#059669,#047857)",
+      t.pass.cashbackEarnedTitle,
+      t.pass.cashbackEarnedBody
+        .replace("{amount}", added.toString())
+        .replace(/{currency}/g, "DH")
+        .replace("{rate}", "10")
+        .replace("{balance}", newBal.toFixed(2))
+    );
   };
 
   // Owner App Broadcast Action
@@ -433,7 +423,7 @@ export default function LandingPage() {
     showBanner(
       "i-mega",
       "linear-gradient(135deg,#4F46E5,#3730A3)",
-      `📣 بروموسيون من ${shopInput}`,
+      t.demo.sendBroadcastBtn,
       ownerMsg
     );
   };
@@ -441,9 +431,31 @@ export default function LandingPage() {
   // Template switch for Owner Promo
   const selectOwnerTpl = (tpl: string) => {
     setOwnerTpl(tpl);
-    if (tpl === "w") setOwnerMsg(`عرض الويكاند: -20% هاد السبت والحد ف ${shopInput}`);
-    else if (tpl === "h") setOwnerMsg(`ساعة سعيدة: قهوة ثانية بنصف الثمن اليوم من 5 ل 7 ف ${shopInput}`);
-    else if (tpl === "v") setOwnerMsg(`خاص بزبنائنا VIP: هدية ترحيبية كتسناك اليوم ف ${shopInput}`);
+    if (tpl === "w") {
+      setOwnerMsg(
+        locale === "fr"
+          ? `Offre Weekend : -20% ce samedi et dimanche chez ${shopInput}`
+          : locale === "es"
+          ? `Oferta Fin de Semana: -20% este sábado y domingo en ${shopInput}`
+          : `عرض خاص لنهاية الأسبوع: -20% هذا السبت والأحد في ${shopInput}`
+      );
+    } else if (tpl === "h") {
+      setOwnerMsg(
+        locale === "fr"
+          ? `Happy Hour : Le 2ème article à moitié prix de 17h à 19h chez ${shopInput}`
+          : locale === "es"
+          ? `Happy Hour: El 2º artículo a mitad de precio de 17h a 19h en ${shopInput}`
+          : `ساعة التخفيضات: المنتج الثاني بنصف السعر اليوم من 5 إلى 7 مساءً في ${shopInput}`
+      );
+    } else if (tpl === "v") {
+      setOwnerMsg(
+        locale === "fr"
+          ? `Exclusif VIP : Un cadeau de bienvenue vous attend aujourd'hui chez ${shopInput}`
+          : locale === "es"
+          ? `Exclusivo VIP: Un regalo de bienvenida le espera hoy en ${shopInput}`
+          : `خاص بالعملاء المميزين: هدية تقديرية بانتظارك اليوم في ${shopInput}`
+      );
+    }
   };
 
   // ROI Math
@@ -467,6 +479,7 @@ export default function LandingPage() {
     setIsSubmitting(true);
 
     const planObj = PLANS_DATA[modalPlan] || PLANS_DATA.growth;
+    const nicheName = activeNicheInfo.name || modalNiche;
 
     try {
       // 1. Post Lead to backend database
@@ -484,17 +497,15 @@ export default function LandingPage() {
         }),
       });
 
-      // 2. Redirect to WhatsApp with formatted Darija order message
-      const text = `السلام عليكم فريق Walink 👋
-بغيت نطلب باك بطاقة الوفاء الذكية لمحلي:
-
-🏢 اسم المحل: ${modalShop.trim()}
-📍 النشاط: ${NICHES_DICT[modalNiche]?.name || modalNiche}
-🏙 المدينة: ${modalCity.trim()}
-📦 الباقة المختارة: ${planObj.title} (${planObj.price} درهم)
-${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
-
-واش ممكن توجدو ليا التصميم والستاند ديال الكاونتر؟ شكراً!`;
+      // 2. Redirect to WhatsApp with formatted multilingual message
+      let text = "";
+      if (locale === "fr") {
+        text = `Bonjour l'équipe Walink 👋\nJe souhaite commander le pack de fidélité digitale pour mon commerce :\n\n🏢 Nom du commerce : ${modalShop.trim()}\n📍 Activité : ${nicheName}\n🏙 Ville : ${modalCity.trim()}\n📦 Pack choisi : ${planObj.title} (${planObj.price} DH)\n${modalPhone.trim() ? `📞 Téléphone : ${modalPhone.trim()}\n` : ""}\nPouvez-vous préparer le design de la carte et le stand de comptoir ? Merci !`;
+      } else if (locale === "es") {
+        text = `Hola equipo de Walink 👋\nDeseo solicitar el pack de fidelización digital para mi negocio:\n\n🏢 Nombre del negocio: ${modalShop.trim()}\n📍 Actividad: ${nicheName}\n🏙 Ciudad: ${modalCity.trim()}\n📦 Pack elegido: ${planObj.title} (${planObj.price} DH)\n${modalPhone.trim() ? `📞 Teléfono: ${modalPhone.trim()}\n` : ""}\n¿Podrían preparar el diseño de la tarjeta y el soporte de mostrador? ¡Gracias!`;
+      } else {
+        text = `السلام عليكم فريق Walink 👋\nأرغب في طلب باقة بطاقة الولاء الرقمية لمتجري:\n\n🏢 اسم المحل: ${modalShop.trim()}\n📍 مجال النشاط: ${nicheName}\n🏙 المدينة: ${modalCity.trim()}\n📦 الباقة المختارة: ${planObj.title} (${planObj.price} درهم)\n${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}\n` : ""}\nهل يمكنكم تجهيز التصميم الرقمي وستاند الكاونتر؟ شكراً لكم!`;
+      }
 
       const waUrl = `https://wa.me/212708107351?text=${encodeURIComponent(text)}`;
       window.location.href = waUrl;
@@ -507,7 +518,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
   };
 
   return (
-    <div className="walink-landing">
+    <div className="walink-landing" dir={dir}>
       {/* 3 Animated Ambient Orbs */}
       <div className="orbs" aria-hidden="true">
         <i />
@@ -666,27 +677,30 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       {/* Header */}
       <header className={`hdr ${isScrolled ? "solid" : ""}`} id="hdr">
         <div className="wrap">
-          <Link href="/" className="logo" aria-label="والينك - الصفحة الرئيسية">
+          <Link href="/" className="logo" aria-label="Walink Home">
             <svg viewBox="0 0 32 32">
               <use href="#mark" />
             </svg>
             <b className="lat">
               walink<i>.ma</i>
             </b>
-            <span>والينك</span>
+            <span>{t.brand.arabicName}</span>
           </Link>
           <nav className="nav">
-            <a href="#demo">جرّب الديمو</a>
-            <a href="#how">كيفاش خدام</a>
-            <a href="#pricing">الأثمنة</a>
-            <a href="#faq">الأسئلة</a>
+            <a href="#demo">{t.nav.demo}</a>
+            <a href="#how">{t.nav.howItWorks}</a>
+            <a href="#pricing">{t.nav.pricing}</a>
+            <a href="#faq">{t.nav.faq}</a>
           </nav>
-          <a href="#pricing" className="btn btn-em">
-            <span>ابدأ دابا</span>
-            <svg className="ic">
-              <use href="#i-bolt" />
-            </svg>
-          </a>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <LanguageSwitcher size="sm" />
+            <a href="#pricing" className="btn btn-em">
+              <span>{t.nav.startNow}</span>
+              <svg className="ic">
+                <use href="#i-bolt" />
+              </svg>
+            </a>
+          </div>
         </div>
       </header>
 
@@ -697,35 +711,32 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
             <div className="live">
               <span className="dot" />
               <span>
-                <b>+40 محل</b> كيتسناو الفوج الجديد 🇲🇦
+                <b>{t.hero.badge}</b>
               </span>
             </div>
             <h1>
-              خلّي كليانك يرجعو لمحلك،
-              <span className="l2">بكارط وفاء رقمية.</span>
+              {t.hero.title1}
+              <span className="l2">{t.hero.title2}</span>
             </h1>
-            <p className="sub">
-              فـ <b>Apple Wallet</b> و <b>Google Wallet</b>. بلا أبليكاسيون
-              كتيليشارجا، بلا اشتراك شهري كيخلع.
-            </p>
+            <p className="sub">{t.hero.desc}</p>
             <div className="feat">
               <span>
                 <svg className="ic">
                   <use href="#i-pin" />
                 </svg>
-                رادار 100 ميترو
+                {t.engines.radarTitle}
               </span>
               <span>
                 <svg className="ic">
                   <use href="#i-star" />
                 </svg>
-                تقييمات Google
+                {t.engines.reviewsTitle}
               </span>
               <span>
                 <svg className="ic">
                   <use href="#i-back" />
                 </svg>
-                رجوع الغابرين
+                {t.engines.winbackTitle}
               </span>
             </div>
             <div className="cta-row">
@@ -733,11 +744,11 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 <svg className="ic">
                   <use href="#i-play" />
                 </svg>
-                <span>جرّب الديمو فـ التيليفون</span>
+                <span>{t.hero.ctaPrimary}</span>
               </a>
               <a href="#pricing" className="btn btn-ghost">
-                <span>شوف الأثمنة</span>
-                <span className="lat">←</span>
+                <span>{t.hero.ctaSecondary}</span>
+                <span className="lat">→</span>
               </a>
             </div>
             <div className="facts">
@@ -745,19 +756,31 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 <svg className="ic">
                   <use href="#i-check" />
                 </svg>
-                خلاص مرة وحدة
+                {locale === "fr"
+                  ? "Paiement unique"
+                  : locale === "es"
+                  ? "Pago único"
+                  : "دفع لمرة واحدة"}
               </span>
               <span>
                 <svg className="ic">
                   <use href="#i-check" />
                 </svg>
-                خدام فـ 48 ساعة
+                {locale === "fr"
+                  ? "Prêt en 48 heures"
+                  : locale === "es"
+                  ? "Listo en 48 horas"
+                  : "جاهز في 48 ساعة"}
               </span>
               <span>
                 <svg className="ic">
                   <use href="#i-check" />
                 </svg>
-                توصيل حتى للمحل
+                {locale === "fr"
+                  ? "Livraison gratuite"
+                  : locale === "es"
+                  ? "Envío gratuito"
+                  : "توصيل مجاني لمتجرك"}
               </span>
             </div>
           </div>
@@ -781,7 +804,13 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                     </div>
                   </div>
                   <div className="lock">
-                    <div className="date">الخميس، 12 نونبر</div>
+                    <div className="date">
+                      {locale === "fr"
+                        ? "Jeudi 12 Novembre"
+                        : locale === "es"
+                        ? "Jueves 12 de Noviembre"
+                        : "الخميس، 12 نوفمبر"}
+                    </div>
                     <div className="time">9:41</div>
                     <div className="stack" id="heroStack">
                       <div className="ntf fresh" key={heroCycleIdx}>
@@ -798,7 +827,13 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                         <div className="nb">
                           <div className="nh">
                             <b>{heroNotifs[heroCycleIdx].title}</b>
-                            <small>الآن</small>
+                            <small>
+                              {locale === "fr"
+                                ? "Maintenant"
+                                : locale === "es"
+                                ? "Ahora"
+                                : "الآن"}
+                            </small>
                           </div>
                           <div className="nt">{heroNotifs[heroCycleIdx].text}</div>
                         </div>
@@ -809,21 +844,21 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       <div
                         className="pass compact"
                         style={{
-                          background: activeNiche.grad,
-                          ["--pc" as string]: activeNiche.pc,
+                          background: activeMeta.grad,
+                          ["--pc" as string]: activeMeta.pc,
                         }}
                       >
                         <div className="p-head">
                           <div className="p-brand">
                             <div className="p-logo">
                               <svg className="ic">
-                                <use href={`#${activeNiche.icon}`} />
+                                <use href={`#${activeMeta.icon}`} />
                               </svg>
                             </div>
                             <b className="p-name">{shopInput}</b>
                           </div>
                           <div className="p-f p-hf">
-                            <small>الطوابع</small>
+                            <small>{t.pass.stampsLabel}</small>
                             <b className="lat">4 / 5</b>
                           </div>
                         </div>
@@ -831,7 +866,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                           {[1, 2, 3, 4].map((i) => (
                             <div className="stp on" key={i}>
                               <svg className="ic">
-                                <use href={`#${activeNiche.icon}`} />
+                                <use href={`#${activeMeta.icon}`} />
                               </svg>
                             </div>
                           ))}
@@ -843,11 +878,11 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                         </div>
                         <div className="p-row">
                           <div className="p-f">
-                            <small>المكافأة القادمة</small>
-                            <b>{activeNiche.reward}</b>
+                            <small>{t.pass.rewardLabel}</small>
+                            <b>{activeNicheInfo.reward}</b>
                           </div>
                           <div className="p-f p-hf">
-                            <small>العضوية</small>
+                            <small>{t.pass.memberCodeLabel}</small>
                             <b className="lat">#4821</b>
                           </div>
                         </div>
@@ -874,7 +909,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       <path d="M10 10h30v30H10zm6 6v18h18V16zm4 4h10v10H20zM60 10h30v30H60zm6 6v18h18V16zm4 4h10v10H70zM10 60h30v30H10zm6 6v18h18V66zm4 4h10v10H20zM50 15h6v12h-6zM85 50h6v12h-6zM50 75h8v6h-8zM68 62h14v8H68zM52 52h10v10H52zm24 24h12v12H76zM60 84h8v6h-8zM85 75h6v6h-6z" />
                     </svg>
                   </div>
-                  <div className="cap">سكاني وخود الكارط ديالك</div>
+                  <div className="cap">{t.hero.standDesc}</div>
                   <div className="nfc">
                     <svg className="ic">
                       <use href="#i-nfc" />
@@ -893,18 +928,15 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       <section className="sec" id="demo">
         <div className="wrap">
           <div className="head c">
-            <h2 className="h2 silver">جرّب كيفاش غادي تبان الكارط فـ محلك</h2>
-            <p className="lead">
-              بدّل اسم المحل واختار نوع النشاط، واطبع الطوابع وجرب إشعارات رادار
-              100م واسترجاع الغابرين مباشرة!
-            </p>
+            <h2 className="h2 silver">{t.demo.title}</h2>
+            <p className="lead">{t.demo.subtitle}</p>
           </div>
 
           <div className="demo-grid">
             {/* Control Column */}
             <div className="surface ctrl">
               <label className="fl" htmlFor="shop" style={{ marginTop: 0 }}>
-                1. سمية المحل ديالك
+                1. {t.checkout.shopNameLabel}
               </label>
               <input
                 className="inp"
@@ -912,31 +944,109 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 type="text"
                 value={shopInput}
                 onChange={(e) => setShopInput(e.target.value)}
-                placeholder="كتب سمية محلك..."
+                placeholder={t.checkout.shopNamePlaceholder}
                 maxLength={24}
               />
 
               <div className="fl" style={{ marginTop: "18px" }}>
-                2. نوع النشاط
+                2. {t.checkout.nicheLabel}
               </div>
               <div className="niches" id="niches">
-                {Object.values(NICHES_DICT).map((n) => (
-                  <button
-                    key={n.id}
-                    className="nch"
-                    type="button"
-                    aria-pressed={currentNiche === n.id}
-                    onClick={() => {
-                      setCurrentNiche(n.id);
-                      setShopInput(n.defaultName);
-                    }}
-                  >
-                    <svg className="ic">
-                      <use href={`#${n.icon}`} />
-                    </svg>
-                    <span>{n.label}</span>
-                  </button>
-                ))}
+                {Object.keys(NICHES_META).map((key) => {
+                  const meta = NICHES_META[key];
+                  const info = t.niches[key] || t.niches.cafe;
+                  return (
+                    <button
+                      key={key}
+                      className="nch"
+                      type="button"
+                      aria-pressed={currentNiche === key}
+                      onClick={() => {
+                        setCurrentNiche(key);
+                        setShopInput(info.defaultShop);
+                      }}
+                    >
+                      <svg className="ic">
+                        <use href={`#${meta.icon}`} />
+                      </svg>
+                      <span>{info.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Dual Loyalty Mode Selector (Phase 7) */}
+              <div className="fl" style={{ marginTop: "18px" }}>
+                3. {t.demo.cardTypeLabel}
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "8px",
+                  marginTop: "8px",
+                }}
+              >
+                <button
+                  type="button"
+                  aria-pressed={demoLoyaltyType === "STAMPS"}
+                  onClick={() => setDemoLoyaltyType("STAMPS")}
+                  style={{
+                    padding: "10px",
+                    borderRadius: "12px",
+                    border:
+                      demoLoyaltyType === "STAMPS"
+                        ? "1px solid var(--em2)"
+                        : "1px solid var(--hair)",
+                    background:
+                      demoLoyaltyType === "STAMPS"
+                        ? "rgba(16,185,129,0.15)"
+                        : "rgba(255,255,255,0.03)",
+                    color:
+                      demoLoyaltyType === "STAMPS"
+                        ? "var(--white)"
+                        : "var(--silver)",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                  }}
+                >
+                  {t.demo.stampsType}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={demoLoyaltyType === "CASHBACK"}
+                  onClick={() => setDemoLoyaltyType("CASHBACK")}
+                  style={{
+                    padding: "10px",
+                    borderRadius: "12px",
+                    border:
+                      demoLoyaltyType === "CASHBACK"
+                        ? "1px solid var(--em2)"
+                        : "1px solid var(--hair)",
+                    background:
+                      demoLoyaltyType === "CASHBACK"
+                        ? "rgba(16,185,129,0.15)"
+                        : "rgba(255,255,255,0.03)",
+                    color:
+                      demoLoyaltyType === "CASHBACK"
+                        ? "var(--white)"
+                        : "var(--silver)",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                  }}
+                >
+                  {t.demo.cashbackType}
+                </button>
               </div>
 
               <div style={{ marginTop: "22px" }}>
@@ -944,7 +1054,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   <svg className="ic">
                     <use href="#i-bolt" />
                   </svg>
-                  <span>طلب هاد الكارط لمحلي دابا</span>
+                  <span>{t.finalCta.btn}</span>
                 </a>
               </div>
             </div>
@@ -962,7 +1072,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   <svg className="ic">
                     <use href="#i-phone" />
                   </svg>
-                  <span>تيليفون الكليان</span>
+                  <span>{t.demo.phoneTab}</span>
                 </button>
                 <button
                   type="button"
@@ -978,8 +1088,10 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   <svg className="ic">
                     <use href="#i-dash" />
                   </svg>
-                  <span>لوحة التحكم</span>
-                  <span className="newb">جديد</span>
+                  <span>{t.demo.merchantTab}</span>
+                  <span className="newb">
+                    {locale === "fr" ? "Nouveau" : locale === "es" ? "Nuevo" : "جديد"}
+                  </span>
                 </button>
               </div>
 
@@ -1044,67 +1156,149 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                         className={`pass ${passShine ? "shine" : ""}`}
                         id="passCard"
                         style={{
-                          background: activeNiche.grad,
-                          ["--pc" as string]: activeNiche.pc,
+                          background: activeMeta.grad,
+                          ["--pc" as string]: activeMeta.pc,
                         }}
                       >
                         <div className="p-head">
                           <div className="p-brand">
                             <div className="p-logo" id="pLogo">
                               <svg className="ic">
-                                <use href={`#${activeNiche.icon}`} />
+                                <use href={`#${activeMeta.icon}`} />
                               </svg>
                             </div>
                             <b className="p-name" id="pName">
                               {shopInput}
                             </b>
                           </div>
-                          <div className="p-f p-hf">
-                            <small>الطوابع</small>
-                            <b className="lat" id="pCount">
-                              {stampsCount} / 5
-                            </b>
-                          </div>
+
+                          {demoLoyaltyType === "STAMPS" ? (
+                            <div className="p-f p-hf">
+                              <small>{t.pass.stampsLabel}</small>
+                              <b className="lat" id="pCount">
+                                {stampsCount} / 5
+                              </b>
+                            </div>
+                          ) : (
+                            <div className="p-f p-hf">
+                              <small>{t.pass.cashbackRateLabel}</small>
+                              <b className="lat" style={{ color: "var(--em2)" }}>
+                                +10%
+                              </b>
+                            </div>
+                          )}
                         </div>
 
-                        <div className="p-strip" id="pStrip">
-                          {[1, 2, 3, 4].map((idx) => {
-                            const isOn = stampsCount >= idx;
-                            const isNew = stampNewIndex === idx;
-                            return (
+                        {/* Pass Body: STAMPS vs CASHBACK */}
+                        {demoLoyaltyType === "STAMPS" ? (
+                          <>
+                            <div className="p-strip" id="pStrip">
+                              {[1, 2, 3, 4].map((idx) => {
+                                const isOn = stampsCount >= idx;
+                                const isNew = stampNewIndex === idx;
+                                return (
+                                  <div
+                                    key={idx}
+                                    className={`stp ${isOn ? "on" : ""} ${
+                                      isNew ? "new" : ""
+                                    }`}
+                                  >
+                                    <svg className="ic">
+                                      <use href={`#${activeMeta.icon}`} />
+                                    </svg>
+                                  </div>
+                                );
+                              })}
                               <div
-                                key={idx}
-                                className={`stp ${isOn ? "on" : ""} ${
-                                  isNew ? "new" : ""
-                                }`}
+                                className={`stp gift ${
+                                  stampsCount >= 5 ? "on" : ""
+                                } ${stampNewIndex === 5 ? "new" : ""}`}
                               >
                                 <svg className="ic">
-                                  <use href={`#${activeNiche.icon}`} />
+                                  <use href="#i-gift" />
                                 </svg>
                               </div>
-                            );
-                          })}
-                          <div
-                            className={`stp gift ${
-                              stampsCount >= 5 ? "on" : ""
-                            } ${stampNewIndex === 5 ? "new" : ""}`}
-                          >
-                            <svg className="ic">
-                              <use href="#i-gift" />
-                            </svg>
-                          </div>
-                        </div>
+                            </div>
 
-                        <div className="p-row">
-                          <div className="p-f">
-                            <small>المكافأة القادمة</small>
-                            <b id="pRew">{activeNiche.reward}</b>
-                          </div>
-                          <div className="p-f p-hf">
-                            <small>العضوية</small>
-                            <b className="lat">#4821</b>
-                          </div>
-                        </div>
+                            <div className="p-row">
+                              <div className="p-f">
+                                <small>{t.pass.rewardLabel}</small>
+                                <b id="pRew">{activeNicheInfo.reward}</b>
+                              </div>
+                              <div className="p-f p-hf">
+                                <small>{t.pass.memberCodeLabel}</small>
+                                <b className="lat">#4821</b>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {/* Glowing Cashback Strip */}
+                            <div
+                              className="p-cashback-strip"
+                              style={{
+                                margin: "10px 0",
+                                padding: "14px 12px",
+                                borderRadius: "14px",
+                                background: "rgba(0,0,0,0.45)",
+                                border: "1px solid rgba(255,255,255,0.14)",
+                                textAlign: "center",
+                                boxShadow:
+                                  "inset 0 1px 1px rgba(255,255,255,0.15), 0 8px 20px -6px rgba(0,0,0,0.5)",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  color: "rgba(255,255,255,0.75)",
+                                  marginBottom: "2px",
+                                }}
+                              >
+                                {t.pass.balanceAvailable}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "26px",
+                                  fontWeight: 700,
+                                  color: "var(--em2)",
+                                  letterSpacing: "-0.5px",
+                                }}
+                              >
+                                <span className="lat">
+                                  {cashbackBalance.toFixed(2)}
+                                </span>{" "}
+                                DH
+                              </div>
+                              <div
+                                style={{
+                                  display: "inline-block",
+                                  marginTop: "4px",
+                                  padding: "2px 8px",
+                                  borderRadius: "99px",
+                                  background: "rgba(16,185,129,0.2)",
+                                  color: "var(--em2)",
+                                  fontSize: "10.5px",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                +10% {t.pass.onEveryPurchase}
+                              </div>
+                            </div>
+
+                            <div className="p-row">
+                              <div className="p-f">
+                                <small>{t.pass.totalEarned}</small>
+                                <b className="lat">
+                                  {(cashbackBalance + 45).toFixed(2)} DH
+                                </b>
+                              </div>
+                              <div className="p-f p-hf">
+                                <small>{t.pass.memberCodeLabel}</small>
+                                <b className="lat">#4821</b>
+                              </div>
+                            </div>
+                          </>
+                        )}
 
                         <div className="p-code">
                           <svg viewBox="0 0 100 100" fill="#000">
@@ -1116,15 +1310,21 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
 
                       <div className="w-meta">
                         <div>
-                          <span>آخر زيارة</span>
-                          <b id="wLast">اليوم، 14:22</b>
+                          <span>{t.pass.lastVisitLabel}</span>
+                          <b id="wLast">14:22</b>
                         </div>
                         <div>
-                          <span>الكادو ديالك</span>
+                          <span>
+                            {demoLoyaltyType === "STAMPS"
+                              ? t.pass.rewardLabel
+                              : t.pass.balanceAvailable}
+                          </span>
                           <b id="wNext" style={{ color: "var(--gold2)" }}>
-                            {stampsCount >= 5
-                              ? "واجد دابا 🎁"
-                              : `باقي ${5 - stampsCount} طوابع`}
+                            {demoLoyaltyType === "STAMPS"
+                              ? stampsCount >= 5
+                                ? t.pass.rewardUnlockedTitle
+                                : `${5 - stampsCount} أختام`
+                              : `${cashbackBalance.toFixed(2)} DH`}
                           </b>
                         </div>
                       </div>
@@ -1138,14 +1338,14 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                     >
                       <div className="o-top">
                         <div>
-                          <small>لوحة التحكم</small>
+                          <small>{t.demo.merchantTab}</small>
                           <b id="oShop">{shopInput}</b>
                         </div>
                         <div className="o-cred">
                           <svg className="ic">
                             <use href="#i-coins" />
                           </svg>
-                          <span>الكريدي</span>
+                          <span>{t.demo.creditsBalance}</span>
                           <b className="lat" id="oCred">
                             {ownerCredits}
                           </b>
@@ -1163,31 +1363,31 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                               <b>
                                 142<em>+12</em>
                               </b>
-                              <small>زيارات هاد الشهر</small>
+                              <small>{t.demo.kpiTotalVisits}</small>
                             </div>
                             <div className="d-card">
                               <b>
                                 64<em>+8</em>
                               </b>
-                              <small>كليان فـ الكارط</small>
+                              <small>{t.demo.kpiReturning}</small>
                             </div>
                             <div className="d-card">
                               <b>
                                 18<em>🎁</em>
                               </b>
-                              <small>كادويات تفرّقو</small>
+                              <small>{t.demo.kpiCashbackGiven}</small>
                             </div>
                             <div className="d-card">
                               <b>
                                 4.9<em style={{ color: "var(--gold2)" }}>★</em>
                               </b>
-                              <small>تقييم Google</small>
+                              <small>{t.demo.kpiGoogleReviews}</small>
                             </div>
                           </div>
 
                           <div className="quiet">
                             <div>
-                              <b>3 كليان</b> غبرو هادي 15 يوم
+                              <b>3</b> {t.demo.audienceQuiet}
                             </div>
                             <button
                               type="button"
@@ -1195,19 +1395,17 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                               onClick={() => {
                                 setOwnerSubTab("promo");
                                 setOwnerAud("quiet");
-                                setOwnerMsg(
-                                  `توحشناك! دوز هاد السيمانة لـ ${shopInput} وعندك طابع هدية 🎁`
-                                );
+                                setOwnerMsg(t.engines.winbackLockBody);
                               }}
                             >
-                              رجعهم
+                              {t.demo.winbackSimulate}
                             </button>
                           </div>
 
                           <div className="d-card">
                             <div className="d-lbl">
-                              <span>هاد السيمانة — زيارات</span>
-                              <b>+1,840 DH نشاط</b>
+                              <span>{t.demo.kpiTotalVisits}</span>
+                              <b>+1,840 DH</b>
                             </div>
                             <div className="week">
                               <i style={{ height: "45%" }} />
@@ -1230,22 +1428,22 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
 
                           <div className="d-card">
                             <div className="d-lbl" style={{ marginBottom: "6px" }}>
-                              <span>آخر الحركات</span>
+                              <span>{t.pass.activityDrawerTitle}</span>
                             </div>
                             <div className="feed">
                               <div>
                                 <i>ك</i>
-                                <span>كريم ب. خذا طابع جديد</span>
-                                <small>دابا</small>
+                                <span>كريم ب. (طابع جديد)</span>
+                                <small>الآن</small>
                               </div>
                               <div>
                                 <i>س</i>
-                                <span>سارة م. وصلات لـ 5/5 🎉</span>
+                                <span>سارة م. (مكافأة 5/5) 🎉</span>
                                 <small>14:10</small>
                               </div>
                               <div>
                                 <i>ي</i>
-                                <span>ياسين ع. تسجّل فـ الكارط</span>
+                                <span>ياسين ع. (انضمام جديد)</span>
                                 <small>12:45</small>
                               </div>
                             </div>
@@ -1257,9 +1455,13 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                           className={`otab ${ownerSubTab === "cl" ? "on" : ""}`}
                           id="otab-cl"
                         >
-                          <div className="o-h">قائمة الكليان</div>
+                          <div className="o-h">{t.demo.ownerClients}</div>
                           <div className="o-s">
-                            كليكي على أي زبون باش تزيد ليه طابع
+                            {locale === "fr"
+                              ? "Cliquez sur un client pour lui attribuer un tampon"
+                              : locale === "es"
+                              ? "Haga clic en un cliente para asignarle un sello"
+                              : "انقر على أي عميل لإضافة ختم له"}
                           </div>
                           <div className="cl">
                             {[
@@ -1269,7 +1471,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                                 ph: "06 61 •• •• 42",
                                 st: "3/5",
                                 tag: "p-on",
-                                tagT: "نشيط",
+                                tagT: t.merchant.statusActive,
                               },
                               {
                                 av: "س",
@@ -1277,7 +1479,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                                 ph: "06 62 •• •• 18",
                                 st: "5/5 🎁",
                                 tag: "p-vip",
-                                tagT: "واجد كادو",
+                                tagT: t.merchant.statusVip,
                               },
                               {
                                 av: "م",
@@ -1285,7 +1487,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                                 ph: "06 63 •• •• 90",
                                 st: "2/5",
                                 tag: "p-off",
-                                tagT: "غابر 16 نهار",
+                                tagT: t.merchant.statusQuiet,
                               },
                               {
                                 av: "ف",
@@ -1293,7 +1495,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                                 ph: "06 70 •• •• 33",
                                 st: "4/5",
                                 tag: "p-on",
-                                tagT: "باقي طابع",
+                                tagT: t.merchant.statusActive,
                               },
                             ].map((c, idx) => (
                               <button
@@ -1302,10 +1504,10 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                                 onClick={() => {
                                   handleStamp();
                                   showBanner(
-                                    activeNiche.icon,
-                                    activeNiche.grad,
-                                    `طابع تزاد لـ ${c.nm}!`,
-                                    `تم تسجيل الزيارة بنجاح فـ لوحة التاجر.`
+                                    activeMeta.icon,
+                                    activeMeta.grad,
+                                    t.pass.stampAddedTitle,
+                                    `${c.nm} — ${t.pass.stampAddedBody.replace("{left}", "1")}`
                                   );
                                 }}
                               >
@@ -1326,7 +1528,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                           className={`otab ${ownerSubTab === "promo" ? "on" : ""}`}
                           id="otab-promo"
                         >
-                          <div className="o-h">صيفط بروموسيون لشاشة الكليان</div>
+                          <div className="o-h">{t.demo.sendPromoTitle}</div>
                           <div className="tpls">
                             <button
                               type="button"
@@ -1334,7 +1536,11 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                               aria-pressed={ownerTpl === "w"}
                               onClick={() => selectOwnerTpl("w")}
                             >
-                              عرض الويكاند
+                              {locale === "fr"
+                                ? "Weekend"
+                                : locale === "es"
+                                ? "Fin de semana"
+                                : "عرض الويكاند"}
                             </button>
                             <button
                               type="button"
@@ -1342,7 +1548,11 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                               aria-pressed={ownerTpl === "h"}
                               onClick={() => selectOwnerTpl("h")}
                             >
-                              ساعة سعيدة
+                              {locale === "fr"
+                                ? "Happy Hour"
+                                : locale === "es"
+                                ? "Happy Hour"
+                                : "ساعة سعيدة"}
                             </button>
                             <button
                               type="button"
@@ -1350,7 +1560,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                               aria-pressed={ownerTpl === "v"}
                               onClick={() => selectOwnerTpl("v")}
                             >
-                              كليان VIP
+                              VIP
                             </button>
                           </div>
                           <textarea
@@ -1365,24 +1575,24 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                               aria-pressed={ownerAud === "all"}
                               onClick={() => setOwnerAud("all")}
                             >
-                              <b>64</b> كاع الكليان
+                              <b>64</b> {t.demo.audienceAll}
                             </button>
                             <button
                               type="button"
                               aria-pressed={ownerAud === "quiet"}
                               onClick={() => setOwnerAud("quiet")}
                             >
-                              <b>3</b> اللي غبرو (15 يوم+)
+                              <b>3</b> {t.demo.audienceQuiet}
                             </button>
                           </div>
 
                           <div className="o-cost">
                             <span>
-                              غادي يتخصم:{" "}
-                              <b>{ownerAud === "all" ? 64 : 3} كريدي</b>
+                              {t.demo.creditsCost}:{" "}
+                              <b>{ownerAud === "all" ? 64 : 3}</b>
                             </span>
                             <span>
-                              كيبقا ليك:{" "}
+                              {t.demo.creditsBalance}:{" "}
                               <b>
                                 {Math.max(
                                   0,
@@ -1397,24 +1607,33 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                             className="o-send"
                             onClick={handleSendOwnerPromo}
                           >
-                            صيفط دابا (Broadcast)
+                            {t.demo.sendBroadcastBtn}
                           </button>
 
                           {ownerSentCount > 0 && (
                             <div className="camp">
                               <div>
                                 <b>{ownerAud === "all" ? 64 : 3}</b>
-                                <span>تصيفطات</span>
+                                <span>{t.demo.sendPromoDesc}</span>
                               </div>
                               <div className="hi">
-                                <b>+{Math.round((ownerAud === "all" ? 64 : 3) * 0.28)}</b>
-                                <span>رجعو للمحل</span>
+                                <b>
+                                  +
+                                  {Math.round(
+                                    (ownerAud === "all" ? 64 : 3) * 0.28
+                                  )}
+                                </b>
+                                <span>{t.engines.winbackTag}</span>
                               </div>
                               <div>
                                 <b className="lat">
-                                  +{Math.round((ownerAud === "all" ? 64 : 3) * 0.28 * 25)} DH
+                                  +
+                                  {Math.round(
+                                    (ownerAud === "all" ? 64 : 3) * 0.28 * 35
+                                  )}{" "}
+                                  DH
                                 </b>
-                                <span>مداخيل إضافية</span>
+                                <span>{t.compare.monthlyExtraRev}</span>
                               </div>
                             </div>
                           )}
@@ -1425,27 +1644,31 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                           className={`otab ${ownerSubTab === "auto" ? "on" : ""}`}
                           id="otab-auto"
                         >
-                          <div className="o-h">ميساجات خدامة بوحدها</div>
+                          <div className="o-h">{t.demo.ownerAuto}</div>
                           <div className="o-s">
-                            شعّلها مرة وحدة والسيستيم كيتكلف بالباقي
+                            {locale === "fr"
+                              ? "Activez une fois et laissez le moteur gérer la suite"
+                              : locale === "es"
+                              ? "Actívelo una vez y el sistema se encargará del resto"
+                              : "شغّلها مرة واحدة والمنظومة تتكفل بالباقي"}
                           </div>
                           <div className="al">
                             <div>
                               <div className="tx">
-                                <b>رجوع الغابرين (15 يوم)</b>
+                                <b>{t.engines.winbackTitle}</b>
                                 <small>
-                                  <span className="tag">بالكريدي</span>
+                                  <span className="tag">{t.engines.winbackTag}</span>
                                   <button
                                     type="button"
                                     className="prev"
                                     onClick={() =>
                                       setOwnerPeek({
-                                        title: "توحشناك! 🎁",
-                                        body: `توحشناك! هادي كثر من 15 يوم ما شفناك فـ ${shopInput}. دوز هاد السيمانة وعندك طابع هدية.`,
+                                        title: t.engines.winbackLockTitle,
+                                        body: t.engines.winbackLockBody,
                                       })
                                     }
                                   >
-                                    شوف
+                                    معاينة
                                   </button>
                                 </small>
                               </div>
@@ -1464,20 +1687,22 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
 
                             <div>
                               <div className="tx">
-                                <b>تذكير رادار 100 ميترو</b>
+                                <b>{t.engines.radarTitle}</b>
                                 <small>
-                                  <span className="tag free">فابور ديما</span>
+                                  <span className="tag free">
+                                    {t.engines.radarTag}
+                                  </span>
                                   <button
                                     type="button"
                                     className="prev"
                                     onClick={() =>
                                       setOwnerPeek({
-                                        title: `📍 راك دايز من حدا ${shopInput}`,
-                                        body: "الكارط ديالك واجدة فـ Apple Wallet! دوز خود قهوتك وجمع طابع جديد ☕",
+                                        title: t.engines.radarLockTitle,
+                                        body: t.engines.radarLockBody,
                                       })
                                     }
                                   >
-                                    شوف
+                                    معاينة
                                   </button>
                                 </small>
                               </div>
@@ -1496,20 +1721,22 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
 
                             <div>
                               <div className="tx">
-                                <b>تقييمات خرائط Google</b>
+                                <b>{t.engines.reviewsTitle}</b>
                                 <small>
-                                  <span className="tag free">فابور ديما</span>
+                                  <span className="tag free">
+                                    {t.engines.reviewsTag}
+                                  </span>
                                   <button
                                     type="button"
                                     className="prev"
                                     onClick={() =>
                                       setOwnerPeek({
-                                        title: "⭐ كيف جاتك الخدمة؟ خلي تقييم فـ Google",
-                                        body: `رأيك كيهمنا بزاف فـ ${shopInput}! كليكي هنا للمشاركة.`,
+                                        title: t.engines.reviewsLockTitle,
+                                        body: t.engines.reviewsLockBody,
                                       })
                                     }
                                   >
-                                    شوف
+                                    معاينة
                                   </button>
                                 </small>
                               </div>
@@ -1528,20 +1755,22 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
 
                             <div>
                               <div className="tx">
-                                <b>الكادو قريب (باقي طابع)</b>
+                                <b>{t.engines.pushTitle}</b>
                                 <small>
-                                  <span className="tag free">فابور ديما</span>
+                                  <span className="tag free">
+                                    {t.engines.pushTag}
+                                  </span>
                                   <button
                                     type="button"
                                     className="prev"
                                     onClick={() =>
                                       setOwnerPeek({
-                                        title: "باقي ليك غير طابع واحد! 🎁",
-                                        body: `باقي ليك طابع واحد على ${activeNiche.reward} فـ ${shopInput}! كمل الكارط ديالك.`,
+                                        title: t.engines.pushLockTitle,
+                                        body: t.engines.pushLockBody,
                                       })
                                     }
                                   >
-                                    شوف
+                                    معاينة
                                   </button>
                                 </small>
                               </div>
@@ -1572,7 +1801,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                           <svg className="ic">
                             <use href="#i-home" />
                           </svg>
-                          <span>الرئيسية</span>
+                          <span>{t.demo.ownerHome}</span>
                         </button>
                         <button
                           type="button"
@@ -1583,7 +1812,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                           <svg className="ic">
                             <use href="#i-users" />
                           </svg>
-                          <span>الكليان</span>
+                          <span>{t.demo.ownerClients}</span>
                         </button>
                         <button
                           type="button"
@@ -1594,7 +1823,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                           <svg className="ic">
                             <use href="#i-mega" />
                           </svg>
-                          <span>پرومو</span>
+                          <span>{t.demo.ownerPromos}</span>
                         </button>
                         <button
                           type="button"
@@ -1605,22 +1834,28 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                           <svg className="ic">
                             <use href="#i-bolt" />
                           </svg>
-                          <span>أوتوماتيك</span>
+                          <span>{t.demo.ownerAuto}</span>
                         </button>
                       </div>
 
                       {/* Peek Lockscreen Overlay */}
                       <div className={`peek ${ownerPeek ? "on" : ""}`}>
-                        <div className="pl">هكا كيوصل للكليان فـ شاشة القفل</div>
+                        <div className="pl">
+                          {locale === "fr"
+                            ? "Aperçu écran de verrouillage"
+                            : locale === "es"
+                            ? "Vista en pantalla de bloqueo"
+                            : "معاينة على شاشة قفل الهاتف"}
+                        </div>
                         <div className="pt">9:41</div>
                         {ownerPeek && (
                           <div className="ntf">
                             <div
                               className="ap"
-                              style={{ background: activeNiche.grad }}
+                              style={{ background: activeMeta.grad }}
                             >
                               <svg className="ic">
-                                <use href={`#${activeNiche.icon}`} />
+                                <use href={`#${activeMeta.icon}`} />
                               </svg>
                             </div>
                             <div className="nb">
@@ -1643,7 +1878,11 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                           }}
                           onClick={() => setOwnerPeek(null)}
                         >
-                          سد المعاينة
+                          {locale === "fr"
+                            ? "Fermer l'aperçu"
+                            : locale === "es"
+                            ? "Cerrar vista"
+                            : "إغلاق المعاينة"}
                         </button>
                       </div>
                     </div>
@@ -1654,21 +1893,39 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
               </div>
 
               {/* Floating Control Dock (-80px overlap) */}
-              <div className={`dock glass ${currentTab === "dash" ? "dim" : ""}`}>
+              <div
+                className={`dock glass ${currentTab === "dash" ? "dim" : ""}`}
+              >
                 <div className="dk-grid">
                   <button
                     type="button"
                     className="dk main"
                     id="tStamp"
-                    onClick={handleStamp}
+                    onClick={() => {
+                      if (demoLoyaltyType === "CASHBACK") {
+                        handleCashbackAdd();
+                      } else {
+                        handleStamp();
+                      }
+                    }}
                   >
                     <span className="dki">
                       <svg className="ic">
-                        <use href="#i-plus" />
+                        <use
+                          href={
+                            demoLoyaltyType === "CASHBACK"
+                              ? "#i-coins"
+                              : "#i-plus"
+                          }
+                        />
                       </svg>
                     </span>
                     <span className="dkt">
-                      <b>زيد طابع فـ الكارط (+1)</b>
+                      <b>
+                        {demoLoyaltyType === "CASHBACK"
+                          ? t.demo.cashbackAction
+                          : `${t.demo.stampAction} (+1)`}
+                      </b>
                     </span>
                   </button>
 
@@ -1682,8 +1939,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       showBanner(
                         "i-pin",
                         "linear-gradient(135deg,#059669,#047857)",
-                        `📍 راك دايز من حدا ${shopInput} دابا`,
-                        "الكارط ديالك واجدة فـ Apple Wallet! دوز خود قهوتك وجمع طابع جديد ☕"
+                        t.engines.radarLockTitle,
+                        t.engines.radarLockBody
                       );
                     }}
                   >
@@ -1693,7 +1950,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       </svg>
                     </span>
                     <span className="dkt">
-                      <b>رادار 100 م</b>
+                      <b>{t.demo.radarSimulate}</b>
                     </span>
                   </button>
 
@@ -1707,8 +1964,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       showBanner(
                         "i-back",
                         "linear-gradient(135deg,#DC2626,#991B1B)",
-                        `🎁 توحشناك فـ ${shopInput}!`,
-                        "هادي كثر من 15 يوم ما شفناك! دوز هاد السيمانة وعندك طابع هدية."
+                        t.engines.winbackLockTitle,
+                        t.engines.winbackLockBody
                       );
                     }}
                   >
@@ -1718,7 +1975,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       </svg>
                     </span>
                     <span className="dkt">
-                      <b>الغابرين</b>
+                      <b>{t.demo.winbackSimulate}</b>
                     </span>
                   </button>
 
@@ -1732,8 +1989,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       showBanner(
                         "i-mega",
                         "linear-gradient(135deg,#4F46E5,#3730A3)",
-                        `📣 عرض الويكاند من ${shopInput}`,
-                        "تخفيض 20% على كاع الطلبات هاد السبت والحد!"
+                        t.engines.pushLockTitle,
+                        t.engines.pushLockBody
                       );
                     }}
                   >
@@ -1743,7 +2000,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       </svg>
                     </span>
                     <span className="dkt">
-                      <b>پروموسيون</b>
+                      <b>{t.demo.promoSimulate}</b>
                     </span>
                   </button>
 
@@ -1757,8 +2014,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       showBanner(
                         "i-star",
                         "linear-gradient(135deg,#2563EB,#1D4ED8)",
-                        "⭐ تقييم 5 نجوم فـ Google",
-                        `عجباتك الخدمة فـ ${shopInput}؟ شارك رأيك فـ Google Maps فـ 5 ثواني!`
+                        t.engines.reviewsLockTitle,
+                        t.engines.reviewsLockBody
                       );
                     }}
                   >
@@ -1768,7 +2025,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       </svg>
                     </span>
                     <span className="dkt">
-                      <b>تقييم Google</b>
+                      <b>{t.demo.reviewSimulate}</b>
                     </span>
                   </button>
                 </div>
@@ -1777,7 +2034,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   <svg className="ic">
                     <use href="#i-eye" />
                   </svg>
-                  <span>كليكي لداخل لوحة التحكم باش تجربها مباشرة</span>
+                  <span>{t.demo.subtitle}</span>
                 </div>
               </div>
 
@@ -1789,12 +2046,10 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                       <svg className="ic">
                         <use href="#i-bolt" />
                       </svg>
-                      <span>
-                        عجباتك التجربة؟ شوف لوحة تحكم التاجر أو اختار الباقة ديال محلك 👇
-                      </span>
+                      <span>{t.finalCta.desc}</span>
                     </p>
                     <a href="#pricing" className="btn btn-gold">
-                      الأثمنة
+                      {t.nav.pricing}
                     </a>
                   </div>
                 )}
@@ -1808,10 +2063,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       <section className="sec" id="how">
         <div className="wrap">
           <div className="head c">
-            <h2 className="h2 silver">3 خطوات ساهلة، وبلا أي تعقيد</h2>
-            <p className="lead">
-              صممنا Walink باش تكون أسرع وأبسط تجربة لزبنائك ولموظفيك داخل المحل.
-            </p>
+            <h2 className="h2 silver">{t.nav.howItWorks}</h2>
+            <p className="lead">{t.hero.desc}</p>
           </div>
 
           <div className="steps">
@@ -1822,12 +2075,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   <use href="#i-scan" />
                 </svg>
               </div>
-              <h3>الكليان كيسكاني الستاند (فـ 5 ثواني)</h3>
-              <p>
-                ملي كيوصل للكاونتر، كيحط التيليفون على الستاند (NFC) أو كيسكاني
-                الكود بالكاميرا. ما كيتيليشارجي حتى شي أبليكاسيون وما كيدخل حتى كود
-                معقد.
-              </p>
+              <h3>{t.hero.standBadge}</h3>
+              <p>{t.hero.standDesc}</p>
             </div>
 
             <div className="surface step">
@@ -1837,11 +2086,13 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   <use href="#i-wallet" />
                 </svg>
               </div>
-              <h3>الكارط كتدخل لـ Wallet (ما كتضيعش)</h3>
+              <h3>{t.pass.addToAppleWallet}</h3>
               <p>
-                كتسجل مباشرة فـ محفظة Apple Wallet فـ iPhone أو Google Wallet فـ
-                Android. كتبقى ديما مخزونة فالتيليفون، ما كتقطعش وما كضيعش بحال
-                الكاغيط.
+                {locale === "fr"
+                  ? "S'ajoute directement à Apple Wallet ou Google Wallet sans installer aucune application."
+                  : locale === "es"
+                  ? "Se añade directamente a Apple Wallet o Google Wallet sin descargar ninguna aplicación."
+                  : "تُحفظ مباشرة في محفظة الهاتف الرقمية بدون الحاجة لتحميل أي تطبيق."}
               </p>
             </div>
 
@@ -1852,11 +2103,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   <use href="#i-bell" />
                 </svg>
               </div>
-              <h3>السيستيم كيفكّرو أوتوماتيك</h3>
-              <p>
-                ملي يقرب من المحل (100m) كيوصلو تذكير بالرادار، وملي يغبر هادي 15 يوم
-                كيوصلو إشعار توحشناك مع هدية باش يرجع، وكلشي كيخدم بوحدو ⚡️.
-              </p>
+              <h3>{t.engines.radarTitle}</h3>
+              <p>{t.engines.radarDesc}</p>
             </div>
           </div>
         </div>
@@ -1866,11 +2114,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       <section className="sec" id="engines">
         <div className="wrap">
           <div className="head c">
-            <h2 className="h2 silver">4 محركات ذكية كتخدم فـ صالح محلك</h2>
-            <p className="lead">
-              كل محرك مبرمج باش يرجع الكليان القديم ويزيد رقم المعاملات ديالك
-              تلقائياً وبلا مجهود.
-            </p>
+            <h2 className="h2 silver">{t.brand.tagline}</h2>
+            <p className="lead">{t.demo.subtitle}</p>
           </div>
 
           <div className="bento">
@@ -1883,20 +2128,16 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   </svg>
                 </span>
                 <div>
-                  <h3>رادار 100 ميترو</h3>
+                  <h3>{t.engines.radarTitle}</h3>
                   <div className="tagline">
                     <svg className="ic">
                       <use href="#i-wifioff" />
                     </svg>
-                    <span>خدام حتى بلا أنترنيت</span>
+                    <span>{t.engines.radarTag}</span>
                   </div>
                 </div>
               </div>
-              <p>
-                غير الكليان يدوز فـ محيط 100 متر من المحل ديالك، التيليفون ديالو
-                كيشعل راسو وكيطلع إشعار: &quot;راك دايز من حدانا فـ {shopInput}،
-                دوز خود قهوتك وجمع طابع جديد ☕&quot;.
-              </p>
+              <p>{t.engines.radarDesc}</p>
 
               {/* Radar Map Canvas */}
               <div className="rv-box">
@@ -1922,12 +2163,10 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   </div>
                   <div className="nb">
                     <div className="nh">
-                      <b>📍 راك دايز من حدانا</b>
+                      <b>{t.engines.radarLockTitle}</b>
                       <small>الآن</small>
                     </div>
-                    <div className="nt">
-                      الكارط ديالك واجدة فـ {shopInput}!
-                    </div>
+                    <div className="nt">{t.engines.radarLockBody}</div>
                   </div>
                 </div>
               </div>
@@ -1942,20 +2181,16 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   </svg>
                 </span>
                 <div>
-                  <h3>تقييمات خرائط Google</h3>
+                  <h3>{t.engines.reviewsTitle}</h3>
                   <div className="tagline">
                     <svg className="ic">
                       <use href="#i-up" />
                     </svg>
-                    <span>طلع محلك فالأول فـ مدينتك</span>
+                    <span>{t.engines.reviewsTag}</span>
                   </div>
                 </div>
               </div>
-              <p>
-                ملي الكليان كيكمل 3 طوابع أو كياخد المكافأة، كيوصلو إشعار ذكي برابط
-                مباشر باش يخلي ليك تقييم 5 نجوم فـ Google Maps ويطلع ترتيب محلك فـ
-                البحث.
-              </p>
+              <p>{t.engines.reviewsDesc}</p>
               <div className="e-mini">
                 <div className="ntf">
                   <div
@@ -1968,12 +2203,10 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   </div>
                   <div className="nb">
                     <div className="nh">
-                      <b>⭐ عجباتك الخدمة اليوم؟</b>
+                      <b>{t.engines.reviewsLockTitle}</b>
                       <small>الآن</small>
                     </div>
-                    <div className="nt">
-                      خلي لينا تقييم زوين فـ Google Maps فـ 5 ثواني
-                    </div>
+                    <div className="nt">{t.engines.reviewsLockBody}</div>
                   </div>
                 </div>
               </div>
@@ -1988,19 +2221,16 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   </svg>
                 </span>
                 <div>
-                  <h3>استرجاع الغابرين</h3>
+                  <h3>{t.engines.winbackTitle}</h3>
                   <div className="tagline">
                     <svg className="ic">
                       <use href="#i-bolt" />
                     </svg>
-                    <span>+28% نسبة رجوع فـ أول سيمانة</span>
+                    <span>{t.engines.winbackTag}</span>
                   </div>
                 </div>
               </div>
-              <p>
-                أي زبون ما زارش محلك هادي كثر من 15 يوم، السيستيم كيعرفو أوتوماتيك
-                وكيصيفط ليه رسالة بالدارجة مع طابع هدية ترحيبية باش يرجع لمحلك.
-              </p>
+              <p>{t.engines.winbackDesc}</p>
               <div className="e-mini" id="winbackMini">
                 <div className="ntf">
                   <div
@@ -2013,13 +2243,10 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   </div>
                   <div className="nb">
                     <div className="nh">
-                      <b>🎁 توحشناك آ السي كريم!</b>
-                      <small>البارح</small>
+                      <b>{t.engines.winbackLockTitle}</b>
+                      <small>الآن</small>
                     </div>
-                    <div className="nt">
-                      هادي كثر من 15 يوم ما شفناك فـ {shopInput}. دوز هاد السيمانة
-                      وعندك طابع هدية ☕
-                    </div>
+                    <div className="nt">{t.engines.winbackLockBody}</div>
                   </div>
                 </div>
               </div>
@@ -2034,20 +2261,16 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   </svg>
                 </span>
                 <div>
-                  <h3>پروموسيون بكليكة وحدة</h3>
+                  <h3>{t.engines.pushTitle}</h3>
                   <div className="tagline">
                     <svg className="ic">
                       <use href="#i-bolt" />
                     </svg>
-                    <span>إشعار شاشة القفل فـ ثانية</span>
+                    <span>{t.engines.pushTag}</span>
                   </div>
                 </div>
               </div>
-              <p>
-                عندك نهار ميت أو ويكاند باغي تدور فيه الحركة؟ كتب الميساج فـ لوحة
-                التحكم وصيفط إشعار جماعي لجميع زبنائك في نفس اللحظة (أرخص 10 مرات من
-                SMS).
-              </p>
+              <p>{t.engines.pushDesc}</p>
               <div className="e-mini">
                 <div className="ntf">
                   <div
@@ -2060,12 +2283,10 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   </div>
                   <div className="nb">
                     <div className="nh">
-                      <b>📣 عرض الويكاند الحصري</b>
+                      <b>{t.engines.pushLockTitle}</b>
                       <small>الآن</small>
                     </div>
-                    <div className="nt">
-                      تخفيض 20% على كاع الطلبات هاد السبت والحد فـ {shopInput}!
-                    </div>
+                    <div className="nt">{t.engines.pushLockBody}</div>
                   </div>
                 </div>
               </div>
@@ -2078,94 +2299,50 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       <section className="sec" id="compare">
         <div className="wrap">
           <div className="head c">
-            <h2 className="h2 silver">علاش Walink أفضل استثمار لمحلك؟</h2>
-            <p className="lead">
-              مقارنة واضحة بين الكاغيط، الأبليكاسيونات المكلفة، ومنظومة Walink الذكية.
-            </p>
+            <h2 className="h2 silver">{t.compare.title}</h2>
+            <p className="lead">{t.compare.subtitle}</p>
           </div>
 
           <div className="surface cmp-wrap">
             <table className="cmp">
               <thead>
                 <tr>
-                  <th>الميزة</th>
-                  <th>
-                    الكاغيط<small>المطبعة</small>
-                  </th>
-                  <th>
-                    أبليكاسيون بالشهر<small>400 DH / شهر</small>
-                  </th>
-                  <th className="tp">
-                    منظومة Walink<small>خلاص مرة وحدة</small>
-                  </th>
+                  <th>{t.compare.colFeature}</th>
+                  <th>{t.compare.colPaper}</th>
+                  <th>{t.compare.colApp}</th>
+                  <th className="tp">{t.compare.colWalink}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>الثمن فـ 3 سنين</td>
-                  <td>
-                    ~ 4,500 DH<span className="note">طباعة متكررة ديما</span>
-                  </td>
-                  <td className="no">
-                    14,400 DH<span className="note">400 DH × 36 شهر</span>
-                  </td>
-                  <td className="tp yes">
-                    3,180 DH<span className="note">توفير أكثر من 11,200 DH!</span>
-                  </td>
+                  <td>{t.compare.row1Feature}</td>
+                  <td>{t.compare.row1Paper}</td>
+                  <td className="no">{t.compare.row1App}</td>
+                  <td className="tp yes">{t.compare.row1Walink}</td>
                 </tr>
                 <tr>
-                  <td>واش كتضيع؟</td>
-                  <td className="no">80% كينساوها فـ الدار</td>
-                  <td>لا</td>
-                  <td className="tp yes">لا، ديما فـ Apple/Google Wallet</td>
+                  <td>{t.compare.row2Feature}</td>
+                  <td className="no">{t.compare.row2Paper}</td>
+                  <td>{t.compare.row2App}</td>
+                  <td className="tp yes">{t.compare.row2Walink}</td>
                 </tr>
                 <tr>
-                  <td>بلا تيليشارجي؟</td>
-                  <td className="yes">نعم</td>
-                  <td className="no">لا، و 70% كيرفضو يتيليشارجيو</td>
-                  <td className="tp yes">نعم، سكان فـ 5 ثواني</td>
+                  <td>{t.compare.row3Feature}</td>
+                  <td className="no">{t.compare.row3Paper}</td>
+                  <td className="no">{t.compare.row3App}</td>
+                  <td className="tp yes">{t.compare.row3Walink}</td>
                 </tr>
                 <tr>
-                  <td>إشعارات فـ الشاشة؟</td>
-                  <td className="no">مستحيل</td>
-                  <td>كيديرو ليها Désactiver</td>
-                  <td className="tp yes">إشعارات رسمية فـ الشاشة 100%</td>
+                  <td>{t.compare.row4Feature}</td>
+                  <td className="no">{t.compare.row4Paper}</td>
+                  <td className="no">{t.compare.row4App}</td>
+                  <td className="tp yes">{t.compare.row4Walink}</td>
                 </tr>
                 <tr>
-                  <td>رادار 100 ميترو؟</td>
-                  <td className="no">
-                    <svg className="ic no">
-                      <use href="#i-x" />
-                    </svg>
-                  </td>
-                  <td className="no">
-                    <svg className="ic no">
-                      <use href="#i-x" />
-                    </svg>
-                  </td>
-                  <td className="tp yes">
-                    <svg className="ic yes">
-                      <use href="#i-check" />
-                    </svg>
-                  </td>
-                </tr>
-                <tr>
-                  <td>تقييمات Google؟</td>
-                  <td className="no">
-                    <svg className="ic no">
-                      <use href="#i-x" />
-                    </svg>
-                  </td>
-                  <td className="no">
-                    <svg className="ic no">
-                      <use href="#i-x" />
-                    </svg>
-                  </td>
-                  <td className="tp yes">
-                    <svg className="ic yes">
-                      <use href="#i-check" />
-                    </svg>
-                  </td>
+                  <td>{t.compare.row5Feature}</td>
+                  <td>{t.compare.row5Paper}</td>
+                  <td className="no">{t.compare.row5App}</td>
+                  <td className="tp yes">{t.compare.row5Walink}</td>
                 </tr>
               </tbody>
             </table>
@@ -2174,14 +2351,14 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
           <div className="roi">
             {/* 3-Year Bars */}
             <div className="surface">
-              <h3>مقارنة التكلفة لـ 3 سنوات</h3>
+              <h3>{t.compare.roiTitle}</h3>
               <p className="lead" style={{ fontSize: "15px" }}>
-                شوف شحال كتوفّر ملي كتخلص مرة وحدة عوض اشتراك شهري كيستنزفك.
+                {t.compare.roiSubtitle}
               </p>
               <div className="bars">
                 <div className="bar bad">
                   <div className="bl">
-                    <span>أبليكاسيون باشتراك شهري (400 DH)</span>
+                    <span>{t.compare.colApp} (400 DH/mois)</span>
                     <b className="lat">14,400 DH</b>
                   </div>
                   <div className="bt">
@@ -2190,8 +2367,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 </div>
                 <div className="bar good">
                   <div className="bl">
-                    <span>منظومة Walink (Growth + Walink Care)</span>
-                    <b className="lat">3,180 DH</b>
+                    <span>Walink (Growth Pack)</span>
+                    <b className="lat">2,400 DH</b>
                   </div>
                   <div className="bt">
                     <i />
@@ -2202,15 +2379,15 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
 
             {/* Dynamic ROI Calculator */}
             <div className="surface calc">
-              <h3>واش السيستيم كيخلّص راسو؟</h3>
+              <h3>{t.compare.paybackTime}</h3>
               <p className="lead" style={{ fontSize: "15px" }}>
-                حسب الأرباح المتوقعة من الزبناء الغابرين اللي غادي يرجعو لمحلك.
+                {t.compare.roiSubtitle}
               </p>
               <div>
                 <label htmlFor="rCount">
-                  <span>شحال من كليان غابر ممكن يرجع فـ الشهر؟</span>
+                  <span>{t.compare.sliderVisitsLabel}</span>
                   <b className="lat" id="vCount">
-                    {roiCount} كليان
+                    {roiCount}
                   </b>
                 </label>
                 <input
@@ -2225,7 +2402,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
 
               <div>
                 <label htmlFor="rSpend">
-                  <span>شحال كيصرف الكليان فـ المتوسط فـ الزيارة؟</span>
+                  <span>{t.compare.sliderTicketLabel}</span>
                   <b className="lat" id="vSpend">
                     {roiSpend} DH
                   </b>
@@ -2242,12 +2419,12 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
               </div>
 
               <div className="out" id="roiOut">
-                كتربح إضافياً:{" "}
-                <b className="gold lat">+{roiMonthlyGain} DH</b> فـ الشهر.
+                {t.compare.monthlyExtraRev}:{" "}
+                <b className="gold lat">+{roiMonthlyGain} DH</b>
                 <br />
-                الباك ديال Walink غادي يخلّص راسو كامل فـ:{" "}
+                {t.compare.paybackTime}:{" "}
                 <b className="lat">{roiPaybackMonths}</b>{" "}
-                {roiPaybackMonths === 1 ? "شهر واحد فقط" : "أشهر"}!
+                {locale === "fr" ? "mois" : locale === "es" ? "meses" : "أشهر"}!
               </div>
             </div>
           </div>
@@ -2258,17 +2435,21 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       <section className="sec" id="pricing">
         <div className="wrap">
           <div className="head c">
-            <h2 className="h2 silver">الأثمنة ديال الباقات</h2>
-            <p className="lead">
-              كتخلص مرة واحدة فقط، والستاند والكارط كيبقاو ديالك مدى الحياة.
-            </p>
+            <h2 className="h2 silver">{t.pricing.title}</h2>
+            <p className="lead">{t.pricing.subtitle}</p>
           </div>
 
           <div className="rush surface">
             <span className="dot" />
             <p>
-              <b>الطلب كثير هاد السيمانة:</b> طلب دابا وتوجد ليك الكارط والستاند فـ
-              48 ساعة فقط.
+              <b>
+                {locale === "fr"
+                  ? "Offre de lancement :"
+                  : locale === "es"
+                  ? "Oferta de lanzamiento:"
+                  : "عرض الإطلاق الخاص:"}
+              </b>{" "}
+              {t.finalCta.desc}
             </p>
           </div>
 
@@ -2279,66 +2460,50 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 <svg className="ic">
                   <use href="#i-card" />
                 </svg>
-                <span>Starter</span>
+                <span>{t.pricing.starterTitle}</span>
               </div>
               <div className="was">
-                <span className="launch">عرض الإطلاق</span>
-                <s className="lat">2,500 DH</s>
-                <span className="disc">-24%</span>
+                <span className="launch">
+                  {locale === "fr" ? "Promo" : locale === "es" ? "Promo" : "عرض"}
+                </span>
+                <s className="lat">2,200 DH</s>
+                <span className="disc">-30%</span>
               </div>
               <div className="pp">
-                <b className="lat">1,900</b>
-                <span>درهم</span>
+                <b className="lat">1,500</b>
+                <span>DH</span>
               </div>
-              <div className="per">خلاص لمرة واحدة فقط</div>
+              <div className="per">{t.pricing.starterDesc}</div>
               <ul>
                 <li>
                   <svg className="ic">
                     <use href="#i-check" />
                   </svg>
-                  كارط فـ Apple و Google Wallet
+                  {t.pricing.featureStand}
                 </li>
                 <li>
                   <svg className="ic">
                     <use href="#i-check" />
                   </svg>
-                  ستاند كاونتر أكريليك ذكي (NFC + QR)
+                  {t.pricing.featureCards}
                 </li>
                 <li>
                   <svg className="ic">
                     <use href="#i-check" />
                   </svg>
-                  إشعارات الطوابع فابور ديما
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  لوحة تحكم التاجر الأساسية
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  <b>200 كريدي</b> فابور
+                  {t.pricing.featureCredits500}
                 </li>
                 <li className="off">
                   <svg className="ic">
                     <use href="#i-x" />
                   </svg>
-                  رادار 100 ميترو
+                  {t.pricing.featureRadar}
                 </li>
                 <li className="off">
                   <svg className="ic">
                     <use href="#i-x" />
                   </svg>
-                  تقييمات خرائط Google
-                </li>
-                <li className="off">
-                  <svg className="ic">
-                    <use href="#i-x" />
-                  </svg>
-                  استرجاع الغابرين
+                  {t.pricing.featureReviews}
                 </li>
               </ul>
               <button
@@ -2349,62 +2514,62 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   setIsModalOpen(true);
                 }}
               >
-                طلب Starter
+                {t.pricing.orderStarterBtn}
               </button>
             </div>
 
             {/* Growth Plan (Most Popular) */}
             <div className="surface plan pop" data-plan="growth">
-              <div className="ribbon">الأكثر طلباً ⭐</div>
+              <div className="ribbon">{t.pricing.popularBadge}</div>
               <div className="pn" style={{ color: "var(--em2)" }}>
                 <svg className="ic">
                   <use href="#i-bolt" />
                 </svg>
-                <span>Growth</span>
+                <span>{t.pricing.growthTitle}</span>
               </div>
               <div className="was">
-                <span className="launch">عرض الإطلاق</span>
+                <span className="launch">
+                  {locale === "fr" ? "Promo" : locale === "es" ? "Promo" : "عرض"}
+                </span>
                 <s className="lat">3,200 DH</s>
                 <span className="disc">-25%</span>
               </div>
               <div className="pp">
                 <b className="lat">2,400</b>
-                <span>درهم</span>
+                <span>DH</span>
               </div>
-              <div className="per">
-                أقل من <b>7 دراهم</b> فالنهار لعام كامل
-              </div>
+              <div className="per">{t.pricing.growthDesc}</div>
               <ul>
-                <li className="all">كل مميزات Starter، زائد:</li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  <b>رادار 100 ميترو</b> (حتى بلا أنترنيت)
+                <li className="all">
+                  {locale === "fr"
+                    ? "Tout le pack Starter, plus :"
+                    : locale === "es"
+                    ? "Todo el pack Starter, más:"
+                    : "كل مميزات Starter، بالإضافة إلى:"}
                 </li>
                 <li>
                   <svg className="ic">
                     <use href="#i-check" />
                   </svg>
-                  <b>تقييمات خرائط Google</b> أوتوماتيك
+                  <b>{t.pricing.featureRadar}</b>
                 </li>
                 <li>
                   <svg className="ic">
                     <use href="#i-check" />
                   </svg>
-                  <b>استرجاع الغابرين</b> بعد 15 يوم
+                  <b>{t.pricing.featureReviews}</b>
                 </li>
                 <li>
                   <svg className="ic">
                     <use href="#i-check" />
                   </svg>
-                  پروموسيون بكليكة وحدة (Broadcast)
+                  <b>{t.engines.winbackTitle}</b>
                 </li>
                 <li>
                   <svg className="ic">
                     <use href="#i-check" />
                   </svg>
-                  <b>1,000 كريدي</b> فابور
+                  <b>{t.pricing.featureCredits1000}</b>
                 </li>
               </ul>
               <button
@@ -2415,7 +2580,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   setIsModalOpen(true);
                 }}
               >
-                <span>طلب Growth دابا</span>
+                <span>{t.pricing.orderGrowthBtn}</span>
                 <svg className="ic">
                   <use href="#i-bolt" />
                 </svg>
@@ -2428,43 +2593,39 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 <svg className="ic">
                   <use href="#i-store" />
                 </svg>
-                <span>Multi-Branch</span>
+                <span>{t.pricing.multiTitle}</span>
               </div>
               <div className="was">
-                <span className="launch">عرض الإطلاق</span>
-                <s className="lat">6,500 DH</s>
-                <span className="disc">-25%</span>
+                <span className="launch">
+                  {locale === "fr" ? "Promo" : locale === "es" ? "Promo" : "عرض"}
+                </span>
+                <s className="lat">5,500 DH</s>
+                <span className="disc">-30%</span>
               </div>
               <div className="pp">
-                <b className="lat">4,900</b>
-                <span>درهم</span>
+                <b className="lat">3,900</b>
+                <span>DH</span>
               </div>
-              <div className="per">للمحلات اللي عندها فروع</div>
+              <div className="per">{t.pricing.multiDesc}</div>
               <ul>
-                <li className="all">كل مميزات Growth، زائد:</li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  <b>3 ستاندات ذكية</b> لـ 3 فروع
+                <li className="all">
+                  {locale === "fr"
+                    ? "Tout le pack Growth, plus :"
+                    : locale === "es"
+                    ? "Todo el pack Growth, más:"
+                    : "كل مميزات Growth، بالإضافة إلى:"}
                 </li>
                 <li>
                   <svg className="ic">
                     <use href="#i-check" />
                   </svg>
-                  لوحة موحدة لجميع الفروع
+                  <b>{t.pricing.featureMultiBranches}</b>
                 </li>
                 <li>
                   <svg className="ic">
                     <use href="#i-check" />
                   </svg>
-                  <b>3,000 كريدي</b> فابور
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  دعم فني مخصص فـ الواتساب
+                  <b>{t.pricing.featureDedicatedSupport}</b>
                 </li>
               </ul>
               <button
@@ -2475,7 +2636,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   setIsModalOpen(true);
                 }}
               >
-                طلب Multi-Branch
+                {t.pricing.orderMultiBtn}
               </button>
             </div>
           </div>
@@ -2487,25 +2648,21 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 <svg className="ic">
                   <use href="#i-coins" />
                 </svg>
-                <span>كيفاش خدام الكريدي فـ Walink؟</span>
+                <span>{t.pricing.creditsTitle}</span>
               </h3>
-              <p>
-                إشعارات الطوابع اليومية وتسليم المكافآت ورادار القرب مجانية دائماً
-                وبلا حدود. الكريدي كيتستعمل فقط لإرسال حملات البروموسيون الجماعية أو
-                رسائل استرجاع الغابرين (1 رسالة = 1 كريدي).
-              </p>
+              <p>{t.pricing.creditsDesc}</p>
               <div className="topups">
                 <div>
                   <b className="lat">500</b>
-                  <small>بـ 100 DH</small>
+                  <small>100 DH</small>
                 </div>
                 <div>
                   <b className="lat">1,200</b>
-                  <small>بـ 200 DH</small>
+                  <small>200 DH</small>
                 </div>
                 <div>
                   <b className="lat">3,000</b>
-                  <small>بـ 400 DH</small>
+                  <small>400 DH</small>
                 </div>
               </div>
             </div>
@@ -2515,14 +2672,9 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 <svg className="ic">
                   <use href="#i-shield" />
                 </svg>
-                <span>خدمة Walink Care السنوية</span>
+                <span>{t.pricing.careTitle}</span>
               </h3>
-              <p>
-                العام الأول مشمول مجاناً فـ ثمن الباقة. ابتداءً من العام الثاني،
-                هناك اشتراك رمزي اختياري بـ <b>390 درهم فالعام</b> فقط لتغطية
-                استضافة خوادم Apple و Google Wallet والنسخ الاحتياطي المستمر لكافة
-                بيانات زبنائك.
-              </p>
+              <p>{t.pricing.careDesc}</p>
             </div>
           </div>
         </div>
@@ -2539,12 +2691,8 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 </svg>
               </div>
               <div>
-                <h3>طريقة الدفع (50/50)</h3>
-                <p>
-                  كنخدمو بمبدأ الثقة: <b>50% تسبيق</b> عند تأكيد الطلب ومعاينة
-                  التصميم الرقمي لكارط محلك، و <b>50% عند التوصيل</b> وتجربة الكارط
-                  فـ محلك والتأكد من أنها خدامة 100%.
-                </p>
+                <h3>{t.payment.termsTitle}</h3>
+                <p>{t.payment.termsDesc}</p>
               </div>
             </div>
 
@@ -2555,25 +2703,25 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                 </svg>
               </div>
               <div>
-                <h3>الضمانة ديالك</h3>
+                <h3>{t.payment.guaranteeTitle}</h3>
                 <ul className="gl">
                   <li>
                     <svg className="ic">
                       <use href="#i-check" />
                     </svg>
-                    كنديرو معاك اتصال كنعاونوك تشعّل السيستيم
+                    {t.payment.g1}
                   </li>
                   <li>
                     <svg className="ic">
                       <use href="#i-check" />
                     </svg>
-                    دعم فني دائم ومباشر فـ الواتساب
+                    {t.payment.g2}
                   </li>
                   <li>
                     <svg className="ic">
                       <use href="#i-check" />
                     </svg>
-                    توصيل مجاني لجميع مدن المغرب 🇲🇦
+                    {t.payment.g3}
                   </li>
                 </ul>
               </div>
@@ -2586,96 +2734,69 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       <section className="sec" id="faq">
         <div className="wrap">
           <div className="head c">
-            <h2 className="h2 silver">الأسئلة الشائعة</h2>
-            <p className="lead">كل ما تحتاج معرفته حول منصة Walink</p>
+            <h2 className="h2 silver">{t.faq.title}</h2>
+            <p className="lead">{t.faq.subtitle}</p>
           </div>
 
           <div className="faq">
             <details className="surface" open>
               <summary>
-                <span>واش الكليان كيحتاج يتيليشارجي شي تطبيق؟</span>
+                <span>{t.faq.q1}</span>
                 <svg className="ic">
                   <use href="#i-chev" />
                 </svg>
               </summary>
-              <div className="a">
-                <b>نهائياً!</b> الكليان كيسكاني الستاند بكاميرا التيليفون أو بلمسة
-                NFC فـ 5 ثواني، والكارط كتدخل أوتوماتيك لـ Apple Wallet (فـ iPhone) و
-                Google Wallet (فـ Android) وكتخدم بلا أنترنيت.
-              </div>
+              <div className="a">{t.faq.a1}</div>
             </details>
 
             <details className="surface">
               <summary>
-                <span>كيفاش خدام رادار 100 ميترو بلا ما يكون التيليفون مكونيكطي؟</span>
+                <span>{t.faq.q2}</span>
                 <svg className="ic">
                   <use href="#i-chev" />
                 </svg>
               </summary>
-              <div className="a">
-                Apple Wallet و Google Wallet مدمجين مباشرة مع نظام تحديد المواقع
-                الجغرافي (GPS) الأصلي ديال الهاتف. ملي كيدوز الكليان فـ محيط 100 متر
-                من المحل، التيليفون كيشعل راسو وكيطلع إشعار القرب فـ شاشة القفل
-                تلقائياً.
-              </div>
+              <div className="a">{t.faq.a2}</div>
             </details>
 
             <details className="surface">
               <summary>
-                <span>شنو كيوقع إيلا سالاو ليا نقط الكريدي؟</span>
+                <span>{t.faq.q3}</span>
                 <svg className="ic">
                   <use href="#i-chev" />
                 </svg>
               </summary>
-              <div className="a">
-                إشعارات الطوابع اليومية وتسليم المكافآت ورادار القرب مجانية دائماً
-                وبلا حدود. الكريدي كيتستعمل فقط لإرسال حملات البروموسيون الجماعية أو
-                رسائل استرجاع الغابرين، وثمن شحن الكريدي رخيص بزاف (500 رسالة بـ 100
-                درهم فقط).
-              </div>
+              <div className="a">{t.faq.a3}</div>
             </details>
 
             <details className="surface">
               <summary>
-                <span>شنو هو الستاند الذكي اللي كيوصل مع الباك؟</span>
+                <span>{t.faq.q4}</span>
                 <svg className="ic">
                   <use href="#i-chev" />
                 </svg>
               </summary>
-              <div className="a">
-                ستاند كاونتر فاخر مصنوع من الأكريليك المقاوم للماء والكسر، مدمج
-                برقيقة NFC ذكية ورمز QR مطبوع بدقة عالية، مصمم باسم محلك وألوان
-                علامتك التجارية، كتحطو فوق الكاونتر والكليان غير كيحط تيليفونو عليه
-                كياخد الكارط.
-              </div>
+              <div className="a">{t.faq.a4}</div>
             </details>
 
             <details className="surface">
               <summary>
-                <span>كيفاش كتكون طريقة الدفع والضمانة؟</span>
+                <span>{t.faq.q5}</span>
                 <svg className="ic">
                   <use href="#i-chev" />
                 </svg>
               </summary>
-              <div className="a">
-                كنخدمو بمبدأ الثقة 50/50: 50% تسبيق عند تأكيد الطلب ومعاينة التصميم
-                الرقمي لكارط محلك، و 50% الباقية عند استلام الستاند وتجربته في محلك.
-                والتوصيل مجاني لجميع مدن المغرب.
-              </div>
+              <div className="a">{t.faq.a5}</div>
             </details>
 
             <details className="surface">
               <summary>
-                <span>واش ممكن نجرب السيستيم قبل ما نشري؟</span>
+                <span>{t.faq.q6}</span>
                 <svg className="ic">
                   <use href="#i-chev" />
                 </svg>
               </summary>
-              <div className="a">
-                نعم! تقدر تجرب الديمو التفاعلي هنا فـ الصفحة، ولا تدخل تجرّب لوحة تحكم
-                التاجر الحقيقية (/m/cafe-atlas) وتشوف كيفاش كيطبع التاجر الطوابع
-                بالكاميرا فـ ثانية وحدة.
-              </div>
+              <div className="a">{t.faq.a6}</div>
             </details>
           </div>
         </div>
@@ -2685,12 +2806,12 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       <section className="final">
         <div className="wrap">
           <div className="surface box">
-            <h2 className="h2 silver">واجد تزيد المبيعات فـ محلك؟</h2>
+            <h2 className="h2 silver">{t.finalCta.title}</h2>
             <p className="lead" style={{ marginInline: "auto" }}>
-              طلب دابا واستفد من عرض الإطلاق. الستاند والكارط كيوجدو فـ 48 ساعة فقط.
+              {t.finalCta.desc}
             </p>
             <a href="#pricing" className="btn btn-em">
-              <span>طلب الباقة لمحلك دابا</span>
+              <span>{t.finalCta.btn}</span>
               <svg className="ic">
                 <use href="#i-bolt" />
               </svg>
@@ -2702,15 +2823,21 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       {/* Footer */}
       <footer>
         <div className="wrap">
-          <p>© {new Date().getFullYear()} Walink (walink.ma) • جميع الحقوق محفوظة لرواد الأعمال في المغرب 🇲🇦</p>
+          <p>
+            © {new Date().getFullYear()} Walink (walink.ma) • {t.footer.copyright}
+          </p>
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-            <a href="https://wa.me/212708107351" target="_blank" rel="noopener noreferrer">
-              واتساب الدعم (+212 708 107 351)
+            <a
+              href="https://wa.me/212708107351"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t.footer.supportWa}
             </a>
             <span>•</span>
-            <Link href="/admin">لوحة الإدارة</Link>
+            <Link href="/admin">{t.footer.adminLink}</Link>
             <span>•</span>
-            <Link href="/admin/outreach">استوديو المبيعات</Link>
+            <Link href="/admin/outreach">{t.footer.outreachLink}</Link>
           </div>
         </div>
       </footer>
@@ -2718,7 +2845,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
       {/* Mobile Sticky Bar */}
       <div className={`mbar ${showMbar ? "show" : ""}`} id="mbar">
         <p>
-          باك Growth الأكثر طلباً
+          {t.pricing.growthTitle} {t.pricing.popularBadge}
           <b className="lat">2,400 DH</b>
         </p>
         <button
@@ -2729,21 +2856,27 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
             setIsModalOpen(true);
           }}
         >
-          <span>طلب دابا</span>
+          <span>{t.nav.startNow}</span>
           <svg className="ic">
             <use href="#i-bolt" />
           </svg>
         </button>
       </div>
 
-      {/* Checkout Bottom Sheet Modal (Matches Reference 2nd Screenshot 100%) */}
+      {/* Checkout Bottom Sheet Modal */}
       <div className={`modal ${isModalOpen ? "open" : ""}`} id="modal">
         <div
           className="scrim"
           id="mScrim"
           role="button"
           tabIndex={0}
-          aria-label="إغلاق النافذة"
+          aria-label={
+            locale === "fr"
+              ? "Fermer"
+              : locale === "es"
+              ? "Cerrar"
+              : "إغلاق النافذة"
+          }
           onClick={() => setIsModalOpen(false)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -2758,7 +2891,13 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
             type="button"
             className="mx"
             id="mClose"
-            aria-label="إغلاق النافذة"
+            aria-label={
+              locale === "fr"
+                ? "Fermer"
+                : locale === "es"
+                ? "Cerrar"
+                : "إغلاق النافذة"
+            }
             onClick={() => setIsModalOpen(false)}
           >
             <svg className="ic">
@@ -2766,11 +2905,13 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
             </svg>
           </button>
 
-          <h3>تأكيد الطلب — باك {PLANS_DATA[modalPlan]?.title}</h3>
+          <h3>
+            {t.checkout.title} — {PLANS_DATA[modalPlan]?.title}
+          </h3>
 
           <div className="sel-plan">
             <div>
-              <b id="mPlanTitle">باك {PLANS_DATA[modalPlan]?.title}</b>
+              <b id="mPlanTitle">{PLANS_DATA[modalPlan]?.title}</b>
               <button
                 type="button"
                 onClick={() => {
@@ -2780,7 +2921,11 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                     ?.scrollIntoView({ behavior: "smooth" });
                 }}
               >
-                تبديل الباقة
+                {locale === "fr"
+                  ? "Changer de pack"
+                  : locale === "es"
+                  ? "Cambiar de pack"
+                  : "تغيير الباقة"}
               </button>
             </div>
             <span className="lat" id="mPlanPrice">
@@ -2791,72 +2936,81 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
           <form id="orderForm" onSubmit={handleOrderSubmit}>
             <div>
               <label className="fl" htmlFor="fShop">
-                اسم المحل التجاري *
+                {t.checkout.shopNameLabel}
               </label>
               <input
                 className={`inp ${modalErrors.shop ? "bad" : ""}`}
                 id="fShop"
                 type="text"
-                placeholder="مثال: Café Atlas"
+                placeholder={t.checkout.shopNamePlaceholder}
                 value={modalShop}
                 onChange={(e) => setModalShop(e.target.value)}
                 maxLength={30}
               />
-              <div className={`err ${modalErrors.shop ? "show" : ""}`} id="eShop">
-                يرجى كتابة اسم المحل
+              <div
+                className={`err ${modalErrors.shop ? "show" : ""}`}
+                id="eShop"
+              >
+                {t.checkout.shopNamePlaceholder}
               </div>
             </div>
 
             <div>
-              <div className="fl">نوع النشاط</div>
+              <div className="fl">{t.checkout.nicheLabel}</div>
               <div className="mchips" id="mNiches">
-                {Object.values(NICHES_DICT).map((n) => (
-                  <button
-                    key={n.id}
-                    className="chip"
-                    type="button"
-                    aria-checked={modalNiche === n.id}
-                    onClick={() => setModalNiche(n.id)}
-                  >
-                    {n.label}
-                  </button>
-                ))}
+                {Object.keys(NICHES_META).map((key) => {
+                  const info = t.niches[key] || t.niches.cafe;
+                  return (
+                    <button
+                      key={key}
+                      className="chip"
+                      type="button"
+                      aria-checked={modalNiche === key}
+                      onClick={() => setModalNiche(key)}
+                    >
+                      {info.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             <div>
               <label className="fl" htmlFor="fCity">
-                المدينة *
+                {t.checkout.cityLabel}
               </label>
               <input
                 className={`inp ${modalErrors.city ? "bad" : ""}`}
                 id="fCity"
                 type="text"
                 list="cities"
-                placeholder="الدار البيضاء"
+                placeholder={t.checkout.cityPlaceholder}
                 value={modalCity}
                 onChange={(e) => setModalCity(e.target.value)}
-                maxLength={30}
+                maxLength={40}
               />
               <datalist id="cities">
                 {MOROCCAN_CITIES.map((c) => (
                   <option key={c} value={c} />
                 ))}
               </datalist>
-              <div className={`err ${modalErrors.city ? "show" : ""}`} id="eCity">
-                يرجى كتابة المدينة
+              <div
+                className={`err ${modalErrors.city ? "show" : ""}`}
+                id="eCity"
+              >
+                {t.checkout.cityPlaceholder}
               </div>
             </div>
 
             <div>
               <label className="fl" htmlFor="fPhone">
-                رقم الهاتف / الواتساب (اختياري)
+                {t.checkout.phoneLabel}
               </label>
               <input
                 className="inp lat"
                 id="fPhone"
                 type="tel"
-                placeholder="06 00 00 00 00"
+                placeholder={t.checkout.phonePlaceholder}
                 value={modalPhone}
                 onChange={(e) => setModalPhone(e.target.value)}
                 maxLength={18}
@@ -2867,9 +3021,7 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
               <svg className="ic">
                 <use href="#i-shield" />
               </svg>
-              <span>
-                <b>50% تسبيق</b> لتأكيد التصميم، و <b>50% عند التوصيل</b>.
-              </span>
+              <span>{t.payment.termsDesc}</span>
             </div>
 
             <div className="send">
@@ -2883,15 +3035,10 @@ ${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}` : ""}
                   <use href="#i-wa" />
                 </svg>
                 <span>
-                  {isSubmitting
-                    ? "جاري الحفظ..."
-                    : "صيفط الطلب فـ واتساب (مباشرة)"}
+                  {isSubmitting ? "..." : t.checkout.confirmSubmitBtn}
                 </span>
               </button>
-              <p className="fine">
-                كتواصل مباشرة مع مسؤول المنصة لتأكيد تفاصيل اللوجو وألوان علامتك
-                التجارية.
-              </p>
+              <p className="fine">{t.checkout.securityNote}</p>
             </div>
           </form>
         </div>

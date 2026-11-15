@@ -490,3 +490,13 @@
 .walink-landing .send .btn{min-height:56px;font-size:16px}
 .walink-landing .send .btn svg{width:21px;height:21px}
 .walink-landing .fine{text-align:center;color:var(--dim);font-size:12.5px;margin-top:9px;line-height:1.6}
+
+/* ---------- LTR directionality for French (fr) & Spanish (es) ---------- */
+.walink-landing[dir="ltr"]{direction:ltr}
+.walink-landing[dir="ltr"] .mx{left:auto;right:12px}
+.walink-landing[dir="ltr"] .sheet h3{padding-left:0;padding-right:46px}
+.walink-landing[dir="ltr"] .ribbon{right:auto;left:22px}
+.walink-landing[dir="ltr"] .hv .phone{left:auto;right:3%;transform:perspective(1800px) rotateY(-14deg) rotateX(2deg)}
+.walink-landing[dir="ltr"] .hv .stand{right:auto;left:1%;transform:perspective(1200px) rotateY(18deg)}
+.walink-landing[dir="ltr"] .cmp th.tp,.walink-landing[dir="ltr"] .cmp td.tp{border-left:1px solid rgba(16,185,129,.25);border-right:1px solid rgba(16,185,129,.25)}
+

@@ -22,10 +22,13 @@ import {
   Code,
   X,
   Compass,
+  Coins,
 } from "lucide-react";
 import WalletPassPreview from "@/components/WalletPassPreview";
 import { formatTimeAgoArabic } from "@/lib/utils";
 import { soundEngine } from "@/lib/sound";
+import { Locale, translations } from "@/lib/i18n/translations";
+import { detectPhoneLocale } from "@/lib/i18n/context";
 
 interface CustomerData {
   id: string;
@@ -33,7 +36,11 @@ interface CustomerData {
   phone: string;
   memberCode: string;
   passSerial: string;
+  loyaltyType?: "STAMPS" | "CASHBACK";
   stamps: number;
+  cashbackBalance?: number;
+  totalCashbackEarned?: number;
+  totalSpent?: number;
   totalVisits: number;
   rewardsRedeemed: number;
   lastVisitAt: string | Date;
@@ -52,6 +59,9 @@ interface MerchantData {
   stampsRequired: number;
   rewardName: string;
   customerPrefix: string;
+  loyaltyMode?: string;
+  cashbackRate?: number;
+  currency?: string;
   latitude: number | null;
   longitude: number | null;
   radarMessage: string;
@@ -65,6 +75,8 @@ interface TransactionData {
   id: string;
   type: string;
   stampsDelta: number;
+  billAmount?: number | null;
+  cashbackDelta?: number | null;
   note: string | null;
   createdAt: string | Date;
 }
@@ -99,7 +111,7 @@ interface NotificationBanner {
   title: string;
   message: string;
   time: string;
-  icon: "stamp" | "reward" | "radar" | "gift";
+  icon: "stamp" | "reward" | "radar" | "gift" | "cashback";
   actionUrl?: string;
 }
 
@@ -112,8 +124,25 @@ export default function CustomerPassHubClient({
 }: CustomerPassHubClientProps) {
   const [customer, setCustomer] = useState<CustomerData>(initialCustomer);
   const [merchant] = useState<MerchantData>(initialMerchant);
-  const [transactions, setTransactions] = useState<TransactionData[]>(initialTransactions);
-  const [latestCampaign, setLatestCampaign] = useState<CampaignData | null>(initialCampaign);
+  const [transactions, setTransactions] =
+    useState<TransactionData[]>(initialTransactions);
+  const [latestCampaign, setLatestCampaign] =
+    useState<CampaignData | null>(initialCampaign);
+
+  // Mode B: Detect phone OS language on mount
+  const [locale, setLocale] = useState<Locale>("ar");
+
+  useEffect(() => {
+    const detected = detectPhoneLocale("fr");
+    setLocale(detected);
+  }, []);
+
+  const t = translations[locale] || translations.ar;
+  const isRTL = locale === "ar";
+
+  const isCashback = customer.loyaltyType === "CASHBACK";
+  const currency = merchant.currency || "DH";
+  const cashbackRate = merchant.cashbackRate || 10;
 
   // Notifications banner stack
   const [activeBanner, setActiveBanner] = useState<NotificationBanner | null>(null);
@@ -129,11 +158,14 @@ export default function CustomerPassHubClient({
 
   // Push notifications state
   const [notificationsEnabled, setNotificationsEnabled] = useState(
-    typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted"
+    typeof window !== "undefined" &&
+      "Notification" in window &&
+      Notification.permission === "granted"
   );
 
   const prevStampsRef = useRef<number>(customer.stamps);
   const prevRewardsRef = useRef<number>(customer.rewardsRedeemed);
+  const prevCashbackRef = useRef<number>(customer.cashbackBalance || 0);
   const prevCampaignIdRef = useRef<string | null>(initialCampaign?.id || null);
   const lastKnownNotificationIdRef = useRef<string | null>(
     initialNotifications.length > 0 ? initialNotifications[0].id : null
@@ -156,7 +188,7 @@ export default function CustomerPassHubClient({
   // Trigger floating iOS 18 glass notification banner
   const showBanner = useCallback((banner: NotificationBanner) => {
     setActiveBanner(banner);
-    if (banner.icon === "reward") {
+    if (banner.icon === "reward" || banner.icon === "cashback") {
       soundEngine.playRewardChime();
     } else if (banner.icon === "radar") {
       soundEngine.playRadarPing();
@@ -174,15 +206,36 @@ export default function CustomerPassHubClient({
     const timer = setTimeout(() => {
       showBanner({
         id: "welcome-stamp",
-        title: `مرحباً بك في ${merchant.name}! 🎁`,
-        message: "حصلت على أول طابع هدية ترحيبية على بطاقة الوفاء ديالك.",
+        title:
+          locale === "ar"
+            ? `مرحباً بك في ${merchant.name}! 🎁`
+            : locale === "fr"
+            ? `Bienvenue chez ${merchant.name} ! 🎁`
+            : `¡Bienvenido a ${merchant.name}! 🎁`,
+        message: isCashback
+          ? locale === "ar"
+            ? `تم تفعيل بطاقة الكاش باك (${cashbackRate}%). رصيدك المتاح: ${Number(
+                customer.cashbackBalance || 0
+              ).toFixed(2)} ${currency}.`
+            : locale === "fr"
+            ? `Carte cashback (${cashbackRate}%) activée. Solde disponible : ${Number(
+                customer.cashbackBalance || 0
+              ).toFixed(2)} ${currency}.`
+            : `Tarjeta cashback (${cashbackRate}%) activada. Saldo disponible: ${Number(
+                customer.cashbackBalance || 0
+              ).toFixed(2)} ${currency}.`
+          : locale === "ar"
+          ? "حصلت على أول ختم هدية ترحيبية على بطاقة الولاء الخاصة بك."
+          : locale === "fr"
+          ? "Vous avez reçu votre premier tampon de bienvenue offert."
+          : "Has recibido tu primer sello de bienvenida de regalo.",
         time: "الآن",
-        icon: "gift",
+        icon: isCashback ? "cashback" : "gift",
       });
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [merchant.name, showBanner]);
+  }, [merchant.name, showBanner, isCashback, cashbackRate, customer.cashbackBalance, currency, locale]);
 
   // Real-time Background Polling every 2.5 seconds
   useEffect(() => {
@@ -190,7 +243,6 @@ export default function CustomerPassHubClient({
     const controller = new AbortController();
 
     const fetchLatestPass = async () => {
-      // Don't poll if page is hidden/tab switched
       if (document.hidden) return;
 
       try {
@@ -207,6 +259,8 @@ export default function CustomerPassHubClient({
           const oldStamps = prevStampsRef.current;
           const newRewards = data.customer.rewardsRedeemed;
           const oldRewards = prevRewardsRef.current;
+          const newCashback = Number(data.customer.cashbackBalance || 0);
+          const oldCashback = prevCashbackRef.current;
 
           // 1. Detect New Stamp Added
           if (newStamps > oldStamps) {
@@ -214,16 +268,19 @@ export default function CustomerPassHubClient({
             if (newStamps >= merchant.stampsRequired) {
               showBanner({
                 id: `reward-unlocked-${Date.now()}`,
-                title: "🏆 مبروك! الكادو ديالك واجد!",
-                message: `جمعتي كاع الطوابع! خود المكافأة ديالك: ${merchant.rewardName}`,
+                title: t.pass.rewardUnlockedTitle,
+                message: `${t.pass.rewardUnlockedBody} (${merchant.rewardName})`,
                 time: "الآن",
                 icon: "reward",
               });
             } else {
               showBanner({
                 id: `stamp-added-${Date.now()}`,
-                title: "طابع جديد تزاد فـ الكارط! ☕️",
-                message: `وصلتي لـ ${newStamps} من ${merchant.stampsRequired} طوابع.`,
+                title: t.pass.stampAddedTitle,
+                message: t.pass.stampAddedBody.replace(
+                  "{left}",
+                  String(merchant.stampsRequired - newStamps)
+                ),
                 time: "الآن",
                 icon: "stamp",
               });
@@ -238,7 +295,7 @@ export default function CustomerPassHubClient({
             showBanner({
               id: `reward-redeemed-${Date.now()}`,
               title: "🎁 بصحتك المكافأة!",
-              message: `تم تسليم ${merchant.rewardName} بنجاح. تم تجديد الكارط لمواصلة جمع الطوابع.`,
+              message: `تم تسليم ${merchant.rewardName} بنجاح. تم تجديد البطاقة لمواصلة جمع الأختام.`,
               time: "الآن",
               icon: "reward",
             });
@@ -246,29 +303,71 @@ export default function CustomerPassHubClient({
             prevRewardsRef.current = newRewards;
           }
 
-          // 3. Detect New Broadcast Campaign Push
-          if (data.latestCampaign && data.latestCampaign.id !== prevCampaignIdRef.current) {
+          // 3. Detect Cashback Earned or Redeemed
+          if (Math.abs(newCashback - oldCashback) >= 0.01) {
+            if (newCashback > oldCashback) {
+              const gained = (newCashback - oldCashback).toFixed(2);
+              showBanner({
+                id: `cashback-earned-${Date.now()}`,
+                title: t.pass.cashbackEarnedTitle,
+                message: t.pass.cashbackEarnedBody
+                  .replace("{amount}", gained)
+                  .replace("{rate}", String(cashbackRate))
+                  .replace("{currency}", currency)
+                  .replace("{balance}", newCashback.toFixed(2)),
+                time: "الآن",
+                icon: "cashback",
+              });
+            } else {
+              const spent = (oldCashback - newCashback).toFixed(2);
+              showBanner({
+                id: `cashback-redeemed-${Date.now()}`,
+                title: t.pass.cashbackRedeemedTitle,
+                message: t.pass.cashbackRedeemedBody
+                  .replace("{amount}", spent)
+                  .replace("{currency}", currency)
+                  .replace("{balance}", newCashback.toFixed(2)),
+                time: "الآن",
+                icon: "cashback",
+              });
+            }
+            prevCashbackRef.current = newCashback;
+          }
+
+          // 4. Detect Broadcast Campaign Push
+          if (
+            data.latestCampaign &&
+            data.latestCampaign.id !== prevCampaignIdRef.current
+          ) {
             prevCampaignIdRef.current = data.latestCampaign.id;
             showBanner({
               id: `promo-broadcast-${data.latestCampaign.id}`,
-              title: `📣 ${data.latestCampaign.title || "عرض حصري جديد!"}`,
+              title: `📣 ${data.latestCampaign.title || "عرض خاص جديد!"}`,
               message: data.latestCampaign.message,
               time: "الآن",
               icon: "reward",
             });
           }
 
-          // 4. Detect New Persisted Push Notifications from Queue (Win-Back, Review, Birthday, Radar, Stamp)
-          if (Array.isArray(data.notifications) && data.notifications.length > 0) {
+          // 5. Detect Persisted Queue Notifications
+          if (
+            Array.isArray(data.notifications) &&
+            data.notifications.length > 0
+          ) {
             const latestNotif = data.notifications[0] as NotificationData;
             if (lastKnownNotificationIdRef.current === null) {
               lastKnownNotificationIdRef.current = latestNotif.id;
             } else if (latestNotif.id !== lastKnownNotificationIdRef.current) {
               lastKnownNotificationIdRef.current = latestNotif.id;
 
-              let bannerIcon: "stamp" | "reward" | "radar" | "gift" = "gift";
+              let bannerIcon: "stamp" | "reward" | "radar" | "gift" | "cashback" =
+                "gift";
               if (latestNotif.type === "STAMP") bannerIcon = "stamp";
-              else if (latestNotif.type === "REWARD" || latestNotif.type === "REVIEW") bannerIcon = "reward";
+              else if (
+                latestNotif.type === "REWARD" ||
+                latestNotif.type === "REVIEW"
+              )
+                bannerIcon = "reward";
               else if (latestNotif.type === "RADAR") bannerIcon = "radar";
 
               showBanner({
@@ -279,21 +378,6 @@ export default function CustomerPassHubClient({
                 icon: bannerIcon,
                 actionUrl: latestNotif.actionUrl || undefined,
               });
-
-              // Also trigger native OS push through Service Worker if active
-              if (
-                typeof window !== "undefined" &&
-                "serviceWorker" in navigator &&
-                navigator.serviceWorker.controller
-              ) {
-                navigator.serviceWorker.controller.postMessage({
-                  type: "SHOW_NOTIFICATION",
-                  title: latestNotif.title,
-                  body: latestNotif.body,
-                  url: latestNotif.actionUrl || window.location.href,
-                  icon: "/favicon.ico",
-                });
-              }
             }
           }
 
@@ -315,12 +399,20 @@ export default function CustomerPassHubClient({
       controller.abort();
       clearInterval(interval);
     };
-  }, [customer.passSerial, merchant.stampsRequired, merchant.rewardName, showBanner]);
+  }, [
+    customer.passSerial,
+    merchant.stampsRequired,
+    merchant.rewardName,
+    cashbackRate,
+    currency,
+    showBanner,
+    t,
+  ]);
 
   // Handle Push Permission
   const handleEnablePush = async () => {
     if (typeof window === "undefined" || !("Notification" in window)) {
-      alert("المتصفح ديالك لا يدعم الإشعارات المباشرة");
+      alert("المتصفح لا يدعم الإشعارات المباشرة");
       return;
     }
 
@@ -329,7 +421,6 @@ export default function CustomerPassHubClient({
       if (permission === "granted") {
         setNotificationsEnabled(true);
 
-        // Notify server
         await fetch(`/api/pass/${customer.passSerial}/subscribe`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -343,20 +434,11 @@ export default function CustomerPassHubClient({
         showBanner({
           id: "push-granted",
           title: "تم تفعيل الإشعارات بنجاح 🔔",
-          message: "غادي يوصلك إشعار فـ شاشة التيليفون كلما تزاد ليك طابع أو نزل عرض خاص.",
+          message:
+            "ستتلقى إشعاراً فورياً على شاشة هاتفك عند إضافة ختم، كاش باك، أو عروض خاصة.",
           time: "الآن",
           icon: "stamp",
         });
-
-        // Test browser notification
-        try {
-          new Notification(merchant.name, {
-            body: `الكارط ديالك واجدة! مكافأة ${merchant.rewardName} فـ انتظارك.`,
-            icon: "/favicon.ico",
-          });
-        } catch (notifErr) {
-          console.warn("Desktop notification trigger warning:", notifErr);
-        }
       }
     } catch (err) {
       console.error("Notification permission error:", err);
@@ -368,7 +450,6 @@ export default function CustomerPassHubClient({
     setSimulatingRadar(true);
 
     try {
-      // Trigger radar server-side to persist in Notification queue
       await fetch(`/api/pass/${customer.passSerial}/radar`, {
         method: "POST",
         signal: AbortSignal.timeout(8000),
@@ -395,9 +476,12 @@ export default function CustomerPassHubClient({
     setIsWalletModalOpen(true);
     if (!pkpassJson) {
       try {
-        const res = await fetch(`/api/pass/${customer.passSerial}/pkpass`, {
-          signal: AbortSignal.timeout(8000),
-        });
+        const res = await fetch(
+          `/api/pass/${customer.passSerial}/pkpass?lang=${locale}`,
+          {
+            signal: AbortSignal.timeout(8000),
+          }
+        );
         const data = await res.json();
         setPkpassJson(data.passJson);
       } catch (err) {
@@ -409,7 +493,10 @@ export default function CustomerPassHubClient({
   const isRewardReady = customer.stamps >= merchant.stampsRequired;
 
   return (
-    <div className="w-full max-w-[430px] mx-auto min-h-screen bg-[#0B0F17] flex flex-col justify-between p-4 sm:p-5 text-white selection:bg-emerald-500 selection:text-black relative">
+    <div
+      dir={isRTL ? "rtl" : "ltr"}
+      className="w-full max-w-[430px] mx-auto min-h-screen bg-[#0B0F17] flex flex-col justify-between p-4 sm:p-5 text-white selection:bg-emerald-500 selection:text-black relative"
+    >
       {/* iOS 18 Floating Glass Notification Banner Stack */}
       {activeBanner && (
         <div className="fixed top-3 left-0 right-0 z-50 px-4 max-w-[430px] mx-auto animate-in slide-in-from-top-4 duration-300">
@@ -417,6 +504,8 @@ export default function CustomerPassHubClient({
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 flex items-center justify-center flex-shrink-0 shadow-md">
               {activeBanner.icon === "reward" ? (
                 <Gift className="w-5 h-5 animate-spin" />
+              ) : activeBanner.icon === "cashback" ? (
+                <Coins className="w-5 h-5 animate-bounce" />
               ) : activeBanner.icon === "radar" ? (
                 <MapPin className="w-5 h-5 animate-pulse" />
               ) : (
@@ -424,7 +513,7 @@ export default function CustomerPassHubClient({
               )}
             </div>
 
-            <div className="flex-1 min-w-0 text-right">
+            <div className={`flex-1 min-w-0 ${isRTL ? "text-right" : "text-left"}`}>
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs text-white truncate">
                   {activeBanner.title}
@@ -463,8 +552,8 @@ export default function CustomerPassHubClient({
       )}
 
       {/* Main Container */}
-      <div className="space-y-5 pt-3">
-        {/* Top Header: Merchant, Customer Name & Member Code */}
+      <div className="space-y-4 pt-1">
+        {/* Top Header: Merchant, Customer Name & Language Switcher */}
         <div className="flex items-center justify-between pb-1">
           <div className="flex items-center gap-2">
             <div
@@ -476,33 +565,86 @@ export default function CustomerPassHubClient({
             <div>
               <h1 className="font-bold text-sm text-white">{merchant.name}</h1>
               <span className="text-[11px] text-emerald-400 font-medium">
-                مرحباً {merchant.customerPrefix} {customer.name} 👋
+                {merchant.customerPrefix} {customer.name} 👋
               </span>
             </div>
           </div>
 
-          <div className="text-left bg-white/5 border border-white/10 px-3 py-1 rounded-xl">
-            <span className="text-[9px] text-white/50 block">عضوية</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">
-              #{customer.memberCode}
-            </span>
+          <div className="flex items-center gap-1.5">
+            {/* Corner Language Selector Pill */}
+            <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full p-0.5 text-[10px] font-semibold">
+              <button
+                type="button"
+                onClick={() => setLocale("ar")}
+                className={`px-1.5 py-0.5 rounded-full transition ${
+                  locale === "ar"
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                عربي
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale("fr")}
+                className={`px-1.5 py-0.5 rounded-full transition ${
+                  locale === "fr"
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                FR
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale("es")}
+                className={`px-1.5 py-0.5 rounded-full transition ${
+                  locale === "es"
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                ES
+              </button>
+            </div>
+
+            <div className="text-start bg-white/5 border border-white/10 px-2.5 py-1 rounded-xl">
+              <span className="text-xs font-mono font-bold text-emerald-400">
+                #{customer.memberCode}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Golden Reward Ready Banner */}
-        {isRewardReady && (
+        {/* Glowing Status Banner when Cashback > 0 */}
+        {isCashback && Number(customer.cashbackBalance || 0) > 0 && (
+          <div className="p-3.5 rounded-3xl bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-amber-500/20 border border-amber-400/30 text-amber-300 text-xs flex items-center gap-2.5 shadow-lg shadow-amber-500/10">
+            <Coins className="w-5 h-5 flex-shrink-0 text-amber-300 animate-pulse" />
+            <span className="leading-relaxed font-semibold">
+              {t.pass.cashbackBanner
+                .replace("{balance}", Number(customer.cashbackBalance).toFixed(2))
+                .replace("{currency}", currency)}
+            </span>
+          </div>
+        )}
+
+        {/* Golden Reward Ready Banner for Stamps */}
+        {!isCashback && isRewardReady && (
           <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/20 via-amber-500/30 to-amber-600/20 border-2 border-amber-400/50 text-white shadow-xl animate-pulse">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold flex-shrink-0 shadow-lg shadow-amber-500/30">
                 <Gift className="w-6 h-6 animate-bounce" />
               </div>
-              <div className="text-right">
+              <div className={isRTL ? "text-right" : "text-left"}>
                 <h2 className="font-bold text-sm text-amber-300">
-                  🎉 مبروك! الكادو ديالك واجد!
+                  {t.pass.rewardUnlockedTitle}
                 </h2>
                 <p className="text-xs text-white/90 mt-0.5">
-                  وصلتي لـ {customer.stamps} طوابع! وري هاد الكارط فـ الكونطوار وخود:{" "}
-                  <strong className="underline text-amber-200">{merchant.rewardName}</strong>.
+                  وصلت إلى {customer.stamps} أختام! أظهر هذه البطاقة للكاشير لاستلام:{" "}
+                  <strong className="underline text-amber-200">
+                    {merchant.rewardName}
+                  </strong>
+                  .
                 </p>
               </div>
             </div>
@@ -516,41 +658,53 @@ export default function CustomerPassHubClient({
             niche={merchant.niche}
             primaryColor={merchant.primaryColor}
             bgGradient={merchant.bgGradient}
+            loyaltyType={customer.loyaltyType || "STAMPS"}
             stamps={customer.stamps}
             stampsRequired={merchant.stampsRequired}
             rewardName={merchant.rewardName}
+            cashbackRate={cashbackRate}
+            cashbackBalance={customer.cashbackBalance || 0}
+            totalCashbackEarned={customer.totalCashbackEarned || 0}
+            currency={currency}
             memberCode={customer.memberCode}
             qrValue={`WALINK:${customer.passSerial}`}
             compact={false}
+            locale={locale}
           />
         </div>
 
         {/* Google Maps 5-Star Review Prompt (Conditional) */}
-        {merchant.autoReview && (isRewardReady || customer.rewardsRedeemed > 0) && (
-          <div className="glass-panel p-4 rounded-3xl border border-amber-500/30 bg-amber-500/5 space-y-2 text-right">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span>عجباتك الخدمة فـ {merchant.name}؟</span>
-              </div>
-              <span className="text-[10px] text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-md">
-                Google Maps
-              </span>
-            </div>
-            <p className="text-xs text-white/80 leading-relaxed">
-              شجعنا وخلي لينا تقييم 5 نجوم على خرائط جوجل، وساعد الناس يكتشفونا! ⭐
-            </p>
-            <a
-              href={merchant.googleMapsUrl || "https://maps.google.com"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-md shadow-amber-400/20"
+        {merchant.autoReview &&
+          (isRewardReady || customer.rewardsRedeemed > 0) && (
+            <div
+              className={`glass-panel p-4 rounded-3xl border border-amber-500/30 bg-amber-500/5 space-y-2 ${
+                isRTL ? "text-right" : "text-left"
+              }`}
             >
-              <span>تقييم في خرائط Google</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
-        )}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <span>هل أعجبتك الخدمة في {merchant.name}؟</span>
+                </div>
+                <span className="text-[10px] text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-md">
+                  Google Maps
+                </span>
+              </div>
+              <p className="text-xs text-white/80 leading-relaxed">
+                ساعدنا بتقييم متجرنا على خرائط جوجل بـ 5 نجوم لمساعدة الآخرين على
+                اكتشافنا! ⭐
+              </p>
+              <a
+                href={merchant.googleMapsUrl || "https://maps.google.com"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-md shadow-amber-400/20"
+              >
+                <span>تقييم في خرائط Google</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          )}
 
         {/* Wallet Action Buttons (Apple / Google / WebPass) */}
         <div className="grid grid-cols-2 gap-2.5">
@@ -560,7 +714,7 @@ export default function CustomerPassHubClient({
             className="py-3 px-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-md"
           >
             <Smartphone className="w-4 h-4 text-white" />
-            <span>أضف إلى المحفظة</span>
+            <span>{t.pass.addToAppleWallet}</span>
           </button>
 
           <button
@@ -604,8 +758,8 @@ export default function CustomerPassHubClient({
               </span>
             </div>
 
-            <p className="text-[11px] text-white/60 leading-relaxed text-right">
-              كلما اقتربت بـ 100 متر من {merchant.name}، غادي يوصلك إشعار تلقائي فـ شاشة الهاتف للتذكير بطوابعك.
+            <p className={`text-[11px] text-white/60 leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+              كلما اقتربت بـ 100 متر من {merchant.name}، يوقظ الهاتف شاشتك بإشعار لتذكيرك برصيدك ومكافآتك.
             </p>
 
             <button
@@ -614,34 +768,65 @@ export default function CustomerPassHubClient({
               onClick={handleSimulateRadar}
               className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold flex items-center justify-center gap-2 transition disabled:opacity-50"
             >
-              <Compass className={`w-4 h-4 text-emerald-400 ${simulatingRadar ? "animate-spin" : ""}`} />
-              <span>{simulatingRadar ? "جاري قياس المسافة..." : "جرّب رادار الـ 100 متر دابا"}</span>
+              <Compass
+                className={`w-4 h-4 text-emerald-400 ${
+                  simulatingRadar ? "animate-spin" : ""
+                }`}
+              />
+              <span>
+                {simulatingRadar ? "جاري قياس المسافة..." : "جرّب رادار الـ 100 متر الآن"}
+              </span>
             </button>
           </div>
         )}
 
         {/* Pass Details & Recent Activity Drawer */}
-        <div className="glass-panel p-5 rounded-3xl border border-white/10 space-y-4 text-right">
+        <div className={`glass-panel p-5 rounded-3xl border border-white/10 space-y-4 ${isRTL ? "text-right" : "text-left"}`}>
           <h2 className="text-xs font-bold text-white flex items-center justify-between pb-2 border-b border-white/10">
-            <span>سجل الزيارات والنشاط</span>
+            <span>{t.pass.activityDrawerTitle}</span>
             <span className="text-[10px] font-mono text-white/50">
-              {customer.totalVisits} زيارة مسجلة
+              {customer.totalVisits} {t.pass.totalVisits}
             </span>
           </h2>
 
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
-              <span className="text-[10px] text-white/50 block">آخر زيارة:</span>
-              <span className="font-semibold text-white">
-                {formatTimeAgoArabic(customer.lastVisitAt)}
-              </span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
-              <span className="text-[10px] text-white/50 block">المكافآت المستفاد منها:</span>
-              <span className="font-mono font-bold text-amber-400">
-                {customer.rewardsRedeemed} مكافأة
-              </span>
-            </div>
+            {isCashback ? (
+              <>
+                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
+                  <span className="text-[10px] text-white/50 block">
+                    {t.pass.balanceAvailable}:
+                  </span>
+                  <span className="font-mono font-bold text-amber-300">
+                    {Number(customer.cashbackBalance || 0).toFixed(2)} {currency}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
+                  <span className="text-[10px] text-white/50 block">
+                    {t.pass.totalEarned}
+                  </span>
+                  <span className="font-mono font-bold text-emerald-400">
+                    {Number(customer.totalCashbackEarned || 0).toFixed(2)} {currency}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
+                  <span className="text-[10px] text-white/50 block">
+                    {t.pass.lastVisitLabel}:
+                  </span>
+                  <span className="font-semibold text-white">
+                    {formatTimeAgoArabic(customer.lastVisitAt)}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
+                  <span className="text-[10px] text-white/50 block">المكافآت المستفاد منها:</span>
+                  <span className="font-mono font-bold text-amber-400">
+                    {customer.rewardsRedeemed} مكافأة
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Transactions List */}
@@ -662,7 +847,7 @@ export default function CustomerPassHubClient({
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                     <div>
                       <span className="font-medium text-white block">
-                        {tx.note || (tx.type === "STAMP_ADDED" ? "إضافة طابع" : tx.type)}
+                        {tx.note || tx.type}
                       </span>
                       <span className="text-[10px] text-white/40">
                         {formatTimeAgoArabic(tx.createdAt)}
@@ -672,10 +857,15 @@ export default function CustomerPassHubClient({
 
                   <span
                     className={`font-mono font-bold text-xs ${
-                      tx.stampsDelta > 0 ? "text-emerald-400" : "text-amber-400"
+                      (tx.cashbackDelta && tx.cashbackDelta > 0) ||
+                      tx.stampsDelta > 0
+                        ? "text-emerald-400"
+                        : "text-amber-400"
                     }`}
                   >
-                    {tx.stampsDelta > 0 ? `+${tx.stampsDelta}` : tx.stampsDelta} طابع
+                    {tx.cashbackDelta
+                      ? `${tx.cashbackDelta > 0 ? "+" : ""}${tx.cashbackDelta} ${currency}`
+                      : `${tx.stampsDelta > 0 ? "+" : ""}${tx.stampsDelta} ختم`}
                   </span>
                 </div>
               ))
@@ -705,7 +895,7 @@ export default function CustomerPassHubClient({
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-bold text-base text-white">حفظ الكارط فـ الهاتف</h3>
+                <h3 className="font-bold text-base text-white">حفظ البطاقة في الهاتف</h3>
               </div>
               <button
                 type="button"
@@ -717,7 +907,7 @@ export default function CustomerPassHubClient({
             </div>
 
             {/* Smart PWA Install Guide */}
-            <div className="space-y-3 text-right">
+            <div className={`space-y-3 ${isRTL ? "text-right" : "text-left"}`}>
               <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
                 <span className="font-bold text-xs text-emerald-400 block">
                   🍎 على هواتف iPhone (Safari):
