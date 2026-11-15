@@ -120,6 +120,8 @@ export default function CustomerPassHubClient({
   );
 
   const prevStampsRef = useRef<number>(customer.stamps);
+  const prevRewardsRef = useRef<number>(customer.rewardsRedeemed);
+  const prevCampaignIdRef = useRef<string | null>(initialCampaign?.id || null);
 
   // Trigger floating iOS 18 glass notification banner
   const showBanner = useCallback((banner: NotificationBanner) => {
@@ -152,7 +154,7 @@ export default function CustomerPassHubClient({
     return () => clearTimeout(timer);
   }, [merchant.name, showBanner]);
 
-  // Real-time Background Polling every 3 seconds
+  // Real-time Background Polling every 2.5 seconds
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
@@ -173,9 +175,11 @@ export default function CustomerPassHubClient({
         if (isMounted && data.customer) {
           const newStamps = data.customer.stamps;
           const oldStamps = prevStampsRef.current;
+          const newRewards = data.customer.rewardsRedeemed;
+          const oldRewards = prevRewardsRef.current;
 
+          // 1. Detect New Stamp Added
           if (newStamps > oldStamps) {
-            // New stamp detected!
             prevStampsRef.current = newStamps;
             if (newStamps >= merchant.stampsRequired) {
               showBanner({
@@ -194,6 +198,34 @@ export default function CustomerPassHubClient({
                 icon: "stamp",
               });
             }
+          } else {
+            prevStampsRef.current = newStamps;
+          }
+
+          // 2. Detect Reward Redeemed
+          if (newRewards > oldRewards) {
+            prevRewardsRef.current = newRewards;
+            showBanner({
+              id: `reward-redeemed-${Date.now()}`,
+              title: "🎁 بصحتك المكافأة!",
+              message: `تم تسليم ${merchant.rewardName} بنجاح. تم تجديد الكارط لمواصلة جمع الطوابع.`,
+              time: "الآن",
+              icon: "reward",
+            });
+          } else {
+            prevRewardsRef.current = newRewards;
+          }
+
+          // 3. Detect New Broadcast Campaign Push
+          if (data.latestCampaign && data.latestCampaign.id !== prevCampaignIdRef.current) {
+            prevCampaignIdRef.current = data.latestCampaign.id;
+            showBanner({
+              id: `promo-broadcast-${data.latestCampaign.id}`,
+              title: `📣 ${data.latestCampaign.title || "عرض حصري جديد!"}`,
+              message: data.latestCampaign.message,
+              time: "الآن",
+              icon: "reward",
+            });
           }
 
           setCustomer(data.customer);
@@ -207,7 +239,7 @@ export default function CustomerPassHubClient({
       }
     };
 
-    const interval = setInterval(fetchLatestPass, 3000);
+    const interval = setInterval(fetchLatestPass, 2500);
 
     return () => {
       isMounted = false;
