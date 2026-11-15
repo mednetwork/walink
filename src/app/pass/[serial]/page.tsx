@@ -1,0 +1,149 @@
+import React from "react";
+import { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { AlertCircle, ArrowRight } from "lucide-react";
+import prisma from "@/lib/prisma";
+import CustomerPassHubClient from "@/components/CustomerPassHubClient";
+
+interface PassPageProps {
+  params: {
+    serial: string;
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: PassPageProps): Promise<Metadata> {
+  const { serial } = params;
+
+  const customer = await prisma.customer.findUnique({
+    where: { passSerial: serial },
+    select: {
+      name: true,
+      memberCode: true,
+      merchant: {
+        select: { name: true, city: true, rewardName: true },
+      },
+    },
+  });
+
+  if (!customer) {
+    return {
+      title: "بطاقة الوفاء غير موجودة | Walink",
+    };
+  }
+
+  return {
+    title: `بطاقة ${customer.name} - ${customer.merchant.name} (${customer.merchant.city}) | Walink`,
+    description: `بطاقة الوفاء الرقمية الخاصة بـ ${customer.name} في ${customer.merchant.name}. كود العضوية #${customer.memberCode}.`,
+  };
+}
+
+export default async function CustomerPassPage({ params }: PassPageProps) {
+  const { serial } = params;
+
+  const customer = await prisma.customer.findUnique({
+    where: { passSerial: serial },
+    include: {
+      merchant: true,
+      transactions: {
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      },
+    },
+  });
+
+  if (!customer) {
+    return (
+      <div className="min-h-screen bg-[#0B0F17] text-white flex items-center justify-center p-4">
+        <div className="w-full max-w-md glass-panel p-8 rounded-3xl text-center space-y-4 border border-white/10">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 mx-auto flex items-center justify-center">
+            <AlertCircle className="w-7 h-7" />
+          </div>
+          <h1 className="text-xl font-bold text-white">بطاقة الوفاء غير موجودة</h1>
+          <p className="text-xs text-white/60 leading-relaxed">
+            تعذر العثور على بطاقة الوفاء المطلوبة. تأكد من صحة الرابط أو قم بالتسجيل من جديد.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition"
+            >
+              <ArrowRight className="w-4 h-4" />
+              <span>العودة للرئيسية</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fetch latest campaign for this merchant if any
+  const latestCampaign = await prisma.campaign.findFirst({
+    where: { merchantId: customer.merchantId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Serialize dates for Client Component
+  const serializedCustomer = {
+    id: customer.id,
+    name: customer.name,
+    phone: customer.phone,
+    memberCode: customer.memberCode,
+    passSerial: customer.passSerial,
+    stamps: customer.stamps,
+    totalVisits: customer.totalVisits,
+    rewardsRedeemed: customer.rewardsRedeemed,
+    lastVisitAt: customer.lastVisitAt.toISOString(),
+    walletType: customer.walletType,
+    pushSubscription: customer.pushSubscription,
+  };
+
+  const serializedMerchant = {
+    id: customer.merchant.id,
+    name: customer.merchant.name,
+    slug: customer.merchant.slug,
+    niche: customer.merchant.niche,
+    city: customer.merchant.city,
+    primaryColor: customer.merchant.primaryColor,
+    bgGradient: customer.merchant.bgGradient,
+    stampsRequired: customer.merchant.stampsRequired,
+    rewardName: customer.merchant.rewardName,
+    customerPrefix: customer.merchant.customerPrefix,
+    latitude: customer.merchant.latitude,
+    longitude: customer.merchant.longitude,
+    radarMessage: customer.merchant.radarMessage,
+    googleMapsUrl: customer.merchant.googleMapsUrl,
+    autoReview: customer.merchant.autoReview,
+    autoRadar: customer.merchant.autoRadar,
+    autoWinback: customer.merchant.autoWinback,
+  };
+
+  const serializedTransactions = customer.transactions.map((tx) => ({
+    id: tx.id,
+    type: tx.type,
+    stampsDelta: tx.stampsDelta,
+    note: tx.note,
+    createdAt: tx.createdAt.toISOString(),
+  }));
+
+  const serializedCampaign = latestCampaign
+    ? {
+        id: latestCampaign.id,
+        title: latestCampaign.title,
+        message: latestCampaign.message,
+        createdAt: latestCampaign.createdAt.toISOString(),
+      }
+    : null;
+
+  return (
+    <CustomerPassHubClient
+      initialCustomer={serializedCustomer}
+      initialMerchant={serializedMerchant}
+      initialTransactions={serializedTransactions}
+      initialCampaign={serializedCampaign}
+    />
+  );
+}
+

@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Merchant {
+  id              String        @id @default(cuid())
+  slug            String        @unique // e.g., "cafe-atlas"
+  name            String        // e.g., "Café Atlas"
+  niche           String        @default("cafe") // cafe, barber, snack, wash, beauty, laundry, other
+  city            String        @default("الدار البيضاء")
+  phone           String?
+  pinCode         String        @default("1234") // PIN for merchant dashboard login
+  logoIcon        String        @default("coffee")
+  primaryColor    String        @default("#5b3519")
+  bgGradient      String        @default("linear-gradient(150deg,#6b4226 0%,#3d2414 100%)")
+  stampsRequired  Int           @default(5)
+  rewardName      String        @default("قهوة فابور")
+  customerPrefix  String        @default("آ السي") // e.g., "آ السي" or "آ لالة"
+  latitude        Float?        @default(33.5731)
+  longitude       Float?        @default(-7.5898)
+  radarMessage    String        @default("راك دايز من حدانا! دوز مرحبا بيك، الكارط ديالك واجدة.")
+  googleMapsUrl   String?
+  plan            String        @default("GROWTH") // STARTER, GROWTH, MULTI
+  credits         Int           @default(1000)
+  autoWinback     Boolean       @default(true)
+  autoBirthday    Boolean       @default(true)
+  autoReview      Boolean       @default(true)
+  autoRadar       Boolean       @default(true)
+  autoNearReward  Boolean       @default(false)
+  isActive        Boolean       @default(true)
+  careExpiresAt   DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  customers       Customer[]
+  transactions    Transaction[]
+  campaigns       Campaign[]
+}
+
+model Customer {
+  id                String        @id @default(cuid())
+  merchantId        String
+  merchant          Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name              String
+  phone             String
+  birthday          String?
+  passSerial        String        @unique @default(cuid())
+  memberCode        String        // 4-digit display ID e.g. "4821"
+  stamps            Int           @default(0)
+  totalVisits       Int           @default(1)
+  rewardsRedeemed   Int           @default(0)
+  lastVisitAt       DateTime      @default(now())
+  walletType        String        @default("WEBPASS") // APPLE, GOOGLE, WEBPASS
+  pushSubscription  String?       // JSON string for Web Push API
+  applePushToken    String?       // APNs token for Apple Wallet
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  transactions      Transaction[]
+
+  @@index([merchantId])
+  @@unique([merchantId, phone])
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  merchantId  String
+  merchant    Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type        String    // STAMP_ADDED, REWARD_REDEEMED, CARD_CREATED
+  stampsDelta Int       @default(1)
+  note        String?
+  createdAt   DateTime  @default(now())
+
+  @@index([merchantId, createdAt])
+}
+
+model Campaign {
+  id            String    @id @default(cuid())
+  merchantId    String
+  merchant      Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  title         String
+  message       String
+  audience      String    @default("ALL") // ALL, QUIET, NEAR_REWARD, VIP
+  sentCount     Int       @default(0)
+  returnedCount Int       @default(0)
+  creditsUsed   Int       @default(0)
+  createdAt     DateTime  @default(now())
+
+  @@index([merchantId, createdAt])
+}
+
