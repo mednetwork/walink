@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Radio,
   Sparkles,
+  Target,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -32,6 +33,12 @@ export default function AdminLayout({
       label: "محرك الأتمتة",
       icon: Sparkles,
       active: pathname === "/admin/automations",
+    },
+    {
+      href: "/admin/outreach",
+      label: "قنص الكليان والطلبات",
+      icon: Target,
+      active: pathname === "/admin/outreach",
     },
     {
       href: "/admin/merchants/new",

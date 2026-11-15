@@ -114,3 +114,17 @@ model Notification {
   @@index([customerId, createdAt])
   @@index([merchantId, createdAt])
 }
+
+model Lead {
+  id          String    @id @default(cuid())
+  shopName    String
+  niche       String    @default("cafe")
+  city        String
+  phone       String?
+  plan        String    @default("growth") // starter, growth, multi
+  price       String    @default("2,400")
+  usedDemo    Boolean   @default(false)
+  status      String    @default("NEW") // NEW, CONTACTED, CONVERTED
+  createdAt   DateTime  @default(now())
+}
+
