@@ -17,12 +17,20 @@ export async function PATCH(
       "autoNearReward",
     ];
 
-    const updateData: Record<string, boolean> = {};
+    const updateData: Record<string, unknown> = {};
 
     for (const key of allowedSettings) {
       if (key in body && typeof body[key] === "boolean") {
         updateData[key] = body[key];
       }
+    }
+
+    if (body.loyaltyMode && ["STAMPS", "CASHBACK", "BOTH"].includes(body.loyaltyMode)) {
+      updateData.loyaltyMode = body.loyaltyMode;
+    }
+
+    if (body.cashbackRate !== undefined && !isNaN(Number(body.cashbackRate))) {
+      updateData.cashbackRate = Math.max(1, Math.min(50, Number(body.cashbackRate)));
     }
 
     const updated = await prisma.merchant.update({
@@ -31,6 +39,8 @@ export async function PATCH(
       select: {
         id: true,
         slug: true,
+        loyaltyMode: true,
+        cashbackRate: true,
         autoWinback: true,
         autoBirthday: true,
         autoReview: true,

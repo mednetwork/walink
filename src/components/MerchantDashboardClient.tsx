@@ -175,6 +175,8 @@ export default function MerchantDashboardClient({
   const [promoSuccessMsg, setPromoSuccessMsg] = useState<string | null>(null);
 
   // Tab 4 (Automations) Settings
+  const [merchantLoyaltyMode, setMerchantLoyaltyMode] = useState(merchant.loyaltyMode || "BOTH");
+  const [merchantCashbackRate, setMerchantCashbackRate] = useState(merchant.cashbackRate || 10);
   const [automations, setAutomations] = useState({
     autoWinback: merchant.autoWinback,
     autoBirthday: merchant.autoBirthday,
@@ -183,6 +185,42 @@ export default function MerchantDashboardClient({
     autoNearReward: merchant.autoNearReward,
   });
   const [savingSettings, setSavingSettings] = useState(false);
+
+  const handleUpdateLoyaltyMode = async (mode: string) => {
+    setMerchantLoyaltyMode(mode);
+    setSavingSettings(true);
+    try {
+      await fetch(`/api/m/${merchant.slug}/settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(8000),
+        body: JSON.stringify({ loyaltyMode: mode }),
+      });
+      setMerchant((m) => ({ ...m, loyaltyMode: mode }));
+    } catch (err) {
+      console.error("Error saving loyalty mode:", err);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleUpdateCashbackRate = async (rate: number) => {
+    setMerchantCashbackRate(rate);
+    setSavingSettings(true);
+    try {
+      await fetch(`/api/m/${merchant.slug}/settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(8000),
+        body: JSON.stringify({ cashbackRate: rate }),
+      });
+      setMerchant((m) => ({ ...m, cashbackRate: rate }));
+    } catch (err) {
+      console.error("Error saving cashback rate:", err);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   // Check PIN session
   useEffect(() => {
@@ -916,6 +954,81 @@ export default function MerchantDashboardClient({
           <div className="p-3.5 space-y-3.5 flex-1 animate-in fade-in duration-200">
             <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-white/80 leading-relaxed">
               ميساجات كتخدم بوحدها — شعّلها مرة وحدة، و Walink تكلف بالباقي ⚡️
+            </div>
+
+            {/* Loyalty Program Settings Card */}
+            <div className="p-3.5 rounded-2xl glass-panel border border-white/10 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <span className="font-bold text-xs text-white flex items-center gap-1.5">
+                  <Coins className="w-4 h-4 text-amber-400" />
+                  <span>نظام الولاء للمحل</span>
+                </span>
+                <span className="text-[10px] text-emerald-400 font-semibold font-mono">
+                  {merchantLoyaltyMode === "BOTH"
+                    ? "أختام + كاش باك"
+                    : merchantLoyaltyMode === "CASHBACK"
+                    ? "كاش باك فقط"
+                    : "أختام فقط"}
+                </span>
+              </div>
+
+              {/* Mode Selector */}
+              <div className="space-y-1">
+                <span className="text-[10px] text-white/60 block">
+                  البرنامج المفعّل للعملاء:
+                </span>
+                <div className="grid grid-cols-3 gap-1.5 text-[11px] font-semibold">
+                  {[
+                    { id: "BOTH", label: "معاً (اختياري)" },
+                    { id: "STAMPS", label: "أختام فقط" },
+                    { id: "CASHBACK", label: "كاش باك فقط" },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      disabled={savingSettings}
+                      onClick={() => handleUpdateLoyaltyMode(m.id)}
+                      className={`py-1.5 px-2 rounded-xl border text-center transition ${
+                        merchantLoyaltyMode === m.id
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm"
+                          : "bg-white/5 border-white/10 text-white/60 hover:text-white"
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cashback Rate Selector */}
+              {(merchantLoyaltyMode === "CASHBACK" ||
+                merchantLoyaltyMode === "BOTH") && (
+                <div className="space-y-1 pt-1.5 border-t border-white/5">
+                  <div className="flex items-center justify-between text-[10px] text-white/60">
+                    <span>نسبة الكاش باك من كل فاتورة:</span>
+                    <span className="font-bold text-amber-300 font-mono text-xs">
+                      {merchantCashbackRate}%
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {[5, 10, 15, 20].map((rate) => (
+                      <button
+                        key={rate}
+                        type="button"
+                        disabled={savingSettings}
+                        onClick={() => handleUpdateCashbackRate(rate)}
+                        className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${
+                          merchantCashbackRate === rate
+                            ? "bg-amber-400/20 text-amber-300 border-amber-400/40"
+                            : "bg-white/5 border-white/10 text-white/60 hover:text-white"
+                        }`}
+                      >
+                        {rate}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2.5">
