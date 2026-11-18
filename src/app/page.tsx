@@ -56,8 +56,8 @@ const NICHES_META: Record<string, NicheMeta> = {
     pc: "#b45309",
     grad: "linear-gradient(150deg, #b45309 0%, #78350f 100%)",
   },
-  carwash: {
-    id: "carwash",
+  wash: {
+    id: "wash",
     icon: "i-car",
     pc: "#0e7490",
     grad: "linear-gradient(150deg, #0e7490 0%, #155e75 100%)",
@@ -190,6 +190,12 @@ export default function LandingPage() {
   const [stampsCount, setStampsCount] = useState<number>(3);
   const [stampNewIndex, setStampNewIndex] = useState<number>(-1);
   const [passShine, setPassShine] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
+  const triggerSyncPulse = () => {
+    setIsSyncing(true);
+    setTimeout(() => setIsSyncing(false), 800);
+  };
 
   // Active floating banner
   const [banner, setBanner] = useState<{
@@ -359,6 +365,7 @@ export default function LandingPage() {
 
   // Stamping action
   const handleStamp = () => {
+    triggerSyncPulse();
     const next = stampsCount >= 5 ? 1 : stampsCount + 1;
     setStampsCount(next);
     setStampNewIndex(next);
@@ -396,6 +403,7 @@ export default function LandingPage() {
 
   // Cashback Add Action
   const handleCashbackAdd = () => {
+    triggerSyncPulse();
     const added = 15;
     const newBal = cashbackBalance + added;
     setCashbackBalance(newBal);
@@ -972,10 +980,25 @@ export default function LandingPage() {
             <p className="lead">{t.demo.subtitle}</p>
           </div>
 
-          <div className="demo-grid">
-            {/* Control Column */}
-            <div className="surface ctrl">
-              <label className="fl" htmlFor="shop" style={{ marginTop: 0 }}>
+          <div className="demo-grid counter-theater">
+            {/* 1. Smart Merchant POS Terminal */}
+            <div className="surface pos-terminal">
+              {/* POS Top Bar Header */}
+              <div className="pos-header">
+                <div className="pos-badge">
+                  <svg className="ic">
+                    <use href="#i-dash" />
+                  </svg>
+                  <span>{t.demo.merchantTab} (POS الكاونتر)</span>
+                </div>
+                <div className={`pos-sync-pill ${isSyncing ? "syncing" : ""}`}>
+                  <span className="sync-dot pulse" />
+                  <span className="lat">Cloud Sync &lt; 45ms</span>
+                </div>
+              </div>
+
+              {/* 1. Shop Name */}
+              <label className="fl" htmlFor="shop" style={{ marginTop: "14px" }}>
                 1. {t.checkout.shopNameLabel}
               </label>
               <input
@@ -988,7 +1011,8 @@ export default function LandingPage() {
                 maxLength={24}
               />
 
-              <div className="fl" style={{ marginTop: "18px" }}>
+              {/* 2. Niche Selection */}
+              <div className="fl" style={{ marginTop: "16px" }}>
                 2. {t.checkout.nicheLabel}
               </div>
               <div className="niches" id="niches">
@@ -1015,81 +1039,163 @@ export default function LandingPage() {
                 })}
               </div>
 
-              {/* Dual Loyalty Mode Selector (Phase 7) */}
-              <div className="fl" style={{ marginTop: "18px" }}>
+              {/* 3. Dual Loyalty Mode Selector */}
+              <div className="fl" style={{ marginTop: "16px" }}>
                 3. {t.demo.cardTypeLabel}
               </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "8px",
-                  marginTop: "8px",
-                }}
-              >
+              <div className="pos-mode-grid">
                 <button
                   type="button"
                   aria-pressed={demoLoyaltyType === "STAMPS"}
                   onClick={() => setDemoLoyaltyType("STAMPS")}
-                  style={{
-                    padding: "10px",
-                    borderRadius: "12px",
-                    border:
-                      demoLoyaltyType === "STAMPS"
-                        ? "1px solid var(--em2)"
-                        : "1px solid var(--hair)",
-                    background:
-                      demoLoyaltyType === "STAMPS"
-                        ? "rgba(16,185,129,0.15)"
-                        : "rgba(255,255,255,0.03)",
-                    color:
-                      demoLoyaltyType === "STAMPS"
-                        ? "var(--white)"
-                        : "var(--silver)",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                  }}
+                  className={`pos-mode-btn ${demoLoyaltyType === "STAMPS" ? "active" : ""}`}
                 >
-                  {t.demo.stampsType}
+                  <svg className="ic">
+                    <use href="#i-gift" />
+                  </svg>
+                  <span>{t.demo.stampsType}</span>
                 </button>
                 <button
                   type="button"
                   aria-pressed={demoLoyaltyType === "CASHBACK"}
                   onClick={() => setDemoLoyaltyType("CASHBACK")}
-                  style={{
-                    padding: "10px",
-                    borderRadius: "12px",
-                    border:
-                      demoLoyaltyType === "CASHBACK"
-                        ? "1px solid var(--em2)"
-                        : "1px solid var(--hair)",
-                    background:
-                      demoLoyaltyType === "CASHBACK"
-                        ? "rgba(16,185,129,0.15)"
-                        : "rgba(255,255,255,0.03)",
-                    color:
-                      demoLoyaltyType === "CASHBACK"
-                        ? "var(--white)"
-                        : "var(--silver)",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                  }}
+                  className={`pos-mode-btn ${demoLoyaltyType === "CASHBACK" ? "active" : ""}`}
                 >
-                  {t.demo.cashbackType}
+                  <svg className="ic">
+                    <use href="#i-coins" />
+                  </svg>
+                  <span>{t.demo.cashbackType}</span>
                 </button>
               </div>
 
-              <div style={{ marginTop: "22px" }}>
+              {/* Cashier Interactive Action Deck */}
+              <div className="pos-deck">
+                <div className="pos-deck-head">
+                  <div className="pos-deck-title">
+                    <svg className="ic"><use href="#i-bolt" /></svg>
+                    <b>عمليات الكاشير المباشرة (جرّب بنفسك):</b>
+                  </div>
+                  <span className="pos-live-tag">Live POS</span>
+                </div>
+
+                {/* Primary Cashier Button */}
+                <button
+                  type="button"
+                  className="pos-cashier-btn"
+                  id="tStamp"
+                  onClick={() => {
+                    triggerSyncPulse();
+                    if (demoLoyaltyType === "CASHBACK") {
+                      handleCashbackAdd();
+                    } else {
+                      handleStamp();
+                    }
+                  }}
+                >
+                  <span className="p-c-icon">
+                    <svg className="ic">
+                      <use
+                        href={
+                          demoLoyaltyType === "CASHBACK"
+                            ? "#i-coins"
+                            : "#i-plus"
+                        }
+                      />
+                    </svg>
+                  </span>
+                  <span className="p-c-text">
+                    <b>
+                      {demoLoyaltyType === "CASHBACK"
+                        ? t.demo.cashbackAction
+                        : `${t.demo.stampAction} (+1)`}
+                    </b>
+                    <small>اضغط لإرسال الختم لمحفظة هاتف العميل فوراً</small>
+                  </span>
+                  <span className="p-c-badge">⚡</span>
+                </button>
+
+                {/* Quick Marketing Automations Grid */}
+                <div className="pos-quick-auto">
+                  <button
+                    type="button"
+                    className="pos-auto-chip"
+                    onClick={() => {
+                      triggerSyncPulse();
+                      playDing();
+                      triggerVibrate();
+                      showBanner(
+                        "i-pin",
+                        "linear-gradient(135deg,#059669,#047857)",
+                        t.engines.radarLockTitle,
+                        t.engines.radarLockBody
+                      );
+                    }}
+                  >
+                    <svg className="ic"><use href="#i-pin" /></svg>
+                    <span>{t.demo.radarSimulate}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="pos-auto-chip"
+                    onClick={() => {
+                      triggerSyncPulse();
+                      playDing();
+                      triggerVibrate();
+                      showBanner(
+                        "i-back",
+                        "linear-gradient(135deg,#DC2626,#991B1B)",
+                        t.engines.winbackLockTitle,
+                        t.engines.winbackLockBody
+                      );
+                    }}
+                  >
+                    <svg className="ic"><use href="#i-back" /></svg>
+                    <span>{t.demo.winbackSimulate}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="pos-auto-chip"
+                    onClick={() => {
+                      triggerSyncPulse();
+                      playDing();
+                      triggerVibrate();
+                      showBanner(
+                        "i-star",
+                        "linear-gradient(135deg,#2563EB,#1D4ED8)",
+                        t.engines.reviewsLockTitle,
+                        t.engines.reviewsLockBody
+                      );
+                    }}
+                  >
+                    <svg className="ic"><use href="#i-star" /></svg>
+                    <span>{t.demo.reviewSimulate}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="pos-auto-chip"
+                    onClick={() => {
+                      triggerSyncPulse();
+                      playDing();
+                      triggerVibrate();
+                      showBanner(
+                        "i-mega",
+                        "linear-gradient(135deg,#4F46E5,#3730A3)",
+                        t.engines.pushLockTitle,
+                        t.engines.pushLockBody
+                      );
+                    }}
+                  >
+                    <svg className="ic"><use href="#i-mega" /></svg>
+                    <span>{t.demo.promoSimulate}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Order Pack Button */}
+              <div style={{ marginTop: "18px" }}>
                 <a href="#pricing" className="btn btn-em btn-block">
                   <svg className="ic">
                     <use href="#i-bolt" />
@@ -1932,48 +2038,51 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Floating Control Dock (-80px overlap) */}
-              <div
-                className={`dock glass ${currentTab === "dash" ? "dim" : ""}`}
-              >
-                <div className="dk-grid">
-                  <button
-                    type="button"
-                    className="dk main"
-                    id="tStamp"
-                    onClick={() => {
-                      if (demoLoyaltyType === "CASHBACK") {
-                        handleCashbackAdd();
-                      } else {
-                        handleStamp();
-                      }
-                    }}
-                  >
-                    <span className="dki">
-                      <svg className="ic">
-                        <use
-                          href={
-                            demoLoyaltyType === "CASHBACK"
-                              ? "#i-coins"
-                              : "#i-plus"
-                          }
-                        />
-                      </svg>
-                    </span>
-                    <span className="dkt">
-                      <b>
-                        {demoLoyaltyType === "CASHBACK"
-                          ? t.demo.cashbackAction
-                          : `${t.demo.stampAction} (+1)`}
-                      </b>
-                    </span>
-                  </button>
+              {/* Mobile Cashier Action Deck (Visible on screens < 980px, sits comfortably right below the phone) */}
+              <div className="counter-mobile-deck">
+                <div className="m-deck-caption">
+                  <span className="m-pulse-dot" />
+                  <b>كاونتر التاجر: انقر للتفاعل المباشر مع البطاقة</b>
+                </div>
+                <button
+                  type="button"
+                  className="pos-cashier-btn"
+                  onClick={() => {
+                    triggerSyncPulse();
+                    if (demoLoyaltyType === "CASHBACK") {
+                      handleCashbackAdd();
+                    } else {
+                      handleStamp();
+                    }
+                  }}
+                >
+                  <span className="p-c-icon">
+                    <svg className="ic">
+                      <use
+                        href={
+                          demoLoyaltyType === "CASHBACK"
+                            ? "#i-coins"
+                            : "#i-plus"
+                        }
+                      />
+                    </svg>
+                  </span>
+                  <span className="p-c-text">
+                    <b>
+                      {demoLoyaltyType === "CASHBACK"
+                        ? t.demo.cashbackAction
+                        : `${t.demo.stampAction} (+1)`}
+                    </b>
+                  </span>
+                  <span className="p-c-badge">⚡</span>
+                </button>
 
+                <div className="pos-quick-auto">
                   <button
                     type="button"
-                    className="dk"
-                    id="tRadar"
+                    className="pos-auto-chip"
                     onClick={() => {
+                      triggerSyncPulse();
                       playDing();
                       triggerVibrate();
                       showBanner(
@@ -1984,21 +2093,15 @@ export default function LandingPage() {
                       );
                     }}
                   >
-                    <span className="dki">
-                      <svg className="ic">
-                        <use href="#i-pin" />
-                      </svg>
-                    </span>
-                    <span className="dkt">
-                      <b>{t.demo.radarSimulate}</b>
-                    </span>
+                    <svg className="ic"><use href="#i-pin" /></svg>
+                    <span>{t.demo.radarSimulate}</span>
                   </button>
 
                   <button
                     type="button"
-                    className="dk"
-                    id="tBack"
+                    className="pos-auto-chip"
                     onClick={() => {
+                      triggerSyncPulse();
                       playDing();
                       triggerVibrate();
                       showBanner(
@@ -2009,46 +2112,15 @@ export default function LandingPage() {
                       );
                     }}
                   >
-                    <span className="dki">
-                      <svg className="ic">
-                        <use href="#i-back" />
-                      </svg>
-                    </span>
-                    <span className="dkt">
-                      <b>{t.demo.winbackSimulate}</b>
-                    </span>
+                    <svg className="ic"><use href="#i-back" /></svg>
+                    <span>{t.demo.winbackSimulate}</span>
                   </button>
 
                   <button
                     type="button"
-                    className="dk"
-                    id="tPromo"
+                    className="pos-auto-chip"
                     onClick={() => {
-                      playDing();
-                      triggerVibrate();
-                      showBanner(
-                        "i-mega",
-                        "linear-gradient(135deg,#4F46E5,#3730A3)",
-                        t.engines.pushLockTitle,
-                        t.engines.pushLockBody
-                      );
-                    }}
-                  >
-                    <span className="dki">
-                      <svg className="ic">
-                        <use href="#i-mega" />
-                      </svg>
-                    </span>
-                    <span className="dkt">
-                      <b>{t.demo.promoSimulate}</b>
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="dk"
-                    id="tReview"
-                    onClick={() => {
+                      triggerSyncPulse();
                       playDing();
                       triggerVibrate();
                       showBanner(
@@ -2059,23 +2131,18 @@ export default function LandingPage() {
                       );
                     }}
                   >
-                    <span className="dki">
-                      <svg className="ic">
-                        <use href="#i-star" />
-                      </svg>
-                    </span>
-                    <span className="dkt">
-                      <b>{t.demo.reviewSimulate}</b>
-                    </span>
+                    <svg className="ic"><use href="#i-star" /></svg>
+                    <span>{t.demo.reviewSimulate}</span>
                   </button>
                 </div>
+              </div>
 
-                <div className="dock-note">
-                  <svg className="ic">
-                    <use href="#i-eye" />
-                  </svg>
-                  <span>{t.demo.subtitle}</span>
-                </div>
+              {/* Certified Security Badge */}
+              <div className="phone-trust-badge">
+                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>معتمد على Apple Wallet و Google Wallet • بدون تطبيقات للتحميل</span>
               </div>
 
               {/* Smart Nudge */}
