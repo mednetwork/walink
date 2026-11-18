@@ -50,26 +50,26 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-[#060B18] flex flex-col font-arabic text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
-      {/* Top Glass Navigation Bar */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#060B18]/85 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-arabic text-[#111B21] antialiased selection:bg-[#008069] selection:text-white">
+      {/* Top Navigation Bar - Meta Business Suite Light Style */}
+      <header className="sticky top-0 z-40 w-full border-b border-[#E9EDEF] bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo & Platform Name */}
           <div className="flex items-center gap-6">
             <Link href="/admin" className="flex items-center gap-2.5 group">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform duration-200">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] flex items-center justify-center text-white font-bold shadow-md shadow-[#008069]/20 group-hover:scale-105 transition-transform duration-200">
                 <ShieldCheck className="w-6 h-6 stroke-[2.5]" />
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-lg text-white tracking-tight">
-                    walink<span className="text-sky-400">.ma</span>
+                  <span className="font-bold text-lg text-[#111B21] tracking-tight">
+                    walink<span className="text-[#008069]">.ma</span>
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-sky-400 border border-blue-500/20 font-semibold">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#008069]/10 text-[#008069] border border-[#008069]/20 font-bold">
                     والينك
                   </span>
                 </div>
-                <span className="text-[10px] text-white/50 -mt-0.5 font-medium">
+                <span className="text-[10px] text-[#54656F] -mt-0.5 font-medium">
                   لوحة إدارة المنصة (Super Admin)
                 </span>
               </div>
@@ -85,8 +85,8 @@ export default function AdminLayout({
                     href={link.href}
                     className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
                       link.active
-                        ? "bg-white/10 text-sky-400 border border-white/10 shadow-inner"
-                        : "text-white/70 hover:text-white hover:bg-white/5"
+                        ? "bg-[#008069]/10 text-[#008069] border border-[#008069]/20 shadow-sm"
+                        : "text-[#54656F] hover:text-[#111B21] hover:bg-[#F0F2F5]"
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -101,17 +101,17 @@ export default function AdminLayout({
           <div className="flex items-center gap-3">
             <LanguageSwitcher size="sm" />
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00A884] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#008069]"></span>
               </span>
               <span>خادم الدار البيضاء نشط</span>
             </div>
 
             <Link
               href="/admin/merchants/new"
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#008069]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <PlusCircle className="w-4 h-4" />
               <span className="hidden sm:inline">إضافة متجر جديد</span>
@@ -127,19 +127,19 @@ export default function AdminLayout({
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-6 text-center text-xs text-white/40">
+      <footer className="border-t border-[#E9EDEF] bg-white py-6 text-center text-xs text-[#54656F]">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>© {new Date().getFullYear()} Walink (walink.ma) • جميع الحقوق محفوظة لرواد الأعمال في المغرب 🇲🇦</p>
-          <div className="flex items-center gap-4 text-white/50">
-            <Link href="/" className="hover:text-sky-400 transition">
+          <div className="flex items-center gap-4 text-[#54656F]">
+            <Link href="/" className="hover:text-[#008069] font-medium transition">
               بوابة المطورين
             </Link>
             <span>•</span>
-            <Link href="/m/cafe-atlas" className="hover:text-sky-400 transition">
+            <Link href="/m/cafe-atlas" className="hover:text-[#008069] font-medium transition">
               تجربة لوحة التاجر
             </Link>
             <span>•</span>
-            <Link href="/join/cafe-atlas" className="hover:text-sky-400 transition">
+            <Link href="/join/cafe-atlas" className="hover:text-[#008069] font-medium transition">
               تجربة انضمام الزبون
             </Link>
           </div>

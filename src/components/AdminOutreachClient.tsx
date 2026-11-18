@@ -169,18 +169,18 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-300 text-[#111B21]">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600/10 border border-blue-500/20 text-sky-400 text-xs font-medium mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-xs font-semibold mb-2">
             <Target className="w-3.5 h-3.5" />
             <span>استوديو المبيعات وقنص الكليان (Cold Outreach Studio)</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#111B21] tracking-tight">
             استوديو قنص الكليان وإدارة الطلبات
           </h1>
-          <p className="text-sm text-white/60 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-sm text-[#54656F] mt-1 max-w-2xl leading-relaxed">
             توليد روابط مخصصة بنقرة واحدة لأي محل في المغرب مع سيناريوهات رسائل واتساب وإنستغرام جاهزة، وإدارة الطلبات الواردة وتحويلها إلى محلات مفعّلة في المنصة.
           </p>
         </div>
@@ -188,7 +188,7 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
         <div className="flex items-center gap-3">
           <Link
             href="/admin"
-            className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition"
+            className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] text-xs font-semibold shadow-sm transition"
           >
             العودة للوحة التحكم
           </Link>
@@ -197,16 +197,16 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
 
       {/* Conversion Toast Notification */}
       {conversionMessage && (
-        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between animate-in fade-in">
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between shadow-sm animate-in fade-in">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
             <span className="font-bold">{conversionMessage.text}</span>
           </div>
           {conversionMessage.slug && (
             <Link
               href={`/m/${conversionMessage.slug}`}
               target="_blank"
-              className="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition flex items-center gap-1 shadow"
+              className="px-3 py-1.5 rounded-xl bg-[#008069] text-white font-bold text-xs hover:bg-[#00A884] transition flex items-center gap-1 shadow-sm"
             >
               <span>فتح لوحة التاجر الجديدة ↗</span>
               <ExternalLink className="w-3 h-3" />
@@ -216,16 +216,16 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
       )}
 
       {/* SECTION 1: Personalized Demo Link & Pitch Generator */}
-      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-600/[0.05] to-transparent space-y-6">
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 via-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-500/25">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] text-white flex items-center justify-center font-bold shadow-md shadow-[#008069]/20">
             <Sparkles className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">
+            <h2 className="text-lg font-bold text-[#111B21]">
               مولّد الروابط المخصصة والرسائل الجاهزة (Personalized Pitch Generator)
             </h2>
-            <p className="text-xs text-white/60">
+            <p className="text-xs text-[#54656F]">
               أدخل اسم المحل المستهدف ونوعه للحصول فوراً على رابط تفاعلي جاهز ورسائل مبيعات بالدارجة المغربية.
             </p>
           </div>
@@ -234,7 +234,7 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
         {/* Inputs Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="prospect-shop-name" className="block text-xs font-semibold text-white/70 mb-1.5">
+            <label htmlFor="prospect-shop-name" className="block text-xs font-semibold text-[#111B21] mb-1.5">
               اسم المحل المستهدف:
             </label>
             <input
@@ -244,19 +244,19 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
               onChange={(e) => setShopName(e.target.value)}
               placeholder="مثال: Café Majestic"
               aria-label="اسم المحل المستهدف"
-              className="w-full bg-[#111827] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500"
+              className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] placeholder-[#54656F] focus:outline-none focus:border-[#008069] focus:bg-white"
             />
           </div>
 
           <div>
-            <label htmlFor="prospect-niche-select" className="block text-xs font-semibold text-white/70 mb-1.5">
+            <label htmlFor="prospect-niche-select" className="block text-xs font-semibold text-[#111B21] mb-1.5">
               نوع النشاط / المجال:
             </label>
             <select
               id="prospect-niche-select"
               value={niche}
               onChange={(e) => setNiche(e.target.value)}
-              className="w-full bg-[#111827] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500"
+              className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] focus:outline-none focus:border-[#008069]"
             >
               {niches.map((n) => (
                 <option key={n.id} value={n.id}>
@@ -267,7 +267,7 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
           </div>
 
           <div>
-            <label htmlFor="prospect-phone" className="block text-xs font-semibold text-white/70 mb-1.5">
+            <label htmlFor="prospect-phone" className="block text-xs font-semibold text-[#111B21] mb-1.5">
               رقم الواتساب للمحل (اختياري للإرسال المباشر):
             </label>
             <input
@@ -277,16 +277,16 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
               onChange={(e) => setProspectPhone(e.target.value)}
               placeholder="0661000000"
               aria-label="رقم الواتساب للمحل"
-              className="w-full bg-[#111827] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+              className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] placeholder-[#54656F] focus:outline-none focus:border-[#008069] focus:bg-white font-mono"
             />
           </div>
         </div>
 
         {/* Generated URL Box */}
-        <div className="p-3.5 rounded-2xl bg-[#0B0F17]/80 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="p-3.5 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
-            <span className="text-xs font-bold text-sky-400 whitespace-nowrap">الرابط المخصص:</span>
-            <code className="text-xs text-white/80 font-mono truncate max-w-full">
+            <span className="text-xs font-bold text-[#008069] whitespace-nowrap">الرابط المخصص:</span>
+            <code className="text-xs text-[#111B21] font-mono truncate max-w-full">
               {generatedUrl}
             </code>
           </div>
@@ -295,16 +295,16 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
             <button
               type="button"
               onClick={() => copyToClipboard(generatedUrl, setCopiedLink)}
-              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#111B21] text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
             >
-              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-[#008069]" /> : <Copy className="w-3.5 h-3.5 text-[#54656F]" />}
               <span>{copiedLink ? "تم النسخ!" : "نسخ الرابط"}</span>
             </button>
 
             <Link
               href={generatedUrl}
               target="_blank"
-              className="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-sky-300 text-xs font-semibold flex items-center gap-1 transition"
+              className="px-3 py-1.5 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 text-[#008069] border border-[#008069]/20 text-xs font-bold flex items-center gap-1 transition"
             >
               <span>تجربة الرابط</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -315,23 +315,23 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
         {/* 2 Darija Scripts (WhatsApp & Instagram) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* WhatsApp Script Card */}
-          <div className="glass-panel p-4 rounded-2xl border border-white/10 space-y-3">
+          <div className="bg-[#F0F2F5] p-4 rounded-2xl border border-[#E9EDEF] space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-sky-400">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#008069]">
                 <MessageSquare className="w-4 h-4" />
                 <span>رسالة واتساب المقترحة (WhatsApp Pitch):</span>
               </div>
               <button
                 type="button"
                 onClick={() => copyToClipboard(waPitch, setCopiedWaScript)}
-                className="text-xs text-white/60 hover:text-white flex items-center gap-1"
+                className="text-xs text-[#54656F] hover:text-[#111B21] flex items-center gap-1"
               >
-                {copiedWaScript ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedWaScript ? <Check className="w-3.5 h-3.5 text-[#008069]" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedWaScript ? "تم النسخ" : "نسخ الرسالة"}</span>
               </button>
             </div>
 
-            <pre className="p-3 rounded-xl bg-[#0B0F17]/70 border border-white/5 text-[11px] text-white/80 whitespace-pre-wrap font-arabic leading-relaxed">
+            <pre className="p-3 rounded-xl bg-white border border-[#E9EDEF] text-[11px] text-[#111B21] whitespace-pre-wrap font-arabic leading-relaxed shadow-sm">
               {waPitch}
             </pre>
 
@@ -339,7 +339,7 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
               <button
                 type="button"
                 onClick={handleSendWhatsApp}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow transition"
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-[#008069]/20 transition"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>صيفط فـ واتساب دابا ↗</span>
@@ -348,28 +348,28 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
           </div>
 
           {/* Instagram DM Script Card */}
-          <div className="glass-panel p-4 rounded-2xl border border-white/10 space-y-3">
+          <div className="bg-[#F0F2F5] p-4 rounded-2xl border border-[#E9EDEF] space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-pink-400">
+              <div className="flex items-center gap-2 text-xs font-bold text-pink-600">
                 <Instagram className="w-4 h-4" />
                 <span>رسالة إنستغرام المقترحة (Instagram DM Pitch):</span>
               </div>
               <button
                 type="button"
                 onClick={() => copyToClipboard(igPitch, setCopiedIgScript)}
-                className="text-xs text-white/60 hover:text-white flex items-center gap-1"
+                className="text-xs text-[#54656F] hover:text-[#111B21] flex items-center gap-1"
               >
-                {copiedIgScript ? <Check className="w-3.5 h-3.5 text-pink-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedIgScript ? <Check className="w-3.5 h-3.5 text-pink-600" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedIgScript ? "تم النسخ" : "نسخ الرسالة"}</span>
               </button>
             </div>
 
-            <pre className="p-3 rounded-xl bg-[#0B0F17]/70 border border-white/5 text-[11px] text-white/80 whitespace-pre-wrap font-arabic leading-relaxed">
+            <pre className="p-3 rounded-xl bg-white border border-[#E9EDEF] text-[11px] text-[#111B21] whitespace-pre-wrap font-arabic leading-relaxed shadow-sm">
               {igPitch}
             </pre>
 
             <div className="pt-1 text-center">
-              <span className="text-[11px] text-white/40">
+              <span className="text-[11px] text-[#54656F]">
                 * انسخ الرسالة وأرسلها لحساب المحل على إنستغرام لفتح المحادثة فوراً.
               </span>
             </div>
@@ -378,24 +378,24 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
       </div>
 
       {/* SECTION 2: Incoming Orders & Leads Table */}
-      <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
+      <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Store className="w-5 h-5 text-sky-400" />
-            <h2 className="text-base font-bold text-white">الطلبات المسجلة من صفحة الهبوط (Incoming Leads)</h2>
+            <Store className="w-5 h-5 text-[#008069]" />
+            <h2 className="text-base font-bold text-[#111B21]">الطلبات المسجلة من صفحة الهبوط (Incoming Leads)</h2>
           </div>
-          <span className="text-xs text-white/50">{leads.length} طلبات مسجلة</span>
+          <span className="text-xs text-[#54656F]">{leads.length} طلبات مسجلة</span>
         </div>
 
         {leads.length === 0 ? (
-          <div className="p-8 text-center text-white/40 text-xs">
+          <div className="p-8 text-center text-[#54656F] text-xs">
             لا توجد طلبات مسجلة بعد. عند ملء أي تاجر لاستمارة الطلب في صفحة الهبوط ستظهر بياناته هنا فوراً.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-right text-xs">
               <thead>
-                <tr className="border-b border-white/10 text-white/40 pb-3">
+                <tr className="border-b border-[#E9EDEF] text-[#54656F] pb-3">
                   <th className="py-2.5 font-semibold">المحل والمدينة</th>
                   <th className="py-2.5 font-semibold">المجال</th>
                   <th className="py-2.5 font-semibold">الباقة المختارة</th>
@@ -406,22 +406,22 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
                   <th className="py-2.5 font-semibold">تحويل إلى محل (1-Click)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-white/80">
+              <tbody className="divide-y divide-[#E9EDEF] text-[#111B21]">
                 {leads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-white/[0.02] transition">
+                  <tr key={lead.id} className="hover:bg-[#F0F2F5] transition">
                     <td className="py-3">
                       <div>
-                        <span className="font-bold text-white block">{lead.shopName}</span>
-                        <span className="text-[11px] text-white/50">{lead.city}</span>
+                        <span className="font-bold text-[#111B21] block">{lead.shopName}</span>
+                        <span className="text-[11px] text-[#54656F]">{lead.city}</span>
                       </div>
                     </td>
                     <td className="py-3">
-                      <span className="px-2 py-0.5 rounded-md bg-white/5 text-white/70 border border-white/10 text-[10px]">
+                      <span className="px-2 py-0.5 rounded-md bg-[#F0F2F5] text-[#54656F] border border-[#E9EDEF] text-[10px] font-semibold">
                         {lead.niche}
                       </span>
                     </td>
                     <td className="py-3">
-                      <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 font-bold border border-amber-500/20 text-[11px]">
+                      <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-bold border border-amber-300 text-[11px]">
                         {lead.plan.toUpperCase()} ({lead.price} DH)
                       </span>
                     </td>
@@ -431,20 +431,20 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
                           href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sky-400 hover:underline flex items-center gap-1"
+                          className="text-[#008069] hover:underline flex items-center gap-1 font-bold"
                         >
                           <Phone className="w-3 h-3" />
                           <span>{lead.phone}</span>
                         </a>
                       ) : (
-                        <span className="text-white/30">-</span>
+                        <span className="text-[#54656F]">-</span>
                       )}
                     </td>
                     <td className="py-3">
                       {lead.usedDemo ? (
-                        <span className="text-emerald-400 font-semibold">نعم ✓</span>
+                        <span className="text-[#008069] font-bold">نعم ✓</span>
                       ) : (
-                        <span className="text-white/40">لا</span>
+                        <span className="text-[#54656F]/40">لا</span>
                       )}
                     </td>
                     <td className="py-3">
@@ -453,23 +453,23 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
                         onChange={(e) => handleUpdateStatus(lead.id, e.target.value)}
                         className={`text-[10px] font-bold rounded-lg px-2 py-1 border focus:outline-none ${
                           lead.status === "CONVERTED"
-                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                            ? "bg-emerald-50 text-emerald-800 border-emerald-300"
                             : lead.status === "CONTACTED"
-                            ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
-                            : "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                            ? "bg-blue-50 text-blue-800 border-blue-300"
+                            : "bg-amber-50 text-amber-800 border-amber-300"
                         }`}
                       >
-                        <option value="NEW" className="bg-[#111827] text-white">جديد (NEW)</option>
-                        <option value="CONTACTED" className="bg-[#111827] text-white">تم التواصل (CONTACTED)</option>
-                        <option value="CONVERTED" className="bg-[#111827] text-white">تم التحويل (CONVERTED)</option>
+                        <option value="NEW" className="bg-white text-[#111B21]">جديد (NEW)</option>
+                        <option value="CONTACTED" className="bg-white text-[#111B21]">تم التواصل (CONTACTED)</option>
+                        <option value="CONVERTED" className="bg-white text-[#111B21]">تم التحويل (CONVERTED)</option>
                       </select>
                     </td>
-                    <td className="py-3 font-mono text-[11px] text-white/50">
+                    <td className="py-3 font-mono text-[11px] text-[#54656F]">
                       {formatTimeAgoArabic(lead.createdAt)}
                     </td>
                     <td className="py-3">
                       {lead.status === "CONVERTED" ? (
-                        <span className="text-emerald-400 text-[11px] font-semibold flex items-center gap-1">
+                        <span className="text-[#008069] text-[11px] font-bold flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" />
                           <span>محل مفعّل</span>
                         </span>
@@ -478,7 +478,7 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
                           type="button"
                           disabled={convertingLeadId === lead.id}
                           onClick={() => handleConvertLead(lead.id)}
-                          className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-bold text-[11px] flex items-center gap-1 shadow shadow-blue-500/20 transition disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition disabled:opacity-50"
                         >
                           <Sparkles className="w-3 h-3" />
                           <span>{convertingLeadId === lead.id ? "جاري الإنشاء..." : "✨ تحويل إلى محل"}</span>

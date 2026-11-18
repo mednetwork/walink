@@ -536,18 +536,18 @@ export default function CustomerPassHubClient({
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className="w-full max-w-[430px] mx-auto min-h-screen bg-[#060B18] flex flex-col justify-between p-4 sm:p-5 text-white selection:bg-blue-600 selection:text-white relative"
+      className="w-full max-w-[430px] mx-auto min-h-screen bg-[#F0F2F5] flex flex-col justify-between p-4 sm:p-5 text-[#111B21] selection:bg-[#008069] selection:text-white relative border-x border-[#E9EDEF]"
       style={{
         backgroundImage:
-          "radial-gradient(circle at 50% -10%, rgba(37, 99, 235, 0.12) 0%, transparent 60%), radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
-        backgroundSize: "100% 100%, 28px 28px",
+          "radial-gradient(circle at 50% 0%, rgba(0, 128, 105, 0.04) 0%, transparent 60%), radial-gradient(rgba(17, 27, 33, 0.04) 1px, transparent 1px)",
+        backgroundSize: "100% 100%, 24px 24px",
       }}
     >
-      {/* iOS 18 Floating Glass Notification Banner Stack */}
+      {/* iOS 18 Floating Notification Banner Stack */}
       {activeBanner && (
         <div className="fixed top-3 left-0 right-0 z-50 px-4 max-w-[430px] mx-auto animate-in slide-in-from-top-4 duration-300">
-          <div className="p-3.5 rounded-3xl border border-white/15 shadow-2xl flex items-start gap-3 bg-[#0D1528]/95 backdrop-blur-2xl">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-sky-500 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+          <div className="p-3.5 rounded-3xl border border-[#E9EDEF] shadow-xl flex items-start gap-3 bg-white/95 backdrop-blur-md">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] text-white flex items-center justify-center flex-shrink-0 shadow-md">
               {activeBanner.icon === "reward" ? (
                 <Gift className="w-5 h-5 animate-spin" />
               ) : activeBanner.icon === "cashback" ? (
@@ -561,14 +561,14 @@ export default function CustomerPassHubClient({
 
             <div className={`flex-1 min-w-0 ${isRTL ? "text-right" : "text-left"}`}>
               <div className="flex items-center justify-between">
-                <span className="font-bold text-xs text-white truncate">
+                <span className="font-bold text-xs text-[#111B21] truncate">
                   {activeBanner.title}
                 </span>
-                <span className="text-[10px] text-white/50 font-mono">
+                <span className="text-[10px] text-[#54656F] font-mono">
                   {activeBanner.time}
                 </span>
               </div>
-              <p className="text-[11px] text-white/80 mt-0.5 leading-relaxed">
+              <p className="text-[11px] text-[#54656F] mt-0.5 leading-relaxed">
                 {activeBanner.message}
               </p>
               {activeBanner.actionUrl && (
@@ -589,7 +589,7 @@ export default function CustomerPassHubClient({
             <button
               type="button"
               onClick={() => setActiveBanner(null)}
-              className="text-white/40 hover:text-white p-1"
+              className="text-[#54656F] hover:text-[#111B21] p-1"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -603,14 +603,14 @@ export default function CustomerPassHubClient({
         <div className="flex items-center justify-between pb-1">
           <div className="flex items-center gap-2">
             <div
-              className="w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-sm text-white shadow border border-white/15"
+              className="w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-sm text-white shadow-sm border border-black/10"
               style={{ background: merchant.bgGradient || merchant.primaryColor }}
             >
               {merchant.name.slice(0, 2)}
             </div>
             <div>
-              <h1 className="font-bold text-sm text-white">{merchant.name}</h1>
-              <span className="text-[11px] text-sky-400 font-medium">
+              <h1 className="font-bold text-sm text-[#111B21]">{merchant.name}</h1>
+              <span className="text-[11px] text-[#008069] font-semibold">
                 {merchant.customerPrefix} {customer.name} 👋
               </span>
             </div>
@@ -618,14 +618,14 @@ export default function CustomerPassHubClient({
 
           <div className="flex items-center gap-1.5">
             {/* Corner Language Selector Pill */}
-            <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-full p-0.5 text-[10px] font-semibold">
+            <div className="flex items-center gap-1 bg-[#E9EDEF] border border-[#D1D7DB] rounded-full p-0.5 text-[10px] font-semibold">
               <button
                 type="button"
                 onClick={() => setLocale("ar")}
                 className={`px-1.5 py-0.5 rounded-full transition ${
                   locale === "ar"
-                    ? "bg-blue-600/20 text-sky-300 border border-blue-500/30"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-white text-[#008069] shadow-sm font-bold"
+                    : "text-[#54656F] hover:text-[#111B21]"
                 }`}
               >
                 عربي
@@ -635,8 +635,8 @@ export default function CustomerPassHubClient({
                 onClick={() => setLocale("fr")}
                 className={`px-1.5 py-0.5 rounded-full transition ${
                   locale === "fr"
-                    ? "bg-blue-600/20 text-sky-300 border border-blue-500/30"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-white text-[#008069] shadow-sm font-bold"
+                    : "text-[#54656F] hover:text-[#111B21]"
                 }`}
               >
                 FR
@@ -646,16 +646,16 @@ export default function CustomerPassHubClient({
                 onClick={() => setLocale("es")}
                 className={`px-1.5 py-0.5 rounded-full transition ${
                   locale === "es"
-                    ? "bg-blue-600/20 text-sky-300 border border-blue-500/30"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-white text-[#008069] shadow-sm font-bold"
+                    : "text-[#54656F] hover:text-[#111B21]"
                 }`}
               >
                 ES
               </button>
             </div>
 
-            <div className="text-start bg-white/[0.04] border border-white/[0.08] px-2.5 py-1 rounded-xl">
-              <span className="text-xs font-mono font-bold text-sky-400">
+            <div className="text-start bg-white border border-[#D1D7DB] px-2.5 py-1 rounded-xl shadow-sm">
+              <span className="text-xs font-mono font-bold text-[#008069]">
                 #{customer.memberCode}
               </span>
             </div>
@@ -664,8 +664,8 @@ export default function CustomerPassHubClient({
 
         {/* Glowing Status Banner when Cashback > 0 */}
         {isCashback && Number(customer.cashbackBalance || 0) > 0 && (
-          <div className="p-3.5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-amber-500/15 border border-amber-400/30 text-amber-300 text-xs flex items-center gap-2.5 shadow-lg shadow-amber-500/5">
-            <Coins className="w-5 h-5 flex-shrink-0 text-amber-300 animate-pulse" />
+          <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2.5 shadow-sm">
+            <Coins className="w-5 h-5 flex-shrink-0 text-amber-600 animate-pulse" />
             <span className="leading-relaxed font-semibold">
               {t.pass.cashbackBanner
                 .replace("{balance}", Number(customer.cashbackBalance).toFixed(2))
@@ -676,18 +676,18 @@ export default function CustomerPassHubClient({
 
         {/* Golden Reward Ready Banner for Stamps */}
         {!isCashback && isRewardReady && (
-          <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/20 via-amber-500/30 to-amber-600/20 border border-amber-400/50 text-white shadow-xl animate-pulse">
+          <div className="p-4 rounded-2xl bg-amber-100 border border-amber-300 text-amber-950 shadow-md animate-pulse">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold flex-shrink-0 shadow-lg shadow-amber-500/30">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-sm">
                 <Gift className="w-6 h-6 animate-bounce" />
               </div>
               <div className={isRTL ? "text-right" : "text-left"}>
-                <h2 className="font-bold text-sm text-amber-300">
+                <h2 className="font-bold text-sm text-amber-900">
                   {t.pass.rewardUnlockedTitle}
                 </h2>
-                <p className="text-xs text-white/90 mt-0.5">
+                <p className="text-xs text-amber-900/90 mt-0.5">
                   وصلت إلى {customer.stamps} أختام! أظهر هذه البطاقة للكاشير لاستلام:{" "}
-                  <strong className="underline text-amber-200">
+                  <strong className="underline text-amber-950 font-bold">
                     {merchant.rewardName}
                   </strong>
                   .
@@ -723,20 +723,20 @@ export default function CustomerPassHubClient({
           />
 
           {/* Dynamic 60-Second Rotating Security QR Badge */}
-          <div className="mt-3 p-3 rounded-2xl bg-black/45 border border-sky-400/30 text-center space-y-1.5 shadow-md">
-            <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-sky-300">
-              <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse shadow-[0_0_8px_#38bdf8]" />
+          <div className="mt-3 p-3.5 rounded-2xl bg-white border border-[#E9EDEF] text-center space-y-1.5 shadow-sm">
+            <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-[#008069]">
+              <span className="w-2 h-2 rounded-full bg-[#00A884] animate-pulse" />
               <span>{t.walletEnterprise.security.dynamicQr}</span>
             </div>
-            <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+            <div className="w-full bg-[#E9EDEF] rounded-full h-1.5 overflow-hidden">
               <div
-                className="bg-sky-400 h-full transition-all duration-1000 ease-linear rounded-full"
+                className="bg-[#008069] h-full transition-all duration-1000 ease-linear rounded-full"
                 style={{ width: `${(countdownSecs / 60) * 100}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-[10px] text-white/50 font-mono px-1">
+            <div className="flex items-center justify-between text-[10px] text-[#54656F] font-mono px-1">
               <span>TOKEN #{timeToken}</span>
-              <span>{countdownSecs}s</span>
+              <span className="font-bold text-[#111B21]">{countdownSecs}s</span>
             </div>
           </div>
         </div>
@@ -745,20 +745,20 @@ export default function CustomerPassHubClient({
         {merchant.autoReview &&
           (isRewardReady || customer.rewardsRedeemed > 0) && (
             <div
-              className={`p-4 rounded-3xl border border-amber-500/30 bg-amber-500/[0.04] space-y-2 ${
+              className={`p-4 rounded-2xl border border-amber-200 bg-white space-y-2 shadow-sm ${
                 isRTL ? "text-right" : "text-left"
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <div className="flex items-center gap-1.5 text-amber-600 font-bold text-xs">
+                  <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
                   <span>هل أعجبتك الخدمة في {merchant.name}؟</span>
                 </div>
-                <span className="text-[10px] text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-md">
+                <span className="text-[10px] text-amber-800 bg-amber-100 font-semibold px-2 py-0.5 rounded-md">
                   Google Maps
                 </span>
               </div>
-              <p className="text-xs text-white/80 leading-relaxed">
+              <p className="text-xs text-[#54656F] leading-relaxed">
                 ساعدنا بتقييم متجرنا على خرائط جوجل بـ 5 نجوم لمساعدة الآخرين على
                 اكتشافنا! ⭐
               </p>
@@ -766,7 +766,7 @@ export default function CustomerPassHubClient({
                 href={merchant.googleMapsUrl || "https://maps.google.com"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-md shadow-amber-400/20"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-sm"
               >
                 <span>تقييم في خرائط Google</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -779,9 +779,9 @@ export default function CustomerPassHubClient({
           <button
             type="button"
             onClick={handleOpenWalletModal}
-            className="py-3 px-3.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.12] border border-white/[0.12] text-white font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm"
+            className="py-3 px-3.5 rounded-2xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm"
           >
-            <Smartphone className="w-4 h-4 text-white" />
+            <Smartphone className="w-4 h-4 text-[#008069]" />
             <span>{t.pass.addToAppleWallet}</span>
           </button>
 
@@ -790,18 +790,18 @@ export default function CustomerPassHubClient({
             onClick={handleEnablePush}
             className={`py-3 px-3.5 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm ${
               notificationsEnabled
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                : "bg-white/[0.04] border-white/[0.08] text-white/80 hover:bg-white/[0.08]"
+                ? "bg-[#008069]/10 border-[#008069]/30 text-[#008069]"
+                : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
             }`}
           >
             {notificationsEnabled ? (
               <>
-                <BellRing className="w-4 h-4 text-emerald-400" />
+                <BellRing className="w-4 h-4 text-[#008069]" />
                 <span>الإشعارات مفعّلة</span>
               </>
             ) : (
               <>
-                <Bell className="w-4 h-4 text-amber-400" />
+                <Bell className="w-4 h-4 text-amber-500" />
                 <span>تفعيل الإشعارات</span>
               </>
             )}
@@ -809,17 +809,17 @@ export default function CustomerPassHubClient({
         </div>
 
         {/* Viral Customer Referral Card */}
-        <div className={`p-4 rounded-3xl bg-gradient-to-br from-[#121926] to-[#0A0E17] border border-amber-400/25 space-y-3 shadow-lg ${isRTL ? "text-right" : "text-left"}`}>
+        <div className={`p-4 rounded-2xl bg-white border border-[#E9EDEF] space-y-3 shadow-sm ${isRTL ? "text-right" : "text-left"}`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
-              <Gift className="w-4 h-4 text-amber-400" />
+            <div className="flex items-center gap-2 text-[#008069] font-bold text-xs">
+              <Gift className="w-4 h-4 text-[#008069]" />
               <span>{t.walletEnterprise.referral.title}</span>
             </div>
-            <span className="text-[10px] font-semibold text-amber-200/90 bg-amber-400/15 px-2.5 py-0.5 rounded-full border border-amber-400/30">
+            <span className="text-[10px] font-semibold text-[#008069] bg-[#008069]/10 px-2.5 py-0.5 rounded-full border border-[#008069]/20">
               {t.walletEnterprise.referral.friendsJoined}: {customer.referralsCount || 0}
             </span>
           </div>
-          <p className="text-xs text-white/80 leading-relaxed">
+          <p className="text-xs text-[#54656F] leading-relaxed">
             {isCashback
               ? t.walletEnterprise.referral.cashbackDesc
                   .replace("{bonus}", String(merchant.referralBonus || 10))
@@ -835,7 +835,7 @@ export default function CustomerPassHubClient({
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/25 transition"
+              className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#008069]/20 transition"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>{t.walletEnterprise.referral.inviteFriend}</span>
@@ -850,16 +850,16 @@ export default function CustomerPassHubClient({
                   setTimeout(() => setCopiedRef(false), 2000);
                 }
               }}
-              className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-xs flex items-center gap-1.5 transition border border-white/10"
+              className="py-2.5 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#111B21] font-semibold text-xs flex items-center gap-1.5 transition border border-[#D1D7DB]"
             >
               {copiedRef ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400">{t.walletEnterprise.referral.linkCopied}</span>
+                  <Check className="w-3.5 h-3.5 text-[#008069]" />
+                  <span className="text-[#008069]">{t.walletEnterprise.referral.linkCopied}</span>
                 </>
               ) : (
                 <>
-                  <Code className="w-3.5 h-3.5" />
+                  <Code className="w-3.5 h-3.5 text-[#54656F]" />
                   <span>{t.walletEnterprise.referral.copyLink}</span>
                 </>
               )}
@@ -868,9 +868,9 @@ export default function CustomerPassHubClient({
         </div>
 
         {/* Back-of-Pass Smart Interactive Tiles */}
-        <div className={`p-4 rounded-3xl bg-[#0E1420]/80 border border-white/10 space-y-3 ${isRTL ? "text-right" : "text-left"}`}>
-          <div className="flex items-center gap-2 text-white font-bold text-xs">
-            <Compass className="w-4 h-4 text-sky-400" />
+        <div className={`p-4 rounded-2xl bg-white border border-[#E9EDEF] space-y-3 shadow-sm ${isRTL ? "text-right" : "text-left"}`}>
+          <div className="flex items-center gap-2 text-[#111B21] font-bold text-xs">
+            <Compass className="w-4 h-4 text-[#008069]" />
             <span>{t.walletEnterprise.backPass.flipPass}</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
@@ -879,10 +879,10 @@ export default function CustomerPassHubClient({
                 href={merchant.menuUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 transition"
+                className="p-2.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#E9EDEF] flex items-center gap-2 transition text-[#111B21] font-medium"
               >
                 <span>{t.walletEnterprise.backPass.menu}</span>
-                <ExternalLink className="w-3 h-3 text-slate-400 ms-auto" />
+                <ExternalLink className="w-3 h-3 text-[#54656F] ms-auto" />
               </a>
             )}
             {merchant.phone && (
@@ -890,10 +890,10 @@ export default function CustomerPassHubClient({
                 href={`https://wa.me/${merchant.phone.replace(/\D/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 transition"
+                className="p-2.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#E9EDEF] flex items-center gap-2 transition text-[#111B21] font-medium"
               >
                 <span>{t.walletEnterprise.backPass.whatsapp}</span>
-                <ExternalLink className="w-3 h-3 text-slate-400 ms-auto" />
+                <ExternalLink className="w-3 h-3 text-[#54656F] ms-auto" />
               </a>
             )}
             {merchant.instagramUrl && (
@@ -901,25 +901,25 @@ export default function CustomerPassHubClient({
                 href={merchant.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 transition"
+                className="p-2.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#E9EDEF] flex items-center gap-2 transition text-[#111B21] font-medium"
               >
                 <span>{t.walletEnterprise.backPass.instagram}</span>
-                <ExternalLink className="w-3 h-3 text-slate-400 ms-auto" />
+                <ExternalLink className="w-3 h-3 text-[#54656F] ms-auto" />
               </a>
             )}
             <a
               href={merchant.googleMapsUrl || `https://maps.google.com/?q=${merchant.latitude || 33.5731},${merchant.longitude || -7.5898}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 transition"
+              className="p-2.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#E9EDEF] flex items-center gap-2 transition text-[#111B21] font-medium"
             >
               <span>{t.walletEnterprise.backPass.directions}</span>
-              <ExternalLink className="w-3 h-3 text-slate-400 ms-auto" />
+              <ExternalLink className="w-3 h-3 text-[#54656F] ms-auto" />
             </a>
           </div>
           {merchant.termsText && (
-            <div className="pt-2 text-[11px] text-white/50 leading-relaxed border-t border-white/5">
-              <span className="font-semibold text-white/70 block mb-0.5">{t.walletEnterprise.backPass.terms}:</span>
+            <div className="pt-2 text-[11px] text-[#54656F] leading-relaxed border-t border-[#E9EDEF]">
+              <span className="font-semibold text-[#111B21] block mb-0.5">{t.walletEnterprise.backPass.terms}:</span>
               {merchant.termsText}
             </div>
           )}
@@ -927,35 +927,35 @@ export default function CustomerPassHubClient({
 
         {/* 100m Geofencing Radar Live Tracker & Simulator */}
         {merchant.autoRadar && (
-          <div className="p-4 rounded-3xl bg-[#0D121D]/80 border border-white/[0.08] space-y-3 shadow-md">
+          <div className="p-4 rounded-2xl bg-white border border-[#E9EDEF] space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00A884] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#008069]"></span>
                 </span>
-                <span className="text-xs font-bold text-white">
+                <span className="text-xs font-bold text-[#111B21]">
                   رادار القرب الجغرافي (100m Radar)
                 </span>
               </div>
-              <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 font-semibold">
+              <span className="text-[10px] text-[#008069] bg-[#008069]/10 px-2 py-0.5 rounded-md border border-[#008069]/20 font-semibold">
                 نشط
               </span>
             </div>
 
-            <p className={`text-[11px] text-white/60 leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+            <p className={`text-[11px] text-[#54656F] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
               كلما اقتربت بـ 100 متر من {merchant.name}، يوقظ الهاتف شاشتك بإشعار لتذكيرك برصيدك ومكافآتك.
             </p>
 
             {parsedRadarZones.length > 0 && (
               <div className="pt-1 flex flex-wrap gap-1.5">
-                <span className="text-[10px] bg-blue-600/15 text-sky-300 px-2 py-0.5 rounded-full border border-blue-500/25">
+                <span className="text-[10px] bg-[#008069]/10 text-[#008069] font-medium px-2 py-0.5 rounded-full border border-[#008069]/20">
                   📍 {merchant.city} (الفرع الرئيسي)
                 </span>
                 {parsedRadarZones.map((zone, zIdx) => (
                   <span
                     key={zIdx}
-                    className="text-[10px] bg-white/5 text-slate-300 px-2 py-0.5 rounded-full border border-white/10"
+                    className="text-[10px] bg-[#F0F2F5] text-[#54656F] font-medium px-2 py-0.5 rounded-full border border-[#D1D7DB]"
                   >
                     📍 {zone.name}
                   </span>
@@ -967,10 +967,10 @@ export default function CustomerPassHubClient({
               type="button"
               disabled={simulatingRadar}
               onClick={handleSimulateRadar}
-              className="w-full py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white text-xs font-semibold flex items-center justify-center gap-2 transition disabled:opacity-50"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#111B21] text-xs font-semibold flex items-center justify-center gap-2 transition disabled:opacity-50"
             >
               <Compass
-                className={`w-4 h-4 text-sky-400 ${
+                className={`w-4 h-4 text-[#008069] ${
                   simulatingRadar ? "animate-spin" : ""
                 }`}
               />
@@ -982,10 +982,10 @@ export default function CustomerPassHubClient({
         )}
 
         {/* Pass Details & Recent Activity Drawer */}
-        <div className={`p-5 rounded-3xl bg-[#0D121D]/80 border border-white/[0.08] space-y-4 shadow-md ${isRTL ? "text-right" : "text-left"}`}>
-          <h2 className="text-xs font-bold text-white flex items-center justify-between pb-2 border-b border-white/10">
+        <div className={`p-5 rounded-2xl bg-white border border-[#E9EDEF] space-y-4 shadow-sm ${isRTL ? "text-right" : "text-left"}`}>
+          <h2 className="text-xs font-bold text-[#111B21] flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
             <span>{t.pass.activityDrawerTitle}</span>
-            <span className="text-[10px] font-mono text-white/50">
+            <span className="text-[10px] font-mono text-[#54656F]">
               {customer.totalVisits} {t.pass.totalVisits}
             </span>
           </h2>
@@ -993,36 +993,36 @@ export default function CustomerPassHubClient({
           <div className="grid grid-cols-2 gap-2 text-xs">
             {isCashback ? (
               <>
-                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
-                  <span className="text-[10px] text-white/50 block">
+                <div className="p-3 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF]">
+                  <span className="text-[10px] text-[#54656F] block">
                     {t.pass.balanceAvailable}:
                   </span>
-                  <span className="font-mono font-bold text-amber-300">
+                  <span className="font-mono font-bold text-[#008069]">
                     {Number(customer.cashbackBalance || 0).toFixed(2)} {currency}
                   </span>
                 </div>
-                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
-                  <span className="text-[10px] text-white/50 block">
+                <div className="p-3 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF]">
+                  <span className="text-[10px] text-[#54656F] block">
                     {t.pass.totalEarned}
                   </span>
-                  <span className="font-mono font-bold text-emerald-400">
+                  <span className="font-mono font-bold text-[#008069]">
                     {Number(customer.totalCashbackEarned || 0).toFixed(2)} {currency}
                   </span>
                 </div>
               </>
             ) : (
               <>
-                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
-                  <span className="text-[10px] text-white/50 block">
+                <div className="p-3 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF]">
+                  <span className="text-[10px] text-[#54656F] block">
                     {t.pass.lastVisitLabel}:
                   </span>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-[#111B21]">
                     {formatTimeAgoArabic(customer.lastVisitAt)}
                   </span>
                 </div>
-                <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
-                  <span className="text-[10px] text-white/50 block">المكافآت المستفاد منها:</span>
-                  <span className="font-mono font-bold text-amber-400">
+                <div className="p-3 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF]">
+                  <span className="text-[10px] text-[#54656F] block">المكافآت المستفاد منها:</span>
+                  <span className="font-mono font-bold text-amber-600">
                     {customer.rewardsRedeemed} مكافأة
                   </span>
                 </div>
@@ -1032,25 +1032,25 @@ export default function CustomerPassHubClient({
 
           {/* Transactions List */}
           <div className="space-y-2 pt-1">
-            <span className="text-[11px] font-semibold text-white/70 block">
+            <span className="text-[11px] font-semibold text-[#111B21] block">
               العمليات الأخيرة:
             </span>
 
             {transactions.length === 0 ? (
-              <p className="text-[11px] text-white/40">لا توجد عمليات سابقة</p>
+              <p className="text-[11px] text-[#54656F]">لا توجد عمليات سابقة</p>
             ) : (
               transactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between text-xs"
+                  className="p-2.5 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#008069] flex-shrink-0" />
                     <div>
-                      <span className="font-medium text-white block">
+                      <span className="font-medium text-[#111B21] block">
                         {tx.note || tx.type}
                       </span>
-                      <span className="text-[10px] text-white/40">
+                      <span className="text-[10px] text-[#54656F]">
                         {formatTimeAgoArabic(tx.createdAt)}
                       </span>
                     </div>
@@ -1060,8 +1060,8 @@ export default function CustomerPassHubClient({
                     className={`font-mono font-bold text-xs ${
                       (tx.cashbackDelta && tx.cashbackDelta > 0) ||
                       tx.stampsDelta > 0
-                        ? "text-emerald-400"
-                        : "text-amber-400"
+                        ? "text-[#008069]"
+                        : "text-amber-600"
                     }`}
                   >
                     {tx.cashbackDelta
@@ -1076,32 +1076,32 @@ export default function CustomerPassHubClient({
       </div>
 
       {/* Footer Return Link */}
-      <footer className="py-6 text-center text-xs text-white/40 space-y-2">
+      <footer className="py-6 text-center text-xs text-[#54656F] space-y-2">
         <Link
           href="/"
-          className="hover:text-sky-400 transition inline-flex items-center gap-1.5"
+          className="hover:text-[#008069] font-medium transition inline-flex items-center gap-1.5"
         >
           <span>منصة والينك (walink.ma)</span>
           <ArrowRight className="w-3.5 h-3.5 rotate-180" />
         </Link>
-        <p className="text-[10px] text-white/30">
+        <p className="text-[10px] text-[#54656F]">
           البطاقة الرقمية الرسمية لـ {merchant.name}
         </p>
       </footer>
 
       {/* Add to Wallet Modal & Spec Inspector */}
       {isWalletModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm bg-[#0D1528] border border-white/10 rounded-3xl shadow-2xl p-6 text-white space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-sm bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-6 text-[#111B21] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
               <div className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-sky-400" />
-                <h3 className="font-bold text-base text-white">حفظ البطاقة في الهاتف</h3>
+                <Smartphone className="w-5 h-5 text-[#008069]" />
+                <h3 className="font-bold text-base text-[#111B21]">حفظ البطاقة في الهاتف</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsWalletModalOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-white/10 text-white/70"
+                className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1109,21 +1109,21 @@ export default function CustomerPassHubClient({
 
             {/* Smart PWA Install Guide */}
             <div className={`space-y-3 ${isRTL ? "text-right" : "text-left"}`}>
-              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <span className="font-bold text-xs text-sky-400 block">
+              <div className="p-3.5 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-2">
+                <span className="font-bold text-xs text-[#008069] block">
                   🍎 على هواتف iPhone (Safari):
                 </span>
-                <p className="text-xs text-white/80 leading-relaxed">
+                <p className="text-xs text-[#54656F] leading-relaxed">
                   اضغط على زر المشاركة <strong>(Share ⎋)</strong> أسفل الشاشة، ثم اختر{" "}
                   <strong>&quot;إضافة إلى الشاشة الرئيسية&quot; (Add to Home Screen)</strong>.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <span className="font-bold text-xs text-sky-400 block">
+              <div className="p-3.5 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-2">
+                <span className="font-bold text-xs text-[#008069] block">
                   🤖 على هواتف Android (Chrome):
                 </span>
-                <p className="text-xs text-white/80 leading-relaxed">
+                <p className="text-xs text-[#54656F] leading-relaxed">
                   اضغط على القائمة (⋮) أعلى اليمين، ثم اختر <strong>&quot;تثبيت التطبيق&quot; (Install App)</strong> أو إضافة إلى الشاشة.
                 </p>
               </div>
@@ -1134,10 +1134,10 @@ export default function CustomerPassHubClient({
               <button
                 type="button"
                 onClick={() => setShowJsonInspector(!showJsonInspector)}
-                className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 text-xs flex items-center justify-between transition"
+                className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#54656F] text-xs flex items-center justify-between transition"
               >
                 <span className="flex items-center gap-1.5">
-                  <Code className="w-3.5 h-3.5 text-amber-400" />
+                  <Code className="w-3.5 h-3.5 text-amber-600" />
                   <span>معاينة كود Apple Wallet (pass.json)</span>
                 </span>
                 <ChevronDown
@@ -1148,7 +1148,7 @@ export default function CustomerPassHubClient({
               </button>
 
               {showJsonInspector && pkpassJson && (
-                <div className="mt-2 p-3 bg-black/60 rounded-xl border border-white/10 text-[10px] font-mono text-sky-300 max-h-48 overflow-y-auto text-left dir-ltr">
+                <div className="mt-2 p-3 bg-slate-900 rounded-xl border border-slate-800 text-[10px] font-mono text-emerald-400 max-h-48 overflow-y-auto text-left dir-ltr">
                   <pre>{JSON.stringify(pkpassJson, null, 2)}</pre>
                 </div>
               )}
@@ -1157,7 +1157,7 @@ export default function CustomerPassHubClient({
             <button
               type="button"
               onClick={() => setIsWalletModalOpen(false)}
-              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] text-white font-bold text-xs shadow-md transition"
             >
               فهمت، شكراً
             </button>

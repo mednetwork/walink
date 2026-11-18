@@ -203,15 +203,15 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
       )}
 
       {/* Split-Screen Layout: Form on Right, Live iPhone & Stand Preview on Left */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start text-[#111B21]">
         {/* Right Column: Form Inputs (7 cols on lg) */}
         <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
           {/* Section 1: Niche Preset Chips */}
-          <div className="glass-panel p-6 rounded-3xl space-y-3">
-            <label className="text-xs font-bold text-white block">
+          <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-3">
+            <label className="text-xs font-bold text-[#111B21] block">
               1. اختر نوع النشاط التجاري (Niche):
             </label>
-            <p className="text-[11px] text-white/50">
+            <p className="text-[11px] text-[#54656F]">
               اختيار النشاط يطبق تلقائياً الألوان الرسمية، الأيقونة، والمكافأة المقترحة.
             </p>
 
@@ -225,8 +225,8 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     onClick={() => handleNicheSelect(preset.id)}
                     className={`p-3 rounded-2xl border text-right transition flex items-center gap-2.5 ${
                       isSelected
-                        ? "bg-white/10 border-blue-400 text-white shadow-lg shadow-blue-500/10 ring-1 ring-blue-400"
-                        : "bg-white/[0.03] border-white/10 hover:bg-white/5 text-white/70"
+                        ? "bg-[#008069]/10 border-[#008069] text-[#111B21] font-bold shadow-sm ring-1 ring-[#008069]"
+                        : "bg-[#F0F2F5] border-[#D1D7DB] hover:bg-[#E9EDEF] text-[#54656F]"
                     }`}
                   >
                     <span
@@ -241,15 +241,15 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
           </div>
 
           {/* Section 2: Basic Merchant Information */}
-          <div className="glass-panel p-6 rounded-3xl space-y-4">
-            <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
-              <Store className="w-4 h-4 text-sky-400" />
+          <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-[#111B21] pb-2 border-b border-[#E9EDEF] flex items-center gap-2">
+              <Store className="w-4 h-4 text-[#008069]" />
               <span>2. البيانات الأساسية للمحل</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   اسم المحل التجاري *
                 </label>
                 <input
@@ -258,12 +258,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   value={formData.name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="مثلاً: Café Atlas أو صالون أنس"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] placeholder-[#54656F] focus:outline-none focus:border-[#008069] focus:bg-white transition"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   رابط المحل (Slug) *
                 </label>
                 <div className="relative">
@@ -275,16 +275,16 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                       setFormData({ ...formData, slug: e.target.value })
                     }
                     placeholder="cafe-atlas"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono dir-ltr text-left focus:outline-none focus:border-blue-500 transition"
+                    className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] font-mono dir-ltr text-left focus:outline-none focus:border-[#008069] focus:bg-white transition"
                   />
-                  <span className="absolute right-3 top-2.5 text-[11px] text-white/40">
+                  <span className="absolute right-3 top-2.5 text-[11px] text-[#54656F]">
                     walink.ma/join/
                   </span>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   المدينة
                 </label>
                 <input
@@ -294,12 +294,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, city: e.target.value })
                   }
                   placeholder="الدار البيضاء، الرباط، مراكش..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] placeholder-[#54656F] focus:outline-none focus:border-[#008069] focus:bg-white transition"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   رقم هاتف صاحب المحل
                 </label>
                 <input
@@ -309,12 +309,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, phone: e.target.value })
                   }
                   placeholder="0661123456"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono dir-ltr text-left focus:outline-none focus:border-blue-500 transition"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] font-mono dir-ltr text-left focus:outline-none focus:border-[#008069] focus:bg-white transition"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   رمز الدخول السري (PIN Code)
                 </label>
                 <input
@@ -325,12 +325,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, pinCode: e.target.value })
                   }
                   placeholder="1234"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-amber-400 font-mono tracking-widest text-center focus:outline-none focus:border-amber-400 transition"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#008069] font-mono font-bold tracking-widest text-center focus:outline-none focus:border-[#008069] focus:bg-white transition"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   لقب مخاطبة الزبون
                 </label>
                 <select
@@ -338,7 +338,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   onChange={(e) =>
                     setFormData({ ...formData, customerPrefix: e.target.value })
                   }
-                  className="w-full bg-[#111827] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] focus:outline-none focus:border-[#008069] transition"
                 >
                   <option value="آ السي">آ السي (للرجال / عام)</option>
                   <option value="آ لالة">آ لالة (للنساء / صالونات تجميل)</option>
@@ -349,15 +349,15 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
           </div>
 
           {/* Section 3: Loyalty Card & Reward Rules */}
-          <div className="glass-panel p-6 rounded-3xl space-y-4">
-            <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-400" />
+          <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-[#111B21] pb-2 border-b border-[#E9EDEF] flex items-center gap-2">
+              <Award className="w-4 h-4 text-[#008069]" />
               <span>3. إعدادات برنامج الولاء والمكافآت (أختام / كاش باك)</span>
             </h3>
 
             {/* Loyalty Mode Selector */}
-            <div className="space-y-1.5 pb-3 border-b border-white/10">
-              <label className="text-xs font-semibold text-white/80 block">
+            <div className="space-y-1.5 pb-3 border-b border-[#E9EDEF]">
+              <label className="text-xs font-semibold text-[#111B21] block">
                 نظام الولاء المعتمد للمتجر:
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -386,14 +386,14 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     }
                     className={`p-3 rounded-2xl border text-start transition ${
                       formData.loyaltyMode === mode.id
-                        ? "bg-blue-600/15 border-blue-500/40 text-sky-300 ring-1 ring-blue-500/30"
-                        : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                        ? "bg-[#008069]/10 border-[#008069] text-[#111B21] ring-1 ring-[#008069] font-bold"
+                        : "bg-[#F0F2F5] border-[#D1D7DB] text-[#54656F] hover:bg-[#E9EDEF]"
                     }`}
                   >
-                    <span className="font-bold text-xs block text-white">
+                    <span className="font-bold text-xs block text-[#111B21]">
                       {mode.label}
                     </span>
-                    <span className="text-[10px] text-white/50">{mode.sub}</span>
+                    <span className="text-[10px] text-[#54656F]">{mode.sub}</span>
                   </button>
                 ))}
               </div>
@@ -402,9 +402,9 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
             {/* Cashback Specific Fields (If BOTH or CASHBACK) */}
             {(formData.loyaltyMode === "BOTH" ||
               formData.loyaltyMode === "CASHBACK") && (
-              <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-[11px] font-semibold text-amber-300 mb-1 block">
+                  <label className="text-[11px] font-semibold text-amber-900 mb-1 block">
                     نسبة الكاش باك (%) *
                   </label>
                   <input
@@ -418,12 +418,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                         cashbackRate: parseFloat(e.target.value) || 10,
                       })
                     }
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                    className="w-full bg-white border border-[#D1D7DB] rounded-xl px-3 py-2 text-xs font-mono text-[#111B21] focus:outline-none focus:border-[#008069]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-semibold text-amber-300 mb-1 block">
+                  <label className="text-[11px] font-semibold text-amber-900 mb-1 block">
                     هدية الترحيب للكاش باك (DH)
                   </label>
                   <input
@@ -436,12 +436,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                         welcomeCashback: parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                    className="w-full bg-white border border-[#D1D7DB] rounded-xl px-3 py-2 text-xs font-mono text-[#111B21] focus:outline-none focus:border-[#008069]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-semibold text-amber-300 mb-1 block">
+                  <label className="text-[11px] font-semibold text-amber-900 mb-1 block">
                     الحد الأدنى للصرف (DH)
                   </label>
                   <input
@@ -454,7 +454,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                         minCashbackRedeem: parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                    className="w-full bg-white border border-[#D1D7DB] rounded-xl px-3 py-2 text-xs font-mono text-[#111B21] focus:outline-none focus:border-[#008069]"
                   />
                 </div>
               </div>
@@ -462,7 +462,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   عدد الأختام للحصول على المكافأة ({formData.stampsRequired})
                 </label>
                 <input
@@ -476,9 +476,9 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                       stampsRequired: parseInt(e.target.value, 10),
                     })
                   }
-                  className="w-full accent-blue-600 cursor-pointer"
+                  className="w-full accent-[#008069] cursor-pointer"
                 />
-                <div className="flex justify-between text-[10px] text-white/50 font-mono mt-1">
+                <div className="flex justify-between text-[10px] text-[#54656F] font-mono mt-1">
                   <span>3 أختام</span>
                   <span>5 (موصى به)</span>
                   <span>10 أختام</span>
@@ -486,7 +486,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   اسم المكافأة المجانية *
                 </label>
                 <input
@@ -497,12 +497,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, rewardName: e.target.value })
                   }
                   placeholder="قهوة مجانية، حلاقة مجانية، وجبة مجانية..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-amber-300 font-semibold focus:outline-none focus:border-amber-400 transition"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-amber-800 font-bold focus:outline-none focus:border-amber-400 focus:bg-white transition"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   اللون الأساسي للبطاقة
                 </label>
                 <div className="flex items-center gap-2">
@@ -521,13 +521,13 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                       setFormData({ ...formData, primaryColor: e.target.value })
                     }
                     aria-label="قيمة اللون الأساسي Hex"
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white/90"
+                    className="flex-1 bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3 py-2 text-xs font-mono text-[#111B21]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   تدرج خلفية البطاقة (CSS Gradient)
                 </label>
                 <input
@@ -537,16 +537,16 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, bgGradient: e.target.value })
                   }
                   placeholder="linear-gradient(...)"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white/70 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[#111B21] focus:outline-none focus:border-[#008069] focus:bg-white"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 4: Plan & Initial Credits */}
-          <div className="glass-panel p-6 rounded-3xl space-y-4">
-            <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
-              <Coins className="w-4 h-4 text-sky-400" />
+          <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-[#111B21] pb-2 border-b border-[#E9EDEF] flex items-center gap-2">
+              <Coins className="w-4 h-4 text-amber-500" />
               <span>4. باقة الاشتراك ورصيد الكريدي</span>
             </h3>
 
@@ -566,17 +566,17 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     }
                     className={`p-4 rounded-2xl border text-right transition ${
                       isSelected
-                        ? "bg-white/10 border-blue-400 text-white shadow-lg ring-1 ring-blue-400"
-                        : "bg-white/[0.03] border-white/10 hover:bg-white/5 text-white/70"
+                        ? "bg-[#008069]/10 border-[#008069] text-[#111B21] shadow-sm ring-1 ring-[#008069]"
+                        : "bg-[#F0F2F5] border-[#D1D7DB] hover:bg-[#E9EDEF] text-[#54656F]"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-sm">{plan.name}</span>
-                      <span className="text-[11px] text-sky-400 font-bold">
+                      <span className="font-bold text-sm text-[#111B21]">{plan.name}</span>
+                      <span className="text-[11px] text-[#008069] font-bold">
                         {plan.price}
                       </span>
                     </div>
-                    <span className="text-[11px] text-white/50 block">
+                    <span className="text-[11px] text-[#54656F] block">
                       {plan.label} • {plan.credits} كريدي
                     </span>
                   </button>
@@ -585,7 +585,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
             </div>
 
             <div className="pt-2">
-              <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+              <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                 رصيد الكريدي الأولي (Initial Credits)
               </label>
               <input
@@ -597,21 +597,21 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     credits: parseInt(e.target.value, 10) || 0,
                   })
                 }
-                className="w-full sm:w-64 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-amber-400 font-mono font-bold focus:outline-none focus:border-amber-400"
+                className="w-full sm:w-64 bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-amber-700 font-mono font-bold focus:outline-none focus:border-amber-400 focus:bg-white"
               />
             </div>
           </div>
 
           {/* Section 5: Radar Geofencing & Google Maps */}
-          <div className="glass-panel p-6 rounded-3xl space-y-4">
-            <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
-              <Radio className="w-4 h-4 text-sky-400" />
+          <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-[#111B21] pb-2 border-b border-[#E9EDEF] flex items-center gap-2">
+              <Radio className="w-4 h-4 text-[#008069]" />
               <span>5. رادار المحيط (100m Radar) ومراجعات Google Maps</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   خط العرض (Latitude)
                 </label>
                 <input
@@ -625,12 +625,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     })
                   }
                   placeholder="33.5731"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] font-mono focus:outline-none focus:border-[#008069] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   خط الطول (Longitude)
                 </label>
                 <input
@@ -644,12 +644,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     })
                   }
                   placeholder="-7.5898"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] font-mono focus:outline-none focus:border-[#008069] focus:bg-white"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   نص إشعار الرادار عند اقتراب الزبون بـ 100 متر
                 </label>
                 <textarea
@@ -659,12 +659,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, radarMessage: e.target.value })
                   }
                   placeholder="راك دايز من حدانا! دوز مرحبا بيك..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] focus:outline-none focus:border-[#008069] focus:bg-white"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-white/80 mb-1.5 block">
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
                   رابط تقييمات خرائط جوجل (Google Maps Review Link)
                 </label>
                 <input
@@ -674,91 +674,91 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, googleMapsUrl: e.target.value })
                   }
                   placeholder="https://maps.google.com/?cid=..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono dir-ltr text-left focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] font-mono dir-ltr text-left focus:outline-none focus:border-[#008069] focus:bg-white"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 6: Automation Flags */}
-          <div className="glass-panel p-6 rounded-3xl space-y-3">
-            <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-sky-400" />
+          <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-3">
+            <h3 className="text-sm font-bold text-[#111B21] pb-2 border-b border-[#E9EDEF] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#008069]" />
               <span>6. محركات الأتمتة الذكية</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <label className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 cursor-pointer hover:bg-white/10 transition">
+              <label className="flex items-center gap-3 p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] cursor-pointer hover:bg-[#E9EDEF] transition">
                 <input
                   type="checkbox"
                   checked={formData.autoWinback}
                   onChange={(e) =>
                     setFormData({ ...formData, autoWinback: e.target.checked })
                   }
-                  className="w-4 h-4 accent-blue-600 rounded"
+                  className="w-4 h-4 accent-[#008069] rounded cursor-pointer"
                 />
                 <div>
-                  <span className="text-xs font-bold text-white block">
+                  <span className="text-xs font-bold text-[#111B21] block">
                     استرجاع الغابرين (Win-back)
                   </span>
-                  <span className="text-[10px] text-white/50">
+                  <span className="text-[10px] text-[#54656F]">
                     إشعار تلقائي بعد 15 يوماً من عدم الزيارة
                   </span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 cursor-pointer hover:bg-white/10 transition">
+              <label className="flex items-center gap-3 p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] cursor-pointer hover:bg-[#E9EDEF] transition">
                 <input
                   type="checkbox"
                   checked={formData.autoReview}
                   onChange={(e) =>
                     setFormData({ ...formData, autoReview: e.target.checked })
                   }
-                  className="w-4 h-4 accent-blue-600 rounded"
+                  className="w-4 h-4 accent-[#008069] rounded cursor-pointer"
                 />
                 <div>
-                  <span className="text-xs font-bold text-white block">
+                  <span className="text-xs font-bold text-[#111B21] block">
                     مراجعات جوجل الآلية
                   </span>
-                  <span className="text-[10px] text-white/50">
+                  <span className="text-[10px] text-[#54656F]">
                     طلب تقييم Google Maps بعد الزيارة الثالثة
                   </span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 cursor-pointer hover:bg-white/10 transition">
+              <label className="flex items-center gap-3 p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] cursor-pointer hover:bg-[#E9EDEF] transition">
                 <input
                   type="checkbox"
                   checked={formData.autoRadar}
                   onChange={(e) =>
                     setFormData({ ...formData, autoRadar: e.target.checked })
                   }
-                  className="w-4 h-4 accent-blue-600 rounded"
+                  className="w-4 h-4 accent-[#008069] rounded cursor-pointer"
                 />
                 <div>
-                  <span className="text-xs font-bold text-white block">
+                  <span className="text-xs font-bold text-[#111B21] block">
                     رادار الجيوفنسينغ
                   </span>
-                  <span className="text-[10px] text-white/50">
+                  <span className="text-[10px] text-[#54656F]">
                     إشعار فوري عند المرور بجانب المحل
                   </span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 cursor-pointer hover:bg-white/10 transition">
+              <label className="flex items-center gap-3 p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] cursor-pointer hover:bg-[#E9EDEF] transition">
                 <input
                   type="checkbox"
                   checked={formData.autoBirthday}
                   onChange={(e) =>
                     setFormData({ ...formData, autoBirthday: e.target.checked })
                   }
-                  className="w-4 h-4 accent-blue-600 rounded"
+                  className="w-4 h-4 accent-[#008069] rounded cursor-pointer"
                 />
                 <div>
-                  <span className="text-xs font-bold text-white block">
+                  <span className="text-xs font-bold text-[#111B21] block">
                     مكافأة عيد الميلاد
                   </span>
-                  <span className="text-[10px] text-white/50">
+                  <span className="text-[10px] text-[#54656F]">
                     طابع مضاعف أو هدية في يوم ميلاد الزبون
                   </span>
                 </div>
@@ -771,7 +771,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-[#008069]/20 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
             >
               {loading ? (
                 <span>جاري الحفظ...</span>
@@ -785,7 +785,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
 
             <Link
               href="/admin"
-              className="py-3.5 px-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 font-semibold text-sm transition"
+              className="py-3.5 px-6 rounded-2xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#54656F] font-semibold text-sm transition"
             >
               إلغاء
             </Link>
@@ -794,19 +794,19 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
 
         {/* Left Column: Sticky Live iPhone Pass Preview & Stand Quick View (5 cols on lg) */}
         <div className="lg:col-span-5 sticky top-24 space-y-6">
-          <div className="glass-panel p-6 rounded-3xl relative overflow-hidden">
+          <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#E9EDEF]">
               <div className="flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-sky-400" />
-                <h3 className="font-bold text-sm text-white">
+                <Smartphone className="w-4 h-4 text-[#008069]" />
+                <h3 className="font-bold text-sm text-[#111B21]">
                   معاينة مباشرة لشاشة الآيفون
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsStandModalOpen(true)}
-                className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 bg-blue-600/10 px-2.5 py-1 rounded-xl border border-blue-500/20"
+                className="text-xs text-[#008069] hover:text-[#00A884] font-semibold flex items-center gap-1 bg-[#008069]/10 px-2.5 py-1 rounded-xl border border-[#008069]/20 shadow-sm"
               >
                 <QrCode className="w-3.5 h-3.5" />
                 <span>معاينة الستاند</span>
@@ -814,14 +814,14 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
             </div>
 
             {/* Loyalty Pass Type Toggle for Preview */}
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-white/5 rounded-2xl mb-3 text-xs">
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#F0F2F5] rounded-2xl mb-3 text-xs border border-[#E9EDEF]">
               <button
                 type="button"
                 onClick={() => setPreviewLoyaltyType("STAMPS")}
                 className={`py-1.5 rounded-xl font-bold transition ${
                   previewLoyaltyType === "STAMPS"
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-white/60 hover:text-white"
+                    ? "bg-[#008069] text-white shadow-sm"
+                    : "text-[#54656F] hover:text-[#111B21]"
                 }`}
               >
                 معاينة بطاقة الأختام
@@ -831,8 +831,8 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                 onClick={() => setPreviewLoyaltyType("CASHBACK")}
                 className={`py-1.5 rounded-xl font-bold transition ${
                   previewLoyaltyType === "CASHBACK"
-                    ? "bg-amber-400 text-slate-950 shadow"
-                    : "text-white/60 hover:text-white"
+                    ? "bg-amber-500 text-slate-950 shadow-sm"
+                    : "text-[#54656F] hover:text-[#111B21]"
                 }`}
               >
                 معاينة بطاقة الكاش باك
@@ -841,8 +841,8 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
 
             {/* Test Stamps Slider (Only for STAMPS preview) */}
             {previewLoyaltyType === "STAMPS" && (
-              <div className="mb-4 p-3 bg-white/[0.02] rounded-2xl border border-white/5 flex items-center justify-between">
-                <span className="text-[11px] text-white/60">
+              <div className="mb-4 p-3 bg-[#F0F2F5] rounded-2xl border border-[#E9EDEF] flex items-center justify-between">
+                <span className="text-[11px] text-[#54656F] font-semibold">
                   تجربة عدد الأختام في المعاينة:
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -853,8 +853,8 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                       onClick={() => setPreviewStamps(idx)}
                       className={`w-6 h-6 rounded-lg text-[10px] font-mono font-bold transition ${
                         previewStamps === idx
-                          ? "bg-blue-600 text-white shadow-md"
-                          : "bg-white/5 text-white/50 hover:bg-white/10"
+                          ? "bg-[#008069] text-white shadow-sm"
+                          : "bg-white text-[#54656F] hover:bg-[#E9EDEF] border border-[#D1D7DB]"
                       }`}
                     >
                       {idx}
@@ -865,15 +865,15 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
             )}
 
             {/* Realistic iPhone Mockup Frame */}
-            <div className="relative mx-auto w-[310px] sm:w-[340px] bg-[#111827] rounded-[48px] p-4 border-[6px] border-slate-700 shadow-2xl shadow-black/80">
+            <div className="relative mx-auto w-[310px] sm:w-[340px] bg-[#F0F2F5] rounded-[48px] p-4 border-[6px] border-slate-300 shadow-xl">
               {/* iPhone Dynamic Island */}
-              <div className="w-24 h-5 bg-black rounded-full mx-auto mb-4 border border-white/10 flex items-center justify-end px-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-white/20"></span>
+              <div className="w-24 h-5 bg-black rounded-full mx-auto mb-4 border border-black/10 flex items-center justify-end px-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-800"></span>
               </div>
 
               {/* Apple Wallet Header */}
               <div className="text-center mb-3">
-                <span className="text-[10px] tracking-wider text-white/40 uppercase font-mono">
+                <span className="text-[10px] tracking-wider text-[#54656F] uppercase font-mono font-semibold">
                   Apple Wallet • بطاقة المتجر
                 </span>
               </div>
@@ -896,10 +896,10 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
               />
 
               {/* iPhone Home Bar */}
-              <div className="w-28 h-1 bg-white/40 rounded-full mx-auto mt-6"></div>
+              <div className="w-28 h-1 bg-slate-400 rounded-full mx-auto mt-6"></div>
             </div>
 
-            <p className="text-center text-[11px] text-white/40 mt-4">
+            <p className="text-center text-[11px] text-[#54656F] mt-4">
               تتحدث المعاينة تلقائياً فور كتابة أي معلومة في النموذج.
             </p>
           </div>

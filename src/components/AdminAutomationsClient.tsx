@@ -204,18 +204,18 @@ export default function AdminAutomationsClient({
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-300 text-[#111B21]">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600/10 border border-blue-500/20 text-sky-400 text-xs font-medium mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-xs font-semibold mb-2">
             <Sparkles className="w-3.5 h-3.5" />
             <span>مركز تحكم الأتمتة المتقدم (Automation Cron Engine)</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#111B21] tracking-tight">
             محرك الأتمتة والرسائل الذكية
           </h1>
-          <p className="text-sm text-white/60 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-sm text-[#54656F] mt-1 max-w-2xl leading-relaxed">
             مراقبة وتشغيل الأتمتة الذكية لجميع المحلات: استرجاع الزبناء الغابرين بعد 15 يوماً، تحفيز قرب المكافأة، هدايا أعياد الميلاد، ورادار القرب الجغرافي.
           </p>
         </div>
@@ -223,7 +223,7 @@ export default function AdminAutomationsClient({
         <div className="flex items-center gap-3">
           <Link
             href="/admin"
-            className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition"
+            className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] text-xs font-semibold shadow-sm transition"
           >
             العودة للوحة التحكم
           </Link>
@@ -232,71 +232,71 @@ export default function AdminAutomationsClient({
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-panel p-5 rounded-2xl border border-white/10 relative overflow-hidden group">
+        <div className="bg-white p-5 rounded-2xl border border-[#E9EDEF] shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-white/60">مجموع الإشعارات</span>
-            <div className="w-8 h-8 rounded-xl bg-white/5 text-white/80 flex items-center justify-center">
+            <span className="text-xs font-semibold text-[#54656F]">مجموع الإشعارات</span>
+            <div className="w-8 h-8 rounded-xl bg-[#008069]/10 text-[#008069] flex items-center justify-center">
               <Bell className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-white mt-3 font-mono">
+          <div className="text-2xl font-bold text-[#111B21] mt-3 font-mono">
             {stats.totalNotifications}
           </div>
-          <p className="text-[11px] text-white/50 mt-1">مرسلة للمشتركين</p>
+          <p className="text-[11px] text-[#54656F] mt-1">مرسلة للمشتركين</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-rose-500/20 bg-rose-500/[0.02] relative overflow-hidden group">
+        <div className="bg-white p-5 rounded-2xl border border-red-200 bg-red-50/30 shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-300/80">استرجاع الغابرين (15 يوم)</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
+            <span className="text-xs font-semibold text-red-900">استرجاع الغابرين (15 يوم)</span>
+            <div className="w-8 h-8 rounded-xl bg-red-100 text-red-700 flex items-center justify-center">
               <Clock className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-rose-400 mt-3 font-mono">
+          <div className="text-2xl font-bold text-red-700 mt-3 font-mono">
             {stats.winbackCount}
           </div>
-          <p className="text-[11px] text-rose-400/60 mt-1">دعوة استرجاع تلقائية</p>
+          <p className="text-[11px] text-red-600 mt-1">دعوة استرجاع تلقائية</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-amber-500/20 bg-amber-500/[0.02] relative overflow-hidden group">
+        <div className="bg-white p-5 rounded-2xl border border-amber-200 bg-amber-50/30 shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-300/80">تحفيز قرب المكافأة</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+            <span className="text-xs font-semibold text-amber-900">تحفيز قرب المكافأة</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
               <Flame className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-amber-400 mt-3 font-mono">
+          <div className="text-2xl font-bold text-amber-700 mt-3 font-mono">
             {stats.nearRewardCount}
           </div>
-          <p className="text-[11px] text-amber-400/60 mt-1">باقي طابع واحد (مجاني)</p>
+          <p className="text-[11px] text-amber-600 mt-1">باقي طابع واحد (مجاني)</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-blue-500/20 bg-blue-500/[0.02] relative overflow-hidden group">
+        <div className="bg-white p-5 rounded-2xl border border-blue-200 bg-blue-50/30 shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-300/80">تقييمات Google Maps</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+            <span className="text-xs font-semibold text-blue-900">تقييمات Google Maps</span>
+            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
               <Star className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-blue-400 mt-3 font-mono">
+          <div className="text-2xl font-bold text-blue-700 mt-3 font-mono">
             {stats.reviewCount}
           </div>
-          <p className="text-[11px] text-blue-400/60 mt-1">بعد الطابع الثالث أو الكادو</p>
+          <p className="text-[11px] text-blue-600 mt-1">بعد الطابع الثالث أو الكادو</p>
         </div>
       </div>
 
       {/* Manual Cron Execution Launcher Box */}
-      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-600/[0.05] to-transparent relative overflow-hidden">
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
         <div className="max-w-3xl space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-500/25">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] text-white flex items-center justify-center font-bold shadow-md shadow-[#008069]/20">
               <Zap className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg font-bold text-[#111B21]">
                 تشغيل محرك الأتمتة اليدوي (Manual Cron Trigger)
               </h2>
-              <p className="text-xs text-white/60">
+              <p className="text-xs text-[#54656F]">
                 يقوم بالبحث عن الزبناء المؤهلين تلقائياً وإرسال الإشعارات إلى بطاقاتهم وخصم الرصيد عند الحاجة.
               </p>
             </div>
@@ -304,14 +304,14 @@ export default function AdminAutomationsClient({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>
-              <label htmlFor="cron-merchant-select" className="block text-xs font-semibold text-white/70 mb-1.5">
+              <label htmlFor="cron-merchant-select" className="block text-xs font-semibold text-[#111B21] mb-1.5">
                 تحديد المحل المستهدف:
               </label>
               <select
                 id="cron-merchant-select"
                 value={selectedMerchantId}
                 onChange={(e) => setSelectedMerchantId(e.target.value)}
-                className="w-full bg-[#111827] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3 py-2 text-xs text-[#111B21] focus:outline-none focus:border-[#008069]"
               >
                 <option value="ALL">جميع المحلات النشطة ({merchants.length})</option>
                 {merchants.map((m) => (
@@ -323,14 +323,14 @@ export default function AdminAutomationsClient({
             </div>
 
             <div className="flex items-center gap-3 pt-4 sm:pt-6">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-white/80">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-[#111B21]">
                 <input
                   type="checkbox"
                   checked={forceDemo}
                   onChange={(e) => setForceDemo(e.target.checked)}
-                  className="rounded border-white/20 bg-[#111827] text-blue-500 focus:ring-0 w-4 h-4 cursor-pointer"
+                  className="rounded border-[#D1D7DB] text-[#008069] focus:ring-0 w-4 h-4 cursor-pointer"
                 />
-                <span>وضع المحاكاة التجريبي (Force Demo Mode لتفعيل الأتمتة فوراً)</span>
+                <span className="font-medium">وضع المحاكاة التجريبي (Force Demo Mode لتفعيل الأتمتة فوراً)</span>
               </label>
             </div>
           </div>
@@ -340,7 +340,7 @@ export default function AdminAutomationsClient({
               type="button"
               onClick={handleRunCron}
               disabled={isRunningCron}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-[#008069]/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
             >
               {isRunningCron ? (
                 <>
@@ -355,15 +355,15 @@ export default function AdminAutomationsClient({
               )}
             </button>
 
-            <span className="text-xs text-white/40">
+            <span className="text-xs text-[#54656F]">
               * في الإنتاج يعمل هذا المحرك تلقائياً كل 6 ساعات عبر Vercel Cron أو Linux Cron.
             </span>
           </div>
 
           {/* Cron Result Report */}
           {cronResult && (
-            <div className="mt-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs space-y-2 animate-in fade-in">
-              <div className="flex items-center gap-2 font-bold text-emerald-400">
+            <div className="mt-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-2 animate-in fade-in">
+              <div className="flex items-center gap-2 font-bold text-emerald-800">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>تم تنفيذ دورة الأتمتة بنجاح!</span>
               </div>
@@ -379,19 +379,19 @@ export default function AdminAutomationsClient({
       </div>
 
       {/* Merchants Automation Status Grid */}
-      <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
+      <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Store className="w-5 h-5 text-sky-400" />
-            <h2 className="text-base font-bold text-white">حالة أتمتة المحلات المشتركة</h2>
+            <Store className="w-5 h-5 text-[#008069]" />
+            <h2 className="text-base font-bold text-[#111B21]">حالة أتمتة المحلات المشتركة</h2>
           </div>
-          <span className="text-xs text-white/50">{merchants.length} محلات</span>
+          <span className="text-xs text-[#54656F]">{merchants.length} محلات</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-right text-xs">
             <thead>
-              <tr className="border-b border-white/10 text-white/40 pb-3">
+              <tr className="border-b border-[#E9EDEF] text-[#54656F] pb-3">
                 <th className="py-2.5 font-semibold">المحل</th>
                 <th className="py-2.5 font-semibold">الرصيد المتاح</th>
                 <th className="py-2.5 font-semibold">استرجاع 15 يوم</th>
@@ -403,48 +403,48 @@ export default function AdminAutomationsClient({
                 <th className="py-2.5 font-semibold">إجراء سريع</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-white/80">
+            <tbody className="divide-y divide-[#E9EDEF] text-[#111B21]">
               {merchants.map((m) => (
-                <tr key={m.id} className="hover:bg-white/[0.02] transition">
-                  <td className="py-3 font-bold text-white">
+                <tr key={m.id} className="hover:bg-[#F0F2F5] transition">
+                  <td className="py-3 font-bold text-[#111B21]">
                     <Link
                       href={`/admin/merchants/${m.id}`}
-                      className="hover:text-sky-400 transition"
+                      className="hover:text-[#008069] transition"
                     >
                       {m.name}
                     </Link>
                   </td>
                   <td className="py-3 font-mono">
-                    <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20">
+                    <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-bold border border-amber-300">
                       {m.credits} نقطة
                     </span>
                   </td>
                   <td className="py-3">
                     {m.autoWinback ? (
-                      <span className="text-emerald-400 font-semibold">مفعّل ✓</span>
+                      <span className="text-[#008069] font-bold">مفعّل ✓</span>
                     ) : (
-                      <span className="text-white/30">معطّل</span>
+                      <span className="text-[#54656F]/40">معطّل</span>
                     )}
                   </td>
                   <td className="py-3">
                     {m.autoNearReward ? (
-                      <span className="text-emerald-400 font-semibold">مفعّل ✓</span>
+                      <span className="text-[#008069] font-bold">مفعّل ✓</span>
                     ) : (
-                      <span className="text-white/30">معطّل</span>
+                      <span className="text-[#54656F]/40">معطّل</span>
                     )}
                   </td>
                   <td className="py-3">
                     {m.autoReview ? (
-                      <span className="text-emerald-400 font-semibold">مفعّل ✓</span>
+                      <span className="text-[#008069] font-bold">مفعّل ✓</span>
                     ) : (
-                      <span className="text-white/30">معطّل</span>
+                      <span className="text-[#54656F]/40">معطّل</span>
                     )}
                   </td>
                   <td className="py-3">
                     {m.autoRadar ? (
-                      <span className="text-emerald-400 font-semibold">مفعّل ✓</span>
+                      <span className="text-[#008069] font-bold">مفعّل ✓</span>
                     ) : (
-                      <span className="text-white/30">معطّل</span>
+                      <span className="text-[#54656F]/40">معطّل</span>
                     )}
                   </td>
                   <td className="py-3 font-mono">{m.customersCount}</td>
@@ -453,7 +453,7 @@ export default function AdminAutomationsClient({
                     <Link
                       href={`/m/${m.slug}`}
                       target="_blank"
-                      className="inline-flex items-center gap-1 text-[11px] text-sky-400 hover:underline"
+                      className="inline-flex items-center gap-1 text-[11px] text-[#008069] hover:underline font-semibold"
                     >
                       <span>تطبيق التاجر</span>
                       <ExternalLink className="w-3 h-3" />
@@ -467,11 +467,11 @@ export default function AdminAutomationsClient({
       </div>
 
       {/* Live Notification Audit Log */}
-      <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
+      <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-sky-400" />
-            <h2 className="text-base font-bold text-white">سجل الإشعارات والأتمتة المباشر (Audit Log)</h2>
+            <Bell className="w-5 h-5 text-[#008069]" />
+            <h2 className="text-base font-bold text-[#111B21]">سجل الإشعارات والأتمتة المباشر (Audit Log)</h2>
           </div>
 
           {/* Type Filter Pills */}
@@ -483,8 +483,8 @@ export default function AdminAutomationsClient({
                 onClick={() => setActiveFilter(type)}
                 className={`px-3 py-1.5 rounded-xl font-medium transition text-xs whitespace-nowrap ${
                   activeFilter === type
-                    ? "bg-blue-600 text-white font-bold shadow"
-                    : "bg-white/5 text-white/60 hover:text-white"
+                    ? "bg-[#008069] text-white font-bold shadow-sm"
+                    : "bg-[#F0F2F5] text-[#54656F] border border-[#D1D7DB] hover:text-[#111B21]"
                 }`}
               >
                 {type === "ALL" && "الكل"}
@@ -500,14 +500,14 @@ export default function AdminAutomationsClient({
         </div>
 
         {filteredNotifications.length === 0 ? (
-          <div className="p-8 text-center text-white/40 text-xs">
+          <div className="p-8 text-center text-[#54656F] text-xs">
             لا توجد إشعارات مسجلة في هذا التصنيف حالياً.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-right text-xs">
               <thead>
-                <tr className="border-b border-white/10 text-white/40 pb-3">
+                <tr className="border-b border-[#E9EDEF] text-[#54656F] pb-3">
                   <th className="py-2.5 font-semibold">النوع</th>
                   <th className="py-2.5 font-semibold">المحل</th>
                   <th className="py-2.5 font-semibold">الزبون المستهدف</th>
@@ -516,30 +516,30 @@ export default function AdminAutomationsClient({
                   <th className="py-2.5 font-semibold">معاينة الكارط</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-white/80">
+              <tbody className="divide-y divide-[#E9EDEF] text-[#111B21]">
                 {filteredNotifications.map((n) => (
-                  <tr key={n.id} className="hover:bg-white/[0.02] transition">
+                  <tr key={n.id} className="hover:bg-[#F0F2F5] transition">
                     <td className="py-3">{getTypeBadge(n.type)}</td>
-                    <td className="py-3 font-semibold text-white">
+                    <td className="py-3 font-semibold text-[#111B21]">
                       {n.merchant.name}
                     </td>
                     <td className="py-3">
                       {n.customer ? (
                         <div>
-                          <span className="font-medium text-white">{n.customer.name}</span>
-                          <span className="block text-[10px] text-white/40 font-mono">
+                          <span className="font-semibold text-[#111B21]">{n.customer.name}</span>
+                          <span className="block text-[10px] text-[#54656F] font-mono">
                             {n.customer.phone}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-white/40">بث جماعي (Broadcast)</span>
+                        <span className="text-[#54656F]">بث جماعي (Broadcast)</span>
                       )}
                     </td>
-                    <td className="py-3 max-w-xs truncate text-white/70">
-                      <span className="font-semibold text-white/90">{n.title}: </span>
+                    <td className="py-3 max-w-xs truncate text-[#54656F]">
+                      <span className="font-semibold text-[#111B21]">{n.title}: </span>
                       <span>{n.body}</span>
                     </td>
-                    <td className="py-3 font-mono text-[11px] text-white/50">
+                    <td className="py-3 font-mono text-[11px] text-[#54656F]">
                       {formatTimeAgoArabic(n.createdAt)}
                     </td>
                     <td className="py-3">
@@ -547,13 +547,13 @@ export default function AdminAutomationsClient({
                         <Link
                           href={`/pass/${n.customer.passSerial}`}
                           target="_blank"
-                          className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:underline"
+                          className="inline-flex items-center gap-1 text-[11px] text-[#008069] hover:underline font-semibold"
                         >
                           <span>عرض الكارط</span>
                           <ArrowUpRight className="w-3 h-3" />
                         </Link>
                       ) : (
-                        <span className="text-white/30">-</span>
+                        <span className="text-[#54656F]">-</span>
                       )}
                     </td>
                   </tr>

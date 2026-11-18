@@ -169,106 +169,106 @@ export default function MerchantsDashboardClient({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      {/* 4 Glass KPI Cards */}
+      {/* 4 Light KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Merchants */}
-        <div className="glass-panel glass-card-hover p-6 rounded-3xl relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-white/60">
+            <span className="text-xs font-semibold text-[#54656F]">
               إجمالي المحلات المشتركة
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-blue-600/10 text-sky-400 border border-blue-500/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-[#008069]/10 text-[#008069] border border-[#008069]/20 flex items-center justify-center shadow-sm">
               <Store className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-white">
+            <span className="text-3xl font-bold font-mono text-[#111B21]">
               {metrics.totalMerchants}
             </span>
-            <span className="text-xs text-emerald-400 font-medium">
+            <span className="text-xs text-[#008069] font-bold">
               ({metrics.activeMerchants} نشط حالياً)
             </span>
           </div>
-          <p className="mt-2 text-[11px] text-white/50">
+          <p className="mt-2 text-[11px] text-[#54656F]">
             محلات المقاهي، الحلاقة، والمطاعم
           </p>
         </div>
 
         {/* Card 2: Customers */}
-        <div className="glass-panel glass-card-hover p-6 rounded-3xl relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-white/60">
+            <span className="text-xs font-semibold text-[#54656F]">
               إجمالي الكارطات المفعّلة
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-[#00A884]/10 text-[#008069] border border-[#00A884]/20 flex items-center justify-center shadow-sm">
               <Users className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-white">
+            <span className="text-3xl font-bold font-mono text-[#111B21]">
               {metrics.totalCustomers.toLocaleString()}
             </span>
-            <span className="text-xs text-blue-400 font-medium">زبون دائم</span>
+            <span className="text-xs text-[#008069] font-bold">زبون دائم</span>
           </div>
-          <p className="mt-2 text-[11px] text-white/50">
+          <p className="mt-2 text-[11px] text-[#54656F]">
             عبر Apple Wallet و Google Wallet و Web Pass
           </p>
         </div>
 
         {/* Card 3: Visits & Stamps */}
-        <div className="glass-panel glass-card-hover p-6 rounded-3xl relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-white/60">
+            <span className="text-xs font-semibold text-[#54656F]">
               مجموع الزيارات والطوابع
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center justify-center shadow-sm">
               <Award className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-white">
+            <span className="text-3xl font-bold font-mono text-[#111B21]">
               {metrics.totalTransactions.toLocaleString()}
             </span>
-            <span className="text-xs text-purple-400 font-medium">عملية مسجلة</span>
+            <span className="text-xs text-purple-700 font-bold">عملية مسجلة</span>
           </div>
-          <p className="mt-2 text-[11px] text-white/50">
+          <p className="mt-2 text-[11px] text-[#54656F]">
             طوابع مضافة ومكافآت مستفاد منها
           </p>
         </div>
 
         {/* Card 4: Distributed Credits */}
-        <div className="glass-panel glass-card-hover p-6 rounded-3xl relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-white/60">
+            <span className="text-xs font-semibold text-[#54656F]">
               رصيد الكريدي الموزع
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center shadow-sm">
               <Coins className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-amber-400">
+            <span className="text-3xl font-bold font-mono text-amber-700">
               {metrics.totalCredits.toLocaleString()}
             </span>
-            <span className="text-xs text-amber-300 font-medium">كريدي متاح</span>
+            <span className="text-xs text-amber-800 font-bold">كريدي متاح</span>
           </div>
-          <p className="mt-2 text-[11px] text-white/50">
+          <p className="mt-2 text-[11px] text-[#54656F]">
             جاهز لإشعارات الرادار وحملات الاسترجاع
           </p>
         </div>
       </div>
 
       {/* Control Bar: Search & Filter */}
-      <div className="glass-panel p-4 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-white p-4 rounded-3xl border border-[#E9EDEF] shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="w-full md:w-96 relative">
-          <Search className="w-4 h-4 absolute right-3.5 top-3.5 text-white/40" />
+          <Search className="w-4 h-4 absolute right-3.5 top-3.5 text-[#54656F]" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="بحث باسم المحل، الرابط، أو المدينة"
             placeholder="بحث باسم المحل، الرابط (Slug)، أو المدينة..."
-            className="w-full bg-white/5 border border-white/10 rounded-2xl pr-10 pl-4 py-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-500 transition"
+            className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-2xl pr-10 pl-4 py-2.5 text-xs text-[#111B21] placeholder-[#54656F] focus:outline-none focus:border-[#008069] focus:bg-white transition"
           />
         </div>
 
@@ -277,7 +277,7 @@ export default function MerchantsDashboardClient({
           <select
             value={selectedNiche}
             onChange={(e) => setSelectedNiche(e.target.value)}
-            className="bg-[#111827] border border-white/10 rounded-2xl px-3 py-2 text-xs text-white/90 focus:outline-none focus:border-blue-500"
+            className="bg-[#F0F2F5] border border-[#D1D7DB] rounded-2xl px-3 py-2 text-xs text-[#111B21] focus:outline-none focus:border-[#008069]"
           >
             <option value="all">كل الأنشطة</option>
             <option value="cafe">المقاهي (Café)</option>
@@ -293,7 +293,7 @@ export default function MerchantsDashboardClient({
           <select
             value={selectedPlan}
             onChange={(e) => setSelectedPlan(e.target.value)}
-            className="bg-[#111827] border border-white/10 rounded-2xl px-3 py-2 text-xs text-white/90 focus:outline-none focus:border-blue-500"
+            className="bg-[#F0F2F5] border border-[#D1D7DB] rounded-2xl px-3 py-2 text-xs text-[#111B21] focus:outline-none focus:border-[#008069]"
           >
             <option value="all">كل الباقات</option>
             <option value="STARTER">باقة STARTER</option>
@@ -303,7 +303,7 @@ export default function MerchantsDashboardClient({
 
           <Link
             href="/admin/merchants/new"
-            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition whitespace-nowrap mr-auto md:mr-0"
+            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#008069]/20 transition whitespace-nowrap mr-auto md:mr-0"
           >
             <PlusCircle className="w-4 h-4" />
             <span>محل جديد</span>
@@ -314,24 +314,24 @@ export default function MerchantsDashboardClient({
       {/* Merchants Grid / Table */}
       <div className="space-y-4" id="merchants">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <h2 className="text-base font-bold text-[#111B21] flex items-center gap-2">
             <span>قائمة المحلات الشريكة</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70 font-mono">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[#E9EDEF] text-[#54656F] font-mono">
               {filteredMerchants.length}
             </span>
           </h2>
         </div>
 
         {filteredMerchants.length === 0 ? (
-          <div className="glass-panel p-12 rounded-3xl text-center">
-            <Store className="w-12 h-12 text-white/20 mx-auto mb-3" />
-            <h3 className="font-bold text-base text-white">لا توجد محلات مطابقة</h3>
-            <p className="text-xs text-white/50 mt-1 max-w-sm mx-auto">
+          <div className="bg-white p-12 rounded-3xl border border-[#E9EDEF] text-center shadow-sm">
+            <Store className="w-12 h-12 text-[#54656F]/30 mx-auto mb-3" />
+            <h3 className="font-bold text-base text-[#111B21]">لا توجد محلات مطابقة</h3>
+            <p className="text-xs text-[#54656F] mt-1 max-w-sm mx-auto">
               جرب تغيير كلمات البحث أو الفلاتر، أو قم بإضافة محل جديد الآن.
             </p>
             <Link
               href="/admin/merchants/new"
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-500 transition"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] text-white font-bold text-xs shadow-sm transition"
             >
               <PlusCircle className="w-4 h-4" />
               <span>إضافة محل جديد</span>
@@ -342,31 +342,31 @@ export default function MerchantsDashboardClient({
             {filteredMerchants.map((merchant) => (
               <div
                 key={merchant.id}
-                className="glass-panel rounded-3xl p-6 relative flex flex-col justify-between border border-white/10 hover:border-blue-500/30 transition-all duration-300"
+                className="bg-white rounded-3xl p-6 relative flex flex-col justify-between border border-[#E9EDEF] hover:border-[#008069]/40 shadow-sm transition-all duration-300"
               >
                 {/* Card Top: Avatar, Name, Niche & Plan */}
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md font-bold text-lg"
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm font-bold text-lg border border-black/10"
                         style={{ background: merchant.bgGradient || merchant.primaryColor }}
                       >
                         {merchant.name.slice(0, 2)}
                       </div>
                       <div>
-                        <h3 className="font-bold text-base text-white hover:text-sky-400 transition">
+                        <h3 className="font-bold text-base text-[#111B21] hover:text-[#008069] transition">
                           <Link href={`/admin/merchants/${merchant.id}`}>
                             {merchant.name}
                           </Link>
                         </h3>
-                        <div className="flex items-center gap-2 text-xs text-white/50 mt-0.5">
-                          <span className="font-mono text-sky-400">
+                        <div className="flex items-center gap-2 text-xs text-[#54656F] mt-0.5">
+                          <span className="font-mono text-[#008069] font-bold">
                             /{merchant.slug}
                           </span>
                           <span>•</span>
                           <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-white/40" />
+                            <MapPin className="w-3 h-3 text-[#54656F]" />
                             {merchant.city}
                           </span>
                         </div>
@@ -382,8 +382,8 @@ export default function MerchantsDashboardClient({
                       aria-label={merchant.isActive ? "تعطيل المحل" : "تفعيل المحل"}
                       className={`p-1.5 rounded-xl border transition ${
                         merchant.isActive
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                          : "bg-red-500/10 border-red-500/30 text-red-400"
+                          ? "bg-emerald-50 border-emerald-300 text-emerald-800"
+                          : "bg-red-50 border-red-300 text-red-800"
                       }`}
                     >
                       {merchant.isActive ? (
@@ -398,44 +398,44 @@ export default function MerchantsDashboardClient({
                   <div className="flex flex-wrap items-center gap-2 mb-4">
                     {getNicheBadge(merchant.niche)}
                     {getPlanBadge(merchant.plan)}
-                    <span className="text-[11px] font-mono text-white/60 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">
+                    <span className="text-[11px] font-mono text-[#54656F] bg-[#F0F2F5] px-2 py-0.5 rounded-lg border border-[#E9EDEF]">
                       PIN: {merchant.pinCode}
                     </span>
                   </div>
 
                   {/* Merchant Stats Summary */}
-                  <div className="grid grid-cols-3 gap-2 p-3 bg-white/[0.02] rounded-2xl border border-white/5 text-center my-3">
+                  <div className="grid grid-cols-3 gap-2 p-3 bg-[#F0F2F5] rounded-2xl border border-[#E9EDEF] text-center my-3">
                     <div>
-                      <span className="text-[10px] text-white/50 block">الكليان</span>
-                      <span className="font-mono font-bold text-sm text-white">
+                      <span className="text-[10px] text-[#54656F] block">الكليان</span>
+                      <span className="font-mono font-bold text-sm text-[#111B21]">
                         {merchant._count?.customers || 0}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-white/50 block">الزيارات</span>
-                      <span className="font-mono font-bold text-sm text-white">
+                      <span className="text-[10px] text-[#54656F] block">الزيارات</span>
+                      <span className="font-mono font-bold text-sm text-[#111B21]">
                         {merchant._count?.transactions || 0}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-white/50 block">الكريدي</span>
-                      <span className="font-mono font-bold text-sm text-amber-400">
+                      <span className="text-[10px] text-[#54656F] block">الكريدي</span>
+                      <span className="font-mono font-bold text-sm text-amber-700">
                         {merchant.credits.toLocaleString()}
                       </span>
                     </div>
                   </div>
 
                   {/* Reward & Stamps Info */}
-                  <div className="p-3 bg-white/5 rounded-2xl border border-white/5 text-xs space-y-1.5 mb-4">
-                    <div className="flex items-center justify-between text-white/80">
-                      <span className="text-white/50">المكافأة:</span>
-                      <span className="font-semibold text-amber-300">
+                  <div className="p-3 bg-[#F0F2F5] rounded-2xl border border-[#E9EDEF] text-xs space-y-1.5 mb-4">
+                    <div className="flex items-center justify-between text-[#111B21]">
+                      <span className="text-[#54656F]">المكافأة:</span>
+                      <span className="font-bold text-amber-800">
                         {merchant.rewardName}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-white/80">
-                      <span className="text-white/50">الطوابع المطلوبة:</span>
-                      <span className="font-mono font-bold text-white">
+                    <div className="flex items-center justify-between text-[#111B21]">
+                      <span className="text-[#54656F]">الطوابع المطلوبة:</span>
+                      <span className="font-mono font-bold text-[#111B21]">
                         {merchant.stampsRequired} طوابع
                       </span>
                     </div>
@@ -443,13 +443,13 @@ export default function MerchantsDashboardClient({
                 </div>
 
                 {/* Quick Action Buttons Row */}
-                <div className="space-y-2 pt-2 border-t border-white/10">
+                <div className="space-y-2 pt-2 border-t border-[#E9EDEF]">
                   <div className="grid grid-cols-2 gap-2">
                     {/* Topup button */}
                     <button
                       type="button"
                       onClick={() => setTopupModalMerchant(merchant)}
-                      className="w-full py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 transition"
+                      className="w-full py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
                     >
                       <Coins className="w-3.5 h-3.5" />
                       <span>شحن الكريدي</span>
@@ -459,9 +459,9 @@ export default function MerchantsDashboardClient({
                     <button
                       type="button"
                       onClick={() => setStandModalMerchant(merchant)}
-                      className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                      className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#111B21] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
                     >
-                      <QrCode className="w-3.5 h-3.5 text-sky-400" />
+                      <QrCode className="w-3.5 h-3.5 text-[#008069]" />
                       <span>الستاند (NFC)</span>
                     </button>
                   </div>
@@ -470,16 +470,16 @@ export default function MerchantsDashboardClient({
                   {merchant.samplePassSerial ? (
                     <Link
                       href={`/pass/${merchant.samplePassSerial}`}
-                      className="w-full py-2 px-3 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 text-sky-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                      className="w-full py-2 px-3 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 border border-[#008069]/20 text-[#008069] font-bold text-xs flex items-center justify-center gap-1.5 transition"
                       title="عرض بطاقة حية لزبون مسجل"
                     >
-                      <Smartphone className="w-3.5 h-3.5 text-sky-400" />
+                      <Smartphone className="w-3.5 h-3.5 text-[#008069]" />
                       <span>عرض كارت تجريبية (Live Pass)</span>
                     </Link>
                   ) : (
                     <Link
                       href={`/join/${merchant.slug}`}
-                      className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 text-xs flex items-center justify-center gap-1.5 transition"
+                      className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#54656F] text-xs flex items-center justify-center gap-1.5 transition font-medium"
                     >
                       <Smartphone className="w-3.5 h-3.5" />
                       <span>تسجيل أول زبون للكارط</span>
@@ -490,7 +490,7 @@ export default function MerchantsDashboardClient({
                   <div className="flex items-center justify-between gap-1 text-[11px] pt-1">
                     <Link
                       href={`/m/${merchant.slug}`}
-                      className="text-white/60 hover:text-sky-400 transition flex items-center gap-1"
+                      className="text-[#54656F] hover:text-[#008069] font-medium transition flex items-center gap-1"
                       title="معاينة لوحة تحكم التاجر"
                     >
                       <span>لوحة التاجر</span>
@@ -499,7 +499,7 @@ export default function MerchantsDashboardClient({
 
                     <Link
                       href={`/join/${merchant.slug}`}
-                      className="text-white/60 hover:text-blue-400 transition flex items-center gap-1"
+                      className="text-[#54656F] hover:text-[#008069] font-medium transition flex items-center gap-1"
                       title="رابط انضمام الزبائن والكارط"
                     >
                       <span>رابط الكليان</span>
@@ -508,7 +508,7 @@ export default function MerchantsDashboardClient({
 
                     <Link
                       href={`/admin/merchants/${merchant.id}`}
-                      className="text-white/60 hover:text-amber-400 transition flex items-center gap-1"
+                      className="text-[#54656F] hover:text-[#008069] font-medium transition flex items-center gap-1"
                       title="تعديل إعدادات المحل"
                     >
                       <span>تعديل</span>

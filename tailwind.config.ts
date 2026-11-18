@@ -9,28 +9,44 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        whatsapp: {
+          DEFAULT: "#008069",
+          green: "#008069",
+          punch: "#00A884",
+          vibrant: "#25D366",
+          dark: "#075E54",
+          bg: "#F0F2F5",
+          card: "#FFFFFF",
+          surface: "#F7F8FA",
+          border: "#E9EDEF",
+          borderStrong: "#D1D7DB",
+          text: "#111B21",
+          muted: "#54656F",
+          doodle: "#EFEAE2",
+        },
         obsidian: {
-          DEFAULT: "#060B18",
-          surface: "#0D1528",
-          card: "#152238",
-          border: "rgba(255, 255, 255, 0.08)",
+          DEFAULT: "#F0F2F5",
+          surface: "#FFFFFF",
+          card: "#FFFFFF",
+          border: "#E9EDEF",
         },
         passkit: {
-          DEFAULT: "#2563EB",
-          blue: "#2563EB",
-          sky: "#38BDF8",
-          indigo: "#4F46E5",
+          DEFAULT: "#008069",
+          blue: "#008069",
+          sky: "#00A884",
+          indigo: "#075E54",
         },
         emerald: {
-          500: "#10B981",
-          400: "#34D399",
+          500: "#008069",
+          400: "#00A884",
+          600: "#075E54",
         },
         gold: {
           500: "#F59E0B",
           400: "#FBBF24",
         },
         ruby: {
-          500: "#F87171",
+          500: "#EF4444",
         },
       },
       fontFamily: {
@@ -65,12 +81,11 @@ const config: Config = {
         },
       },
       backgroundImage: {
-        "glass-gradient": "linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)",
-        "radial-highlight": "radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.15), transparent 70%)",
+        "glass-gradient": "linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%)",
+        "radial-highlight": "radial-gradient(circle at 50% 0%, rgba(0, 128, 105, 0.1), transparent 70%)",
       },
     },
   },
   plugins: [],
 };
 export default config;
-

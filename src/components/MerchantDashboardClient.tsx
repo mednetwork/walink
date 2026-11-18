@@ -248,10 +248,10 @@ export default function MerchantDashboardClient({
       prev.map((c) =>
         c.id === updatedCustomer.id
           ? {
-              ...c,
-              ...updatedCustomer,
-              lastVisitAt: updatedCustomer.lastVisitAt || new Date().toISOString(),
-            }
+            ...c,
+            ...updatedCustomer,
+            lastVisitAt: updatedCustomer.lastVisitAt || new Date().toISOString(),
+          }
           : c
       )
     );
@@ -418,10 +418,10 @@ export default function MerchantDashboardClient({
     promoAudience === "ALL"
       ? metrics.audienceCounts.all
       : promoAudience === "QUIET"
-      ? metrics.audienceCounts.quiet
-      : promoAudience === "NEAR_REWARD"
-      ? metrics.audienceCounts.near
-      : metrics.audienceCounts.vip;
+        ? metrics.audienceCounts.quiet
+        : promoAudience === "NEAR_REWARD"
+          ? metrics.audienceCounts.near
+          : metrics.audienceCounts.vip;
 
   const costCredits = Math.max(1, audienceTargetCount);
   const remainingCredits = merchant.credits - costCredits;
@@ -429,18 +429,18 @@ export default function MerchantDashboardClient({
   // PIN Gate Screen
   if (!isUnlocked) {
     return (
-      <div className="min-h-screen bg-[#060B18] flex items-center justify-center p-4 text-white">
-        <div className="w-full max-w-xs glass-panel p-6 rounded-3xl border border-white/10 text-center space-y-5">
-          <div className="w-14 h-14 rounded-2xl bg-blue-600/10 text-sky-400 border border-blue-500/20 mx-auto flex items-center justify-center">
+      <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center p-4 text-[#111B21]">
+        <div className="w-full max-w-xs bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-xl text-center space-y-5">
+          <div className="w-14 h-14 rounded-2xl bg-[#008069]/10 text-[#008069] border border-[#008069]/20 mx-auto flex items-center justify-center shadow-sm">
             <KeyRound className="w-7 h-7" />
           </div>
 
           <div>
-            <h2 className="font-bold text-lg text-white">{merchant.name}</h2>
-            <p className="text-xs text-white/50 mt-0.5">لوحة تشغيل التاجر • دخل كود الـ PIN</p>
+            <h2 className="font-bold text-lg text-[#111B21]">{merchant.name}</h2>
+            <p className="text-xs text-[#54656F] mt-0.5">لوحة تشغيل التاجر • دخل كود الـ PIN</p>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-blue-600/10 border border-blue-500/20 text-sky-400 text-xs flex items-center justify-center gap-1.5">
+          <div className="p-2.5 rounded-xl bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-xs flex items-center justify-center gap-1.5 font-semibold">
             <span>كود التجربة السريع:</span>
             <strong className="font-mono text-sm tracking-widest">{merchant.pinCode}</strong>
           </div>
@@ -458,11 +458,11 @@ export default function MerchantDashboardClient({
               }}
               placeholder="••••"
               aria-label="رمز PIN للتاجر"
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 text-center text-xl font-mono tracking-widest text-sky-400 focus:outline-none focus:border-blue-500"
+              className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-2xl py-3 text-center text-xl font-mono tracking-widest text-[#008069] focus:outline-none focus:border-[#008069] focus:bg-white"
             />
 
             {pinError && (
-              <p className="text-xs text-red-400 font-semibold">
+              <p className="text-xs text-red-600 font-semibold">
                 الكود غير صحيح، عاود المحاولة
               </p>
             )}
@@ -470,7 +470,7 @@ export default function MerchantDashboardClient({
             <button
               type="button"
               onClick={() => handleVerifyPin(merchant.pinCode)}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/25 transition"
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#008069]/20 transition"
             >
               <Unlock className="w-4 h-4" />
               <span>دخول سريع بنقرة واحدة (1-Click)</span>
@@ -478,7 +478,7 @@ export default function MerchantDashboardClient({
           </div>
 
           <div className="pt-2 text-center">
-            <Link href="/admin" className="text-[11px] text-white/40 hover:text-white transition">
+            <Link href="/admin" className="text-[11px] text-[#54656F] hover:text-[#008069] font-medium transition">
               الرجوع للوحة السوبر أدمن
             </Link>
           </div>
@@ -488,20 +488,20 @@ export default function MerchantDashboardClient({
   }
 
   return (
-    <div className={`min-h-screen bg-[#060B18] flex justify-center text-white selection:bg-blue-600 selection:text-white font-arabic ${isFrameMode ? "py-8" : ""}`}>
+    <div className={`min-h-screen bg-[#F0F2F5] flex justify-center text-[#111B21] selection:bg-[#008069] selection:text-white font-arabic ${isFrameMode ? "py-8" : ""}`}>
       {/* Centered Mobile Container */}
       <div
-        className={`w-full max-w-[440px] flex flex-col justify-between bg-[#060B18] text-white relative ${
+        className={`w-full max-w-[440px] flex flex-col justify-between bg-[#F0F2F5] text-[#111B21] relative ${
           isFrameMode
-            ? "rounded-[48px] border-[6px] border-slate-700 shadow-2xl shadow-black overflow-hidden min-h-[820px]"
-            : "min-h-screen border-x border-white/5"
+            ? "rounded-[48px] border-[6px] border-slate-400 shadow-2xl shadow-slate-400/50 overflow-hidden min-h-[820px] bg-[#F0F2F5]"
+            : "min-h-screen border-x border-[#E9EDEF]"
         }`}
       >
-        {/* Top App Bar */}
-        <header className="sticky top-0 z-30 p-3.5 bg-[#060B18]/90 backdrop-blur-xl border-b border-white/10 flex items-center justify-between">
+        {/* Top App Bar - WhatsApp Business Dark Teal Header */}
+        <header className="sticky top-0 z-30 p-3.5 bg-[#075E54] text-white shadow-md flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow"
+              className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-sm border border-white/20"
               style={{ background: merchant.bgGradient || merchant.primaryColor }}
             >
               {merchant.name.slice(0, 2)}
@@ -511,11 +511,11 @@ export default function MerchantDashboardClient({
                 <h1 className="font-bold text-xs text-white truncate max-w-[120px]">
                   {merchant.name}
                 </h1>
-                <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-blue-600/10 text-sky-400 border border-blue-500/20 font-bold">
+                <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-white/20 text-white font-bold">
                   {merchant.plan}
                 </span>
               </div>
-              <span className="text-[10px] text-white/40 block">اليوم</span>
+              <span className="text-[10px] text-emerald-200 block">اليوم</span>
             </div>
           </div>
 
@@ -526,7 +526,7 @@ export default function MerchantDashboardClient({
             <button
               type="button"
               onClick={() => setIsCreditsOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold transition"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-amber-300 font-mono text-xs font-bold transition shadow-sm"
             >
               <Coins className="w-3.5 h-3.5" />
               <span>{merchant.credits}</span>
@@ -538,9 +538,9 @@ export default function MerchantDashboardClient({
               onClick={() => setIsStandOpen(true)}
               title="عرض ستاند الكاونتر الذكي"
               aria-label="عرض ستاند الكاونتر الذكي"
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 transition"
+              className="p-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white transition shadow-sm"
             >
-              <QrCode className="w-4 h-4 text-sky-400" />
+              <QrCode className="w-4 h-4 text-white" />
             </button>
           </div>
         </header>
@@ -550,15 +550,15 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setIsScannerOpen(true)}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-blue-500/25 transition-all hover:scale-[1.01] active:scale-[0.99]"
+            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-[#008069]/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
           >
             <Camera className="w-5 h-5 stroke-[2.5]" />
             <span>
               {locale === "ar"
                 ? "📷 مسح بطاقة العميل / إضافة ختم أو كاش باك"
                 : locale === "fr"
-                ? "📷 Scanner la carte / Tampon ou Cashback"
-                : "📷 Escanear tarjeta / Sello o Cashback"}
+                  ? "📷 Scanner la carte / Tampon ou Cashback"
+                  : "📷 Escanear tarjeta / Sello o Cashback"}
             </span>
           </button>
         </div>
@@ -568,45 +568,45 @@ export default function MerchantDashboardClient({
           <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
             {/* 2x2 KPI Grid */}
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="glass-panel p-3.5 rounded-2xl border border-white/10">
-                <span className="text-[11px] text-white/50 block">زيارات</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm">
+                <span className="text-[11px] text-[#54656F] block">زيارات</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-white">
+                  <span className="text-2xl font-bold font-mono text-[#111B21]">
                     {metrics.totalVisits}
                   </span>
-                  <span className="text-[10px] text-emerald-400 font-bold font-mono">
+                  <span className="text-[10px] text-[#008069] font-bold font-mono">
                     +18%
                   </span>
                 </div>
               </div>
 
-              <div className="glass-panel p-3.5 rounded-2xl border border-white/10">
-                <span className="text-[11px] text-white/50 block">كليان رجعو</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm">
+                <span className="text-[11px] text-[#54656F] block">كليان رجعو</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-white">
+                  <span className="text-2xl font-bold font-mono text-[#111B21]">
                     {metrics.returningCustomers}
                   </span>
-                  <span className="text-[10px] text-emerald-400 font-bold font-mono">
+                  <span className="text-[10px] text-[#008069] font-bold font-mono">
                     +11%
                   </span>
                 </div>
               </div>
 
-              <div className="glass-panel p-3.5 rounded-2xl border border-white/10">
-                <span className="text-[11px] text-white/50 block">كادوات تعطاو</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm">
+                <span className="text-[11px] text-[#54656F] block">كادوات تعطاو</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-amber-300">
+                  <span className="text-2xl font-bold font-mono text-amber-600">
                     {metrics.totalRewards}
                   </span>
-                  <span className="text-[10px] text-amber-400">مكافأة</span>
+                  <span className="text-[10px] text-amber-600 font-bold">مكافأة</span>
                 </div>
               </div>
 
-              <div className="glass-panel p-3.5 rounded-2xl border border-white/10">
-                <span className="text-[11px] text-white/50 block">تقييم Google</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm">
+                <span className="text-[11px] text-[#54656F] block">تقييم Google</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-amber-400 flex items-center gap-1">
-                    4.8 <Star className="w-4 h-4 fill-amber-400" />
+                  <span className="text-2xl font-bold font-mono text-amber-600 flex items-center gap-1">
+                    4.8 <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
                   </span>
                 </div>
               </div>
@@ -614,19 +614,19 @@ export default function MerchantDashboardClient({
 
             {/* Inactive Customers Alert */}
             {metrics.audienceCounts.quiet > 0 && (
-              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-red-500/20 to-red-600/10 border border-red-500/30 flex items-center justify-between">
+              <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-between shadow-sm">
                 <div>
-                  <span className="font-bold text-xs text-red-300 block">
+                  <span className="font-bold text-xs text-red-900 block">
                     {metrics.audienceCounts.quiet} كليان غبرو هادي 15 يوم
                   </span>
-                  <span className="text-[10px] text-white/60">
+                  <span className="text-[10px] text-red-700">
                     صيفط ليهم إشعار &quot;توحشناك&quot; يرجعو دابا
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleSwitchToPromoQuiet}
-                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition shadow"
+                  className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition shadow-sm"
                 >
                   رجعهم
                 </button>
@@ -634,10 +634,10 @@ export default function MerchantDashboardClient({
             )}
 
             {/* Weekly Visits Dynamic Bar Chart */}
-            <div className="glass-panel p-4 rounded-2xl border border-white/10 space-y-2.5">
+            <div className="bg-white p-4 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-white">هاد السيمانة — زيارات</span>
-                <span className="text-[11px] text-sky-400 font-mono">
+                <span className="font-bold text-[#111B21]">هاد السيمانة — زيارات</span>
+                <span className="text-[11px] text-[#008069] font-mono font-bold">
                   +{metrics.totalVisits * 12} درهم نشاط
                 </span>
               </div>
@@ -656,12 +656,12 @@ export default function MerchantDashboardClient({
                     <div
                       className={`w-full rounded-t-lg transition-all duration-500 ${
                         bar.today
-                          ? "bg-gradient-to-t from-blue-600 to-sky-400 shadow-lg shadow-blue-500/30"
-                          : "bg-white/10 hover:bg-white/20"
+                          ? "bg-gradient-to-t from-[#008069] to-[#00A884] shadow-sm"
+                          : "bg-[#E9EDEF] hover:bg-[#D1D7DB]"
                       }`}
                       style={{ height: bar.h }}
                     />
-                    <span className={`text-[10px] ${bar.today ? "text-sky-400 font-bold" : "text-white/40"}`}>
+                    <span className={`text-[10px] ${bar.today ? "text-[#008069] font-bold" : "text-[#54656F]"}`}>
                       {bar.day}
                     </span>
                   </div>
@@ -670,30 +670,30 @@ export default function MerchantDashboardClient({
             </div>
 
             {/* Live Activity Feed */}
-            <div className="glass-panel p-4 rounded-2xl border border-white/10 space-y-2.5">
-              <span className="font-bold text-xs text-white block">آخر الحركات</span>
+            <div className="bg-white p-4 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-2.5">
+              <span className="font-bold text-xs text-[#111B21] block">آخر الحركات</span>
               <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
                 {transactions.slice(0, 6).map((tx) => (
                   <div
                     key={tx.id}
-                    className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between text-xs"
+                    className="p-2.5 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-center justify-between text-xs"
                   >
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-blue-600/20 text-sky-400 flex items-center justify-center font-bold text-[11px]">
+                      <div className="w-7 h-7 rounded-lg bg-[#008069]/10 text-[#008069] flex items-center justify-center font-bold text-[11px]">
                         {tx.customer.name.slice(0, 1)}
                       </div>
                       <div>
-                        <span className="font-bold text-white block">
+                        <span className="font-bold text-[#111B21] block">
                           {tx.customer.name}
                         </span>
-                        <span className="text-[10px] text-white/40 font-mono">
+                        <span className="text-[10px] text-[#54656F] font-mono">
                           {formatTimeAgoArabic(tx.createdAt)}
                         </span>
                       </div>
                     </div>
                     <span
                       className={`text-[11px] font-bold font-mono ${
-                        tx.stampsDelta > 0 ? "text-emerald-400" : "text-amber-400"
+                        tx.stampsDelta > 0 ? "text-[#008069]" : "text-amber-600"
                       }`}
                     >
                       {tx.note || (tx.stampsDelta > 0 ? "+1 طابع" : "استلام مكافأة")}
@@ -716,9 +716,9 @@ export default function MerchantDashboardClient({
                 onChange={(e) => setCrmSearch(e.target.value)}
                 placeholder="قلّب بالسمية، النمرة، ولا الكود #..."
                 aria-label="بحث في قائمة الزبائن"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-500"
+                className="w-full bg-white border border-[#D1D7DB] rounded-2xl px-4 py-2.5 text-xs text-[#111B21] placeholder-[#54656F] focus:outline-none focus:border-[#008069] shadow-sm"
               />
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-white/40" />
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#54656F]" />
             </div>
 
             {/* Filter Pills */}
@@ -735,8 +735,8 @@ export default function MerchantDashboardClient({
                   onClick={() => setCrmFilter(f.id as typeof crmFilter)}
                   className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition font-medium ${
                     crmFilter === f.id
-                      ? "bg-blue-600 text-white font-bold border-blue-400"
-                      : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                      ? "bg-[#008069] text-white font-bold border-[#008069] shadow-sm"
+                      : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
                   }`}
                 >
                   {f.label}
@@ -747,7 +747,7 @@ export default function MerchantDashboardClient({
             {/* Customers List */}
             <div className="space-y-2">
               {filteredCustomers.length === 0 ? (
-                <p className="text-center text-xs text-white/40 py-8">لا يوجد زبائن مطابقين</p>
+                <p className="text-center text-xs text-[#54656F] py-8">لا يوجد زبائن مطابقين</p>
               ) : (
                 filteredCustomers.map((c) => {
                   const isQuiet = new Date(c.lastVisitAt) <= new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
@@ -758,20 +758,20 @@ export default function MerchantDashboardClient({
                       key={c.id}
                       type="button"
                       onClick={() => setIsScannerOpen(true)}
-                      className="w-full text-start p-3 rounded-2xl glass-panel border border-white/10 hover:border-blue-500/30 flex items-center justify-between text-xs transition"
+                      className="w-full text-start p-3 rounded-2xl bg-white border border-[#E9EDEF] hover:border-[#008069]/40 shadow-sm flex items-center justify-between text-xs transition"
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-white/10 text-white font-bold flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-xl bg-[#F0F2F5] text-[#111B21] border border-[#E9EDEF] font-bold flex items-center justify-center">
                           {c.name.slice(0, 1)}
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-white">{c.name}</span>
-                            <span className="font-mono text-[10px] text-white/40">
+                            <span className="font-bold text-[#111B21]">{c.name}</span>
+                            <span className="font-mono text-[10px] text-[#54656F]">
                               #{c.memberCode}
                             </span>
                           </div>
-                          <span className="text-[10px] text-white/50 block">
+                          <span className="text-[10px] text-[#54656F] block">
                             {c.totalVisits} زيارات • آخر زيارة: {formatTimeAgoArabic(c.lastVisitAt)}
                           </span>
                         </div>
@@ -781,23 +781,23 @@ export default function MerchantDashboardClient({
                         <span
                           className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
                             isVip
-                              ? "bg-amber-400/20 text-amber-300 border border-amber-400/30"
+                              ? "bg-amber-100 text-amber-800 border border-amber-200"
                               : isQuiet
-                              ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                              ? "bg-red-100 text-red-800 border border-red-200"
                               : isCashbackCust
-                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                              : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              ? "bg-amber-100 text-amber-800 border border-amber-200"
+                              : "bg-[#008069]/10 text-[#008069] border border-[#008069]/20"
                           }`}
                         >
                           {isVip ? "VIP" : isQuiet ? "غائب" : isCashbackCust ? "كاش باك" : "أختام"}
                         </span>
                         <div className="text-end">
                           {isCashbackCust ? (
-                            <span className="font-mono font-bold text-amber-300 text-xs block">
+                            <span className="font-mono font-bold text-amber-600 text-xs block">
                               {Number(c.cashbackBalance || 0).toFixed(2)} {merchant.currency || "DH"}
                             </span>
                           ) : (
-                            <span className="font-mono font-bold text-emerald-400 text-xs block">
+                            <span className="font-mono font-bold text-[#008069] text-xs block">
                               {c.stamps}/{merchant.stampsRequired}
                             </span>
                           )}
@@ -816,7 +816,7 @@ export default function MerchantDashboardClient({
           <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
             {/* Template Chips */}
             <div className="space-y-1.5">
-              <span className="text-[11px] text-white/70 block">قوالب جاهزة:</span>
+              <span className="text-[11px] text-[#54656F] font-semibold block">قوالب جاهزة:</span>
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
                 {[
                   { id: "weekend", label: "Promo weekend", text: `عرض الويكاند: -20% هاد السبت والحد ف ${merchant.name}` },
@@ -833,8 +833,8 @@ export default function MerchantDashboardClient({
                     }}
                     className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-[11px] font-semibold ${
                       promoTemplate === tpl.id
-                        ? "bg-white/15 border-white/30 text-white shadow"
-                        : "bg-white/5 border-white/10 text-white/70"
+                        ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                        : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
                     }`}
                   >
                     {tpl.label}
@@ -845,8 +845,8 @@ export default function MerchantDashboardClient({
 
             {/* Message Textarea */}
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs text-white/70">
-                <span>نص الإشعار:</span>
+              <div className="flex items-center justify-between text-xs text-[#54656F]">
+                <span className="font-semibold text-[#111B21]">نص الإشعار:</span>
                 <span className="font-mono text-[10px]">{promoMessage.length}/110</span>
               </div>
               <textarea
@@ -854,13 +854,13 @@ export default function MerchantDashboardClient({
                 maxLength={110}
                 value={promoMessage}
                 onChange={(e) => setPromoMessage(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-white focus:outline-none focus:border-blue-500"
+                className="w-full bg-white border border-[#D1D7DB] rounded-2xl p-3 text-xs text-[#111B21] focus:outline-none focus:border-[#008069] shadow-sm"
               />
             </div>
 
             {/* 2x2 Audience Selector Grid */}
             <div className="space-y-1.5">
-              <span className="text-[11px] text-white/70 block">لمن غادي تصيفط:</span>
+              <span className="text-[11px] text-[#54656F] font-semibold block">لمن غادي تصيفط:</span>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {[
                   { id: "ALL", label: "كاع الكليان", count: metrics.audienceCounts.all },
@@ -874,12 +874,12 @@ export default function MerchantDashboardClient({
                     onClick={() => setPromoAudience(a.id as typeof promoAudience)}
                     className={`p-3 rounded-2xl border text-right transition ${
                       promoAudience === a.id
-                        ? "bg-blue-600/20 border-blue-400 text-white ring-1 ring-blue-400"
-                        : "bg-white/5 border-white/10 text-white/70"
+                        ? "bg-[#008069]/10 border-[#008069] text-[#111B21] ring-1 ring-[#008069]"
+                        : "bg-white border-[#E9EDEF] text-[#54656F] shadow-sm hover:border-[#D1D7DB]"
                     }`}
                   >
-                    <span className="font-bold block">{a.label}</span>
-                    <span className="text-[10px] text-sky-400 font-mono">
+                    <span className="font-bold text-[#111B21] block">{a.label}</span>
+                    <span className="text-[10px] text-[#008069] font-mono font-bold">
                       {a.count} زبون
                     </span>
                   </button>
@@ -888,17 +888,17 @@ export default function MerchantDashboardClient({
             </div>
 
             {/* Cost Summary Row */}
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
-              <span className="text-white/70">
-                غادي يتخصم: <strong className="text-amber-400 font-mono">{costCredits}</strong> كريدي
+            <div className="p-3 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm flex items-center justify-between text-xs">
+              <span className="text-[#54656F]">
+                غادي يتخصم: <strong className="text-amber-600 font-mono font-bold">{costCredits}</strong> كريدي
               </span>
-              <span className="text-white/70">
-                يبقى ليك: <strong className="text-emerald-400 font-mono">{Math.max(0, remainingCredits)}</strong> كريدي
+              <span className="text-[#54656F]">
+                يبقى ليك: <strong className="text-[#008069] font-mono font-bold">{Math.max(0, remainingCredits)}</strong> كريدي
               </span>
             </div>
 
             {promoSuccessMsg && (
-              <div className="p-3 rounded-xl bg-blue-600/10 border border-blue-500/30 text-sky-300 text-xs">
+              <div className="p-3 rounded-xl bg-[#008069]/10 border border-[#008069]/30 text-[#008069] text-xs font-semibold">
                 {promoSuccessMsg}
               </div>
             )}
@@ -909,7 +909,7 @@ export default function MerchantDashboardClient({
                 type="button"
                 disabled={sendingPromo || merchant.credits < costCredits}
                 onClick={handleSendCampaign}
-                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition disabled:opacity-50"
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-[#008069]/20 transition disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
                 <span>{sendingPromo ? "جاري الإرسال..." : "صيفط دابا (Broadcast)"}</span>
@@ -927,22 +927,22 @@ export default function MerchantDashboardClient({
                 }
                 title="معاينة كيف يظهر على هاتف الزبون"
                 aria-label="معاينة كيف يظهر على هاتف الزبون"
-                className="p-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-white"
+                className="p-3 rounded-2xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#54656F] shadow-sm transition"
               >
                 <Eye className="w-4 h-4" />
               </button>
             </div>
 
             {/* Past Campaigns */}
-            <div className="space-y-2 pt-2 border-t border-white/10">
-              <span className="text-[11px] font-bold text-white/70 block">سجل الحملات السابقة:</span>
+            <div className="space-y-2 pt-2 border-t border-[#E9EDEF]">
+              <span className="text-[11px] font-bold text-[#111B21] block">سجل الحملات السابقة:</span>
               {campaigns.slice(0, 3).map((camp) => (
-                <div key={camp.id} className="p-3 rounded-xl bg-white/5 border border-white/5 text-xs space-y-1">
-                  <div className="flex items-center justify-between font-bold text-white">
+                <div key={camp.id} className="p-3 rounded-xl bg-white border border-[#E9EDEF] shadow-sm text-xs space-y-1">
+                  <div className="flex items-center justify-between font-bold text-[#111B21]">
                     <span>{camp.title}</span>
-                    <span className="font-mono text-emerald-400">+{camp.returnedCount} رجعو</span>
+                    <span className="font-mono text-[#008069]">+{camp.returnedCount} رجعو</span>
                   </div>
-                  <p className="text-[11px] text-white/60 truncate">{camp.message}</p>
+                  <p className="text-[11px] text-[#54656F] truncate">{camp.message}</p>
                 </div>
               ))}
             </div>
@@ -952,29 +952,29 @@ export default function MerchantDashboardClient({
         {/* Tab 4: أوتوماتيك (Automations) */}
         {activeTab === "auto" && (
           <div className="p-3.5 space-y-3.5 flex-1 animate-in fade-in duration-200">
-            <div className="p-3 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-xs text-sky-300 leading-relaxed">
+            <div className="p-3 rounded-2xl bg-[#008069]/10 border border-[#008069]/20 text-xs text-[#008069] font-semibold leading-relaxed">
               ميساجات كتخدم بوحدها — شعّلها مرة وحدة، و Walink تكلف بالباقي ⚡️
             </div>
 
             {/* Loyalty Program Settings Card */}
-            <div className="p-3.5 rounded-2xl glass-panel border border-white/10 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <span className="font-bold text-xs text-white flex items-center gap-1.5">
-                  <Coins className="w-4 h-4 text-amber-400" />
+            <div className="p-3.5 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
+                <span className="font-bold text-xs text-[#111B21] flex items-center gap-1.5">
+                  <Coins className="w-4 h-4 text-amber-500" />
                   <span>نظام الولاء للمحل</span>
                 </span>
-                <span className="text-[10px] text-sky-400 font-semibold font-mono">
+                <span className="text-[10px] text-[#008069] font-bold font-mono">
                   {merchantLoyaltyMode === "BOTH"
                     ? "أختام + كاش باك"
                     : merchantLoyaltyMode === "CASHBACK"
-                    ? "كاش باك فقط"
-                    : "أختام فقط"}
+                      ? "كاش باك فقط"
+                      : "أختام فقط"}
                 </span>
               </div>
 
               {/* Mode Selector */}
               <div className="space-y-1">
-                <span className="text-[10px] text-white/60 block">
+                <span className="text-[10px] text-[#54656F] font-semibold block">
                   البرنامج المفعّل للعملاء:
                 </span>
                 <div className="grid grid-cols-3 gap-1.5 text-[11px] font-semibold">
@@ -990,8 +990,8 @@ export default function MerchantDashboardClient({
                       onClick={() => handleUpdateLoyaltyMode(m.id)}
                       className={`py-1.5 px-2 rounded-xl border text-center transition ${
                         merchantLoyaltyMode === m.id
-                          ? "bg-blue-600/20 text-sky-300 border-blue-500/40 shadow-sm"
-                          : "bg-white/5 border-white/10 text-white/60 hover:text-white"
+                          ? "bg-[#008069] text-white border-[#008069] shadow-sm"
+                          : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
                       }`}
                     >
                       {m.label}
@@ -1003,10 +1003,10 @@ export default function MerchantDashboardClient({
               {/* Cashback Rate Selector */}
               {(merchantLoyaltyMode === "CASHBACK" ||
                 merchantLoyaltyMode === "BOTH") && (
-                <div className="space-y-1 pt-1.5 border-t border-white/5">
-                  <div className="flex items-center justify-between text-[10px] text-white/60">
-                    <span>نسبة الكاش باك من كل فاتورة:</span>
-                    <span className="font-bold text-amber-300 font-mono text-xs">
+                <div className="space-y-1 pt-1.5 border-t border-[#E9EDEF]">
+                  <div className="flex items-center justify-between text-[10px] text-[#54656F]">
+                    <span className="font-semibold text-[#111B21]">نسبة الكاش باك من كل فاتورة:</span>
+                    <span className="font-bold text-amber-600 font-mono text-xs">
                       {merchantCashbackRate}%
                     </span>
                   </div>
@@ -1019,16 +1019,16 @@ export default function MerchantDashboardClient({
                         onClick={() => handleUpdateCashbackRate(rate)}
                         className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${
                           merchantCashbackRate === rate
-                            ? "bg-amber-400/20 text-amber-300 border-amber-400/40"
-                            : "bg-white/5 border-white/10 text-white/60 hover:text-white"
-                        }`}
-                      >
-                        {rate}%
-                      </button>
-                    ))}
+                            ? "bg-amber-100 text-amber-800 border-amber-300"
+                            : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                            }`}
+                        >
+                          {rate}%
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             <div className="space-y-2.5">
@@ -1076,21 +1076,21 @@ export default function MerchantDashboardClient({
               ].map((item) => (
                 <div
                   key={item.key}
-                  className="p-3 rounded-2xl glass-panel border border-white/10 flex items-center justify-between text-xs gap-3"
+                  className="p-3 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm flex items-center justify-between text-xs gap-3"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-white">{item.title}</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/10 text-white/60">
+                      <span className="font-bold text-[#111B21]">{item.title}</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#F0F2F5] text-[#54656F] border border-[#E9EDEF]">
                         {item.badge}
                       </span>
                       {item.locked && (
-                        <span className="text-[9px] text-amber-400 flex items-center gap-0.5">
+                        <span className="text-[9px] text-amber-600 font-bold flex items-center gap-0.5">
                           <Lock className="w-2.5 h-2.5" /> Growth
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] text-white/50 mt-1 truncate max-w-[200px]">
+                    <p className="text-[10px] text-[#54656F] mt-1 truncate max-w-[200px]">
                       {item.message}
                     </p>
                   </div>
@@ -1106,7 +1106,7 @@ export default function MerchantDashboardClient({
                           message: item.message,
                         })
                       }
-                      className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 text-[10px]"
+                      className="px-2 py-1 rounded-lg bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#54656F] text-[10px] border border-[#D1D7DB] font-medium"
                     >
                       شوف
                     </button>
@@ -1116,7 +1116,7 @@ export default function MerchantDashboardClient({
                       disabled={savingSettings || item.locked}
                       onClick={() => handleToggleAutomation(item.key)}
                       className={`w-11 h-6 rounded-full transition-colors p-0.5 flex items-center ${
-                        item.active ? "bg-blue-600 justify-end" : "bg-white/20 justify-start"
+                        item.active ? "bg-[#008069] justify-end" : "bg-[#D1D7DB] justify-start"
                       } ${item.locked ? "opacity-40 cursor-not-allowed" : ""}`}
                     >
                       <div className="w-5 h-5 rounded-full bg-white shadow-md"></div>
@@ -1127,19 +1127,19 @@ export default function MerchantDashboardClient({
             </div>
 
             {/* Test Automations Trigger Button */}
-            <div className="pt-2 border-t border-white/10 space-y-2">
+            <div className="pt-2 border-t border-[#E9EDEF] space-y-2">
               <button
                 type="button"
                 disabled={testingCron}
                 onClick={handleTestCronForMerchant}
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition disabled:opacity-50"
+                className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
               >
                 <Zap className="w-4 h-4" />
                 <span>{testingCron ? "جاري تجربة الأتمتة..." : "⚡ جرّب إرسال الرسائل الأوتوماتيكية دابا"}</span>
               </button>
 
               {cronTestMessage && (
-                <div className="p-2.5 rounded-xl bg-blue-600/10 border border-blue-500/30 text-sky-300 text-[11px] text-center font-medium">
+                <div className="p-2.5 rounded-xl bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-[11px] text-center font-bold">
                   {cronTestMessage}
                 </div>
               )}
@@ -1148,7 +1148,7 @@ export default function MerchantDashboardClient({
         )}
 
         {/* Bottom Navigation Bar */}
-        <nav className="sticky bottom-0 z-30 bg-[#060B18]/95 backdrop-blur-xl border-t border-white/10 grid grid-cols-4 p-2 text-center text-xs">
+        <nav className="sticky bottom-0 z-30 bg-white border-t border-[#E9EDEF] grid grid-cols-4 p-2 text-center text-xs shadow-lg">
           {[
             { id: "home", label: "الرئيسية", icon: LayoutDashboard },
             { id: "customers", label: "الكليان", icon: Users },
@@ -1163,7 +1163,7 @@ export default function MerchantDashboardClient({
                 type="button"
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`py-2 rounded-xl flex flex-col items-center gap-1 transition ${
-                  isActive ? "text-sky-400 font-bold" : "text-white/50 hover:text-white"
+                  isActive ? "text-[#008069] font-bold" : "text-[#54656F] hover:text-[#111B21]"
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? "stroke-[2.5]" : ""}`} />
@@ -1179,9 +1179,9 @@ export default function MerchantDashboardClient({
         <button
           type="button"
           onClick={() => setIsFrameMode(!isFrameMode)}
-          className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white text-xs flex items-center gap-1.5 backdrop-blur-md shadow-lg"
+          className="px-3 py-2 rounded-xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] text-xs flex items-center gap-1.5 shadow-md font-medium"
         >
-          <Smartphone className="w-3.5 h-3.5" />
+          <Smartphone className="w-3.5 h-3.5 text-[#008069]" />
           <span>{isFrameMode ? "إلغاء إطار الهاتف" : "معاينة داخل آيفون"}</span>
         </button>
 
@@ -1189,7 +1189,7 @@ export default function MerchantDashboardClient({
           href={`/pass/${customers[0]?.passSerial || "pass-atlas-4821"}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-sky-300 text-xs flex items-center gap-1.5 backdrop-blur-md shadow-lg font-bold"
+          className="px-3 py-2 rounded-xl bg-[#008069] hover:bg-[#00A884] text-white text-xs flex items-center gap-1.5 shadow-md font-bold"
         >
           <span>فتح كارط الزبون (Live Pass) ↗</span>
         </Link>
