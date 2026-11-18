@@ -2221,22 +2221,22 @@ export default function LandingPage() {
       <section className="sec" id="engines">
         <div className="wrap">
           <div className="head c">
-            <h2 className="h2 silver">{t.brand.tagline}</h2>
-            <p className="lead">{t.demo.subtitle}</p>
+            <h2 className="h2 silver">{t.engines.sectionTitle}</h2>
+            <p className="lead">{t.engines.sectionSubtitle}</p>
           </div>
 
-          <div className="bento">
+          <div className="bento bento-2x2">
             {/* Engine 1: Radar 100m */}
-            <div className="surface eng e-radar">
+            <div className="surface eng eng-card">
               <div className="et">
-                <span>
+                <span className="eng-icon">
                   <svg className="ic">
                     <use href="#i-pin" />
                   </svg>
                 </span>
-                <div>
+                <div className="eng-head-info">
                   <h3>{t.engines.radarTitle}</h3>
-                  <div className="tagline">
+                  <div className="tagline tag-gps">
                     <svg className="ic">
                       <use href="#i-wifioff" />
                     </svg>
@@ -2244,22 +2244,24 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <p>{t.engines.radarDesc}</p>
+              <p className="eng-desc">{t.engines.radarDesc}</p>
 
-              {/* Radar Map Canvas */}
-              <div className="rv-box">
-                <div className="map" />
-                <div className="zone">
-                  <div className="sweep" />
-                  <span className="lbl lat">100m Radar Zone</span>
-                  <div className="pin">
+              {/* Radar Visual Showcase */}
+              <div className="radar-showcase">
+                <div className="radar-map-mini">
+                  <div className="radar-grid-bg" />
+                  <div className="radar-concentric" />
+                  <div className="radar-sweep" />
+                  <span className="radar-dist-tag lat">85m • داخل نطاق المحل</span>
+                  <div className="radar-center-pin">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
                     </svg>
                   </div>
+                  <div className="radar-cust-dot" />
                 </div>
-                <div className="cust" />
-                <div className="pop ntf" id="radarPop">
+
+                <div className="eng-notification">
                   <div
                     className="ap"
                     style={{ background: "linear-gradient(135deg,#059669,#047857)" }}
@@ -2280,16 +2282,16 @@ export default function LandingPage() {
             </div>
 
             {/* Engine 2: Google Reviews */}
-            <div className="surface eng">
+            <div className="surface eng eng-card">
               <div className="et">
-                <span>
-                  <svg className="ic" style={{ color: "var(--gold2)" }}>
+                <span className="eng-icon" style={{ background: "#FEF3C7", color: "#D97706" }}>
+                  <svg className="ic" style={{ color: "#D97706" }}>
                     <use href="#i-star" />
                   </svg>
                 </span>
-                <div>
+                <div className="eng-head-info">
                   <h3>{t.engines.reviewsTitle}</h3>
-                  <div className="tagline">
+                  <div className="tagline tag-review">
                     <svg className="ic">
                       <use href="#i-up" />
                     </svg>
@@ -2297,9 +2299,24 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <p>{t.engines.reviewsDesc}</p>
-              <div className="e-mini">
-                <div className="ntf">
+              <p className="eng-desc">{t.engines.reviewsDesc}</p>
+
+              {/* Google Reviews Visual Showcase */}
+              <div className="google-showcase">
+                <div className="google-score-card">
+                  <div className="score-left">
+                    <b className="score-num lat">4.9</b>
+                    <div className="score-stars">★★★★★</div>
+                    <small className="score-count">284 تقييم موثق على خرائط Google</small>
+                  </div>
+                  <div className="score-badge">
+                    <span className="score-pill">قبل Walink: 3.8 ★</span>
+                    <span className="score-arrow">➔</span>
+                    <span className="score-pill success">مع Walink: 4.9 ★</span>
+                  </div>
+                </div>
+
+                <div className="eng-notification">
                   <div
                     className="ap"
                     style={{ background: "linear-gradient(135deg,#2563EB,#1D4ED8)" }}
@@ -2320,16 +2337,16 @@ export default function LandingPage() {
             </div>
 
             {/* Engine 3: 15-Day Winback */}
-            <div className="surface eng">
+            <div className="surface eng eng-card">
               <div className="et">
-                <span>
-                  <svg className="ic" style={{ color: "var(--red)" }}>
+                <span className="eng-icon" style={{ background: "#FEE2E2", color: "#DC2626" }}>
+                  <svg className="ic" style={{ color: "#DC2626" }}>
                     <use href="#i-back" />
                   </svg>
                 </span>
-                <div>
+                <div className="eng-head-info">
                   <h3>{t.engines.winbackTitle}</h3>
-                  <div className="tagline">
+                  <div className="tagline tag-winback">
                     <svg className="ic">
                       <use href="#i-bolt" />
                     </svg>
@@ -2337,9 +2354,33 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <p>{t.engines.winbackDesc}</p>
-              <div className="e-mini" id="winbackMini">
-                <div className="ntf">
+              <p className="eng-desc">{t.engines.winbackDesc}</p>
+
+              {/* Retention Timeline Visual Showcase */}
+              <div className="timeline-showcase">
+                <div className="retention-flow">
+                  <div className="flow-step">
+                    <span className="f-day">اليوم 1</span>
+                    <b className="f-act">زيارة وشراء</b>
+                  </div>
+                  <span className="flow-sep">➔</span>
+                  <div className="flow-step warn">
+                    <span className="f-day">اليوم 15</span>
+                    <b className="f-act">غياب غير معتاد</b>
+                  </div>
+                  <span className="flow-sep">➔</span>
+                  <div className="flow-step trigger">
+                    <span className="f-day">آلياً ⚡</span>
+                    <b className="f-act">إرسال عرض</b>
+                  </div>
+                  <span className="flow-sep">➔</span>
+                  <div className="flow-step success">
+                    <span className="f-day">اليوم 16</span>
+                    <b className="f-act">عودة الزبون 🎉</b>
+                  </div>
+                </div>
+
+                <div className="eng-notification">
                   <div
                     className="ap"
                     style={{ background: "linear-gradient(135deg,#DC2626,#991B1B)" }}
@@ -2360,16 +2401,16 @@ export default function LandingPage() {
             </div>
 
             {/* Engine 4: Broadcast Promos */}
-            <div className="surface eng">
+            <div className="surface eng eng-card">
               <div className="et">
-                <span>
-                  <svg className="ic" style={{ color: "var(--em2)" }}>
+                <span className="eng-icon" style={{ background: "#EDE9FE", color: "#6D28D9" }}>
+                  <svg className="ic" style={{ color: "#6D28D9" }}>
                     <use href="#i-mega" />
                   </svg>
                 </span>
-                <div>
+                <div className="eng-head-info">
                   <h3>{t.engines.pushTitle}</h3>
-                  <div className="tagline">
+                  <div className="tagline tag-push">
                     <svg className="ic">
                       <use href="#i-bolt" />
                     </svg>
@@ -2377,9 +2418,35 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <p>{t.engines.pushDesc}</p>
-              <div className="e-mini">
-                <div className="ntf">
+              <p className="eng-desc">{t.engines.pushDesc}</p>
+
+              {/* Open Rate Comparison Bars Showcase */}
+              <div className="open-rate-showcase">
+                <div className="rates-container">
+                  <div className="rate-row">
+                    <span className="rate-lbl">Instagram Stories</span>
+                    <div className="rate-track">
+                      <div className="rate-fill" style={{ width: "8%", background: "#CBD5E1" }} />
+                    </div>
+                    <b className="rate-val lat">6%</b>
+                  </div>
+                  <div className="rate-row">
+                    <span className="rate-lbl">WhatsApp Messages</span>
+                    <div className="rate-track">
+                      <div className="rate-fill" style={{ width: "24%", background: "#94A3B8" }} />
+                    </div>
+                    <b className="rate-val lat">24%</b>
+                  </div>
+                  <div className="rate-row primary">
+                    <span className="rate-lbl">Walink Lockscreen</span>
+                    <div className="rate-track">
+                      <div className="rate-fill active" style={{ width: "92%" }} />
+                    </div>
+                    <b className="rate-val lat highlight">92% ⚡</b>
+                  </div>
+                </div>
+
+                <div className="eng-notification">
                   <div
                     className="ap"
                     style={{ background: "linear-gradient(135deg,#4F46E5,#3730A3)" }}

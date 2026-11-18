@@ -64,6 +64,8 @@ export interface TranslationDictionary {
     simulatingSuccess: string;
   };
   engines: {
+    sectionTitle: string;
+    sectionSubtitle: string;
     radarTitle: string;
     radarTag: string;
     radarDesc: string;
@@ -444,6 +446,8 @@ export const translations: Record<Locale, TranslationDictionary> = {
       simulatingSuccess: "تم إرسال الإشعار بنجاح إلى هواتف العملاء!",
     },
     engines: {
+      sectionTitle: "4 محركات نمو ذكية تعمل في الخلفية لمضاعفة مبيعاتك",
+      sectionSubtitle: "آليات أوتوماتيكية مدمجة في Apple Wallet و Google Wallet تعمل بدون تدخلك لضمان عودة الزبائن ورفع مبيعاتك بنسبة تفوق 30%",
       radarTitle: "رادار القرب 100 متر الذكي",
       radarTag: "GPS مدمج",
       radarDesc: "بمجرد مرور العميل في محيط 100 متر من متجرك، يستشعر الهاتف الموقع ويظهر إشعاراً جذاباً على شاشة القفل تلقائياً لتذكيره بزيارتك.",
@@ -864,6 +868,8 @@ export const translations: Record<Locale, TranslationDictionary> = {
       simulatingSuccess: "Notification diffusée avec succès aux smartphones !",
     },
     engines: {
+      sectionTitle: "4 moteurs de croissance automatisés pour décupler vos ventes",
+      sectionSubtitle: "Des automatisations natives dans Apple Wallet et Google Wallet qui réactivent vos clients et augmentent vos revenus en continu.",
       radarTitle: "Radar de proximité intelligent 100m",
       radarTag: "GPS natif",
       radarDesc: "Dès qu'un client passe à moins de 100 mètres de votre commerce, son téléphone réveille son écran avec une notification l'invitant à entrer.",
@@ -1284,6 +1290,8 @@ export const translations: Record<Locale, TranslationDictionary> = {
       simulatingSuccess: "¡Notificación enviada con éxito a los teléfonos!",
     },
     engines: {
+      sectionTitle: "4 motores de crecimiento automatizados para disparar tus ventas",
+      sectionSubtitle: "Automatizaciones nativas en Apple Wallet y Google Wallet que reactivan a tus clientes y maximizan tus ingresos en piloto automático.",
       radarTitle: "Radar inteligente de proximidad 100m",
       radarTag: "GPS nativo",
       radarDesc: "Cuando el cliente pasa a menos de 100m de tu negocio, su móvil despierta la pantalla con una notificación invitándole a entrar.",
