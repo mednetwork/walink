@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model Merchant {
@@ -17,7 +17,7 @@ model Merchant {
   pinCode         String        @default("1234") // PIN for merchant dashboard login
   logoIcon        String        @default("coffee")
   primaryColor    String        @default("#5b3519")
-  bgGradient      String        @default("linear-gradient(150deg,#6b4226 0%,#3d2414 100%)")
+  bgGradient      String        @default("linear-gradient(150deg,#6b4226 0%,#3d2414 100%)") @db.Text
   stampsRequired  Int           @default(5)
   rewardName      String        @default("قهوة مجانية")
   customerPrefix  String        @default("عزيزي")
@@ -30,15 +30,15 @@ model Merchant {
   longitude       Float?        @default(-7.5898)
   radarMessage    String        @default("أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.")
   googleMapsUrl   String?
-  staffMembers       String        @default("[{\"name\":\"أمين (كاشير)\",\"pin\":\"1111\"}]") // JSON array of { name, pin }
+  staffMembers       String        @default("[{\"name\":\"أمين (كاشير)\",\"pin\":\"1111\"}]") @db.Text // JSON array of { name, pin }
   cooldownMinutes    Int           @default(30)     // Anti-fraud minimum minutes between scans for the same customer
   vipVisitsThreshold Int           @default(10)     // Visits needed to unlock VIP Gold Card
   vipCashbackBonus   Float         @default(5)      // Extra % cashback for VIPs (e.g., 10% + 5% = 15%)
   referralBonus      Float         @default(10)     // Cashback DH bonus for referring a friend (or 1 free stamp)
-  radarZones         String        @default("[]")   // JSON array of up to 10 { name, lat, lng, message } zones
+  radarZones         String        @default("[]") @db.Text   // JSON array of up to 10 { name, lat, lng, message } zones
   menuUrl            String?       @default("https://instagram.com")
   instagramUrl       String?       @default("https://instagram.com")
-  termsText          String        @default("البطاقة صالحة في جميع فروع المتجر. لا يمكن استبدال المكافآت نقداً.")
+  termsText          String        @default("البطاقة صالحة في جميع فروع المتجر. لا يمكن استبدال المكافآت نقداً.") @db.Text
   plan            String        @default("GROWTH") // STARTER, GROWTH, MULTI
   credits         Int           @default(1000)
   autoWinback     Boolean       @default(true)
@@ -78,8 +78,8 @@ model Customer {
   referralsCount     Int           @default(0)      // How many friends this customer brought in
   lastVisitAt       DateTime      @default(now())
   walletType        String        @default("WEBPASS") // APPLE, GOOGLE, WEBPASS
-  pushSubscription  String?       // JSON string for Web Push API
-  applePushToken    String?       // APNs token for Apple Wallet
+  pushSubscription  String?       @db.Text        // JSON string for Web Push API
+  applePushToken    String?       @db.Text        // APNs token for Apple Wallet
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -100,7 +100,7 @@ model Transaction {
   stampsDelta   Int       @default(1)
   billAmount    Float?    // Original purchase bill amount (for CASHBACK_EARNED)
   cashbackDelta Float?    // +amount earned or -amount redeemed
-  note          String?
+  note          String?   @db.Text
   staffName     String    @default("المدير") // Tracks which staff member performed the scan
   createdAt     DateTime  @default(now())
 
@@ -112,7 +112,7 @@ model Campaign {
   merchantId    String
   merchant      Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   title         String
-  message       String
+  message       String    @db.Text
   audience      String    @default("ALL") // ALL, QUIET, NEAR_REWARD, VIP
   sentCount     Int       @default(0)
   returnedCount Int       @default(0)
@@ -130,7 +130,7 @@ model Notification {
   customer    Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
   type        String    // STAMP, REWARD, PROMO, WINBACK, BIRTHDAY, RADAR, NEAR_REWARD, REVIEW
   title       String
-  body        String
+  body        String    @db.Text
   actionUrl   String?   // e.g., Google Maps review URL
   isRead      Boolean   @default(false)
   createdAt   DateTime  @default(now())
@@ -151,4 +151,3 @@ model Lead {
   status      String    @default("NEW") // NEW, CONTACTED, CONVERTED
   createdAt   DateTime  @default(now())
 }
-
