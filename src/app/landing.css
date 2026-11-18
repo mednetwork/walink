@@ -527,40 +527,81 @@
 .walink-landing .rate-val.highlight{color:var(--em);font-size:13px;font-weight:800}
 
 /* ---------- comparison & roi ---------- */
-.walink-landing .cmp-wrap{overflow:hidden;padding:0}
+.walink-landing .cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0;border-radius:20px;border:1.5px solid var(--hair-strong);background:#FFFFFF;box-shadow:0 4px 20px rgba(11,20,26,.04)}
 .walink-landing .cmp{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.5}
-.walink-landing .cmp th,.walink-landing .cmp td{padding:14px 10px;text-align:center;vertical-align:middle;border-bottom:1px solid var(--hair)}
+.walink-landing .cmp th,.walink-landing .cmp td{padding:14px 12px;text-align:center;vertical-align:middle;border-bottom:1px solid var(--hair)}
 .walink-landing .cmp tbody tr:last-child td{border-bottom:0}
-.walink-landing .cmp thead th{font-size:14px;font-weight:700;padding:16px 8px;color:#111B21;background:#F7F8FA}
-.walink-landing .cmp thead th small{display:block;font-weight:500;font-size:11.5px;color:var(--silver)}
-.walink-landing .cmp td:first-child,.walink-landing .cmp th:first-child{text-align:start;font-weight:600;color:#111B21;padding-inline-start:18px;width:31%}
-.walink-landing .cmp .tp{background:#E8F5E9}
-.walink-landing .cmp thead th.tp{color:var(--em);box-shadow:inset 0 2px 0 var(--em)}
-.walink-landing .cmp td.tp{color:#111B21;font-weight:700}
-.walink-landing .cmp .ic{width:18px;height:18px;margin:0 auto;stroke-width:2.2}
-.walink-landing .cmp .no{color:#DC2626}.walink-landing .cmp .yes{color:var(--em)}
-.walink-landing .cmp .note{display:block;font-size:11.5px;color:var(--silver);font-weight:400}
-@media(min-width:720px){.walink-landing .cmp{font-size:15px}.walink-landing .cmp th,.walink-landing .cmp td{padding:16px 14px}.walink-landing .cmp thead th{font-size:15px}}
+.walink-landing .cmp thead th{font-size:13.5px;font-weight:700;padding:16px 12px;color:#111B21;background:#F8FAFC}
+.walink-landing .cmp thead th.cmp-th-feat{text-align:start;padding-inline-start:20px;width:28%}
+.walink-landing .cmp td:first-child{text-align:start;font-weight:700;color:#111B21;padding-inline-start:20px}
+.walink-landing .cmp-feat-title{font-size:14px;font-weight:700;color:#111B21}
+.walink-landing .cmp .tp{background:rgba(0,128,105,0.04);width:28%}
+.walink-landing .cmp thead th.tp.cmp-th-walink{background:linear-gradient(180deg,#075E54 0%,#008069 100%);color:#FFFFFF;box-shadow:0 4px 12px rgba(7,94,84,0.18)}
+.walink-landing .cmp-th-badge{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:800;font-size:15px;color:#FFFFFF}
+.walink-landing .cmp-star{font-size:14px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.2))}
+.walink-landing .cmp-th-sub{display:block;font-size:11px;font-weight:600;color:#A7F3D0;margin-top:3px;letter-spacing:0.2px}
+.walink-landing .cmp-pill{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:99px;font-size:12.5px;font-weight:600;line-height:1.4;text-align:center;box-sizing:border-box}
+.walink-landing .cmp-pill.yes{background:#E8F5E9;border:1px solid #A7F3D0;color:#047857;font-weight:700}
+.walink-landing .cmp-pill.warn{background:#FEF3C7;border:1px solid #FDE68A;color:#92400E}
+.walink-landing .cmp-pill.no{background:#FEE2E2;border:1px solid #FECACA;color:#991B1B}
+@media(min-width:768px){.walink-landing .cmp{font-size:14.5px}.walink-landing .cmp th,.walink-landing .cmp td{padding:16px 14px}}
 
-.walink-landing .roi{margin-top:16px;display:grid;gap:14px}
-@media(min-width:820px){.walink-landing .roi{grid-template-columns:1fr 1fr;gap:16px}}
-.walink-landing .roi .surface{padding:26px}
-.walink-landing .roi h3{font-size:19px;font-weight:700;margin-bottom:6px;color:#111B21}
-.walink-landing .bars{display:grid;gap:14px;margin-top:14px}
-.walink-landing .bar .bl{display:flex;justify-content:space-between;font-size:14px;font-weight:600;color:var(--silver);margin-bottom:6px}
-.walink-landing .bar .bl b{font-family:Inter;font-weight:700;color:#111B21}
-.walink-landing .bar .bt{height:10px;border-radius:99px;background:#E9EDEF}
-.walink-landing .bar .bt i{display:block;height:100%;border-radius:99px}
-.walink-landing .bar.bad .bt i{background:#94A3B8;width:100%}
-.walink-landing .bar.good .bt i{background:var(--em);width:22%}
-.walink-landing .bar.good .bl b{color:var(--em)}
-.walink-landing .calc label{display:flex;justify-content:space-between;gap:10px;font-weight:600;font-size:14.5px;margin:14px 0 8px;color:#111B21}
-.walink-landing .calc label b{font-family:Inter;color:var(--em);font-weight:700}
-.walink-landing input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;background:#D1D7DB;outline:none}
-.walink-landing input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#008069;box-shadow:0 0 0 3px rgba(0,128,105,.25)}
-.walink-landing .calc .out{margin-top:18px;padding-top:16px;border-top:1px solid var(--hair);font-size:15px;line-height:1.85;color:var(--silver)}
-.walink-landing .calc .out b{color:#111B21;font-family:Inter;font-weight:700}
-.walink-landing .calc .out .gold{color:#B45309}
+.walink-landing .roi{margin-top:20px;display:grid;gap:16px}
+@media(min-width:860px){.walink-landing .roi{grid-template-columns:1.05fr 0.95fr;gap:20px}}
+.walink-landing .roi-card{padding:26px;border-radius:20px;background:#FFFFFF;border:1.5px solid var(--hair-strong);box-shadow:0 4px 20px rgba(11,20,26,.04);display:flex;flex-direction:column;gap:18px}
+.walink-landing .roi-head{display:flex;align-items:flex-start;gap:14px}
+.walink-landing .roi-icon-badge{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex:none}
+.walink-landing .roi-icon-badge.calc-badge{background:#E8F5E9;color:#008069}
+.walink-landing .roi-icon-badge.cost-badge{background:#FEF3C7;color:#D97706}
+.walink-landing .roi-icon-badge .ic{width:22px;height:22px}
+.walink-landing .roi-card h3{font-size:18px;font-weight:800;color:#111B21;margin:0 0 4px;line-height:1.3}
+.walink-landing .roi-card .lead{font-size:13.5px;color:var(--silver);margin:0;line-height:1.55}
+
+/* Slider Controls */
+.walink-landing .roi-sliders{display:flex;flex-direction:column;gap:16px}
+.walink-landing .roi-slider-group{display:flex;flex-direction:column;gap:8px}
+.walink-landing .roi-slider-group label{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;font-weight:700;color:#111B21}
+.walink-landing .r-val-pill{padding:4px 10px;border-radius:99px;background:#E8F5E9;color:#008069;font-weight:800;font-size:13px;font-family:Inter}
+.walink-landing .r-range-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--silver);font-weight:500;font-family:Inter;margin-top:-2px}
+.walink-landing input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:99px;background:#E2E8F0;outline:none;cursor:pointer;transition:background .2s}
+.walink-landing input[type=range]:hover{background:#CBD5E1}
+.walink-landing input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#008069;border:3px solid #FFFFFF;box-shadow:0 2px 8px rgba(0,128,105,.4);cursor:pointer;transition:transform .15s}
+.walink-landing input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+
+/* ROI Profit Result Box */
+.walink-landing .roi-profit-card{background:linear-gradient(135deg,#F0FDF4 0%,#DCFCE7 100%);border:1.5px solid #86EFAC;padding:18px 20px;border-radius:16px;display:flex;flex-direction:column;gap:14px;box-shadow:0 4px 12px rgba(16,185,129,.08)}
+.walink-landing .profit-primary-row{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.walink-landing .profit-title{font-size:12.5px;font-weight:700;color:#166534;display:block;margin-bottom:2px}
+.walink-landing .profit-big{font-size:28px;font-weight:900;color:#008069;line-height:1.1;font-family:Inter;letter-spacing:-.5px}
+.walink-landing .profit-unit{font-size:13px;font-weight:600;color:#15803D;margin-inline-start:4px}
+.walink-landing .profit-annual{text-align:end;background:#FFFFFF;padding:6px 12px;border-radius:10px;border:1px solid #BBF7D0}
+.walink-landing .annual-tag{display:block;font-size:11px;font-weight:600;color:#15803D}
+.walink-landing .annual-val{font-size:15px;font-weight:800;color:#065F46;font-family:Inter}
+.walink-landing .payback-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:#FFFFFF;border:1px solid #86EFAC;font-size:12.5px;color:#166534;font-weight:600}
+.walink-landing .payback-icon{font-size:14px}
+.walink-landing .payback-time-val{color:#008069;font-weight:800}
+
+/* Cost Comparison Bars */
+.walink-landing .bars-showcase{display:flex;flex-direction:column;gap:12px}
+.walink-landing .bar-card{padding:14px 16px;border-radius:14px;background:#F8FAFC;border:1.5px solid var(--hair-strong);display:flex;flex-direction:column;gap:8px}
+.walink-landing .bar-card.good{background:#F0FDF4;border-color:#86EFAC}
+.walink-landing .bar-top{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;font-weight:700;color:#111B21}
+.walink-landing .bar-name small{font-size:11.5px;color:var(--silver);font-weight:500}
+.walink-landing .plan-badge{display:inline-block;padding:2px 8px;border-radius:6px;background:#E8F5E9;color:#008069;font-size:11px;font-weight:700;font-family:Inter}
+.walink-landing .bar-amount{font-size:16px;font-weight:800;font-family:Inter;color:#64748B}
+.walink-landing .bar-amount.highlight{color:#008069;font-size:18px}
+.walink-landing .bar-track{height:8px;border-radius:99px;background:#E2E8F0;overflow:hidden}
+.walink-landing .bar-fill{height:100%;border-radius:99px;transition:width .8s ease}
+.walink-landing .bar-fill.bad{background:#94A3B8}
+.walink-landing .bar-fill.good{background:linear-gradient(90deg,#00A884,#008069)}
+.walink-landing .bar-note{font-size:11.5px;color:#64748B;line-height:1.4}
+.walink-landing .bar-note.good{color:#065F46;font-weight:600}
+
+/* Savings Callout Box */
+.walink-landing .savings-callout{padding:16px;border-radius:14px;background:#ECFDF5;border:1.5px solid #10B981;display:flex;flex-direction:column;gap:6px}
+.walink-landing .savings-badge{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:800;color:#065F46;line-height:1.4}
+.walink-landing .savings-sparkle{font-size:16px}
+.walink-landing .savings-explanation{font-size:12.5px;color:#047857;line-height:1.5;margin:0}
 
 /* ---------- Infrastructure & Security Grid ---------- */
 .walink-landing .infra-sec{padding:80px 0 20px}

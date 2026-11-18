@@ -116,6 +116,9 @@ export interface TranslationDictionary {
     row5App: string;
     roiTitle: string;
     roiSubtitle: string;
+    costCompareTitle: string;
+    costCompareSubtitle: string;
+    costSavingsCallout: string;
     sliderVisitsLabel: string;
     sliderTicketLabel: string;
     monthlyExtraRev: string;
@@ -477,7 +480,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
       colPaper: "البطاقات الورقية",
       colApp: "تطبيق هاتف خاص",
       row1Feature: "تنزيل تطبيق من المتجر",
-      row1Walink: "❌ بدون أي تطبيق (تفتح بـ 5 ثوانٍ)",
+      row1Walink: "✅ بدون تحميل أي تطبيق (فتح فوري في 5 ثوانٍ)",
       row1Paper: "❌ لا يوجد تطبيق",
       row1App: "⚠️ إجباري (90% من الزبائن يرفضون)",
       row2Feature: "النسيان والضياع",
@@ -496,8 +499,11 @@ export const translations: Record<Locale, TranslationDictionary> = {
       row5Walink: "✅ دفعة واحدة وبلا اشتراك شهري",
       row5Paper: "⚠️ طباعة متكررة ومكلفة شهرياً",
       row5App: "❌ تكلفة تطوير باهظة + اشتراك شهري",
-      roiTitle: "حاسبة العائد الاستثماري لمتجرك",
-      roiSubtitle: "حرّك المؤشرات لتقدير الأرباح الإضافية التي ستجنيها شهرياً بفضل عودة عملائك",
+      roiTitle: "حاسبة العائد الاستثماري والأرباح الإضافية",
+      roiSubtitle: "حرّك المؤشرات لتقدير الأرباح الإضافية الشهرية والسنوية التي ستجنيها بفضل عودة زبائنك",
+      costCompareTitle: "مقارنة التكلفة وتوفير الميزانية السنوية",
+      costCompareSubtitle: "لماذا تدفع اشتراكات شهرية متكررة وتطويراً مكلفاً بينما تمنحك Walink حلاً دائماً بدفعة واحدة؟",
+      costSavingsCallout: "وفر أكثر من 12,000 درهم في السنة الأولى وحدها مقارنة ببرمجة تطبيق خاص! 🎉",
       sliderVisitsLabel: "عدد العملاء اليومي في محلك:",
       sliderTicketLabel: "متوسط قيمة الفاتورة (درهم):",
       monthlyExtraRev: "أرباح إضافية متوقعة شهرياً:",
@@ -899,7 +905,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
       colPaper: "Cartes en carton",
       colApp: "Application sur mesure",
       row1Feature: "Téléchargement d'application",
-      row1Walink: "❌ Aucune application (accès en 5s)",
+      row1Walink: "✅ Aucune application à télécharger (accès direct en 5s)",
       row1Paper: "❌ Pas d'application",
       row1App: "⚠️ Obligatoire (90% d'abandons)",
       row2Feature: "Oubli ou perte de la carte",
@@ -918,8 +924,11 @@ export const translations: Record<Locale, TranslationDictionary> = {
       row5Walink: "✅ Paiement unique sans abonnement",
       row5Paper: "⚠️ Réimpressions coûteuses et régulières",
       row5App: "❌ Développement cher + abonnements mensuels",
-      roiTitle: "Simulateur de retour sur investissement",
+      roiTitle: "Simulateur de rentabilité & revenus additionnels",
       roiSubtitle: "Ajustez les curseurs pour estimer le chiffre d'affaires additionnel généré par vos clients fidélisés",
+      costCompareTitle: "Comparatif des coûts & économies annuelles",
+      costCompareSubtitle: "Pourquoi payer un abonnement mensuel et du développement sur-mesure coûteux quand Walink vous offre une solution clé en main à vie ?",
+      costSavingsCallout: "Économisez plus de 12 000 DH dès la première année par rapport à une application sur-mesure ! 🎉",
       sliderVisitsLabel: "Nombre de clients par jour :",
       sliderTicketLabel: "Panier moyen par client (DH) :",
       monthlyExtraRev: "Revenu additionnel mensuel estimé :",
@@ -1321,7 +1330,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
       colPaper: "Tarjetas de papel",
       colApp: "App propia a medida",
       row1Feature: "Descargar una app de la tienda",
-      row1Walink: "❌ Sin descargas (acceso en 5s)",
+      row1Walink: "✅ Sin descargas de apps (acceso inmediato en 5s)",
       row1Paper: "❌ Sin app",
       row1App: "⚠️ Obligatorio (90% de abandonos)",
       row2Feature: "Pérdida u olvido de tarjeta",
@@ -1340,8 +1349,11 @@ export const translations: Record<Locale, TranslationDictionary> = {
       row5Walink: "✅ Pago único sin mensualidades",
       row5Paper: "⚠️ Reimpresiones continuas y caras",
       row5App: "❌ Desarrollo caro + mensualidades altas",
-      roiTitle: "Calculadora de retorno de inversión",
-      roiSubtitle: "Mueve los controles para estimar los ingresos adicionales gracias a tus clientes habituales",
+      roiTitle: "Calculadora de rentabilidad e ingresos adicionales",
+      roiSubtitle: "Ajusta los controles para estimar los ingresos adicionales generados gracias a la recurrencia de tus clientes",
+      costCompareTitle: "Comparativa de costes y ahorro anual",
+      costCompareSubtitle: "¿Por qué pagar cuotas mensuales y desarrollos caros cuando Walink te ofrece una solución definitiva de un solo pago?",
+      costSavingsCallout: "¡Ahorra más de 12.000 DH en el primer año frente al desarrollo de una app a medida! 🎉",
       sliderVisitsLabel: "Número de clientes al día:",
       sliderTicketLabel: "Ticket medio por cliente (DH):",
       monthlyExtraRev: "Ingresos extra mensuales estimados:",

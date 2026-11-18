@@ -2481,124 +2481,257 @@ export default function LandingPage() {
             <table className="cmp">
               <thead>
                 <tr>
-                  <th>{t.compare.colFeature}</th>
+                  <th className="cmp-th-feat">{t.compare.colFeature}</th>
                   <th>{t.compare.colPaper}</th>
                   <th>{t.compare.colApp}</th>
-                  <th className="tp">{t.compare.colWalink}</th>
+                  <th className="tp cmp-th-walink">
+                    <div className="cmp-th-badge">
+                      <span className="cmp-star">⭐</span>
+                      <span>{t.compare.colWalink}</span>
+                    </div>
+                    <small className="cmp-th-sub">
+                      {locale === "fr"
+                        ? "Solution recommandée"
+                        : locale === "es"
+                        ? "Solución recomendada"
+                        : "الحل الموصى به"}
+                    </small>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>{t.compare.row1Feature}</td>
-                  <td>{t.compare.row1Paper}</td>
-                  <td className="no">{t.compare.row1App}</td>
-                  <td className="tp yes">{t.compare.row1Walink}</td>
+                  <td className="cmp-feat-title">{t.compare.row1Feature}</td>
+                  <td>
+                    <span className="cmp-pill no">{t.compare.row1Paper}</span>
+                  </td>
+                  <td>
+                    <span className="cmp-pill warn">{t.compare.row1App}</span>
+                  </td>
+                  <td className="tp">
+                    <span className="cmp-pill yes">{t.compare.row1Walink}</span>
+                  </td>
                 </tr>
                 <tr>
-                  <td>{t.compare.row2Feature}</td>
-                  <td className="no">{t.compare.row2Paper}</td>
-                  <td>{t.compare.row2App}</td>
-                  <td className="tp yes">{t.compare.row2Walink}</td>
+                  <td className="cmp-feat-title">{t.compare.row2Feature}</td>
+                  <td>
+                    <span className="cmp-pill no">{t.compare.row2Paper}</span>
+                  </td>
+                  <td>
+                    <span className="cmp-pill warn">{t.compare.row2App}</span>
+                  </td>
+                  <td className="tp">
+                    <span className="cmp-pill yes">{t.compare.row2Walink}</span>
+                  </td>
                 </tr>
                 <tr>
-                  <td>{t.compare.row3Feature}</td>
-                  <td className="no">{t.compare.row3Paper}</td>
-                  <td className="no">{t.compare.row3App}</td>
-                  <td className="tp yes">{t.compare.row3Walink}</td>
+                  <td className="cmp-feat-title">{t.compare.row3Feature}</td>
+                  <td>
+                    <span className="cmp-pill no">{t.compare.row3Paper}</span>
+                  </td>
+                  <td>
+                    <span className="cmp-pill warn">{t.compare.row3App}</span>
+                  </td>
+                  <td className="tp">
+                    <span className="cmp-pill yes">{t.compare.row3Walink}</span>
+                  </td>
                 </tr>
                 <tr>
-                  <td>{t.compare.row4Feature}</td>
-                  <td className="no">{t.compare.row4Paper}</td>
-                  <td className="no">{t.compare.row4App}</td>
-                  <td className="tp yes">{t.compare.row4Walink}</td>
+                  <td className="cmp-feat-title">{t.compare.row4Feature}</td>
+                  <td>
+                    <span className="cmp-pill no">{t.compare.row4Paper}</span>
+                  </td>
+                  <td>
+                    <span className="cmp-pill warn">{t.compare.row4App}</span>
+                  </td>
+                  <td className="tp">
+                    <span className="cmp-pill yes">{t.compare.row4Walink}</span>
+                  </td>
                 </tr>
                 <tr>
-                  <td>{t.compare.row5Feature}</td>
-                  <td>{t.compare.row5Paper}</td>
-                  <td className="no">{t.compare.row5App}</td>
-                  <td className="tp yes">{t.compare.row5Walink}</td>
+                  <td className="cmp-feat-title">{t.compare.row5Feature}</td>
+                  <td>
+                    <span className="cmp-pill warn">{t.compare.row5Paper}</span>
+                  </td>
+                  <td>
+                    <span className="cmp-pill no">{t.compare.row5App}</span>
+                  </td>
+                  <td className="tp">
+                    <span className="cmp-pill yes">{t.compare.row5Walink}</span>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <div className="roi">
-            {/* 3-Year Bars */}
-            <div className="surface">
-              <h3>{t.compare.roiTitle}</h3>
-              <p className="lead" style={{ fontSize: "15px" }}>
-                {t.compare.roiSubtitle}
-              </p>
-              <div className="bars">
-                <div className="bar bad">
-                  <div className="bl">
-                    <span>{t.compare.colApp} (400 DH/mois)</span>
-                    <b className="lat">14,400 DH</b>
-                  </div>
-                  <div className="bt">
-                    <i />
+            {/* Card 1: Dynamic ROI Calculator & Extra Revenue */}
+            <div className="surface roi-card roi-calc-card">
+              <div className="roi-head">
+                <span className="roi-icon-badge calc-badge">
+                  <svg className="ic">
+                    <use href="#i-bolt" />
+                  </svg>
+                </span>
+                <div>
+                  <h3>{t.compare.roiTitle}</h3>
+                  <p className="lead">{t.compare.roiSubtitle}</p>
+                </div>
+              </div>
+
+              <div className="roi-sliders">
+                <div className="roi-slider-group">
+                  <label htmlFor="rCount">
+                    <span className="r-label">{t.compare.sliderVisitsLabel}</span>
+                    <b className="lat r-val-pill" id="vCount">
+                      {roiCount} {locale === "fr" ? "clients/jour" : locale === "es" ? "clientes/día" : "زبون/يوم"}
+                    </b>
+                  </label>
+                  <input
+                    type="range"
+                    id="rCount"
+                    min="1"
+                    max="50"
+                    value={roiCount}
+                    onChange={(e) => setRoiCount(Number(e.target.value))}
+                  />
+                  <div className="r-range-labels">
+                    <small>1</small>
+                    <small>25</small>
+                    <small>50+</small>
                   </div>
                 </div>
-                <div className="bar good">
-                  <div className="bl">
-                    <span>Walink (Growth Pack)</span>
-                    <b className="lat">2,400 DH</b>
+
+                <div className="roi-slider-group">
+                  <label htmlFor="rSpend">
+                    <span className="r-label">{t.compare.sliderTicketLabel}</span>
+                    <b className="lat r-val-pill" id="vSpend">
+                      {roiSpend} DH
+                    </b>
+                  </label>
+                  <input
+                    type="range"
+                    id="rSpend"
+                    min="10"
+                    max="300"
+                    step="5"
+                    value={roiSpend}
+                    onChange={(e) => setRoiSpend(Number(e.target.value))}
+                  />
+                  <div className="r-range-labels">
+                    <small>10 DH</small>
+                    <small>150 DH</small>
+                    <small>300+ DH</small>
                   </div>
-                  <div className="bt">
-                    <i />
+                </div>
+              </div>
+
+              {/* Enhanced Profit Card */}
+              <div className="roi-profit-card" id="roiOut">
+                <div className="profit-primary-row">
+                  <div>
+                    <span className="profit-title">{t.compare.monthlyExtraRev}</span>
+                    <div className="profit-big lat">
+                      +{roiMonthlyGain.toLocaleString()} DH
+                      <small className="profit-unit">
+                        /{locale === "fr" ? "mois" : locale === "es" ? "mes" : "شهرياً"}
+                      </small>
+                    </div>
                   </div>
+                  <div className="profit-annual">
+                    <span className="annual-tag">{t.compare.yearlyExtraRev}</span>
+                    <b className="lat annual-val">
+                      +{(roiMonthlyGain * 12).toLocaleString()} DH
+                    </b>
+                  </div>
+                </div>
+
+                <div className="payback-chip">
+                  <span className="payback-icon">⚡</span>
+                  <span>
+                    <b>{t.compare.paybackTime}</b>{" "}
+                    <span className="payback-time-val lat">
+                      {roiPaybackMonths}{" "}
+                      {locale === "fr"
+                        ? "mois seulement !"
+                        : locale === "es"
+                        ? "meses solamente!"
+                        : "أشهر فقط!"}
+                    </span>
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Dynamic ROI Calculator */}
-            <div className="surface calc">
-              <h3>{t.compare.paybackTime}</h3>
-              <p className="lead" style={{ fontSize: "15px" }}>
-                {t.compare.roiSubtitle}
-              </p>
-              <div>
-                <label htmlFor="rCount">
-                  <span>{t.compare.sliderVisitsLabel}</span>
-                  <b className="lat" id="vCount">
-                    {roiCount}
-                  </b>
-                </label>
-                <input
-                  type="range"
-                  id="rCount"
-                  min="1"
-                  max="30"
-                  value={roiCount}
-                  onChange={(e) => setRoiCount(Number(e.target.value))}
-                />
+            {/* Card 2: Cost Comparison & Annual Budget Savings */}
+            <div className="surface roi-card roi-cost-card">
+              <div className="roi-head">
+                <span className="roi-icon-badge cost-badge">
+                  <svg className="ic">
+                    <use href="#i-coins" />
+                  </svg>
+                </span>
+                <div>
+                  <h3>{t.compare.costCompareTitle}</h3>
+                  <p className="lead">{t.compare.costCompareSubtitle}</p>
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="rSpend">
-                  <span>{t.compare.sliderTicketLabel}</span>
-                  <b className="lat" id="vSpend">
-                    {roiSpend} DH
-                  </b>
-                </label>
-                <input
-                  type="range"
-                  id="rSpend"
-                  min="10"
-                  max="200"
-                  step="5"
-                  value={roiSpend}
-                  onChange={(e) => setRoiSpend(Number(e.target.value))}
-                />
+              <div className="bars-showcase">
+                <div className="bar-card bad">
+                  <div className="bar-top">
+                    <span className="bar-name">
+                      {t.compare.colApp}{" "}
+                      <small>(400 DH/{locale === "fr" ? "mois" : locale === "es" ? "mes" : "شهر"})</small>
+                    </span>
+                    <b className="bar-amount lat">14,400 DH</b>
+                  </div>
+                  <div className="bar-track">
+                    <div className="bar-fill bad" style={{ width: "100%" }} />
+                  </div>
+                  <div className="bar-note">
+                    {locale === "fr"
+                      ? "Frais de dev initiaux + abonnements mensuels récurrents"
+                      : locale === "es"
+                      ? "Costes iniciales de app + suscripciones mensuales fijas"
+                      : "تكلفة تطوير باهظة في البداية + اشتراك شهري مستمر لا يتوقف"}
+                  </div>
+                </div>
+
+                <div className="bar-card good">
+                  <div className="bar-top">
+                    <div className="bar-name">
+                      <b>Walink</b>{" "}
+                      <span className="plan-badge">Growth Pack</span>
+                    </div>
+                    <b className="bar-amount lat highlight">2,400 DH</b>
+                  </div>
+                  <div className="bar-track">
+                    <div className="bar-fill good" style={{ width: "17%" }} />
+                  </div>
+                  <div className="bar-note good">
+                    {locale === "fr"
+                      ? "Paiement unique à vie • Stand connecté inclus • 0 DH/mois"
+                      : locale === "es"
+                      ? "Pago único para siempre • Soporte inteligente incluido • 0 DH/mes"
+                      : "دفعة واحدة فقط لمدى الحياة • الستاند الذكي مشمول • 0 درهم/شهر"}
+                  </div>
+                </div>
               </div>
 
-              <div className="out" id="roiOut">
-                {t.compare.monthlyExtraRev}:{" "}
-                <b className="gold lat">+{roiMonthlyGain} DH</b>
-                <br />
-                {t.compare.paybackTime}:{" "}
-                <b className="lat">{roiPaybackMonths}</b>{" "}
-                {locale === "fr" ? "mois" : locale === "es" ? "meses" : "أشهر"}!
+              {/* Savings Callout Box */}
+              <div className="savings-callout">
+                <div className="savings-badge">
+                  <span className="savings-sparkle">🎉</span>
+                  <b>{t.compare.costSavingsCallout}</b>
+                </div>
+                <p className="savings-explanation">
+                  {locale === "fr"
+                    ? "Payez une seule fois 2 400 DH et possédez votre propre système de fidélité à vie sans mensualités qui grugent votre marge."
+                    : locale === "es"
+                    ? "Paga una sola vez 2.400 DH y obtén tu sistema de fidelización de por vida sin cuotas mensuales que reduzcan tu beneficio."
+                    : "ادفع مرة واحدة 2,400 درهم وامتلك منصتك الخاصة لمدى الحياة، بدون اشتراكات أو عمولات تستنزف أرباح متجرك شهرياً."}
+                </p>
               </div>
             </div>
           </div>
