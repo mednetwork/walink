@@ -30,6 +30,15 @@ model Merchant {
   longitude       Float?        @default(-7.5898)
   radarMessage    String        @default("أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.")
   googleMapsUrl   String?
+  staffMembers       String        @default("[{\"name\":\"أمين (كاشير)\",\"pin\":\"1111\"}]") // JSON array of { name, pin }
+  cooldownMinutes    Int           @default(30)     // Anti-fraud minimum minutes between scans for the same customer
+  vipVisitsThreshold Int           @default(10)     // Visits needed to unlock VIP Gold Card
+  vipCashbackBonus   Float         @default(5)      // Extra % cashback for VIPs (e.g., 10% + 5% = 15%)
+  referralBonus      Float         @default(10)     // Cashback DH bonus for referring a friend (or 1 free stamp)
+  radarZones         String        @default("[]")   // JSON array of up to 10 { name, lat, lng, message } zones
+  menuUrl            String?       @default("https://instagram.com")
+  instagramUrl       String?       @default("https://instagram.com")
+  termsText          String        @default("البطاقة صالحة في جميع فروع المتجر. لا يمكن استبدال المكافآت نقداً.")
   plan            String        @default("GROWTH") // STARTER, GROWTH, MULTI
   credits         Int           @default(1000)
   autoWinback     Boolean       @default(true)
@@ -64,6 +73,9 @@ model Customer {
   totalSpent        Float         @default(0)        // Lifetime bill amount spent at merchant
   totalVisits       Int           @default(1)
   rewardsRedeemed   Int           @default(0)
+  isVip              Boolean       @default(false)
+  referredByCode     String?       // 4-digit memberCode of the customer who referred them
+  referralsCount     Int           @default(0)      // How many friends this customer brought in
   lastVisitAt       DateTime      @default(now())
   walletType        String        @default("WEBPASS") // APPLE, GOOGLE, WEBPASS
   pushSubscription  String?       // JSON string for Web Push API
@@ -89,6 +101,7 @@ model Transaction {
   billAmount    Float?    // Original purchase bill amount (for CASHBACK_EARNED)
   cashbackDelta Float?    // +amount earned or -amount redeemed
   note          String?
+  staffName     String    @default("المدير") // Tracks which staff member performed the scan
   createdAt     DateTime  @default(now())
 
   @@index([merchantId, createdAt])

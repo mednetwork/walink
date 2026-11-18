@@ -92,12 +92,28 @@ export async function PATCH(
       "autoRadar",
       "autoNearReward",
       "isActive",
+      "staffMembers",
+      "cooldownMinutes",
+      "vipVisitsThreshold",
+      "vipCashbackBonus",
+      "referralBonus",
+      "radarZones",
+      "menuUrl",
+      "instagramUrl",
+      "termsText",
     ];
 
     const updateData: Record<string, unknown> = {};
     for (const key of allowedFields) {
       if (key in body) {
-        if (key === "stampsRequired" || key === "credits") {
+        if (
+          key === "stampsRequired" ||
+          key === "credits" ||
+          key === "cooldownMinutes" ||
+          key === "vipVisitsThreshold" ||
+          key === "vipCashbackBonus" ||
+          key === "referralBonus"
+        ) {
           updateData[key] = Number(body[key]);
         } else if (key === "latitude" || key === "longitude") {
           updateData[key] = body[key] !== null ? parseFloat(String(body[key])) : null;

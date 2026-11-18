@@ -34,13 +34,17 @@ export interface WalletPassPreviewProps {
   compact?: boolean;
   qrValue?: string;
   locale?: Locale;
+  isVip?: boolean;
+  totalVisits?: number;
+  vipVisitsThreshold?: number;
+  vipCashbackBonus?: number;
 }
 
 export default function WalletPassPreview({
   name = "Café Atlas",
   niche = "cafe",
   primaryColor = "#5b3519",
-  bgGradient = "linear-gradient(150deg, #6b4226 0%, #3d2414 100%)",
+  bgGradient = "linear-gradient(150deg, #5c371d 0%, #2a170b 100%)",
   loyaltyType = "STAMPS",
   stamps = 4,
   stampsRequired = 5,
@@ -53,6 +57,10 @@ export default function WalletPassPreview({
   compact = false,
   qrValue,
   locale = "ar",
+  isVip = false,
+  totalVisits,
+  vipVisitsThreshold = 10,
+  vipCashbackBonus = 5,
 }: WalletPassPreviewProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
 
@@ -63,7 +71,7 @@ export default function WalletPassPreview({
       width: compact ? 140 : 200,
       margin: 1,
       color: {
-        dark: "#000000",
+        dark: "#05080E",
         light: "#FFFFFF",
       },
       errorCorrectionLevel: "H",
@@ -75,25 +83,35 @@ export default function WalletPassPreview({
   const getNicheIcon = () => {
     switch (niche) {
       case "barber":
-        return <Scissors className="w-5 h-5 text-amber-300" />;
+        return <Scissors className="w-4 h-4 text-amber-300" />;
       case "snack":
-        return <Utensils className="w-5 h-5 text-amber-300" />;
+        return <Utensils className="w-4 h-4 text-amber-300" />;
       case "wash":
-        return <Car className="w-5 h-5 text-amber-300" />;
+        return <Car className="w-4 h-4 text-amber-300" />;
       case "beauty":
-        return <Sparkles className="w-5 h-5 text-amber-300" />;
+        return <Sparkles className="w-4 h-4 text-amber-300" />;
       case "laundry":
-        return <Shirt className="w-5 h-5 text-amber-300" />;
+        return <Shirt className="w-4 h-4 text-amber-300" />;
       case "other":
-        return <Store className="w-5 h-5 text-amber-300" />;
+        return <Store className="w-4 h-4 text-amber-300" />;
       case "cafe":
       default:
-        return <Coffee className="w-5 h-5 text-amber-300" />;
+        return <Coffee className="w-4 h-4 text-amber-300" />;
     }
   };
 
   const safeStampsRequired = Math.max(3, Math.min(10, stampsRequired || 5));
   const safeStamps = Math.max(0, Math.min(safeStampsRequired, stamps || 0));
+
+  const isVipCustomer = Boolean(
+    isVip ||
+      (totalVisits !== undefined &&
+        vipVisitsThreshold !== undefined &&
+        totalVisits >= vipVisitsThreshold)
+  );
+  const effectiveCashbackRate = isVipCustomer
+    ? cashbackRate + (vipCashbackBonus || 5)
+    : cashbackRate;
 
   const isCashback = loyaltyType === "CASHBACK";
   const isRTL = locale === "ar";
@@ -146,50 +164,60 @@ export default function WalletPassPreview({
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className={`relative w-full max-w-[360px] mx-auto rounded-[28px] overflow-hidden text-white shadow-2xl border border-white/20 select-none transition-all duration-300 ${
-        compact ? "p-4 text-xs" : "p-6"
-      }`}
+      className={`relative w-full max-w-[360px] mx-auto rounded-[28px] overflow-hidden text-white select-none transition-all duration-300 border ${
+        isVipCustomer
+          ? "border-amber-400/50 shadow-[0_24px_50px_-12px_rgba(245,158,11,0.35)] ring-1 ring-amber-300/40"
+          : "border-white/[0.12] border-t-white/[0.24] shadow-[0_24px_50px_-12px_rgba(0,0,0,0.85)]"
+      } ${compact ? "p-4 text-xs" : "p-6"}`}
       style={{
-        background: bgGradient || primaryColor || "#1e293b",
-        boxShadow:
-          "0 25px 50px -12px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
+        background: bgGradient || primaryColor || "#141c2b",
+        boxShadow: isVipCustomer
+          ? "0 24px 50px -12px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 235, 150, 0.45)"
+          : "0 24px 50px -12px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.22)",
       }}
     >
-      {/* Apple Wallet Top Foil Shimmer Effect */}
+      {/* Subtle Optical Specular Light Line (Apple Wallet Finish) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[28px]">
-        <div className="absolute -inset-[100%] bg-gradient-to-r from-transparent via-white/[0.08] to-transparent transform -rotate-45 animate-shimmer" />
+        <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/[0.05] to-transparent transform -rotate-45" />
       </div>
 
       {/* Header: Logo, Merchant Name & Program Indicator */}
-      <div className="flex items-center justify-between pb-4 border-b border-white/15 relative z-10">
+      <div className="flex items-center justify-between pb-4 border-b border-white/[0.12] relative z-10">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-black/30 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
+          <div className="w-10 h-10 rounded-2xl bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
             {getNicheIcon()}
           </div>
           <div>
-            <h3 className="font-bold text-base tracking-wide leading-tight text-white drop-shadow">
-              {name}
-            </h3>
-            <span className="text-[11px] font-medium text-white/70 block">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h3 className="font-bold text-base tracking-tight leading-tight text-white drop-shadow-sm">
+                {name}
+              </h3>
+              {isVipCustomer && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 shadow-sm border border-amber-300/80">
+                  👑 VIP GOLD
+                </span>
+              )}
+            </div>
+            <span className="text-[11px] font-medium text-white/70 block mt-0.5">
               {labels.passSubtitle}
             </span>
           </div>
         </div>
 
         {isCashback ? (
-          <div className="text-center bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-amber-400/30 shadow-sm">
+          <div className="text-center bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-xl border border-amber-400/35 shadow-sm">
             <div className="text-[10px] text-amber-300/80 font-medium">
               {labels.cashbackHeader}
             </div>
             <div className="text-sm font-bold text-amber-300 font-mono tracking-tight flex items-center justify-center gap-1">
               <Coins className="w-3.5 h-3.5" />
-              <span>{cashbackRate}%</span>
+              <span>{effectiveCashbackRate}%</span>
             </div>
           </div>
         ) : (
-          <div className="text-center bg-black/35 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 shadow-sm">
-            <div className="text-[10px] text-white/70">{labels.stampsHeader}</div>
-            <div className="text-sm font-bold text-emerald-400 font-mono tracking-tight">
+          <div className="text-center bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 shadow-sm">
+            <div className="text-[10px] text-white/70 font-medium">{labels.stampsHeader}</div>
+            <div className="text-sm font-bold text-sky-400 font-mono tracking-tight">
               {safeStamps} / {safeStampsRequired}
             </div>
           </div>
@@ -199,17 +227,17 @@ export default function WalletPassPreview({
       {/* Program Middle Strip: Stamps Grid OR Cashback Balance Card */}
       {isCashback ? (
         <div className="my-5 relative z-10">
-          <div className="p-4 rounded-2xl bg-black/45 backdrop-blur-md border border-amber-400/25 shadow-inner">
+          <div className="p-4 rounded-2xl bg-black/55 backdrop-blur-md border border-amber-400/25 shadow-inner">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[11px] font-medium text-white/70">
                 {labels.availableBalance}
               </span>
-              <span className="text-[10px] font-bold text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-300/30">
-                +{cashbackRate}% {labels.onEveryPurchase}
+              <span className="text-[10px] font-bold text-amber-300 bg-amber-400/20 px-2.5 py-0.5 rounded-full border border-amber-300/30">
+                +{effectiveCashbackRate}% {labels.onEveryPurchase}
               </span>
             </div>
             <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-3xl font-extrabold font-mono tracking-tight text-amber-300 drop-shadow">
+              <span className="text-3xl font-extrabold font-mono tracking-tight text-amber-300 drop-shadow-sm">
                 {Number(cashbackBalance || 0).toFixed(2)}
               </span>
               <span className="text-sm font-bold text-amber-200/90">{currency}</span>
@@ -239,11 +267,11 @@ export default function WalletPassPreview({
                     key={index}
                     className={`aspect-square rounded-2xl flex flex-col items-center justify-center transition-all duration-300 relative ${
                       isCollected
-                        ? "bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-lg shadow-amber-500/30 ring-2 ring-amber-300 scale-105"
-                        : "bg-black/35 border-2 border-dashed border-amber-400/50 text-amber-300/80"
+                        ? "bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 ring-1 ring-amber-200 scale-105"
+                        : "bg-black/40 border border-dashed border-amber-400/50 text-amber-300/80"
                     }`}
                   >
-                    <Gift className={`w-5 h-5 ${isCollected ? "animate-bounce" : ""}`} />
+                    <Gift className={`w-5 h-5 ${isCollected ? "animate-pulse" : ""}`} />
                     <span className="text-[9px] font-bold mt-0.5">{labels.giftSlot}</span>
                   </div>
                 );
@@ -254,13 +282,13 @@ export default function WalletPassPreview({
                   key={index}
                   className={`aspect-square rounded-2xl flex flex-col items-center justify-center transition-all duration-300 relative ${
                     isCollected
-                      ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 font-bold shadow-md shadow-emerald-500/25 ring-2 ring-emerald-300/80"
-                      : "bg-black/30 border border-white/20 text-white/40"
+                      ? "bg-gradient-to-br from-emerald-300 via-emerald-400 to-emerald-600 text-slate-950 font-bold shadow-md shadow-emerald-500/25 ring-1 ring-emerald-200/80"
+                      : "bg-black/35 border border-white/10 text-white/40"
                   }`}
                   style={{
                     boxShadow: isCollected
-                      ? "inset 0 2px 4px rgba(255, 255, 255, 0.4), 0 4px 8px rgba(0,0,0,0.4)"
-                      : "inset 0 2px 4px rgba(0, 0, 0, 0.6)",
+                      ? "inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 3px 6px rgba(0,0,0,0.4)"
+                      : "inset 0 3px 6px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255,255,255,0.06)",
                   }}
                 >
                   {isCollected ? (
@@ -276,11 +304,11 @@ export default function WalletPassPreview({
       )}
 
       {/* Pass Footer & Member QR Section */}
-      <div className="mt-4 pt-4 border-t border-white/15 bg-black/40 -mx-6 -mb-6 p-5 rounded-b-[28px] backdrop-blur-md relative z-10 flex flex-col items-center">
+      <div className="mt-4 pt-4 border-t border-white/[0.12] bg-black/45 -mx-6 -mb-6 p-5 rounded-b-[28px] backdrop-blur-md relative z-10 flex flex-col items-center">
         <div className="w-full flex items-center justify-between mb-3 text-xs">
           <div>
             <span className="text-[10px] text-white/60 block">{labels.memberNumber}</span>
-            <span className="font-mono font-bold tracking-widest text-emerald-400 text-sm">
+            <span className="font-mono font-bold tracking-widest text-sky-400 text-sm">
               #{memberCode}
             </span>
           </div>
@@ -291,7 +319,7 @@ export default function WalletPassPreview({
         </div>
 
         {/* Crisp High-Contrast Scannable QR Code Canvas */}
-        <div className="bg-white p-2.5 rounded-2xl shadow-xl flex flex-col items-center justify-center">
+        <div className="bg-white p-2.5 rounded-2xl shadow-xl flex flex-col items-center justify-center border border-white/10">
           {qrDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -309,7 +337,7 @@ export default function WalletPassPreview({
         </div>
 
         <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-white/70 font-mono tracking-wider">
-          <span className="text-emerald-400 font-bold">WALINK #{memberCode}</span>
+          <span className="text-sky-400 font-bold">WALINK #{memberCode}</span>
           <span className="text-white/30">•</span>
           <span>{labels.scanHint}</span>
         </div>

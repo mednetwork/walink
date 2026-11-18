@@ -529,13 +529,18 @@ export default function LandingPage() {
       {/* SVG Sprite containing all reference symbols */}
       <svg style={{ display: "none" }} aria-hidden="true">
         <defs>
+          <linearGradient id="mark-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#38BDF8" />
+            <stop offset="50%" stopColor="#2563EB" />
+            <stop offset="100%" stopColor="#1D4ED8" />
+          </linearGradient>
           <symbol id="mark" viewBox="0 0 32 32">
             <path
-              fill="#10B981"
+              fill="url(#mark-grad)"
               d="M16 3L4 7v9c0 8.3 5.1 12.8 12 14 6.9-1.2 12-5.7 12-14V7L16 3z"
             />
             <path
-              fill="#03140D"
+              fill="#FFFFFF"
               d="M16 8a7 7 0 0 1 7 7h-2.5a4.5 4.5 0 0 0-4.5-4.5V8zm0 4.5a2.5 2.5 0 0 1 2.5 2.5H16v-2.5z"
             />
           </symbol>
@@ -782,6 +787,41 @@ export default function LandingPage() {
                   ? "Envío gratuito"
                   : "توصيل مجاني لمتجرك"}
               </span>
+            </div>
+
+            {/* Enterprise Ecosystem Trust Bar */}
+            <div className="trust-bar" aria-label="Ecosystem Compatibility">
+              <div className="trust-badge">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.9.04-2 .6-2.65 1.36-.56.65-1.06 1.7-1 2.76 1.01.08 2.03-.51 2.64-1.25z"/>
+                </svg>
+                <span>{t.enterprise.worksWithApple}</span>
+              </div>
+              <div className="trust-badge">
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M21.35 11.1H12v3.16h5.36c-.23 1.25-.94 2.31-2 3.02v2.51h3.24c1.9-1.75 2.99-4.32 2.99-7.39 0-.44-.04-.87-.1-1.3z" fill="#4285F4"/>
+                  <path d="M12 21c2.7 0 4.97-.9 6.62-2.43l-3.24-2.51c-.9.6-2.05.96-3.38.96-2.6 0-4.81-1.76-5.6-4.12H3.06v2.59C4.7 18.77 8.08 21 12 21z" fill="#34A853"/>
+                  <path d="M6.4 12.9c-.2-.6-.31-1.24-.31-1.9s.11-1.3.31-1.9V6.51H3.06C2.39 7.84 2 9.37 2 11s.39 3.16 1.06 4.49l3.34-2.59z" fill="#FBBC05"/>
+                  <path d="M12 5.08c1.47 0 2.79.5 3.82 1.49l2.87-2.87C16.96 2.06 14.7 1 12 1 8.08 1 4.7 3.23 3.06 6.51l3.34 2.59C7.19 6.74 9.4 5.08 12 5.08z" fill="#EA4335"/>
+                </svg>
+                <span>{t.enterprise.googleWalletCertified}</span>
+              </div>
+              <div className="trust-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" aria-hidden="true">
+                  <path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/>
+                  <path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/>
+                  <path d="M12.91 4.1a15.91 15.91 0 0 1 0 15.8"/>
+                  <path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>
+                </svg>
+                <span>{t.enterprise.nfcForumStandard}</span>
+              </div>
+              <div className="trust-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="m9 12 2 2 4-4"/>
+                </svg>
+                <span>{t.enterprise.bankGradeSecurity}</span>
+              </div>
             </div>
           </div>
 
@@ -2426,6 +2466,95 @@ export default function LandingPage() {
                 <b className="lat">{roiPaybackMonths}</b>{" "}
                 {locale === "fr" ? "mois" : locale === "es" ? "meses" : "أشهر"}!
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Enterprise Infrastructure & Security Grid */}
+      <section className="infra-sec" id="infrastructure">
+        <div className="wrap">
+          <div className="head c">
+            <div className="infra-live" style={{ display: "inline-flex", margin: "0 auto 16px" }}>
+              <span className="infra-live-dot" />
+              <span>LIVE ENTERPRISE NETWORK</span>
+            </div>
+            <h2 className="h2 silver">{t.enterprise.infraTitle}</h2>
+            <p className="lead">{t.enterprise.infraSubtitle}</p>
+          </div>
+
+          <div className="infra-grid">
+            <div className="infra-card">
+              <div className="infra-head">
+                <div className="infra-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                  </svg>
+                </div>
+                <div className="infra-live">
+                  <span className="infra-live-dot" />
+                  <span>SLA</span>
+                </div>
+              </div>
+              <div className="infra-metric">99.99%</div>
+              <div className="infra-label">{t.enterprise.uptimeTitle}</div>
+              <p className="infra-desc">{t.enterprise.uptimeDesc}</p>
+            </div>
+
+            <div className="infra-card">
+              <div className="infra-head">
+                <div className="infra-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </div>
+                <div className="infra-live">
+                  <span className="infra-live-dot" />
+                  <span>FAST</span>
+                </div>
+              </div>
+              <div className="infra-metric">&lt; 45ms</div>
+              <div className="infra-label">{t.enterprise.latencyTitle}</div>
+              <p className="infra-desc">{t.enterprise.latencyDesc}</p>
+            </div>
+
+            <div className="infra-card">
+              <div className="infra-head">
+                <div className="infra-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <div className="infra-live">
+                  <span className="infra-live-dot" />
+                  <span>AES-256</span>
+                </div>
+              </div>
+              <div className="infra-metric">256-Bit</div>
+              <div className="infra-label">{t.enterprise.securityTitle}</div>
+              <p className="infra-desc">{t.enterprise.securityDesc}</p>
+            </div>
+
+            <div className="infra-card">
+              <div className="infra-head">
+                <div className="infra-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                </div>
+                <div className="infra-live">
+                  <span className="infra-live-dot" />
+                  <span>SCALE</span>
+                </div>
+              </div>
+              <div className="infra-metric">+100K</div>
+              <div className="infra-label">{t.enterprise.capacityTitle}</div>
+              <p className="infra-desc">{t.enterprise.capacityDesc}</p>
             </div>
           </div>
         </div>

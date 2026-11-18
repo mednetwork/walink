@@ -177,7 +177,7 @@ export default function MerchantsDashboardClient({
             <span className="text-xs font-semibold text-white/60">
               إجمالي المحلات المشتركة
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600/10 text-sky-400 border border-blue-500/20 flex items-center justify-center">
               <Store className="w-5 h-5" />
             </div>
           </div>
@@ -268,7 +268,7 @@ export default function MerchantsDashboardClient({
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="بحث باسم المحل، الرابط، أو المدينة"
             placeholder="بحث باسم المحل، الرابط (Slug)، أو المدينة..."
-            className="w-full bg-white/5 border border-white/10 rounded-2xl pr-10 pl-4 py-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 transition"
+            className="w-full bg-white/5 border border-white/10 rounded-2xl pr-10 pl-4 py-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-500 transition"
           />
         </div>
 
@@ -277,7 +277,7 @@ export default function MerchantsDashboardClient({
           <select
             value={selectedNiche}
             onChange={(e) => setSelectedNiche(e.target.value)}
-            className="bg-[#111827] border border-white/10 rounded-2xl px-3 py-2 text-xs text-white/90 focus:outline-none focus:border-emerald-500"
+            className="bg-[#111827] border border-white/10 rounded-2xl px-3 py-2 text-xs text-white/90 focus:outline-none focus:border-blue-500"
           >
             <option value="all">كل الأنشطة</option>
             <option value="cafe">المقاهي (Café)</option>
@@ -293,7 +293,7 @@ export default function MerchantsDashboardClient({
           <select
             value={selectedPlan}
             onChange={(e) => setSelectedPlan(e.target.value)}
-            className="bg-[#111827] border border-white/10 rounded-2xl px-3 py-2 text-xs text-white/90 focus:outline-none focus:border-emerald-500"
+            className="bg-[#111827] border border-white/10 rounded-2xl px-3 py-2 text-xs text-white/90 focus:outline-none focus:border-blue-500"
           >
             <option value="all">كل الباقات</option>
             <option value="STARTER">باقة STARTER</option>
@@ -303,7 +303,7 @@ export default function MerchantsDashboardClient({
 
           <Link
             href="/admin/merchants/new"
-            className="px-4 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition whitespace-nowrap mr-auto md:mr-0"
+            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition whitespace-nowrap mr-auto md:mr-0"
           >
             <PlusCircle className="w-4 h-4" />
             <span>محل جديد</span>
@@ -331,7 +331,7 @@ export default function MerchantsDashboardClient({
             </p>
             <Link
               href="/admin/merchants/new"
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-500 transition"
             >
               <PlusCircle className="w-4 h-4" />
               <span>إضافة محل جديد</span>
@@ -342,7 +342,7 @@ export default function MerchantsDashboardClient({
             {filteredMerchants.map((merchant) => (
               <div
                 key={merchant.id}
-                className="glass-panel rounded-3xl p-6 relative flex flex-col justify-between border border-white/10 hover:border-emerald-500/30 transition-all duration-300"
+                className="glass-panel rounded-3xl p-6 relative flex flex-col justify-between border border-white/10 hover:border-blue-500/30 transition-all duration-300"
               >
                 {/* Card Top: Avatar, Name, Niche & Plan */}
                 <div>
@@ -355,13 +355,13 @@ export default function MerchantsDashboardClient({
                         {merchant.name.slice(0, 2)}
                       </div>
                       <div>
-                        <h3 className="font-bold text-base text-white hover:text-emerald-400 transition">
+                        <h3 className="font-bold text-base text-white hover:text-sky-400 transition">
                           <Link href={`/admin/merchants/${merchant.id}`}>
                             {merchant.name}
                           </Link>
                         </h3>
                         <div className="flex items-center gap-2 text-xs text-white/50 mt-0.5">
-                          <span className="font-mono text-emerald-400">
+                          <span className="font-mono text-sky-400">
                             /{merchant.slug}
                           </span>
                           <span>•</span>
@@ -461,7 +461,7 @@ export default function MerchantsDashboardClient({
                       onClick={() => setStandModalMerchant(merchant)}
                       className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition"
                     >
-                      <QrCode className="w-3.5 h-3.5 text-emerald-400" />
+                      <QrCode className="w-3.5 h-3.5 text-sky-400" />
                       <span>الستاند (NFC)</span>
                     </button>
                   </div>
@@ -470,10 +470,10 @@ export default function MerchantsDashboardClient({
                   {merchant.samplePassSerial ? (
                     <Link
                       href={`/pass/${merchant.samplePassSerial}`}
-                      className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                      className="w-full py-2 px-3 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 text-sky-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition"
                       title="عرض بطاقة حية لزبون مسجل"
                     >
-                      <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                      <Smartphone className="w-3.5 h-3.5 text-sky-400" />
                       <span>عرض كارت تجريبية (Live Pass)</span>
                     </Link>
                   ) : (
@@ -490,7 +490,7 @@ export default function MerchantsDashboardClient({
                   <div className="flex items-center justify-between gap-1 text-[11px] pt-1">
                     <Link
                       href={`/m/${merchant.slug}`}
-                      className="text-white/60 hover:text-emerald-400 transition flex items-center gap-1"
+                      className="text-white/60 hover:text-sky-400 transition flex items-center gap-1"
                       title="معاينة لوحة تحكم التاجر"
                     >
                       <span>لوحة التاجر</span>

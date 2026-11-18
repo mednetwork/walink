@@ -34,7 +34,7 @@ export function LanguageSwitcher({
             onClick={() => setLocale(item.key)}
             className={`px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
               isActive
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm shadow-emerald-500/20"
+                ? "bg-blue-600/20 text-sky-300 border border-blue-500/35 shadow-sm shadow-blue-500/20 font-bold"
                 : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
             } ${size === "sm" ? "px-2 py-0.5 text-[11px]" : ""}`}
             aria-pressed={isActive}

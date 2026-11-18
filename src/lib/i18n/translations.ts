@@ -304,6 +304,79 @@ export interface TranslationDictionary {
       defaultShop: string;
     }
   >;
+  enterprise: {
+    worksWithApple: string;
+    googleWalletCertified: string;
+    nfcForumStandard: string;
+    bankGradeSecurity: string;
+    infraTitle: string;
+    infraSubtitle: string;
+    uptimeTitle: string;
+    uptimeDesc: string;
+    latencyTitle: string;
+    latencyDesc: string;
+    securityTitle: string;
+    securityDesc: string;
+    capacityTitle: string;
+    capacityDesc: string;
+  };
+  walletEnterprise: {
+    staff: {
+      loginTitle: string;
+      ownerHint: string;
+      staffHint: string;
+      currentStaff: string;
+      switchAccount: string;
+      recentShiftScans: string;
+      cooldownWarning: string;
+      overrideCooldown: string;
+      byStaff: string;
+      manageStaff: string;
+      staffName: string;
+      staffPin: string;
+      addStaff: string;
+      cooldownMinutes: string;
+    };
+    vip: {
+      badge: string;
+      congratsTitle: string;
+      congratsBody: string;
+      vipBonusNotice: string;
+    };
+    referral: {
+      title: string;
+      stampsDesc: string;
+      cashbackDesc: string;
+      inviteFriend: string;
+      copyLink: string;
+      linkCopied: string;
+      friendsJoined: string;
+      referredBanner: string;
+      rewardEarned: string;
+    };
+    backPass: {
+      menu: string;
+      whatsapp: string;
+      instagram: string;
+      directions: string;
+      terms: string;
+      flipPass: string;
+    };
+    security: {
+      dynamicQr: string;
+      nfcScan: string;
+      nfcWaiting: string;
+      nfcUnsupported: string;
+    };
+    csv: {
+      export: string;
+      import: string;
+      importModalTitle: string;
+      importPlaceholder: string;
+      importBtn: string;
+      importSuccess: string;
+    };
+  };
 }
 
 export const translations: Record<Locale, TranslationDictionary> = {
@@ -650,6 +723,79 @@ export const translations: Record<Locale, TranslationDictionary> = {
         reward: "هدية خاصة مجانية",
         prefix: "عزيزي",
         defaultShop: "Boutique Elegance",
+      },
+    },
+    enterprise: {
+      worksWithApple: "متوافق رسمياً مع Apple Wallet",
+      googleWalletCertified: "معتمد على Google Wallet",
+      nfcForumStandard: "معيار NFC Contactless العالمي",
+      bankGradeSecurity: "تشفير بنكي مصفح 256-Bit AES",
+      infraTitle: "بنية تحتية بمواصفات الشركات العالمية",
+      infraSubtitle: "تم تصميم منصة والينك لتعمل بأقصى درجات الاستقرار والسرعة والأمان المصرفي للمتاجر والمؤسسات الكبرى.",
+      uptimeTitle: "99.99% نسبة الجاهزية (SLA)",
+      uptimeDesc: "سيرفرات سحابية عالية التوافر تضمن عمل بطاقات العملاء على مدار الساعة دون أي انقطاع.",
+      latencyTitle: "< 45ms زمن المعالجة",
+      latencyDesc: "مسح فوري واستجابة لحظية في أجزاء من الثانية لضمان انسيابية العمل في أوقات الذروة.",
+      securityTitle: "تشفير بنكي مصفح 256-bit",
+      securityDesc: "حماية تامة لبيانات المتاجر والزبائن مع الامتثال الكامل لمعايير الخصوصية الدولية.",
+      capacityTitle: "+100,000 عملية متزامنة",
+      capacityDesc: "بنية تحتية مرنة تستوعب كبرى السلاسل والمتاجر المتعددة الفروع بكل سلاسة واقتدار.",
+    },
+    walletEnterprise: {
+      staff: {
+        loginTitle: "تسجيل الدخول برمز PIN",
+        ownerHint: "دخول المدير: 1234",
+        staffHint: "دخول الموظف (أمين): 1111",
+        currentStaff: "الموظف الحالي",
+        switchAccount: "تبديل الحساب",
+        recentShiftScans: "آخر العمليات في هذه الوردية",
+        cooldownWarning: "⚠️ حماية من التلاعب: تم مسح بطاقة هذا العميل قبل بضع دقائق! يرجى الانتظار أو تأكيد العملية بصلاحية المدير.",
+        overrideCooldown: "تجاوز القفل وتأكيد العملية (صلاحية المدير)",
+        byStaff: "بواسطة",
+        manageStaff: "إدارة طاقم العمل والكاشير",
+        staffName: "اسم الموظف",
+        staffPin: "رمز PIN (4 أرقام)",
+        addStaff: "إضافة موظف جديد",
+        cooldownMinutes: "فترة الحماية بين عمليات المسح (بالدقائق)",
+      },
+      vip: {
+        badge: "👑 VIP GOLD",
+        congratsTitle: "👑 ترقية لفئة VIP الذهبية!",
+        congratsBody: "👑 تهانينا! لقد تمت ترقية بطاقتك إلى فئة VIP الذهبية مع مزايا ومكافآت مضاعفة!",
+        vipBonusNotice: "ميزة VIP: نسبة كاش باك إضافية",
+      },
+      referral: {
+        title: "🎁 شارك مع صديق واربح",
+        stampsDesc: "أهدِ صديقك بطاقة واحصل على ختم مجاني فور تسجيله!",
+        cashbackDesc: "أهدِ صديقك بطاقة واحصل على +{bonus} {currency} رصيد كاش باك مجاني فور تسجيله!",
+        inviteFriend: "مشاركة عبر واتساب",
+        copyLink: "نسخ الرابط",
+        linkCopied: "تم النسخ!",
+        friendsJoined: "الأصدقاء المسجلون",
+        referredBanner: "🎁 تمت دعوتك من طرف صديق! سجل الآن واحصل على هديتك الترحيبية.",
+        rewardEarned: "🎉 قام صديقك {name} بالتسجيل عبر رابطك! تمت إضافة مكافأة الإحالة إلى بطاقتك.",
+      },
+      backPass: {
+        menu: "📖 القائمة / المنيو الرقمي",
+        whatsapp: "💬 تواصل عبر واتساب",
+        instagram: "📸 حساب إنستغرام",
+        directions: "📍 الموقع والاتجاهات",
+        terms: "📜 شروط الاستخدام",
+        flipPass: "🔄 تفاصيل وروابط المتجر",
+      },
+      security: {
+        dynamicQr: "🔒 رمز QR مشفر ومتجدد كل 60 ثانية (محمي ضد تصوير الشاشة)",
+        nfcScan: "📲 مسح عبر NFC (قرب هاتف العميل)",
+        nfcWaiting: "يرجى تقريب هاتف العميل من خلفية الجهاز...",
+        nfcUnsupported: "تقنية NFC غير مدعومة على هذا المتصفح، جاري فتح كاميرا المسح...",
+      },
+      csv: {
+        export: "📥 تصدير CSV",
+        import: "📤 استيراد CSV",
+        importModalTitle: "استيراد وتفعيل بطاقات العملاء دفعة واحدة (CSV)",
+        importPlaceholder: "أدخل أسطر العملاء بالشكل: الاسم,رقم الهاتف\nمثال:\nمحمد علوي,0661223344\nسناء بناني,0665778899",
+        importBtn: "بدء الاستيراد وإنشاء البطاقات",
+        importSuccess: "تم استيراد وإنشاء {count} بطاقة عميل بنجاح!",
       },
     },
   },
@@ -999,6 +1145,79 @@ export const translations: Record<Locale, TranslationDictionary> = {
         defaultShop: "Boutique Elegance",
       },
     },
+    enterprise: {
+      worksWithApple: "Compatible officiel Apple Wallet",
+      googleWalletCertified: "Certifié Google Wallet",
+      nfcForumStandard: "Norme mondiale NFC Contactless",
+      bankGradeSecurity: "Chiffrement bancaire 256-Bit AES",
+      infraTitle: "Infrastructure de classe Entreprise",
+      infraSubtitle: "Walink est conçu pour offrir une stabilité maximale, une vitesse ultra-rapide et une sécurité bancaire aux grandes enseignes.",
+      uptimeTitle: "99.99% Disponibilité garantie (SLA)",
+      uptimeDesc: "Serveurs cloud haute disponibilité garantissant le fonctionnement continu de vos cartes sans interruption.",
+      latencyTitle: "< 45ms Temps de réponse",
+      latencyDesc: "Scan instantané et réaction en millisecondes pour fluidifier l'encaissement aux heures de pointe.",
+      securityTitle: "Chiffrement bancaire 256-bit",
+      securityDesc: "Protection intégrale des données des commerces et des clients conforme aux normes RGPD.",
+      capacityTitle: "+100 000 Opérations simultanées",
+      capacityDesc: "Architecture évolutive capable de gérer les plus grands réseaux de franchise en toute sérénité.",
+    },
+    walletEnterprise: {
+      staff: {
+        loginTitle: "Connexion par code PIN",
+        ownerHint: "Accès Directeur : 1234",
+        staffHint: "Accès Employé (Amine) : 1111",
+        currentStaff: "Employé actuel",
+        switchAccount: "Changer de compte",
+        recentShiftScans: "Opérations récentes du service",
+        cooldownWarning: "⚠️ Protection anti-fraude : Cette carte a déjà été scannée récemment ! Veuillez patienter ou valider avec les droits Directeur.",
+        overrideCooldown: "Ignorer le délai et valider (Directeur)",
+        byStaff: "Par",
+        manageStaff: "Gestion du personnel et caisse",
+        staffName: "Nom de l'employé",
+        staffPin: "Code PIN (4 chiffres)",
+        addStaff: "Ajouter un employé",
+        cooldownMinutes: "Délai anti-fraude entre scans (minutes)",
+      },
+      vip: {
+        badge: "👑 VIP GOLD",
+        congratsTitle: "👑 Statut VIP Gold débloqué !",
+        congratsBody: "👑 Félicitations ! Votre carte est passée au statut VIP Gold avec des avantages exclusifs !",
+        vipBonusNotice: "Avantage VIP : Taux de cashback bonifié",
+      },
+      referral: {
+        title: "🎁 Parrainez un ami et gagnez",
+        stampsDesc: "Offrez une carte à un ami et recevez un tampon gratuit dès son inscription !",
+        cashbackDesc: "Offrez une carte à un ami et recevez +{bonus} {currency} de cashback dès son inscription !",
+        inviteFriend: "Partager sur WhatsApp",
+        copyLink: "Copier le lien",
+        linkCopied: "Copié !",
+        friendsJoined: "Amis inscrits",
+        referredBanner: "🎁 Vous avez été invité par un ami ! Inscrivez-vous et profitez de votre cadeau de bienvenue.",
+        rewardEarned: "🎉 Votre ami {name} s'est inscrit grâce à vous ! Votre bonus parrainage a été crédité.",
+      },
+      backPass: {
+        menu: "📖 Carte & Menu digital",
+        whatsapp: "💬 Contact WhatsApp",
+        instagram: "📸 Page Instagram",
+        directions: "📍 Itinéraire Google Maps",
+        terms: "📜 Conditions d'utilisation",
+        flipPass: "🔄 Infos & Liens utiles",
+      },
+      security: {
+        dynamicQr: "🔒 QR code sécurisé renouvelé toutes les 60s (anti-capture d'écran)",
+        nfcScan: "📲 Scan sans contact NFC (approchez le mobile)",
+        nfcWaiting: "Approchez le smartphone du client...",
+        nfcUnsupported: "NFC non supporté sur ce navigateur, activation de la caméra...",
+      },
+      csv: {
+        export: "📥 Exporter CSV",
+        import: "📤 Importer CSV",
+        importModalTitle: "Importation groupée de clients (CSV)",
+        importPlaceholder: "Entrez les lignes: Nom,Téléphone\nExemple:\nMohamed Alami,0661223344\nSanaa Bennani,0665778899",
+        importBtn: "Lancer l'importation",
+        importSuccess: "{count} cartes clients créées avec succès !",
+      },
+    },
   },
 
   es: {
@@ -1344,6 +1563,79 @@ export const translations: Record<Locale, TranslationDictionary> = {
         reward: "Regalo exclusivo",
         prefix: "Estimado cliente",
         defaultShop: "Boutique Elegance",
+      },
+    },
+    enterprise: {
+      worksWithApple: "Compatible oficial con Apple Wallet",
+      googleWalletCertified: "Certificado para Google Wallet",
+      nfcForumStandard: "Estándar mundial NFC Contactless",
+      bankGradeSecurity: "Seguridad bancaria 256-Bit AES",
+      infraTitle: "Infraestructura de nivel Empresarial",
+      infraSubtitle: "Walink está diseñado para ofrecer máxima estabilidad, velocidad instantánea y seguridad bancaria a grandes marcas.",
+      uptimeTitle: "99.99% Disponibilidad SLA",
+      uptimeDesc: "Servidores en la nube de alta disponibilidad que garantizan el funcionamiento ininterrumpido 24/7.",
+      latencyTitle: "< 45ms Tiempo de respuesta",
+      latencyDesc: "Escaneo instantáneo y respuesta en milisegundos para agilizar el cobro en horas pico.",
+      securityTitle: "Cifrado bancario 256-bit",
+      securityDesc: "Protección total de datos de comercios y clientes cumpliendo estrictas normas de privacidad.",
+      capacityTitle: "+100.000 Operaciones simultáneas",
+      capacityDesc: "Arquitectura escalable para gestionar cadenas comerciales y franquicias con total fluidez.",
+    },
+    walletEnterprise: {
+      staff: {
+        loginTitle: "Iniciar sesión con código PIN",
+        ownerHint: "Acceso Director: 1234",
+        staffHint: "Acceso Empleado (Amine): 1111",
+        currentStaff: "Empleado actual",
+        switchAccount: "Cambiar cuenta",
+        recentShiftScans: "Operaciones recientes del turno",
+        cooldownWarning: "⚠️ Protección antifraude: ¡Esta tarjeta ya fue escaneada recientemente! Espere o confirme con permisos de Administrador.",
+        overrideCooldown: "Omitir espera y confirmar (Director)",
+        byStaff: "Por",
+        manageStaff: "Gestión del personal y caja",
+        staffName: "Nombre del empleado",
+        staffPin: "Código PIN (4 dígitos)",
+        addStaff: "Añadir empleado",
+        cooldownMinutes: "Tiempo antifraude entre escaneos (minutos)",
+      },
+      vip: {
+        badge: "👑 VIP ORO",
+        congratsTitle: "👑 ¡Nivel VIP Oro desbloqueado!",
+        congratsBody: "👑 ¡Felicidades! Tu tarjeta ha subido al nivel VIP Oro con beneficios y recompensas exclusivas.",
+        vipBonusNotice: "Ventaja VIP: Cashback aumentado",
+      },
+      referral: {
+        title: "🎁 Invita a un amigo y gana",
+        stampsDesc: "¡Regala una tarjeta a un amigo y recibe un sello gratis al registrarse!",
+        cashbackDesc: "¡Regala una tarjeta a un amigo y recibe +{bonus} {currency} de saldo cashback al registrarse!",
+        inviteFriend: "Compartir por WhatsApp",
+        copyLink: "Copiar enlace",
+        linkCopied: "¡Copiado!",
+        friendsJoined: "Amigos inscritos",
+        referredBanner: "🎁 ¡Has sido invitado por un amigo! Regístrate y recibe tu regalo de bienvenida.",
+        rewardEarned: "🎉 ¡Tu amigo {name} se ha registrado con tu enlace! Se ha añadido la recompensa a tu tarjeta.",
+      },
+      backPass: {
+        menu: "📖 Menú digital",
+        whatsapp: "💬 Contacto WhatsApp",
+        instagram: "📸 Página de Instagram",
+        directions: "📍 Cómo llegar (Google Maps)",
+        terms: "📜 Términos y condiciones",
+        flipPass: "🔄 Detalles y enlaces",
+      },
+      security: {
+        dynamicQr: "🔒 Código QR dinámico renovado cada 60s (protegido contra capturas)",
+        nfcScan: "📲 Escaneo sin contacto NFC (acerque el teléfono)",
+        nfcWaiting: "Acerque el móvil del cliente al dispositivo...",
+        nfcUnsupported: "NFC no soportado en este navegador, activando cámara...",
+      },
+      csv: {
+        export: "📥 Exportar CSV",
+        import: "📤 Importar CSV",
+        importModalTitle: "Importación masiva de clientes (CSV)",
+        importPlaceholder: "Introduzca líneas: Nombre,Teléfono\nEjemplo:\nCarlos Ruiz,0661223344\nAna Moreno,0665778899",
+        importBtn: "Iniciar importación",
+        importSuccess: "¡{count} tarjetas de clientes creadas con éxito!",
       },
     },
   },

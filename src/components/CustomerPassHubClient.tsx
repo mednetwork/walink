@@ -43,6 +43,9 @@ interface CustomerData {
   totalSpent?: number;
   totalVisits: number;
   rewardsRedeemed: number;
+  isVip?: boolean;
+  referredByCode?: string | null;
+  referralsCount?: number;
   lastVisitAt: string | Date;
   walletType: string;
   pushSubscription: string | null;
@@ -54,6 +57,7 @@ interface MerchantData {
   slug: string;
   niche: string;
   city: string;
+  phone?: string | null;
   primaryColor: string;
   bgGradient: string;
   stampsRequired: number;
@@ -66,6 +70,13 @@ interface MerchantData {
   longitude: number | null;
   radarMessage: string;
   googleMapsUrl: string | null;
+  vipVisitsThreshold?: number;
+  vipCashbackBonus?: number;
+  referralBonus?: number;
+  radarZones?: string;
+  menuUrl?: string | null;
+  instagramUrl?: string | null;
+  termsText?: string;
   autoReview: boolean;
   autoRadar: boolean;
   autoWinback: boolean;
@@ -155,6 +166,36 @@ export default function CustomerPassHubClient({
   // Radar state
   const [isRadarActive, setIsRadarActive] = useState(merchant.autoRadar);
   const [simulatingRadar, setSimulatingRadar] = useState(false);
+
+  // Dynamic 60-Second Rotating Security QR
+  const [timeToken, setTimeToken] = useState(() =>
+    Math.floor(Date.now() / 60000).toString(36)
+  );
+  const [countdownSecs, setCountdownSecs] = useState(() =>
+    60 - (Math.floor(Date.now() / 1000) % 60)
+  );
+  const [copiedRef, setCopiedRef] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = Date.now();
+      const token = Math.floor(now / 60000).toString(36);
+      const secsLeft = 60 - (Math.floor(now / 1000) % 60);
+      setTimeToken(token);
+      setCountdownSecs(secsLeft);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Multi-zone geofencing parser
+  let parsedRadarZones: Array<{ name: string; lat: number; lng: number; message?: string }> = [];
+  try {
+    if (merchant.radarZones) {
+      parsedRadarZones = JSON.parse(merchant.radarZones);
+    }
+  } catch {
+    parsedRadarZones = [];
+  }
 
   // Push notifications state
   const [notificationsEnabled, setNotificationsEnabled] = useState(
@@ -495,13 +536,18 @@ export default function CustomerPassHubClient({
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className="w-full max-w-[430px] mx-auto min-h-screen bg-[#0B0F17] flex flex-col justify-between p-4 sm:p-5 text-white selection:bg-emerald-500 selection:text-black relative"
+      className="w-full max-w-[430px] mx-auto min-h-screen bg-[#060B18] flex flex-col justify-between p-4 sm:p-5 text-white selection:bg-blue-600 selection:text-white relative"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at 50% -10%, rgba(37, 99, 235, 0.12) 0%, transparent 60%), radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
+        backgroundSize: "100% 100%, 28px 28px",
+      }}
     >
       {/* iOS 18 Floating Glass Notification Banner Stack */}
       {activeBanner && (
         <div className="fixed top-3 left-0 right-0 z-50 px-4 max-w-[430px] mx-auto animate-in slide-in-from-top-4 duration-300">
-          <div className="glass-panel p-3.5 rounded-3xl border border-white/20 shadow-2xl flex items-start gap-3 bg-[#111827]/95 backdrop-blur-2xl">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 flex items-center justify-center flex-shrink-0 shadow-md">
+          <div className="p-3.5 rounded-3xl border border-white/15 shadow-2xl flex items-start gap-3 bg-[#0D1528]/95 backdrop-blur-2xl">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-sky-500 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
               {activeBanner.icon === "reward" ? (
                 <Gift className="w-5 h-5 animate-spin" />
               ) : activeBanner.icon === "cashback" ? (
@@ -557,14 +603,14 @@ export default function CustomerPassHubClient({
         <div className="flex items-center justify-between pb-1">
           <div className="flex items-center gap-2">
             <div
-              className="w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-sm text-white shadow"
+              className="w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-sm text-white shadow border border-white/15"
               style={{ background: merchant.bgGradient || merchant.primaryColor }}
             >
               {merchant.name.slice(0, 2)}
             </div>
             <div>
               <h1 className="font-bold text-sm text-white">{merchant.name}</h1>
-              <span className="text-[11px] text-emerald-400 font-medium">
+              <span className="text-[11px] text-sky-400 font-medium">
                 {merchant.customerPrefix} {customer.name} 👋
               </span>
             </div>
@@ -572,13 +618,13 @@ export default function CustomerPassHubClient({
 
           <div className="flex items-center gap-1.5">
             {/* Corner Language Selector Pill */}
-            <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full p-0.5 text-[10px] font-semibold">
+            <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-full p-0.5 text-[10px] font-semibold">
               <button
                 type="button"
                 onClick={() => setLocale("ar")}
                 className={`px-1.5 py-0.5 rounded-full transition ${
                   locale === "ar"
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    ? "bg-blue-600/20 text-sky-300 border border-blue-500/30"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
@@ -589,7 +635,7 @@ export default function CustomerPassHubClient({
                 onClick={() => setLocale("fr")}
                 className={`px-1.5 py-0.5 rounded-full transition ${
                   locale === "fr"
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    ? "bg-blue-600/20 text-sky-300 border border-blue-500/30"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
@@ -600,7 +646,7 @@ export default function CustomerPassHubClient({
                 onClick={() => setLocale("es")}
                 className={`px-1.5 py-0.5 rounded-full transition ${
                   locale === "es"
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    ? "bg-blue-600/20 text-sky-300 border border-blue-500/30"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
@@ -608,8 +654,8 @@ export default function CustomerPassHubClient({
               </button>
             </div>
 
-            <div className="text-start bg-white/5 border border-white/10 px-2.5 py-1 rounded-xl">
-              <span className="text-xs font-mono font-bold text-emerald-400">
+            <div className="text-start bg-white/[0.04] border border-white/[0.08] px-2.5 py-1 rounded-xl">
+              <span className="text-xs font-mono font-bold text-sky-400">
                 #{customer.memberCode}
               </span>
             </div>
@@ -618,7 +664,7 @@ export default function CustomerPassHubClient({
 
         {/* Glowing Status Banner when Cashback > 0 */}
         {isCashback && Number(customer.cashbackBalance || 0) > 0 && (
-          <div className="p-3.5 rounded-3xl bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-amber-500/20 border border-amber-400/30 text-amber-300 text-xs flex items-center gap-2.5 shadow-lg shadow-amber-500/10">
+          <div className="p-3.5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-amber-500/15 border border-amber-400/30 text-amber-300 text-xs flex items-center gap-2.5 shadow-lg shadow-amber-500/5">
             <Coins className="w-5 h-5 flex-shrink-0 text-amber-300 animate-pulse" />
             <span className="leading-relaxed font-semibold">
               {t.pass.cashbackBanner
@@ -630,7 +676,7 @@ export default function CustomerPassHubClient({
 
         {/* Golden Reward Ready Banner for Stamps */}
         {!isCashback && isRewardReady && (
-          <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/20 via-amber-500/30 to-amber-600/20 border-2 border-amber-400/50 text-white shadow-xl animate-pulse">
+          <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/20 via-amber-500/30 to-amber-600/20 border border-amber-400/50 text-white shadow-xl animate-pulse">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold flex-shrink-0 shadow-lg shadow-amber-500/30">
                 <Gift className="w-6 h-6 animate-bounce" />
@@ -667,17 +713,39 @@ export default function CustomerPassHubClient({
             totalCashbackEarned={customer.totalCashbackEarned || 0}
             currency={currency}
             memberCode={customer.memberCode}
-            qrValue={`WALINK:${customer.passSerial}`}
+            qrValue={`WALINK:${customer.passSerial}:${timeToken}`}
+            isVip={Boolean(customer.isVip || (customer.totalVisits >= (merchant.vipVisitsThreshold || 10)))}
+            totalVisits={customer.totalVisits}
+            vipVisitsThreshold={merchant.vipVisitsThreshold || 10}
+            vipCashbackBonus={merchant.vipCashbackBonus || 5}
             compact={false}
             locale={locale}
           />
+
+          {/* Dynamic 60-Second Rotating Security QR Badge */}
+          <div className="mt-3 p-3 rounded-2xl bg-black/45 border border-sky-400/30 text-center space-y-1.5 shadow-md">
+            <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-sky-300">
+              <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse shadow-[0_0_8px_#38bdf8]" />
+              <span>{t.walletEnterprise.security.dynamicQr}</span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+              <div
+                className="bg-sky-400 h-full transition-all duration-1000 ease-linear rounded-full"
+                style={{ width: `${(countdownSecs / 60) * 100}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-white/50 font-mono px-1">
+              <span>TOKEN #{timeToken}</span>
+              <span>{countdownSecs}s</span>
+            </div>
+          </div>
         </div>
 
         {/* Google Maps 5-Star Review Prompt (Conditional) */}
         {merchant.autoReview &&
           (isRewardReady || customer.rewardsRedeemed > 0) && (
             <div
-              className={`glass-panel p-4 rounded-3xl border border-amber-500/30 bg-amber-500/5 space-y-2 ${
+              className={`p-4 rounded-3xl border border-amber-500/30 bg-amber-500/[0.04] space-y-2 ${
                 isRTL ? "text-right" : "text-left"
               }`}
             >
@@ -711,7 +779,7 @@ export default function CustomerPassHubClient({
           <button
             type="button"
             onClick={handleOpenWalletModal}
-            className="py-3 px-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-md"
+            className="py-3 px-3.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.12] border border-white/[0.12] text-white font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm"
           >
             <Smartphone className="w-4 h-4 text-white" />
             <span>{t.pass.addToAppleWallet}</span>
@@ -720,10 +788,10 @@ export default function CustomerPassHubClient({
           <button
             type="button"
             onClick={handleEnablePush}
-            className={`py-3 px-3.5 rounded-2xl border font-bold text-xs flex items-center justify-center gap-2 transition shadow-md ${
+            className={`py-3 px-3.5 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm ${
               notificationsEnabled
                 ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                : "bg-white/[0.04] border-white/[0.08] text-white/80 hover:bg-white/[0.08]"
             }`}
           >
             {notificationsEnabled ? (
@@ -740,9 +808,126 @@ export default function CustomerPassHubClient({
           </button>
         </div>
 
+        {/* Viral Customer Referral Card */}
+        <div className={`p-4 rounded-3xl bg-gradient-to-br from-[#121926] to-[#0A0E17] border border-amber-400/25 space-y-3 shadow-lg ${isRTL ? "text-right" : "text-left"}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
+              <Gift className="w-4 h-4 text-amber-400" />
+              <span>{t.walletEnterprise.referral.title}</span>
+            </div>
+            <span className="text-[10px] font-semibold text-amber-200/90 bg-amber-400/15 px-2.5 py-0.5 rounded-full border border-amber-400/30">
+              {t.walletEnterprise.referral.friendsJoined}: {customer.referralsCount || 0}
+            </span>
+          </div>
+          <p className="text-xs text-white/80 leading-relaxed">
+            {isCashback
+              ? t.walletEnterprise.referral.cashbackDesc
+                  .replace("{bonus}", String(merchant.referralBonus || 10))
+                  .replace("{currency}", currency)
+              : t.walletEnterprise.referral.stampsDesc}
+          </p>
+          <div className="flex items-center gap-2 pt-1">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                `${merchant.name}: تفضل بطاقة ولاء رقمية مجانية واحصل على هدية ترحيبية فورية! سجل عبر هذا الرابط: ${
+                  typeof window !== "undefined" ? window.location.origin : "https://walink.ma"
+                }/join/${merchant.slug}?ref=${customer.memberCode}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/25 transition"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>{t.walletEnterprise.referral.inviteFriend}</span>
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  const url = `${window.location.origin}/join/${merchant.slug}?ref=${customer.memberCode}`;
+                  navigator.clipboard.writeText(url);
+                  setCopiedRef(true);
+                  setTimeout(() => setCopiedRef(false), 2000);
+                }
+              }}
+              className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-xs flex items-center gap-1.5 transition border border-white/10"
+            >
+              {copiedRef ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-emerald-400">{t.walletEnterprise.referral.linkCopied}</span>
+                </>
+              ) : (
+                <>
+                  <Code className="w-3.5 h-3.5" />
+                  <span>{t.walletEnterprise.referral.copyLink}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Back-of-Pass Smart Interactive Tiles */}
+        <div className={`p-4 rounded-3xl bg-[#0E1420]/80 border border-white/10 space-y-3 ${isRTL ? "text-right" : "text-left"}`}>
+          <div className="flex items-center gap-2 text-white font-bold text-xs">
+            <Compass className="w-4 h-4 text-sky-400" />
+            <span>{t.walletEnterprise.backPass.flipPass}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {merchant.menuUrl && (
+              <a
+                href={merchant.menuUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 transition"
+              >
+                <span>{t.walletEnterprise.backPass.menu}</span>
+                <ExternalLink className="w-3 h-3 text-slate-400 ms-auto" />
+              </a>
+            )}
+            {merchant.phone && (
+              <a
+                href={`https://wa.me/${merchant.phone.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 transition"
+              >
+                <span>{t.walletEnterprise.backPass.whatsapp}</span>
+                <ExternalLink className="w-3 h-3 text-slate-400 ms-auto" />
+              </a>
+            )}
+            {merchant.instagramUrl && (
+              <a
+                href={merchant.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 transition"
+              >
+                <span>{t.walletEnterprise.backPass.instagram}</span>
+                <ExternalLink className="w-3 h-3 text-slate-400 ms-auto" />
+              </a>
+            )}
+            <a
+              href={merchant.googleMapsUrl || `https://maps.google.com/?q=${merchant.latitude || 33.5731},${merchant.longitude || -7.5898}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] flex items-center gap-2 transition"
+            >
+              <span>{t.walletEnterprise.backPass.directions}</span>
+              <ExternalLink className="w-3 h-3 text-slate-400 ms-auto" />
+            </a>
+          </div>
+          {merchant.termsText && (
+            <div className="pt-2 text-[11px] text-white/50 leading-relaxed border-t border-white/5">
+              <span className="font-semibold text-white/70 block mb-0.5">{t.walletEnterprise.backPass.terms}:</span>
+              {merchant.termsText}
+            </div>
+          )}
+        </div>
+
         {/* 100m Geofencing Radar Live Tracker & Simulator */}
         {merchant.autoRadar && (
-          <div className="glass-panel p-4 rounded-3xl border border-white/10 space-y-3">
+          <div className="p-4 rounded-3xl bg-[#0D121D]/80 border border-white/[0.08] space-y-3 shadow-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2.5 w-2.5">
@@ -762,14 +947,30 @@ export default function CustomerPassHubClient({
               كلما اقتربت بـ 100 متر من {merchant.name}، يوقظ الهاتف شاشتك بإشعار لتذكيرك برصيدك ومكافآتك.
             </p>
 
+            {parsedRadarZones.length > 0 && (
+              <div className="pt-1 flex flex-wrap gap-1.5">
+                <span className="text-[10px] bg-blue-600/15 text-sky-300 px-2 py-0.5 rounded-full border border-blue-500/25">
+                  📍 {merchant.city} (الفرع الرئيسي)
+                </span>
+                {parsedRadarZones.map((zone, zIdx) => (
+                  <span
+                    key={zIdx}
+                    className="text-[10px] bg-white/5 text-slate-300 px-2 py-0.5 rounded-full border border-white/10"
+                  >
+                    📍 {zone.name}
+                  </span>
+                ))}
+              </div>
+            )}
+
             <button
               type="button"
               disabled={simulatingRadar}
               onClick={handleSimulateRadar}
-              className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold flex items-center justify-center gap-2 transition disabled:opacity-50"
+              className="w-full py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white text-xs font-semibold flex items-center justify-center gap-2 transition disabled:opacity-50"
             >
               <Compass
-                className={`w-4 h-4 text-emerald-400 ${
+                className={`w-4 h-4 text-sky-400 ${
                   simulatingRadar ? "animate-spin" : ""
                 }`}
               />
@@ -781,7 +982,7 @@ export default function CustomerPassHubClient({
         )}
 
         {/* Pass Details & Recent Activity Drawer */}
-        <div className={`glass-panel p-5 rounded-3xl border border-white/10 space-y-4 ${isRTL ? "text-right" : "text-left"}`}>
+        <div className={`p-5 rounded-3xl bg-[#0D121D]/80 border border-white/[0.08] space-y-4 shadow-md ${isRTL ? "text-right" : "text-left"}`}>
           <h2 className="text-xs font-bold text-white flex items-center justify-between pb-2 border-b border-white/10">
             <span>{t.pass.activityDrawerTitle}</span>
             <span className="text-[10px] font-mono text-white/50">
@@ -878,7 +1079,7 @@ export default function CustomerPassHubClient({
       <footer className="py-6 text-center text-xs text-white/40 space-y-2">
         <Link
           href="/"
-          className="hover:text-emerald-400 transition inline-flex items-center gap-1.5"
+          className="hover:text-sky-400 transition inline-flex items-center gap-1.5"
         >
           <span>منصة والينك (walink.ma)</span>
           <ArrowRight className="w-3.5 h-3.5 rotate-180" />
@@ -891,10 +1092,10 @@ export default function CustomerPassHubClient({
       {/* Add to Wallet Modal & Spec Inspector */}
       {isWalletModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm bg-[#0F172A] border border-white/10 rounded-3xl shadow-2xl p-6 text-white space-y-4">
+          <div className="relative w-full max-w-sm bg-[#0D1528] border border-white/10 rounded-3xl shadow-2xl p-6 text-white space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-emerald-400" />
+                <Smartphone className="w-5 h-5 text-sky-400" />
                 <h3 className="font-bold text-base text-white">حفظ البطاقة في الهاتف</h3>
               </div>
               <button
@@ -909,7 +1110,7 @@ export default function CustomerPassHubClient({
             {/* Smart PWA Install Guide */}
             <div className={`space-y-3 ${isRTL ? "text-right" : "text-left"}`}>
               <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <span className="font-bold text-xs text-emerald-400 block">
+                <span className="font-bold text-xs text-sky-400 block">
                   🍎 على هواتف iPhone (Safari):
                 </span>
                 <p className="text-xs text-white/80 leading-relaxed">
@@ -919,7 +1120,7 @@ export default function CustomerPassHubClient({
               </div>
 
               <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <span className="font-bold text-xs text-blue-400 block">
+                <span className="font-bold text-xs text-sky-400 block">
                   🤖 على هواتف Android (Chrome):
                 </span>
                 <p className="text-xs text-white/80 leading-relaxed">
@@ -947,7 +1148,7 @@ export default function CustomerPassHubClient({
               </button>
 
               {showJsonInspector && pkpassJson && (
-                <div className="mt-2 p-3 bg-black/60 rounded-xl border border-white/10 text-[10px] font-mono text-emerald-300 max-h-48 overflow-y-auto text-left dir-ltr">
+                <div className="mt-2 p-3 bg-black/60 rounded-xl border border-white/10 text-[10px] font-mono text-sky-300 max-h-48 overflow-y-auto text-left dir-ltr">
                   <pre>{JSON.stringify(pkpassJson, null, 2)}</pre>
                 </div>
               )}
@@ -956,7 +1157,7 @@ export default function CustomerPassHubClient({
             <button
               type="button"
               onClick={() => setIsWalletModalOpen(false)}
-              className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition"
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition"
             >
               فهمت، شكراً
             </button>

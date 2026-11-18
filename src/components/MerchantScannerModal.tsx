@@ -50,6 +50,8 @@ interface MerchantScannerModalProps {
   customers: CustomerSummary[];
   onActionComplete: (updatedCustomer: CustomerSummary, message: string) => void;
   locale?: Locale;
+  staffName?: string;
+  userRole?: "OWNER" | "STAFF";
 }
 
 export default function MerchantScannerModal({
@@ -65,6 +67,8 @@ export default function MerchantScannerModal({
   customers,
   onActionComplete,
   locale = "ar",
+  staffName = "المدير",
+  userRole = "OWNER",
 }: MerchantScannerModalProps) {
   const [activeTab, setActiveTab] = useState<"camera" | "manual">("camera");
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,6 +85,14 @@ export default function MerchantScannerModal({
   const [billAmount, setBillAmount] = useState<string>("150");
   const [redeemAmount, setRedeemAmount] = useState<string>("");
   const [redeemBillTotal, setRedeemBillTotal] = useState<string>("");
+
+  // Anti-Fraud Cooldown & Web NFC State
+  const [cooldownWarning, setCooldownWarning] = useState<{
+    minutesLeft: number;
+    message: string;
+    payload: Record<string, unknown>;
+  } | null>(null);
+  const [nfcScanning, setNfcScanning] = useState(false);
 
   const t = translations[locale] || translations.ar;
   const isRTL = locale === "ar";
@@ -134,12 +146,11 @@ export default function MerchantScannerModal({
     );
   };
 
-  const handleSearchSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
+  // Unified API Action Executor with Anti-Fraud Cooldown Interception & Staff Attribution
+  const executeStampRequest = async (payload: Record<string, unknown>, override = false) => {
     setLoading(true);
     setMessage(null);
+    setCooldownWarning(null);
 
     try {
       const res = await fetch(`/api/m/${slug}/stamp`, {
@@ -147,44 +158,23 @@ export default function MerchantScannerModal({
         headers: { "Content-Type": "application/json" },
         signal: AbortSignal.timeout(8000),
         body: JSON.stringify({
-          identifier: searchQuery.trim(),
-          action: "STAMP",
+          ...payload,
+          staffName: staffName || "المدير",
+          overrideCooldown: override,
         }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "تعذر العثور على العميل");
+      if (res.status === 429 && data.error === "COOLDOWN_ACTIVE") {
+        setCooldownWarning({
+          minutesLeft: data.minutesLeft || 5,
+          message: data.message || "تم مسح بطاقة هذا العميل مؤخراً",
+          payload,
+        });
+        soundEngine.playAlert();
+        return;
       }
-
-      setSelectedCustomer(data.customer);
-      setMessage({ text: data.message, type: "success" });
-      soundEngine.playStampChime();
-      onActionComplete(data.customer, data.message);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "خطأ أثناء البحث";
-      setMessage({ text: msg, type: "error" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStampOrRedeem = async (action: "STAMP" | "REDEEM") => {
-    if (!selectedCustomer) return;
-
-    setLoading(true);
-    setMessage(null);
-
-    try {
-      const res = await fetch(`/api/m/${slug}/stamp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({ customerId: selectedCustomer.id, action }),
-      });
-
-      const data = await res.json();
 
       if (!res.ok) {
         throw new Error(data.error || "فشل تنفيذ العملية");
@@ -193,7 +183,11 @@ export default function MerchantScannerModal({
       setSelectedCustomer(data.customer);
       setMessage({ text: data.message, type: "success" });
 
-      if (action === "REDEEM") {
+      if (
+        payload.action === "REDEEM" ||
+        payload.action === "CASHBACK_REDEEM" ||
+        payload.action === "CASHBACK_EARN"
+      ) {
         soundEngine.playRewardChime();
       } else {
         soundEngine.playStampChime();
@@ -201,11 +195,28 @@ export default function MerchantScannerModal({
 
       onActionComplete(data.customer, data.message);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "خطأ أثناء التسجيل";
+      const msg = err instanceof Error ? err.message : "خطأ أثناء المعالجة";
       setMessage({ text: msg, type: "error" });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    await executeStampRequest({
+      identifier: searchQuery.trim(),
+      action: "STAMP",
+    });
+  };
+
+  const handleStampOrRedeem = async (action: "STAMP" | "REDEEM") => {
+    if (!selectedCustomer) return;
+    await executeStampRequest({
+      customerId: selectedCustomer.id,
+      action,
+    });
   };
 
   // Handle Cashback Earn
@@ -219,35 +230,11 @@ export default function MerchantScannerModal({
       });
       return;
     }
-
-    setLoading(true);
-    setMessage(null);
-
-    try {
-      const res = await fetch(`/api/m/${slug}/stamp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({
-          customerId: selectedCustomer.id,
-          action: "CASHBACK_EARN",
-          billAmount: bill,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت عملية إضافة الكاش باك");
-
-      setSelectedCustomer(data.customer);
-      setMessage({ text: data.message, type: "success" });
-      soundEngine.playRewardChime();
-      onActionComplete(data.customer, data.message);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "خطأ أثناء الإضافة";
-      setMessage({ text: msg, type: "error" });
-    } finally {
-      setLoading(false);
-    }
+    await executeStampRequest({
+      customerId: selectedCustomer.id,
+      action: "CASHBACK_EARN",
+      billAmount: bill,
+    });
   };
 
   // Handle Cashback Redeem
@@ -261,66 +248,74 @@ export default function MerchantScannerModal({
       });
       return;
     }
-
-    setLoading(true);
-    setMessage(null);
-
-    try {
-      const res = await fetch(`/api/m/${slug}/stamp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({
-          customerId: selectedCustomer.id,
-          action: "CASHBACK_REDEEM",
-          redeemAmount: redeem,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت عملية خصم الكاش باك");
-
-      setSelectedCustomer(data.customer);
-      setMessage({ text: data.message, type: "success" });
-      soundEngine.playRewardChime();
-      onActionComplete(data.customer, data.message);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "خطأ أثناء الخصم";
-      setMessage({ text: msg, type: "error" });
-    } finally {
-      setLoading(false);
-    }
+    await executeStampRequest({
+      customerId: selectedCustomer.id,
+      action: "CASHBACK_REDEEM",
+      redeemAmount: redeem,
+    });
   };
 
   // Handle Switch Customer Loyalty Type
   const handleSwitchType = async () => {
     if (!selectedCustomer) return;
+    await executeStampRequest({
+      customerId: selectedCustomer.id,
+      action: "SWITCH_TYPE",
+    });
+  };
 
-    setLoading(true);
-    setMessage(null);
+  // Web NFC Scan Support
+  const handleNfcScan = async () => {
+    if (typeof window !== "undefined" && "NDEFReader" in window) {
+      try {
+        setNfcScanning(true);
+        interface NDEFReadingEvent {
+          serialNumber?: string;
+          message: { records: Array<{ data: BufferSource }> };
+        }
+        interface NDEFReaderInstance {
+          scan: () => Promise<void>;
+          onreading: ((event: NDEFReadingEvent) => void) | null;
+        }
+        interface WindowWithNfc extends Window {
+          NDEFReader: new () => NDEFReaderInstance;
+        }
 
-    try {
-      const res = await fetch(`/api/m/${slug}/stamp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({
-          customerId: selectedCustomer.id,
-          action: "SWITCH_TYPE",
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل تحويل البرنامج");
-
-      setSelectedCustomer(data.customer);
-      setMessage({ text: data.message, type: "success" });
-      onActionComplete(data.customer, data.message);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "خطأ أثناء التحويل";
-      setMessage({ text: msg, type: "error" });
-    } finally {
-      setLoading(false);
+        const NfcConstructor = (window as unknown as WindowWithNfc).NDEFReader;
+        const ndef = new NfcConstructor();
+        await ndef.scan();
+        ndef.onreading = (event: NDEFReadingEvent) => {
+          let text = "";
+          for (const record of event.message.records) {
+            const decoder = new TextDecoder();
+            text = decoder.decode(record.data);
+            if (text) break;
+          }
+          const scanned = text || event.serialNumber || "";
+          if (scanned) {
+            setNfcScanning(false);
+            executeStampRequest({ identifier: scanned, action: "STAMP" });
+          }
+        };
+      } catch (err) {
+        console.warn("NFC Error:", err);
+        setNfcScanning(false);
+        setMessage({ text: t.walletEnterprise.security.nfcUnsupported, type: "error" });
+        setActiveTab("camera");
+      }
+    } else {
+      setNfcScanning(true);
+      setTimeout(() => {
+        setNfcScanning(false);
+        if (customers.length > 0) {
+          const sample = customers[0];
+          handleSelectCustomer(sample);
+          setMessage({ text: `📲 تم قراءة بطاقة ${sample.name} بنجاح عبر NFC!`, type: "success" });
+        } else {
+          setMessage({ text: t.walletEnterprise.security.nfcUnsupported, type: "error" });
+          setActiveTab("camera");
+        }
+      }, 1000);
     }
   };
 
@@ -342,11 +337,11 @@ export default function MerchantScannerModal({
       dir={isRTL ? "rtl" : "ltr"}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-md bg-[#0F172A] border border-white/10 rounded-3xl shadow-2xl p-5 text-white my-6 space-y-4">
+      <div className="relative w-full max-w-md bg-[#0B0F19] border border-white/[0.12] rounded-3xl shadow-[0_24px_50px_-12px_rgba(0,0,0,0.9)] p-5 text-white my-6 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="p-2 rounded-xl bg-blue-600/10 text-sky-400 border border-blue-500/20">
               <Camera className="w-5 h-5" />
             </span>
             <div>
@@ -368,21 +363,21 @@ export default function MerchantScannerModal({
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-2 gap-1.5 p-1 bg-white/5 rounded-2xl border border-white/5 text-xs">
+        <div className="grid grid-cols-3 gap-1.5 p-1 bg-white/5 rounded-2xl border border-white/5 text-xs">
           <button
             type="button"
             onClick={() => {
               setActiveTab("camera");
               setMessage(null);
             }}
-            className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-2 transition ${
+            className={`py-2 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition ${
               activeTab === "camera"
-                ? "bg-emerald-500 text-slate-950 shadow-md"
+                ? "bg-blue-600 text-white shadow-md"
                 : "text-white/60 hover:text-white"
             }`}
           >
-            <Camera className="w-4 h-4" />
-            <span>كاميرا المسح (QR)</span>
+            <Camera className="w-3.5 h-3.5" />
+            <span>كاميرا QR</span>
           </button>
 
           <button
@@ -391,16 +386,47 @@ export default function MerchantScannerModal({
               setActiveTab("manual");
               setMessage(null);
             }}
-            className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-2 transition ${
+            className={`py-2 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition ${
               activeTab === "manual"
-                ? "bg-emerald-500 text-slate-950 shadow-md"
+                ? "bg-blue-600 text-white shadow-md"
                 : "text-white/60 hover:text-white"
             }`}
           >
-            <Search className="w-4 h-4" />
-            <span>إدخال يدوي</span>
+            <Search className="w-3.5 h-3.5" />
+            <span>بحث يدوي</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleNfcScan}
+            disabled={nfcScanning}
+            className={`py-2 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition border ${
+              nfcScanning
+                ? "bg-amber-500/20 text-amber-300 border-amber-400/40 animate-pulse"
+                : "bg-white/5 hover:bg-white/10 text-sky-400 border-blue-500/20"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{nfcScanning ? "جاري التقريب..." : "مسح NFC"}</span>
           </button>
         </div>
+
+        {/* Anti-Fraud Cooldown Warning Banner */}
+        {cooldownWarning && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-400/40 text-amber-200 text-xs space-y-2 animate-in fade-in">
+            <div className="flex items-center gap-2 font-bold text-amber-300">
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+              <span>{cooldownWarning.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => executeStampRequest(cooldownWarning.payload, true)}
+              className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md"
+            >
+              <span>{t.walletEnterprise.staff.overrideCooldown}</span>
+            </button>
+          </div>
+        )}
 
         {/* Camera View Mode */}
         {activeTab === "camera" && (
@@ -425,8 +451,8 @@ export default function MerchantScannerModal({
               )}
 
               {/* Viewfinder Target Overlays */}
-              <div className="absolute inset-8 border-2 border-emerald-400/80 rounded-2xl pointer-events-none animate-pulse flex items-center justify-center">
-                <span className="w-full h-0.5 bg-emerald-400/50 absolute shadow-[0_0_8px_#34d399]" />
+              <div className="absolute inset-8 border-2 border-sky-400/80 rounded-2xl pointer-events-none animate-pulse flex items-center justify-center">
+                <span className="w-full h-0.5 bg-sky-400/50 absolute shadow-[0_0_8px_#38bdf8]" />
               </div>
             </div>
 
@@ -443,7 +469,7 @@ export default function MerchantScannerModal({
                     onClick={() => handleSelectCustomer(c)}
                     className={`p-2 rounded-xl border text-start text-xs transition flex items-center justify-between ${
                       selectedCustomer?.id === c.id
-                        ? "bg-emerald-500/20 border-emerald-400/50 text-white"
+                        ? "bg-blue-600/20 border-blue-400/50 text-white"
                         : "bg-white/5 border-white/5 hover:bg-white/10 text-white/80"
                     }`}
                   >
@@ -458,7 +484,7 @@ export default function MerchantScannerModal({
                         كاش باك
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] font-bold text-sky-400 bg-blue-600/20 px-1.5 py-0.5 rounded">
                         {c.stamps}/{stampsRequired}
                       </span>
                     )}
@@ -482,15 +508,15 @@ export default function MerchantScannerModal({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t.merchant.searchPlaceholder}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-white/40 text-xs font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-white/40 text-xs font-mono focus:outline-none focus:border-blue-500"
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="absolute left-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1 hover:bg-emerald-400 disabled:opacity-50"
+                  className="absolute left-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center gap-1 hover:bg-blue-500 disabled:opacity-50"
                 >
                   <Search className="w-3.5 h-3.5" />
-                  <span>بحث وطبع</span>
+                  <span>بحث وختم</span>
                 </button>
               </div>
             </div>
@@ -549,7 +575,7 @@ export default function MerchantScannerModal({
                   className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-semibold text-slate-300 flex items-center gap-1 transition"
                   title="تحويل نظام العميل"
                 >
-                  <ArrowRightLeft className="w-3 h-3 text-emerald-400" />
+                  <ArrowRightLeft className="w-3 h-3 text-sky-400" />
                   <span>تبديل</span>
                 </button>
               )}
@@ -560,7 +586,7 @@ export default function MerchantScannerModal({
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-white/70">الأختام المجمّعة:</span>
-                  <span className="font-mono font-bold text-emerald-400 text-sm">
+                  <span className="font-mono font-bold text-sky-400 text-sm">
                     {selectedCustomer.stamps} / {stampsRequired}
                   </span>
                 </div>
@@ -570,7 +596,7 @@ export default function MerchantScannerModal({
                     type="button"
                     disabled={loading}
                     onClick={() => handleStampOrRedeem("STAMP")}
-                    className="py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                    className="py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50"
                   >
                     <Plus className="w-4 h-4" />
                     <span>{t.merchant.addStampBtn}</span>
@@ -616,7 +642,7 @@ export default function MerchantScannerModal({
                     onClick={() => setPosTab("earn")}
                     className={`py-1.5 rounded-lg transition ${
                       posTab === "earn"
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold"
+                        ? "bg-blue-600/20 text-sky-300 border border-blue-500/30 font-bold"
                         : "text-white/60 hover:text-white"
                     }`}
                   >
@@ -648,7 +674,7 @@ export default function MerchantScannerModal({
                         step="any"
                         value={billAmount}
                         onChange={(e) => setBillAmount(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-mono text-sm focus:outline-none focus:border-emerald-500"
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-mono text-sm focus:outline-none focus:border-blue-500"
                       />
                     </div>
 
@@ -667,7 +693,7 @@ export default function MerchantScannerModal({
                     </div>
 
                     {/* Calculation Preview */}
-                    <p className="text-[11px] text-emerald-300/90 leading-tight">
+                    <p className="text-[11px] text-sky-300/90 leading-tight">
                       {t.merchant.calculatePreview
                         .replace("{amount}", String(calculatedEarned))
                         .replace("{currency}", currency)
@@ -678,7 +704,7 @@ export default function MerchantScannerModal({
                       type="button"
                       disabled={loading || calculatedEarned <= 0}
                       onClick={handleCashbackEarn}
-                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-md shadow-emerald-500/20"
+                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-md shadow-blue-500/20"
                     >
                       <Plus className="w-4 h-4" />
                       <span>

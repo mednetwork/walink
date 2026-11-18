@@ -62,8 +62,19 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [birthday, setBirthday] = useState("");
+  const [refCode, setRefCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const r = params.get("ref");
+      if (r && /^\d{4}$/.test(r.trim())) {
+        setRefCode(r.trim());
+      }
+    }
+  }, []);
 
   const isCashback = selectedLoyaltyType === "CASHBACK";
   const cashbackRate = merchant.cashbackRate || 10;
@@ -107,6 +118,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           phone,
           birthday,
           loyaltyType: selectedLoyaltyType,
+          ref: refCode,
         }),
       });
 
@@ -135,24 +147,29 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className="w-full max-w-[430px] mx-auto min-h-screen flex flex-col justify-between p-4 sm:p-6 text-white selection:bg-emerald-500 selection:text-black"
+      className="w-full max-w-[430px] mx-auto min-h-screen bg-[#060B18] flex flex-col justify-between p-4 sm:p-6 text-white selection:bg-blue-600 selection:text-white"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at 50% -10%, rgba(37, 99, 235, 0.12) 0%, transparent 60%), radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
+        backgroundSize: "100% 100%, 28px 28px",
+      }}
     >
       <div className="space-y-6 pt-2">
         {/* Top Header Badge & Language Pill */}
         <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600/10 border border-blue-500/20 text-sky-400 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{merchant.city} • Walink</span>
           </div>
 
           {/* Quick Corner Language Selector */}
-          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full p-1 text-[11px] font-semibold">
+          <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-full p-0.5 text-[11px] font-semibold">
             <button
               type="button"
               onClick={() => setLocale("ar")}
               className={`px-2 py-0.5 rounded-full transition ${
                 locale === "ar"
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  ? "bg-blue-600/20 text-sky-300 border border-blue-500/30"
                   : "text-slate-400 hover:text-white"
               }`}
             >
@@ -163,7 +180,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               onClick={() => setLocale("fr")}
               className={`px-2 py-0.5 rounded-full transition ${
                 locale === "fr"
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  ? "bg-blue-600/20 text-sky-300 border border-blue-500/30"
                   : "text-slate-400 hover:text-white"
               }`}
             >
@@ -174,7 +191,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               onClick={() => setLocale("es")}
               className={`px-2 py-0.5 rounded-full transition ${
                 locale === "es"
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  ? "bg-blue-600/20 text-sky-300 border border-blue-500/30"
                   : "text-slate-400 hover:text-white"
               }`}
             >
@@ -183,19 +200,26 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           </div>
         </div>
 
+        {refCode && (
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-blue-500/15 to-transparent border border-amber-400/30 text-amber-200 text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+            <Gift className="w-4 h-4 text-amber-300 shrink-0" />
+            <span>{t.walletEnterprise.referral.referredBanner}</span>
+          </div>
+        )}
+
         <div className="text-center space-y-2">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
             {locale === "ar" ? (
               <>
-                احصل على بطاقة ولاء <span className="text-emerald-400">{merchant.name}</span> في ثوانٍ
+                احصل على بطاقة ولاء <span className="text-sky-400">{merchant.name}</span> في ثوانٍ
               </>
             ) : locale === "fr" ? (
               <>
-                Obtenez votre carte <span className="text-emerald-400">{merchant.name}</span> en 5s
+                Obtenez votre carte <span className="text-sky-400">{merchant.name}</span> en 5s
               </>
             ) : (
               <>
-                Obtén tu tarjeta de <span className="text-emerald-400">{merchant.name}</span> en 5s
+                Obtén tu tarjeta de <span className="text-sky-400">{merchant.name}</span> en 5s
               </>
             )}
           </h1>
@@ -239,13 +263,13 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               <button
                 type="button"
                 onClick={() => setSelectedLoyaltyType("STAMPS")}
-                className={`p-3 rounded-2xl text-start transition-all border ${
+                className={`p-3.5 rounded-2xl text-start transition-all border ${
                   selectedLoyaltyType === "STAMPS"
-                    ? "bg-emerald-500/15 border-emerald-500/40 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/40"
-                    : "bg-white/5 border-white/10 hover:bg-white/10 text-white/70"
+                    ? "bg-blue-600/[0.12] border-blue-500/40 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/40"
+                    : "bg-[#0C101A]/80 border-white/[0.08] hover:bg-white/[0.05] text-white/70"
                 }`}
               >
-                <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-400 mb-1">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-sky-400 mb-1">
                   <Gift className="w-4 h-4" />
                   <span>{t.onboarding.stampsProgramTitle}</span>
                 </div>
@@ -259,10 +283,10 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               <button
                 type="button"
                 onClick={() => setSelectedLoyaltyType("CASHBACK")}
-                className={`p-3 rounded-2xl text-start transition-all border ${
+                className={`p-3.5 rounded-2xl text-start transition-all border ${
                   selectedLoyaltyType === "CASHBACK"
-                    ? "bg-amber-500/15 border-amber-500/40 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/40"
-                    : "bg-white/5 border-white/10 hover:bg-white/10 text-white/70"
+                    ? "bg-amber-500/[0.12] border-amber-500/40 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/40"
+                    : "bg-[#0C101A]/80 border-white/[0.08] hover:bg-white/[0.05] text-white/70"
                 }`}
               >
                 <div className="flex items-center gap-1.5 font-bold text-xs text-amber-300 mb-1">
@@ -304,7 +328,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t.onboarding.namePlaceholder}
-              className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition text-sm"
+              className="w-full px-4 py-3 rounded-2xl bg-[#0C101A]/90 border border-white/[0.09] text-white placeholder-white/35 focus:outline-none focus:border-blue-500/80 focus:ring-2 focus:ring-blue-500/20 transition text-sm shadow-inner"
             />
           </div>
 
@@ -319,7 +343,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder={t.onboarding.phonePlaceholder}
-                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition text-sm font-mono"
+                className="w-full px-4 py-3 rounded-2xl bg-[#0C101A]/90 border border-white/[0.09] text-white placeholder-white/35 focus:outline-none focus:border-blue-500/80 focus:ring-2 focus:ring-blue-500/20 transition text-sm font-mono shadow-inner"
               />
               <Smartphone className={`w-4 h-4 text-white/40 absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 pointer-events-none`} />
             </div>
@@ -334,7 +358,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 type="date"
                 value={birthday}
                 onChange={(e) => setBirthday(e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-white placeholder-white/40 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition text-sm font-mono"
+                className="w-full px-4 py-3 rounded-2xl bg-[#0C101A]/90 border border-white/[0.09] text-white placeholder-white/35 focus:outline-none focus:border-blue-500/80 focus:ring-2 focus:ring-blue-500/20 transition text-sm font-mono shadow-inner"
               />
               <Calendar className={`w-4 h-4 text-white/40 absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 pointer-events-none`} />
             </div>
@@ -343,10 +367,10 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-6 rounded-2xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-slate-950 shadow-lg shadow-emerald-500/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3.5 px-6 rounded-2xl font-bold text-sm bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-600/30 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
                 <span>{t.onboarding.submitBtn}</span>
@@ -360,7 +384,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
       {/* Footer Security Badges */}
       <div className="pt-6 pb-2 text-center space-y-2 text-[11px] text-white/50">
         <div className="flex items-center justify-center gap-2">
-          <Lock className="w-3.5 h-3.5 text-emerald-400" />
+          <Lock className="w-3.5 h-3.5 text-sky-400" />
           <span>Apple Wallet & Google Wallet • مشفّرة 100%</span>
         </div>
         <p>© {new Date().getFullYear()} Walink (walink.ma)</p>

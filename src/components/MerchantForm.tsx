@@ -186,7 +186,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
     <div className="space-y-6">
       {/* Breadcrumb Navigation */}
       <div className="flex items-center gap-2 text-xs text-white/50">
-        <Link href="/admin" className="hover:text-emerald-400 transition">
+        <Link href="/admin" className="hover:text-sky-400 transition">
           لوحة الإدارة
         </Link>
         <ChevronRight className="w-3.5 h-3.5 rotate-180" />
@@ -225,7 +225,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     onClick={() => handleNicheSelect(preset.id)}
                     className={`p-3 rounded-2xl border text-right transition flex items-center gap-2.5 ${
                       isSelected
-                        ? "bg-white/10 border-emerald-400 text-white shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-400"
+                        ? "bg-white/10 border-blue-400 text-white shadow-lg shadow-blue-500/10 ring-1 ring-blue-400"
                         : "bg-white/[0.03] border-white/10 hover:bg-white/5 text-white/70"
                     }`}
                   >
@@ -243,7 +243,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
           {/* Section 2: Basic Merchant Information */}
           <div className="glass-panel p-6 rounded-3xl space-y-4">
             <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
-              <Store className="w-4 h-4 text-emerald-400" />
+              <Store className="w-4 h-4 text-sky-400" />
               <span>2. البيانات الأساسية للمحل</span>
             </h3>
 
@@ -258,7 +258,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   value={formData.name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="مثلاً: Café Atlas أو صالون أنس"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition"
                 />
               </div>
 
@@ -275,7 +275,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                       setFormData({ ...formData, slug: e.target.value })
                     }
                     placeholder="cafe-atlas"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono dir-ltr text-left focus:outline-none focus:border-emerald-500 transition"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono dir-ltr text-left focus:outline-none focus:border-blue-500 transition"
                   />
                   <span className="absolute right-3 top-2.5 text-[11px] text-white/40">
                     walink.ma/join/
@@ -294,7 +294,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, city: e.target.value })
                   }
                   placeholder="الدار البيضاء، الرباط، مراكش..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition"
                 />
               </div>
 
@@ -309,7 +309,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, phone: e.target.value })
                   }
                   placeholder="0661123456"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono dir-ltr text-left focus:outline-none focus:border-emerald-500 transition"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono dir-ltr text-left focus:outline-none focus:border-blue-500 transition"
                 />
               </div>
 
@@ -338,7 +338,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   onChange={(e) =>
                     setFormData({ ...formData, customerPrefix: e.target.value })
                   }
-                  className="w-full bg-[#111827] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition"
+                  className="w-full bg-[#111827] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition"
                 >
                   <option value="آ السي">آ السي (للرجال / عام)</option>
                   <option value="آ لالة">آ لالة (للنساء / صالونات تجميل)</option>
@@ -386,7 +386,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     }
                     className={`p-3 rounded-2xl border text-start transition ${
                       formData.loyaltyMode === mode.id
-                        ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 ring-1 ring-emerald-500/30"
+                        ? "bg-blue-600/15 border-blue-500/40 text-sky-300 ring-1 ring-blue-500/30"
                         : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
                     }`}
                   >
@@ -476,7 +476,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                       stampsRequired: parseInt(e.target.value, 10),
                     })
                   }
-                  className="w-full accent-emerald-500 cursor-pointer"
+                  className="w-full accent-blue-600 cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] text-white/50 font-mono mt-1">
                   <span>3 أختام</span>
@@ -537,7 +537,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, bgGradient: e.target.value })
                   }
                   placeholder="linear-gradient(...)"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white/70 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white/70 focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
@@ -546,7 +546,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
           {/* Section 4: Plan & Initial Credits */}
           <div className="glass-panel p-6 rounded-3xl space-y-4">
             <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
-              <Coins className="w-4 h-4 text-emerald-400" />
+              <Coins className="w-4 h-4 text-sky-400" />
               <span>4. باقة الاشتراك ورصيد الكريدي</span>
             </h3>
 
@@ -566,13 +566,13 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     }
                     className={`p-4 rounded-2xl border text-right transition ${
                       isSelected
-                        ? "bg-white/10 border-emerald-400 text-white shadow-lg ring-1 ring-emerald-400"
+                        ? "bg-white/10 border-blue-400 text-white shadow-lg ring-1 ring-blue-400"
                         : "bg-white/[0.03] border-white/10 hover:bg-white/5 text-white/70"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-bold text-sm">{plan.name}</span>
-                      <span className="text-[11px] text-emerald-400 font-bold">
+                      <span className="text-[11px] text-sky-400 font-bold">
                         {plan.price}
                       </span>
                     </div>
@@ -605,7 +605,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
           {/* Section 5: Radar Geofencing & Google Maps */}
           <div className="glass-panel p-6 rounded-3xl space-y-4">
             <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
-              <Radio className="w-4 h-4 text-emerald-400" />
+              <Radio className="w-4 h-4 text-sky-400" />
               <span>5. رادار المحيط (100m Radar) ومراجعات Google Maps</span>
             </h3>
 
@@ -625,7 +625,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     })
                   }
                   placeholder="33.5731"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -644,7 +644,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     })
                   }
                   placeholder="-7.5898"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -659,7 +659,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, radarMessage: e.target.value })
                   }
                   placeholder="راك دايز من حدانا! دوز مرحبا بيك..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -674,7 +674,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     setFormData({ ...formData, googleMapsUrl: e.target.value })
                   }
                   placeholder="https://maps.google.com/?cid=..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono dir-ltr text-left focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono dir-ltr text-left focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
@@ -683,7 +683,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
           {/* Section 6: Automation Flags */}
           <div className="glass-panel p-6 rounded-3xl space-y-3">
             <h3 className="text-sm font-bold text-white pb-2 border-b border-white/10 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <Sparkles className="w-4 h-4 text-sky-400" />
               <span>6. محركات الأتمتة الذكية</span>
             </h3>
 
@@ -695,7 +695,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   onChange={(e) =>
                     setFormData({ ...formData, autoWinback: e.target.checked })
                   }
-                  className="w-4 h-4 accent-emerald-500 rounded"
+                  className="w-4 h-4 accent-blue-600 rounded"
                 />
                 <div>
                   <span className="text-xs font-bold text-white block">
@@ -714,7 +714,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   onChange={(e) =>
                     setFormData({ ...formData, autoReview: e.target.checked })
                   }
-                  className="w-4 h-4 accent-emerald-500 rounded"
+                  className="w-4 h-4 accent-blue-600 rounded"
                 />
                 <div>
                   <span className="text-xs font-bold text-white block">
@@ -733,7 +733,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   onChange={(e) =>
                     setFormData({ ...formData, autoRadar: e.target.checked })
                   }
-                  className="w-4 h-4 accent-emerald-500 rounded"
+                  className="w-4 h-4 accent-blue-600 rounded"
                 />
                 <div>
                   <span className="text-xs font-bold text-white block">
@@ -752,7 +752,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   onChange={(e) =>
                     setFormData({ ...formData, autoBirthday: e.target.checked })
                   }
-                  className="w-4 h-4 accent-emerald-500 rounded"
+                  className="w-4 h-4 accent-blue-600 rounded"
                 />
                 <div>
                   <span className="text-xs font-bold text-white block">
@@ -771,7 +771,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
             >
               {loading ? (
                 <span>جاري الحفظ...</span>
@@ -798,7 +798,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
             {/* Header */}
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-emerald-400" />
+                <Smartphone className="w-4 h-4 text-sky-400" />
                 <h3 className="font-bold text-sm text-white">
                   معاينة مباشرة لشاشة الآيفون
                 </h3>
@@ -806,7 +806,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
               <button
                 type="button"
                 onClick={() => setIsStandModalOpen(true)}
-                className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-xl border border-emerald-500/20"
+                className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 bg-blue-600/10 px-2.5 py-1 rounded-xl border border-blue-500/20"
               >
                 <QrCode className="w-3.5 h-3.5" />
                 <span>معاينة الستاند</span>
@@ -820,7 +820,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                 onClick={() => setPreviewLoyaltyType("STAMPS")}
                 className={`py-1.5 rounded-xl font-bold transition ${
                   previewLoyaltyType === "STAMPS"
-                    ? "bg-emerald-500 text-slate-950 shadow"
+                    ? "bg-blue-600 text-white shadow"
                     : "text-white/60 hover:text-white"
                 }`}
               >
@@ -853,7 +853,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                       onClick={() => setPreviewStamps(idx)}
                       className={`w-6 h-6 rounded-lg text-[10px] font-mono font-bold transition ${
                         previewStamps === idx
-                          ? "bg-emerald-500 text-slate-950 shadow-md"
+                          ? "bg-blue-600 text-white shadow-md"
                           : "bg-white/5 text-white/50 hover:bg-white/10"
                       }`}
                     >

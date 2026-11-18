@@ -69,7 +69,7 @@ export default function LockScreenPeekModal({
           </div>
 
           <div className="text-center mt-3">
-            <span className="text-[10px] text-emerald-400 font-mono tracking-wider">
+            <span className="text-[10px] text-sky-400 font-mono tracking-wider">
               ✦ هكا كيوصل الإشعار للكليان فـ شاشة التيليفون ✦
             </span>
           </div>

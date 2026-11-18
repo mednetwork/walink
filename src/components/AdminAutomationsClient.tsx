@@ -208,7 +208,7 @@ export default function AdminAutomationsClient({
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600/10 border border-blue-500/20 text-sky-400 text-xs font-medium mb-2">
             <Sparkles className="w-3.5 h-3.5" />
             <span>مركز تحكم الأتمتة المتقدم (Automation Cron Engine)</span>
           </div>
@@ -286,10 +286,10 @@ export default function AdminAutomationsClient({
       </div>
 
       {/* Manual Cron Execution Launcher Box */}
-      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.03] to-transparent relative overflow-hidden">
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-600/[0.05] to-transparent relative overflow-hidden">
         <div className="max-w-3xl space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 flex items-center justify-center font-bold shadow-lg shadow-emerald-500/20">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-500/25">
               <Zap className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
@@ -311,7 +311,7 @@ export default function AdminAutomationsClient({
                 id="cron-merchant-select"
                 value={selectedMerchantId}
                 onChange={(e) => setSelectedMerchantId(e.target.value)}
-                className="w-full bg-[#111827] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#111827] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
               >
                 <option value="ALL">جميع المحلات النشطة ({merchants.length})</option>
                 {merchants.map((m) => (
@@ -328,7 +328,7 @@ export default function AdminAutomationsClient({
                   type="checkbox"
                   checked={forceDemo}
                   onChange={(e) => setForceDemo(e.target.checked)}
-                  className="rounded border-white/20 bg-[#111827] text-emerald-500 focus:ring-0 w-4 h-4 cursor-pointer"
+                  className="rounded border-white/20 bg-[#111827] text-blue-500 focus:ring-0 w-4 h-4 cursor-pointer"
                 />
                 <span>وضع المحاكاة التجريبي (Force Demo Mode لتفعيل الأتمتة فوراً)</span>
               </label>
@@ -340,7 +340,7 @@ export default function AdminAutomationsClient({
               type="button"
               onClick={handleRunCron}
               disabled={isRunningCron}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
             >
               {isRunningCron ? (
                 <>
@@ -382,7 +382,7 @@ export default function AdminAutomationsClient({
       <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Store className="w-5 h-5 text-emerald-400" />
+            <Store className="w-5 h-5 text-sky-400" />
             <h2 className="text-base font-bold text-white">حالة أتمتة المحلات المشتركة</h2>
           </div>
           <span className="text-xs text-white/50">{merchants.length} محلات</span>
@@ -409,7 +409,7 @@ export default function AdminAutomationsClient({
                   <td className="py-3 font-bold text-white">
                     <Link
                       href={`/admin/merchants/${m.id}`}
-                      className="hover:text-emerald-400 transition"
+                      className="hover:text-sky-400 transition"
                     >
                       {m.name}
                     </Link>
@@ -453,7 +453,7 @@ export default function AdminAutomationsClient({
                     <Link
                       href={`/m/${m.slug}`}
                       target="_blank"
-                      className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:underline"
+                      className="inline-flex items-center gap-1 text-[11px] text-sky-400 hover:underline"
                     >
                       <span>تطبيق التاجر</span>
                       <ExternalLink className="w-3 h-3" />
@@ -470,7 +470,7 @@ export default function AdminAutomationsClient({
       <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-emerald-400" />
+            <Bell className="w-5 h-5 text-sky-400" />
             <h2 className="text-base font-bold text-white">سجل الإشعارات والأتمتة المباشر (Audit Log)</h2>
           </div>
 
@@ -483,7 +483,7 @@ export default function AdminAutomationsClient({
                 onClick={() => setActiveFilter(type)}
                 className={`px-3 py-1.5 rounded-xl font-medium transition text-xs whitespace-nowrap ${
                   activeFilter === type
-                    ? "bg-emerald-500 text-slate-950 font-bold shadow"
+                    ? "bg-blue-600 text-white font-bold shadow"
                     : "bg-white/5 text-white/60 hover:text-white"
                 }`}
               >

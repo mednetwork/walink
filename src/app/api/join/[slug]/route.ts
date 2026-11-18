@@ -9,7 +9,7 @@ export async function POST(
   try {
     const { slug } = params;
     const body = await req.json();
-    const { name, phone, birthday, loyaltyType: requestedLoyaltyType } = body;
+    const { name, phone, birthday, loyaltyType: requestedLoyaltyType, ref } = body;
 
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json(
@@ -45,6 +45,7 @@ export async function POST(
         cashbackRate: true,
         stampsRequired: true,
         rewardName: true,
+        referralBonus: true,
       },
     });
 
@@ -113,6 +114,17 @@ export async function POST(
     const isCashback = effectiveLoyaltyType === "CASHBACK";
     const welcomeBonus = isCashback ? Number(merchant.welcomeCashback || 0) : 0;
 
+    // Check if customer was referred by an existing member
+    let referrerCustomer = null;
+    if (ref && typeof ref === "string" && ref.trim()) {
+      referrerCustomer = await prisma.customer.findFirst({
+        where: {
+          merchantId: merchant.id,
+          memberCode: ref.trim(),
+        },
+      });
+    }
+
     // Create new customer
     const newCustomer = await prisma.customer.create({
       data: {
@@ -126,9 +138,79 @@ export async function POST(
         cashbackBalance: welcomeBonus,
         totalCashbackEarned: welcomeBonus,
         totalVisits: 1,
+        referredByCode: referrerCustomer ? referrerCustomer.memberCode : null,
         walletType: "WEBPASS",
       },
     });
+
+    // Reward referrer immediately if exists
+    if (referrerCustomer) {
+      const isReferrerCashback = referrerCustomer.loyaltyType === "CASHBACK";
+      const refBonusDH = Number(merchant.referralBonus || 10);
+      const currency = merchant.currency || "DH";
+
+      if (isReferrerCashback) {
+        await prisma.$transaction([
+          prisma.customer.update({
+            where: { id: referrerCustomer.id },
+            data: {
+              cashbackBalance: { increment: refBonusDH },
+              totalCashbackEarned: { increment: refBonusDH },
+              referralsCount: { increment: 1 },
+            },
+          }),
+          prisma.transaction.create({
+            data: {
+              merchantId: merchant.id,
+              customerId: referrerCustomer.id,
+              type: "CASHBACK_EARNED",
+              cashbackDelta: refBonusDH,
+              staffName: "النظام",
+              note: `مكافأة دعوة صديق: ${newCustomer.name} 🎁`,
+            },
+          }),
+          prisma.notification.create({
+            data: {
+              merchantId: merchant.id,
+              customerId: referrerCustomer.id,
+              type: "REWARD",
+              title: merchant.name,
+              body: `🎉 قام صديقك ${newCustomer.name} بالتسجيل عبر رابطك! تمت إضافة مكافأة الإحالة (+${refBonusDH} ${currency}) إلى رصيدك.`,
+            },
+          }),
+        ]);
+      } else {
+        const newStamps = Math.min(merchant.stampsRequired, referrerCustomer.stamps + 1);
+        await prisma.$transaction([
+          prisma.customer.update({
+            where: { id: referrerCustomer.id },
+            data: {
+              stamps: newStamps,
+              referralsCount: { increment: 1 },
+            },
+          }),
+          prisma.transaction.create({
+            data: {
+              merchantId: merchant.id,
+              customerId: referrerCustomer.id,
+              type: "STAMP_ADDED",
+              stampsDelta: 1,
+              staffName: "النظام",
+              note: `مكافأة دعوة صديق: ${newCustomer.name} 🎁`,
+            },
+          }),
+          prisma.notification.create({
+            data: {
+              merchantId: merchant.id,
+              customerId: referrerCustomer.id,
+              type: "STAMP",
+              title: merchant.name,
+              body: `🎉 قام صديقك ${newCustomer.name} بالتسجيل عبر رابطك! تمت إضافة ختم مجاني إلى بطاقتك.`,
+            },
+          }),
+        ]);
+      }
+    }
 
     // Create initial card created transaction
     await prisma.transaction.create({
@@ -138,6 +220,7 @@ export async function POST(
         type: "CARD_CREATED",
         stampsDelta: isCashback ? 0 : 1,
         cashbackDelta: isCashback ? welcomeBonus : 0,
+        staffName: "النظام",
         note: isCashback
           ? `تفعيل بطاقة كاش باك + هدية ترحيبية ${welcomeBonus} ${merchant.currency}`
           : "تفعيل بطاقة الأختام + أول ختم ترحيبي هدية 🎁",

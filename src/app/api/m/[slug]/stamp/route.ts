@@ -15,6 +15,8 @@ export async function POST(
       action = "STAMP",
       billAmount,
       redeemAmount,
+      staffName = "المدير",
+      overrideCooldown = false,
     } = body;
 
     const merchant = await prisma.merchant.findUnique({
@@ -32,6 +34,9 @@ export async function POST(
         googleMapsUrl: true,
         autoReview: true,
         isActive: true,
+        cooldownMinutes: true,
+        vipVisitsThreshold: true,
+        vipCashbackBonus: true,
       },
     });
 
@@ -54,9 +59,11 @@ export async function POST(
     if (!customer && identifier) {
       const rawIdent = String(identifier).trim();
 
-      // Case 1: Scanned QR string e.g. "WALINK:pass-atlas-4821" or "WALINK:4821"
+      // Case 1: Scanned QR string e.g. "WALINK:pass-atlas-4821", "WALINK:4821", or Dynamic QR "WALINK:pass-atlas-4821:3x7b"
       if (rawIdent.startsWith("WALINK:")) {
-        const payload = rawIdent.replace("WALINK:", "").trim();
+        const fullPayload = rawIdent.replace("WALINK:", "").trim();
+        const parts = fullPayload.split(":");
+        const payload = parts[0];
         customer = await prisma.customer.findFirst({
           where: {
             merchantId: merchant.id,
@@ -69,12 +76,13 @@ export async function POST(
         });
       }
 
-      // Case 2: Direct passSerial
+      // Case 2: Direct passSerial (with optional timeToken)
       if (!customer) {
+        const directPayload = rawIdent.split(":")[0].trim();
         customer = await prisma.customer.findFirst({
           where: {
             merchantId: merchant.id,
-            passSerial: rawIdent,
+            passSerial: directPayload,
           },
         });
       }
@@ -113,6 +121,50 @@ export async function POST(
     const now = new Date();
     const currency = merchant.currency || "DH";
 
+    // Anti-Fraud Cooldown check (for STAMP and CASHBACK_EARN)
+    if (
+      (action === "STAMP" || action === "CASHBACK_EARN") &&
+      (merchant.cooldownMinutes || 0) > 0 &&
+      !overrideCooldown
+    ) {
+      const lastTx = await prisma.transaction.findFirst({
+        where: {
+          merchantId: merchant.id,
+          customerId: customer.id,
+          type: { in: ["STAMP_ADDED", "CASHBACK_EARNED"] },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (lastTx) {
+        const diffMs = now.getTime() - new Date(lastTx.createdAt).getTime();
+        const cooldownMs = (merchant.cooldownMinutes || 30) * 60 * 1000;
+        if (diffMs < cooldownMs) {
+          const minutesLeft = Math.max(1, Math.ceil((cooldownMs - diffMs) / 60000));
+          return NextResponse.json(
+            {
+              error: "COOLDOWN_ACTIVE",
+              minutesLeft,
+              message: `⚠️ حماية من التلاعب: تم مسح بطاقة هذا العميل قبل ${Math.floor(
+                diffMs / 60000
+              )} دقيقة! يرجى الانتظار (${minutesLeft} دقيقة متبقية) أو تأكيد العملية بصلاحية المدير.`,
+            },
+            { status: 429 }
+          );
+        }
+      }
+    }
+
+    // Dynamic VIP Gold Card status check
+    const isAlreadyVip = Boolean(customer.isVip);
+    const willBecomeVip =
+      !isAlreadyVip &&
+      customer.totalVisits + 1 >= (merchant.vipVisitsThreshold || 10);
+    const isVipCustomer = isAlreadyVip || willBecomeVip;
+    const effectiveCashbackRate = isVipCustomer
+      ? merchant.cashbackRate + (merchant.vipCashbackBonus || 5)
+      : merchant.cashbackRate;
+
     // Action 1: SWITCH_TYPE (Toggle customer between STAMPS and CASHBACK)
     if (action === "SWITCH_TYPE") {
       const targetType = customer.loyaltyType === "CASHBACK" ? "STAMPS" : "CASHBACK";
@@ -141,7 +193,7 @@ export async function POST(
         );
       }
 
-      const earned = Number(((bill * merchant.cashbackRate) / 100).toFixed(2));
+      const earned = Number(((bill * effectiveCashbackRate) / 100).toFixed(2));
       const newBalance = Number(((customer.cashbackBalance || 0) + earned).toFixed(2));
 
       const [updatedCustomer, transaction, notification] = await prisma.$transaction([
@@ -152,6 +204,7 @@ export async function POST(
             totalCashbackEarned: { increment: earned },
             totalSpent: { increment: bill },
             totalVisits: { increment: 1 },
+            isVip: isVipCustomer,
             lastVisitAt: now,
           },
         }),
@@ -162,7 +215,10 @@ export async function POST(
             type: "CASHBACK_EARNED",
             billAmount: bill,
             cashbackDelta: earned,
-            note: `كاش باك ${merchant.cashbackRate}% على فاتورة ${bill} ${currency}`,
+            staffName: staffName || "المدير",
+            note: isVipCustomer
+              ? `كاش باك VIP الذهبي ${effectiveCashbackRate}% على فاتورة ${bill} ${currency}`
+              : `كاش باك ${merchant.cashbackRate}% على فاتورة ${bill} ${currency}`,
             createdAt: now,
           },
         }),
@@ -178,10 +234,23 @@ export async function POST(
         }),
       ]);
 
+      if (willBecomeVip) {
+        await prisma.notification.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "REWARD",
+            title: "👑 ترقية لفئة VIP الذهبية!",
+            body: `👑 تهانينا ${customer.name}! لقد تمت ترقية بطاقتك إلى فئة VIP الذهبية مع نسبة كاش باك إضافية ومزايا مضاعفة!`,
+            createdAt: new Date(now.getTime() + 500),
+          },
+        });
+      }
+
       return NextResponse.json({
         success: true,
         action: "CASHBACK_EARN",
-        message: `تمت إضافة +${earned} ${currency} (${merchant.cashbackRate}%) لـ ${customer.name} بنجاح!`,
+        message: `تمت إضافة +${earned} ${currency} (${effectiveCashbackRate}%) لـ ${customer.name} بنجاح!`,
         earned,
         bill,
         customer: updatedCustomer,
@@ -234,6 +303,7 @@ export async function POST(
             customerId: customer.id,
             type: "CASHBACK_REDEEMED",
             cashbackDelta: -toRedeem,
+            staffName: staffName || "المدير",
             note: `خصم ${toRedeem} ${currency} من رصيد الكاش باك`,
             createdAt: now,
           },
@@ -294,6 +364,7 @@ export async function POST(
             customerId: customer.id,
             type: "REWARD_REDEEMED",
             stampsDelta: -merchant.stampsRequired,
+            staffName: staffName || "المدير",
             note: `تسليم المكافأة: ${merchant.rewardName} 🎁`,
             createdAt: now,
           },
@@ -345,6 +416,7 @@ export async function POST(
         data: {
           stamps: { increment: 1 },
           totalVisits: { increment: 1 },
+          isVip: isVipCustomer,
           lastVisitAt: now,
         },
       }),
@@ -354,6 +426,7 @@ export async function POST(
           customerId: customer.id,
           type: "STAMP_ADDED",
           stampsDelta: 1,
+          staffName: staffName || "المدير",
           note: "ختم زيارة جديد ☕️",
           createdAt: now,
         },
@@ -371,6 +444,19 @@ export async function POST(
         },
       }),
     ]);
+
+    if (willBecomeVip) {
+      await prisma.notification.create({
+        data: {
+          merchantId: merchant.id,
+          customerId: customer.id,
+          type: "REWARD",
+          title: "👑 ترقية لفئة VIP الذهبية!",
+          body: `👑 تهانينا ${customer.name}! لقد تمت ترقية بطاقتك إلى فئة VIP الذهبية مع مزايا ومكافآت مضاعفة!`,
+          createdAt: new Date(now.getTime() + 500),
+        },
+      });
+    }
 
     if (isRewardUnlocked && merchant.autoReview) {
       await prisma.notification.create({

@@ -118,6 +118,32 @@ class SoundEngine {
       console.warn("Radar ping play warning:", err);
     }
   }
+
+  playAlert() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.setValueAtTime(260, now + 0.12);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.38);
+
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+      }
+    } catch (err) {
+      console.warn("Alert chime play warning:", err);
+    }
+  }
 }
 
 export const soundEngine = new SoundEngine();

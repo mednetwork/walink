@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
+import { Noto_Sans_Arabic, Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 
-const ibmPlexArabic = IBM_Plex_Sans_Arabic({
+const notoSansArabic = Noto_Sans_Arabic({
   subsets: ["arabic"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-ibm-plex-arabic",
+  variable: "--font-noto-arabic",
+  display: "swap",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-plus-jakarta",
   display: "swap",
 });
 
@@ -31,8 +38,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${ibmPlexArabic.variable} ${inter.variable}`}>
-      <body className="bg-[#0B0F17] text-slate-100 min-h-screen selection:bg-emerald-500 selection:text-black">
+    <html
+      lang="ar"
+      dir="rtl"
+      className={`${notoSansArabic.variable} ${plusJakartaSans.variable} ${inter.variable}`}
+    >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        />
+      </head>
+      <body className="bg-[#060B18] text-slate-100 min-h-screen selection:bg-blue-600 selection:text-white">
         {children}
       </body>
     </html>

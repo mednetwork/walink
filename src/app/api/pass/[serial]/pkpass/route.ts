@@ -53,6 +53,44 @@ export async function GET(
     const isCashback = customer.loyaltyType === "CASHBACK";
     const currency = merchant.currency || "DH";
 
+    // Parse multi-zone geofencing locations (up to 10 zones per Apple PassKit spec)
+    let parsedZones: Array<{ name: string; lat: number; lng: number; message?: string }> = [];
+    try {
+      if (merchant.radarZones) {
+        parsedZones = JSON.parse(merchant.radarZones);
+      }
+    } catch {
+      parsedZones = [];
+    }
+
+    const locationsList = [];
+    if (merchant.latitude && merchant.longitude) {
+      locationsList.push({
+        latitude: merchant.latitude,
+        longitude: merchant.longitude,
+        relevantText:
+          merchant.radarMessage ||
+          (locale === "ar"
+            ? "أنت بالقرب منا! تفضل بزيارتنا، بطاقتك ومكافآتك جاهزة."
+            : locale === "fr"
+            ? "Vous êtes tout près ! Passez nous voir, votre carte vous attend."
+            : "¡Estás muy cerca! Pasa a visitarnos, tus beneficios te esperan."),
+        maxDistance: 100,
+      });
+    }
+
+    for (const z of parsedZones) {
+      if (locationsList.length >= 10) break;
+      if (z.lat && z.lng) {
+        locationsList.push({
+          latitude: Number(z.lat),
+          longitude: Number(z.lng),
+          relevantText: z.message || `${z.name} - ${merchant.name}`,
+          maxDistance: 100,
+        });
+      }
+    }
+
     // Localized Apple Pass strings
     const passStrings = {
       description:
@@ -149,24 +187,8 @@ export async function GET(
       foregroundColor: "rgb(255, 255, 255)",
       backgroundColor: bgColor,
       labelColor: isCashback ? "rgb(251, 191, 36)" : "rgb(52, 211, 153)",
-      // 100m Geofencing Radar Locations
-      locations:
-        merchant.latitude && merchant.longitude
-          ? [
-              {
-                latitude: merchant.latitude,
-                longitude: merchant.longitude,
-                relevantText:
-                  merchant.radarMessage ||
-                  (locale === "ar"
-                    ? "أنت بالقرب منا! تفضل بزيارتنا، بطاقتك ومكافآتك جاهزة."
-                    : locale === "fr"
-                    ? "Vous êtes tout près ! Passez nous voir, votre carte vous attend."
-                    : "¡Estás muy cerca! Pasa a visitarnos, tus beneficios te esperan."),
-                maxDistance: 100, // 100m radar boundary!
-              },
-            ]
-          : [],
+      // Multi-Zone Geofencing Radar Locations (Up to 10 zones)
+      locations: locationsList,
       // High-resolution scannable barcode
       barcodes: [
         {
@@ -218,10 +240,37 @@ export async function GET(
             label: passStrings.aboutLabel,
             value: `${merchant.name} - ${merchant.city}`,
           },
+          ...(merchant.menuUrl
+            ? [
+                {
+                  key: "menu_url",
+                  label: "Digital Menu",
+                  value: merchant.menuUrl,
+                },
+              ]
+            : []),
+          ...(merchant.phone
+            ? [
+                {
+                  key: "whatsapp_contact",
+                  label: "WhatsApp",
+                  value: `https://wa.me/${merchant.phone.replace(/\D/g, "")}`,
+                },
+              ]
+            : []),
+          ...(merchant.instagramUrl
+            ? [
+                {
+                  key: "instagram",
+                  label: "Instagram",
+                  value: merchant.instagramUrl,
+                },
+              ]
+            : []),
           {
             key: "terms",
             label: passStrings.termsLabel,
-            value: passStrings.termsValue,
+            value: merchant.termsText || passStrings.termsValue,
           },
           {
             key: "support",
