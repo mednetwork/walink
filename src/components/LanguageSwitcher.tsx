@@ -7,9 +7,11 @@ import { Locale } from "@/lib/i18n/translations";
 export function LanguageSwitcher({
   className = "",
   size = "md",
+  variant = "light",
 }: {
   className?: string;
   size?: "sm" | "md";
+  variant?: "light" | "dark";
 }) {
   const { locale, setLocale } = useI18n();
 
@@ -21,9 +23,12 @@ export function LanguageSwitcher({
 
   return (
     <div
-      className={`inline-flex items-center gap-1 p-1 rounded-full bg-slate-900/60 backdrop-blur-md border border-white/10 shadow-inner ${className}`}
-      role="group"
+      className={`walink-lang-switcher ${variant === "dark" ? "dark" : "light"} ${
+        size === "sm" ? "sm" : ""
+      } ${className}`}
+      role="radiogroup"
       aria-label="Language Selector"
+      dir="ltr"
     >
       {locales.map((item) => {
         const isActive = locale === item.key;
@@ -31,13 +36,10 @@ export function LanguageSwitcher({
           <button
             key={item.key}
             type="button"
+            role="radio"
+            aria-checked={isActive}
             onClick={() => setLocale(item.key)}
-            className={`px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
-              isActive
-                ? "bg-blue-600/20 text-sky-300 border border-blue-500/35 shadow-sm shadow-blue-500/20 font-bold"
-                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-            } ${size === "sm" ? "px-2 py-0.5 text-[11px]" : ""}`}
-            aria-pressed={isActive}
+            className={`lang-pill ${isActive ? "active" : ""}`}
           >
             {item.label}
           </button>
@@ -46,4 +48,3 @@ export function LanguageSwitcher({
     </div>
   );
 }
-

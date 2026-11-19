@@ -520,7 +520,7 @@ export default function MerchantDashboardClient({
           </div>
 
           <div className="flex items-center gap-2">
-            <LanguageSwitcher size="sm" />
+            <LanguageSwitcher size="sm" variant="dark" />
 
             {/* Live Credits Counter Pill */}
             <button
