@@ -491,11 +491,10 @@ export default function MerchantDashboardClient({
     <div className={`min-h-screen bg-[#F0F2F5] flex justify-center text-[#111B21] selection:bg-[#008069] selection:text-white font-arabic ${isFrameMode ? "py-8" : ""}`}>
       {/* Centered Mobile Container */}
       <div
-        className={`w-full max-w-[440px] flex flex-col justify-between bg-[#F0F2F5] text-[#111B21] relative ${
-          isFrameMode
-            ? "rounded-[48px] border-[6px] border-slate-400 shadow-2xl shadow-slate-400/50 overflow-hidden min-h-[820px] bg-[#F0F2F5]"
-            : "min-h-screen border-x border-[#E9EDEF]"
-        }`}
+        className={`w-full max-w-[440px] flex flex-col justify-between bg-[#F0F2F5] text-[#111B21] relative ${isFrameMode
+          ? "rounded-[48px] border-[6px] border-slate-400 shadow-2xl shadow-slate-400/50 overflow-hidden min-h-[820px] bg-[#F0F2F5]"
+          : "min-h-screen border-x border-[#E9EDEF]"
+          }`}
       >
         {/* Top App Bar - WhatsApp Business Dark Teal Header */}
         <header className="sticky top-0 z-30 p-3.5 bg-[#075E54] text-white shadow-md flex items-center justify-between">
@@ -654,11 +653,10 @@ export default function MerchantDashboardClient({
                 ].map((bar, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
                     <div
-                      className={`w-full rounded-t-lg transition-all duration-500 ${
-                        bar.today
-                          ? "bg-gradient-to-t from-[#008069] to-[#00A884] shadow-sm"
-                          : "bg-[#E9EDEF] hover:bg-[#D1D7DB]"
-                      }`}
+                      className={`w-full rounded-t-lg transition-all duration-500 ${bar.today
+                        ? "bg-gradient-to-t from-[#008069] to-[#00A884] shadow-sm"
+                        : "bg-[#E9EDEF] hover:bg-[#D1D7DB]"
+                        }`}
                       style={{ height: bar.h }}
                     />
                     <span className={`text-[10px] ${bar.today ? "text-[#008069] font-bold" : "text-[#54656F]"}`}>
@@ -692,9 +690,8 @@ export default function MerchantDashboardClient({
                       </div>
                     </div>
                     <span
-                      className={`text-[11px] font-bold font-mono ${
-                        tx.stampsDelta > 0 ? "text-[#008069]" : "text-amber-600"
-                      }`}
+                      className={`text-[11px] font-bold font-mono ${tx.stampsDelta > 0 ? "text-[#008069]" : "text-amber-600"
+                        }`}
                     >
                       {tx.note || (tx.stampsDelta > 0 ? "+1 طابع" : "استلام مكافأة")}
                     </span>
@@ -733,11 +730,10 @@ export default function MerchantDashboardClient({
                   key={f.id}
                   type="button"
                   onClick={() => setCrmFilter(f.id as typeof crmFilter)}
-                  className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition font-medium ${
-                    crmFilter === f.id
-                      ? "bg-[#008069] text-white font-bold border-[#008069] shadow-sm"
-                      : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
-                  }`}
+                  className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition font-medium ${crmFilter === f.id
+                    ? "bg-[#008069] text-white font-bold border-[#008069] shadow-sm"
+                    : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                    }`}
                 >
                   {f.label}
                 </button>
@@ -779,15 +775,14 @@ export default function MerchantDashboardClient({
 
                       <div className="text-end flex items-center gap-2">
                         <span
-                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
-                            isVip
-                              ? "bg-amber-100 text-amber-800 border border-amber-200"
-                              : isQuiet
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${isVip
+                            ? "bg-amber-100 text-amber-800 border border-amber-200"
+                            : isQuiet
                               ? "bg-red-100 text-red-800 border border-red-200"
                               : isCashbackCust
-                              ? "bg-amber-100 text-amber-800 border border-amber-200"
-                              : "bg-[#008069]/10 text-[#008069] border border-[#008069]/20"
-                          }`}
+                                ? "bg-amber-100 text-amber-800 border border-amber-200"
+                                : "bg-[#008069]/10 text-[#008069] border border-[#008069]/20"
+                            }`}
                         >
                           {isVip ? "VIP" : isQuiet ? "غائب" : isCashbackCust ? "كاش باك" : "أختام"}
                         </span>
@@ -831,11 +826,10 @@ export default function MerchantDashboardClient({
                       setPromoTemplate(tpl.id);
                       setPromoMessage(tpl.text);
                     }}
-                    className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-[11px] font-semibold ${
-                      promoTemplate === tpl.id
-                        ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                        : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
-                    }`}
+                    className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-[11px] font-semibold ${promoTemplate === tpl.id
+                      ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                      : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                      }`}
                   >
                     {tpl.label}
                   </button>
@@ -872,11 +866,10 @@ export default function MerchantDashboardClient({
                     key={a.id}
                     type="button"
                     onClick={() => setPromoAudience(a.id as typeof promoAudience)}
-                    className={`p-3 rounded-2xl border text-right transition ${
-                      promoAudience === a.id
-                        ? "bg-[#008069]/10 border-[#008069] text-[#111B21] ring-1 ring-[#008069]"
-                        : "bg-white border-[#E9EDEF] text-[#54656F] shadow-sm hover:border-[#D1D7DB]"
-                    }`}
+                    className={`p-3 rounded-2xl border text-right transition ${promoAudience === a.id
+                      ? "bg-[#008069]/10 border-[#008069] text-[#111B21] ring-1 ring-[#008069]"
+                      : "bg-white border-[#E9EDEF] text-[#54656F] shadow-sm hover:border-[#D1D7DB]"
+                      }`}
                   >
                     <span className="font-bold text-[#111B21] block">{a.label}</span>
                     <span className="text-[10px] text-[#008069] font-mono font-bold">
@@ -988,11 +981,10 @@ export default function MerchantDashboardClient({
                       type="button"
                       disabled={savingSettings}
                       onClick={() => handleUpdateLoyaltyMode(m.id)}
-                      className={`py-1.5 px-2 rounded-xl border text-center transition ${
-                        merchantLoyaltyMode === m.id
-                          ? "bg-[#008069] text-white border-[#008069] shadow-sm"
-                          : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
-                      }`}
+                      className={`py-1.5 px-2 rounded-xl border text-center transition ${merchantLoyaltyMode === m.id
+                        ? "bg-[#008069] text-white border-[#008069] shadow-sm"
+                        : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                        }`}
                     >
                       {m.label}
                     </button>
@@ -1003,22 +995,21 @@ export default function MerchantDashboardClient({
               {/* Cashback Rate Selector */}
               {(merchantLoyaltyMode === "CASHBACK" ||
                 merchantLoyaltyMode === "BOTH") && (
-                <div className="space-y-1 pt-1.5 border-t border-[#E9EDEF]">
-                  <div className="flex items-center justify-between text-[10px] text-[#54656F]">
-                    <span className="font-semibold text-[#111B21]">نسبة الكاش باك من كل فاتورة:</span>
-                    <span className="font-bold text-amber-600 font-mono text-xs">
-                      {merchantCashbackRate}%
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    {[5, 10, 15, 20].map((rate) => (
-                      <button
-                        key={rate}
-                        type="button"
-                        disabled={savingSettings}
-                        onClick={() => handleUpdateCashbackRate(rate)}
-                        className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${
-                          merchantCashbackRate === rate
+                  <div className="space-y-1 pt-1.5 border-t border-[#E9EDEF]">
+                    <div className="flex items-center justify-between text-[10px] text-[#54656F]">
+                      <span className="font-semibold text-[#111B21]">نسبة الكاش باك من كل فاتورة:</span>
+                      <span className="font-bold text-amber-600 font-mono text-xs">
+                        {merchantCashbackRate}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {[5, 10, 15, 20].map((rate) => (
+                        <button
+                          key={rate}
+                          type="button"
+                          disabled={savingSettings}
+                          onClick={() => handleUpdateCashbackRate(rate)}
+                          className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${merchantCashbackRate === rate
                             ? "bg-amber-100 text-amber-800 border-amber-300"
                             : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
                             }`}
@@ -1115,9 +1106,8 @@ export default function MerchantDashboardClient({
                       type="button"
                       disabled={savingSettings || item.locked}
                       onClick={() => handleToggleAutomation(item.key)}
-                      className={`w-11 h-6 rounded-full transition-colors p-0.5 flex items-center ${
-                        item.active ? "bg-[#008069] justify-end" : "bg-[#D1D7DB] justify-start"
-                      } ${item.locked ? "opacity-40 cursor-not-allowed" : ""}`}
+                      className={`w-11 h-6 rounded-full transition-colors p-0.5 flex items-center ${item.active ? "bg-[#008069] justify-end" : "bg-[#D1D7DB] justify-start"
+                        } ${item.locked ? "opacity-40 cursor-not-allowed" : ""}`}
                     >
                       <div className="w-5 h-5 rounded-full bg-white shadow-md"></div>
                     </button>
@@ -1162,9 +1152,8 @@ export default function MerchantDashboardClient({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`py-2 rounded-xl flex flex-col items-center gap-1 transition ${
-                  isActive ? "text-[#008069] font-bold" : "text-[#54656F] hover:text-[#111B21]"
-                }`}
+                className={`py-2 rounded-xl flex flex-col items-center gap-1 transition ${isActive ? "text-[#008069] font-bold" : "text-[#54656F] hover:text-[#111B21]"
+                  }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? "stroke-[2.5]" : ""}`} />
                 <span className="text-[10px]">{tab.label}</span>

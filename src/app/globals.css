@@ -60,75 +60,176 @@ body {
   animation: shimmer 3.5s infinite;
 }
 
-/* ---------- Language Switcher (WhatsApp Enterprise Segmented Control) ---------- */
-.walink-lang-switcher {
+/* ---------- Header Language Dropdown (WhatsApp Enterprise Dropdown Menu) ---------- */
+.walink-lang-dropdown {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+}
+.walink-lang-dropdown .lang-trigger-btn {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 3px;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
   border-radius: 99px;
   background: #F0F2F5;
   border: 1px solid #D1D7DB;
-  direction: ltr !important;
-  box-shadow: inset 0 1px 2px rgba(11, 20, 26, 0.04);
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.walink-lang-switcher .lang-pill {
-  border: none;
-  outline: none;
-  background: transparent;
-  padding: 4px 10px;
-  border-radius: 99px;
-  font-size: 12px;
+  color: #111B21;
+  font-size: 13px;
   font-weight: 700;
-  color: #54656F;
   cursor: pointer;
   transition: all 0.18s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  line-height: 1.2;
-  user-select: none;
-  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(11, 20, 26, 0.04);
 }
-
-.walink-lang-switcher.sm .lang-pill {
-  padding: 3px 8px;
-  font-size: 11px;
-  min-width: 28px;
+.walink-lang-dropdown.sm .lang-trigger-btn {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  gap: 5px;
 }
-
-.walink-lang-switcher .lang-pill:hover {
-  color: #111B21;
-  background: rgba(0, 0, 0, 0.05);
+.walink-lang-dropdown .lang-trigger-btn:hover {
+  background: #E9EDEF;
+  border-color: #CBD5E1;
+  transform: translateY(-1px);
 }
-
-.walink-lang-switcher .lang-pill.active {
+.walink-lang-dropdown .lang-trigger-btn.open {
   background: #FFFFFF;
+  border-color: #008069;
+  box-shadow: 0 0 0 3px rgba(0, 128, 105, 0.15);
+}
+.walink-lang-dropdown .lang-globe-icon {
+  display: flex;
+  align-items: center;
   color: #008069;
-  box-shadow: 0 1px 4px rgba(11, 20, 26, 0.14);
+  flex-shrink: 0;
+}
+.walink-lang-dropdown .lang-trigger-flag {
+  font-size: 14px;
+  line-height: 1;
+}
+.walink-lang-dropdown.sm .lang-trigger-flag {
+  font-size: 13px;
+}
+.walink-lang-dropdown .lang-trigger-name {
+  font-weight: 700;
+  color: #111B21;
+  white-space: nowrap;
+}
+.walink-lang-dropdown .lang-trigger-chevron {
+  display: flex;
+  align-items: center;
+  color: #64748B;
+  transition: transform 0.2s ease;
+  margin-inline-start: 2px;
+}
+.walink-lang-dropdown .lang-trigger-btn.open .lang-trigger-chevron {
+  transform: rotate(180deg);
+  color: #008069;
+}
+
+/* Dark Variant for Dashboard Header */
+.walink-lang-dropdown.dark .lang-trigger-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+}
+.walink-lang-dropdown.dark .lang-trigger-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.walink-lang-dropdown.dark .lang-globe-icon {
+  color: #25D366;
+}
+.walink-lang-dropdown.dark .lang-trigger-name {
+  color: #FFFFFF;
+}
+.walink-lang-dropdown.dark .lang-trigger-chevron {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Dropdown Menu Popover */
+.walink-lang-dropdown .lang-menu-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-end: 0;
+  min-width: 190px;
+  background: #FFFFFF;
+  border: 1px solid #E9EDEF;
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow: 0 12px 32px rgba(11, 20, 26, 0.14), 0 2px 6px rgba(11, 20, 26, 0.04);
+  z-index: 1000;
+  animation: langPopoverFade 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  direction: rtl;
+}
+@keyframes langPopoverFade {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.walink-lang-dropdown .lang-menu-header {
+  padding: 6px 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  border-bottom: 1px solid #F0F2F5;
+  margin-bottom: 4px;
+  text-align: start;
+}
+.walink-lang-dropdown .lang-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.walink-lang-dropdown .lang-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #111B21;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: start;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.walink-lang-dropdown .lang-menu-item:hover {
+  background: #F0F2F5;
+  color: #008069;
+}
+.walink-lang-dropdown .lang-menu-item.active {
+  background: #E8F5E9;
+  color: #008069;
   font-weight: 800;
 }
-
-.walink-lang-switcher.dark {
-  background: rgba(0, 0, 0, 0.25);
-  border-color: rgba(255, 255, 255, 0.2);
+.walink-lang-dropdown .lang-item-flag {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
 }
-
-.walink-lang-switcher.dark .lang-pill {
-  color: rgba(255, 255, 255, 0.75);
+.walink-lang-dropdown .lang-item-info {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1;
 }
-
-.walink-lang-switcher.dark .lang-pill:hover {
-  color: #FFFFFF;
-  background: rgba(255, 255, 255, 0.12);
+.walink-lang-dropdown .lang-item-name {
+  font-size: 13px;
+  font-weight: 700;
 }
-
-.walink-lang-switcher.dark .lang-pill.active {
-  background: #FFFFFF;
+.walink-lang-dropdown .lang-item-code {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  font-family: Inter, system-ui, sans-serif;
+}
+.walink-lang-dropdown .lang-item-check {
+  display: flex;
+  align-items: center;
   color: #008069;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
 }
