@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Arabic, Plus_Jakarta_Sans, Inter } from "next/font/google";
+import { I18nProvider } from "@/lib/i18n/context";
 import "./globals.css";
 
 const notoSansArabic = Noto_Sans_Arabic({
@@ -52,7 +53,9 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#F0F2F5] text-[#111B21] min-h-screen selection:bg-[#008069] selection:text-white">
-        {children}
+        <I18nProvider>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

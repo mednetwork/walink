@@ -280,6 +280,19 @@ export default function LandingPage() {
     }
   }, []);
 
+  // Sync default demo marketing message when locale changes
+  useEffect(() => {
+    if (ownerTpl === "w") {
+      setOwnerMsg(
+        locale === "fr"
+          ? `Offre Weekend : -20% ce samedi et dimanche chez ${shopInput}`
+          : locale === "es"
+          ? `Oferta Fin de Semana: -20% este sábado y domingo en ${shopInput}`
+          : `عرض خاص لنهاية الأسبوع: -20% هذا السبت والأحد في ${shopInput}`
+      );
+    }
+  }, [locale, shopInput, ownerTpl]);
+
   // Header scroll listener
   useEffect(() => {
     const handleScroll = () => {
@@ -989,7 +1002,14 @@ export default function LandingPage() {
                   <svg className="ic">
                     <use href="#i-dash" />
                   </svg>
-                  <span>{t.demo.merchantTab} (POS الكاونتر)</span>
+                  <span>
+                    {t.demo.merchantTab}{" "}
+                    {locale === "fr"
+                      ? "(POS Comptoir)"
+                      : locale === "es"
+                      ? "(POS Mostrador)"
+                      : "(POS الكاونتر)"}
+                  </span>
                 </div>
                 <div className={`pos-sync-pill ${isSyncing ? "syncing" : ""}`}>
                   <span className="sync-dot pulse" />
@@ -1073,7 +1093,13 @@ export default function LandingPage() {
                 <div className="pos-deck-head">
                   <div className="pos-deck-title">
                     <svg className="ic"><use href="#i-bolt" /></svg>
-                    <b>عمليات الكاشير المباشرة (جرّب بنفسك):</b>
+                    <b>
+                      {locale === "fr"
+                        ? "Opérations caisse en direct (testez vous-même) :"
+                        : locale === "es"
+                        ? "Operaciones de caja en vivo (pruébelo usted mismo):"
+                        : "عمليات الكاشير المباشرة (جرّب بنفسك):"}
+                    </b>
                   </div>
                   <span className="pos-live-tag">Live POS</span>
                 </div>
@@ -1109,7 +1135,13 @@ export default function LandingPage() {
                         ? t.demo.cashbackAction
                         : `${t.demo.stampAction} (+1)`}
                     </b>
-                    <small>اضغط لإرسال الختم لمحفظة هاتف العميل فوراً</small>
+                    <small>
+                      {locale === "fr"
+                        ? "Cliquez pour envoyer au portefeuille du client"
+                        : locale === "es"
+                        ? "Haga clic para enviar a la billetera del cliente"
+                        : "اضغط لإرسال الختم لمحفظة هاتف العميل فوراً"}
+                    </small>
                   </span>
                   <span className="p-c-badge">⚡</span>
                 </button>
@@ -1469,6 +1501,10 @@ export default function LandingPage() {
                             {demoLoyaltyType === "STAMPS"
                               ? stampsCount >= 5
                                 ? t.pass.rewardUnlockedTitle
+                                : locale === "fr"
+                                ? `${5 - stampsCount} tampons`
+                                : locale === "es"
+                                ? `${5 - stampsCount} sellos`
                                 : `${5 - stampsCount} أختام`
                               : `${cashbackBalance.toFixed(2)} DH`}
                           </b>
@@ -1578,18 +1614,42 @@ export default function LandingPage() {
                             </div>
                             <div className="feed">
                               <div>
-                                <i>ك</i>
-                                <span>كريم ب. (طابع جديد)</span>
-                                <small>الآن</small>
+                                <i>{locale === "fr" || locale === "es" ? "K" : "ك"}</i>
+                                <span>
+                                  {locale === "fr"
+                                    ? "Karim B. (Nouveau tampon)"
+                                    : locale === "es"
+                                    ? "Karim B. (Nuevo sello)"
+                                    : "كريم ب. (طابع جديد)"}
+                                </span>
+                                <small>
+                                  {locale === "fr"
+                                    ? "Maintenant"
+                                    : locale === "es"
+                                    ? "Ahora"
+                                    : "الآن"}
+                                </small>
                               </div>
                               <div>
-                                <i>س</i>
-                                <span>سارة م. (مكافأة 5/5) 🎉</span>
+                                <i>{locale === "fr" || locale === "es" ? "S" : "س"}</i>
+                                <span>
+                                  {locale === "fr"
+                                    ? "Sara M. (Récompense 5/5) 🎉"
+                                    : locale === "es"
+                                    ? "Sara M. (Recompensa 5/5) 🎉"
+                                    : "سارة م. (مكافأة 5/5) 🎉"}
+                                </span>
                                 <small>14:10</small>
                               </div>
                               <div>
-                                <i>ي</i>
-                                <span>ياسين ع. (انضمام جديد)</span>
+                                <i>{locale === "fr" || locale === "es" ? "Y" : "ي"}</i>
+                                <span>
+                                  {locale === "fr"
+                                    ? "Yassine A. (Nouveau membre)"
+                                    : locale === "es"
+                                    ? "Yassine A. (Nuevo miembro)"
+                                    : "ياسين ع. (انضمام جديد)"}
+                                </span>
                                 <small>12:45</small>
                               </div>
                             </div>
@@ -1612,32 +1672,32 @@ export default function LandingPage() {
                           <div className="cl">
                             {[
                               {
-                                av: "ك",
-                                nm: "كريم بناني",
+                                av: locale === "fr" || locale === "es" ? "K" : "ك",
+                                nm: locale === "fr" || locale === "es" ? "Karim Bennani" : "كريم بناني",
                                 ph: "06 61 •• •• 42",
                                 st: "3/5",
                                 tag: "p-on",
                                 tagT: t.merchant.statusActive,
                               },
                               {
-                                av: "س",
-                                nm: "سارة مجيد",
+                                av: locale === "fr" || locale === "es" ? "S" : "س",
+                                nm: locale === "fr" || locale === "es" ? "Sara Majid" : "سارة مجيد",
                                 ph: "06 62 •• •• 18",
                                 st: "5/5 🎁",
                                 tag: "p-vip",
                                 tagT: t.merchant.statusVip,
                               },
                               {
-                                av: "م",
-                                nm: "مهدي العلمي",
+                                av: locale === "fr" || locale === "es" ? "M" : "م",
+                                nm: locale === "fr" || locale === "es" ? "Mehdi Alami" : "مهدي العلمي",
                                 ph: "06 63 •• •• 90",
                                 st: "2/5",
                                 tag: "p-off",
                                 tagT: t.merchant.statusQuiet,
                               },
                               {
-                                av: "ف",
-                                nm: "فاطمة الزهراء",
+                                av: locale === "fr" || locale === "es" ? "F" : "ف",
+                                nm: locale === "fr" || locale === "es" ? "Fatima Zahra" : "فاطمة الزهراء",
                                 ph: "06 70 •• •• 33",
                                 st: "4/5",
                                 tag: "p-on",
@@ -1814,7 +1874,11 @@ export default function LandingPage() {
                                       })
                                     }
                                   >
-                                    معاينة
+                                    {locale === "fr"
+                                      ? "Aperçu"
+                                      : locale === "es"
+                                      ? "Vista"
+                                      : "معاينة"}
                                   </button>
                                 </small>
                               </div>
@@ -1848,7 +1912,11 @@ export default function LandingPage() {
                                       })
                                     }
                                   >
-                                    معاينة
+                                    {locale === "fr"
+                                      ? "Aperçu"
+                                      : locale === "es"
+                                      ? "Vista"
+                                      : "معاينة"}
                                   </button>
                                 </small>
                               </div>
@@ -1882,7 +1950,11 @@ export default function LandingPage() {
                                       })
                                     }
                                   >
-                                    معاينة
+                                    {locale === "fr"
+                                      ? "Aperçu"
+                                      : locale === "es"
+                                      ? "Vista"
+                                      : "معاينة"}
                                   </button>
                                 </small>
                               </div>
@@ -1916,7 +1988,11 @@ export default function LandingPage() {
                                       })
                                     }
                                   >
-                                    معاينة
+                                    {locale === "fr"
+                                      ? "Aperçu"
+                                      : locale === "es"
+                                      ? "Vista"
+                                      : "معاينة"}
                                   </button>
                                 </small>
                               </div>
@@ -2007,7 +2083,13 @@ export default function LandingPage() {
                             <div className="nb">
                               <div className="nh">
                                 <b>{ownerPeek.title}</b>
-                                <small>الآن</small>
+                                <small>
+                                  {locale === "fr"
+                                    ? "Maintenant"
+                                    : locale === "es"
+                                    ? "Ahora"
+                                    : "الآن"}
+                                </small>
                               </div>
                               <div className="nt">{ownerPeek.body}</div>
                             </div>
@@ -2042,7 +2124,13 @@ export default function LandingPage() {
               <div className="counter-mobile-deck">
                 <div className="m-deck-caption">
                   <span className="m-pulse-dot" />
-                  <b>كاونتر التاجر: انقر للتفاعل المباشر مع البطاقة</b>
+                  <b>
+                    {locale === "fr"
+                      ? "Comptoir commerçant : Cliquez pour interagir en direct"
+                      : locale === "es"
+                      ? "Mostrador del comerciante: Haga clic para interactuar"
+                      : "كاونتر التاجر: انقر للتفاعل المباشر مع البطاقة"}
+                  </b>
                 </div>
                 <button
                   type="button"
@@ -2142,7 +2230,13 @@ export default function LandingPage() {
                 <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                <span>معتمد على Apple Wallet و Google Wallet • بدون تطبيقات للتحميل</span>
+                <span>
+                  {locale === "fr"
+                    ? "Certifié Apple Wallet & Google Wallet • Sans aucune application à télécharger"
+                    : locale === "es"
+                    ? "Certificado Apple Wallet y Google Wallet • Sin apps para descargar"
+                    : "معتمد على Apple Wallet و Google Wallet • بدون تطبيقات للتحميل"}
+                </span>
               </div>
 
               {/* Smart Nudge */}
@@ -2252,7 +2346,13 @@ export default function LandingPage() {
                   <div className="radar-grid-bg" />
                   <div className="radar-concentric" />
                   <div className="radar-sweep" />
-                  <span className="radar-dist-tag lat">85m • داخل نطاق المحل</span>
+                  <span className="radar-dist-tag lat">
+                    {locale === "fr"
+                      ? "85m • À portée du commerce"
+                      : locale === "es"
+                      ? "85m • Dentro del alcance"
+                      : "85m • داخل نطاق المحل"}
+                  </span>
                   <div className="radar-center-pin">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
@@ -2273,7 +2373,13 @@ export default function LandingPage() {
                   <div className="nb">
                     <div className="nh">
                       <b>{t.engines.radarLockTitle}</b>
-                      <small>الآن</small>
+                      <small>
+                        {locale === "fr"
+                          ? "Maintenant"
+                          : locale === "es"
+                          ? "Ahora"
+                          : "الآن"}
+                      </small>
                     </div>
                     <div className="nt">{t.engines.radarLockBody}</div>
                   </div>
@@ -2307,12 +2413,30 @@ export default function LandingPage() {
                   <div className="score-left">
                     <b className="score-num lat">4.9</b>
                     <div className="score-stars">★★★★★</div>
-                    <small className="score-count">284 تقييم موثق على خرائط Google</small>
+                    <small className="score-count">
+                      {locale === "fr"
+                        ? "284 avis vérifiés sur Google Maps"
+                        : locale === "es"
+                        ? "284 reseñas verificadas en Google Maps"
+                        : "284 تقييم موثق على خرائط Google"}
+                    </small>
                   </div>
                   <div className="score-badge">
-                    <span className="score-pill">قبل Walink: 3.8 ★</span>
+                    <span className="score-pill">
+                      {locale === "fr"
+                        ? "Avant Walink : 3.8 ★"
+                        : locale === "es"
+                        ? "Antes de Walink: 3.8 ★"
+                        : "قبل Walink: 3.8 ★"}
+                    </span>
                     <span className="score-arrow">➔</span>
-                    <span className="score-pill success">مع Walink: 4.9 ★</span>
+                    <span className="score-pill success">
+                      {locale === "fr"
+                        ? "Avec Walink : 4.9 ★"
+                        : locale === "es"
+                        ? "Con Walink: 4.9 ★"
+                        : "مع Walink: 4.9 ★"}
+                    </span>
                   </div>
                 </div>
 
@@ -2328,7 +2452,13 @@ export default function LandingPage() {
                   <div className="nb">
                     <div className="nh">
                       <b>{t.engines.reviewsLockTitle}</b>
-                      <small>الآن</small>
+                      <small>
+                        {locale === "fr"
+                          ? "Maintenant"
+                          : locale === "es"
+                          ? "Ahora"
+                          : "الآن"}
+                      </small>
                     </div>
                     <div className="nt">{t.engines.reviewsLockBody}</div>
                   </div>
@@ -2360,23 +2490,71 @@ export default function LandingPage() {
               <div className="timeline-showcase">
                 <div className="retention-flow">
                   <div className="flow-step">
-                    <span className="f-day">اليوم 1</span>
-                    <b className="f-act">زيارة وشراء</b>
+                    <span className="f-day">
+                      {locale === "fr"
+                        ? "Jour 1"
+                        : locale === "es"
+                        ? "Día 1"
+                        : "اليوم 1"}
+                    </span>
+                    <b className="f-act">
+                      {locale === "fr"
+                        ? "Visite & achat"
+                        : locale === "es"
+                        ? "Visita y compra"
+                        : "زيارة وشراء"}
+                    </b>
                   </div>
                   <span className="flow-sep">➔</span>
                   <div className="flow-step warn">
-                    <span className="f-day">اليوم 15</span>
-                    <b className="f-act">غياب غير معتاد</b>
+                    <span className="f-day">
+                      {locale === "fr"
+                        ? "Jour 15"
+                        : locale === "es"
+                        ? "Día 15"
+                        : "اليوم 15"}
+                    </span>
+                    <b className="f-act">
+                      {locale === "fr"
+                        ? "Absence inattendue"
+                        : locale === "es"
+                        ? "Ausencia inusual"
+                        : "غياب غير معتاد"}
+                    </b>
                   </div>
                   <span className="flow-sep">➔</span>
                   <div className="flow-step trigger">
-                    <span className="f-day">آلياً ⚡</span>
-                    <b className="f-act">إرسال عرض</b>
+                    <span className="f-day">
+                      {locale === "fr"
+                        ? "Auto ⚡"
+                        : locale === "es"
+                        ? "Auto ⚡"
+                        : "آلياً ⚡"}
+                    </span>
+                    <b className="f-act">
+                      {locale === "fr"
+                        ? "Envoi offre"
+                        : locale === "es"
+                        ? "Envío oferta"
+                        : "إرسال عرض"}
+                    </b>
                   </div>
                   <span className="flow-sep">➔</span>
                   <div className="flow-step success">
-                    <span className="f-day">اليوم 16</span>
-                    <b className="f-act">عودة الزبون 🎉</b>
+                    <span className="f-day">
+                      {locale === "fr"
+                        ? "Jour 16"
+                        : locale === "es"
+                        ? "Día 16"
+                        : "اليوم 16"}
+                    </span>
+                    <b className="f-act">
+                      {locale === "fr"
+                        ? "Retour client 🎉"
+                        : locale === "es"
+                        ? "Cliente regresa 🎉"
+                        : "عودة الزبون 🎉"}
+                    </b>
                   </div>
                 </div>
 
@@ -2392,7 +2570,13 @@ export default function LandingPage() {
                   <div className="nb">
                     <div className="nh">
                       <b>{t.engines.winbackLockTitle}</b>
-                      <small>الآن</small>
+                      <small>
+                        {locale === "fr"
+                          ? "Maintenant"
+                          : locale === "es"
+                          ? "Ahora"
+                          : "الآن"}
+                      </small>
                     </div>
                     <div className="nt">{t.engines.winbackLockBody}</div>
                   </div>
@@ -2458,7 +2642,13 @@ export default function LandingPage() {
                   <div className="nb">
                     <div className="nh">
                       <b>{t.engines.pushLockTitle}</b>
-                      <small>الآن</small>
+                      <small>
+                        {locale === "fr"
+                          ? "Maintenant"
+                          : locale === "es"
+                          ? "Ahora"
+                          : "الآن"}
+                      </small>
                     </div>
                     <div className="nt">{t.engines.pushLockBody}</div>
                   </div>

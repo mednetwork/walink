@@ -120,7 +120,13 @@ export function LanguageSwitcher({
           aria-orientation="vertical"
         >
           <div className="lang-menu-header">
-            <span>اختر لغة العرض • Langue</span>
+            <span>
+              {locale === "fr"
+                ? "Choisir la langue"
+                : locale === "es"
+                ? "Seleccionar idioma"
+                : "اختر لغة العرض"}
+            </span>
           </div>
           <div className="lang-menu-list">
             {LANGUAGES.map((lang) => {
