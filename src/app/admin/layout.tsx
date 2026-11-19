@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ShieldCheck,
   Store,
@@ -12,6 +12,7 @@ import {
   Radio,
   Sparkles,
   Target,
+  LogOut,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
@@ -21,6 +22,22 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.warn("Logout error:", err);
+    } finally {
+      router.push("/admin/login");
+      router.refresh();
+    }
+  };
 
   const navLinks = [
     {
@@ -117,6 +134,17 @@ export default function AdminLayout({
               <span className="hidden sm:inline">إضافة متجر جديد</span>
               <span className="sm:hidden">إضافة</span>
             </Link>
+
+            {/* Logout Button */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+              title="تسجيل الخروج من لوحة الإدارة"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">خروج</span>
+            </button>
           </div>
         </div>
       </header>
