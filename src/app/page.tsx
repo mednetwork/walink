@@ -2477,6 +2477,19 @@ export default function LandingPage() {
             <p className="lead">{t.compare.subtitle}</p>
           </div>
 
+          <div className="cmp-mobile-hint">
+            <svg className="ic">
+              <use href="#i-bolt" />
+            </svg>
+            <span>
+              {locale === "fr"
+                ? "← Faites défiler horizontalement pour comparer →"
+                : locale === "es"
+                ? "← Desliza horizontalmente para comparar →"
+                : "← اسحب أفقياً لمقارنة الميزات بالكامل →"}
+            </span>
+          </div>
+
           <div className="surface cmp-wrap">
             <table className="cmp">
               <thead>
