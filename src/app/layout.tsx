@@ -1,28 +1,6 @@
 import type { Metadata } from "next";
-import { Noto_Sans_Arabic, Plus_Jakarta_Sans, Inter } from "next/font/google";
 import { I18nProvider } from "@/lib/i18n/context";
 import "./globals.css";
-
-const notoSansArabic = Noto_Sans_Arabic({
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-noto-arabic",
-  display: "swap",
-});
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-plus-jakarta",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Walink (والينك) | بطاقات الوفاء الرقمية للمحلات التجارية بالمغرب",
@@ -39,11 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ar"
-      dir="rtl"
-      className={`${notoSansArabic.variable} ${plusJakartaSans.variable} ${inter.variable}`}
-    >
+    <html lang="ar" dir="rtl">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -60,4 +34,3 @@ export default function RootLayout({
     </html>
   );
 }
-

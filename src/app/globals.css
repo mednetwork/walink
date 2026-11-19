@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 :root {
+  --font-noto-arabic: "Noto Sans Arabic", system-ui, sans-serif;
+  --font-plus-jakarta: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-inter: "Inter", system-ui, sans-serif;
   --background: #F0F2F5;
   --foreground: #111B21;
   --ff: "Google Sans", "Plus Jakarta Sans", "Noto Sans Arabic", "Inter", system-ui, -apple-system, sans-serif;
