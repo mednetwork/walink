@@ -84,18 +84,6 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#E9EDEF]">
-        <div>
-          <h1 className="text-2xl font-black text-[#111B21] tracking-tight">
-            لوحة الإدارة المركزية (Super Admin)
-          </h1>
-          <p className="text-xs text-[#54656F] mt-1">
-            متابعة شاملة لجميع المحلات التجارية، البطاقات المفعلة، والأرصدة في المغرب 🇲🇦
-          </p>
-        </div>
-      </div>
-
       {/* Database Warning Alert if connection failed */}
       {dbError && (
         <div
@@ -106,7 +94,7 @@ export default async function AdminDashboardPage() {
           <div className="flex-1 leading-relaxed">
             <h2 className="font-bold text-sm text-amber-900">تنبيه اتصال بقاعدة البيانات</h2>
             <p className="mt-1 text-amber-800">
-              تعذر جلب بيانات المحلات مؤقتاً:{" "}
+              تعذر جلب بيانات المتاجر مؤقتاً:{" "}
               <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-[11px] text-amber-950">
                 {dbError}
               </code>

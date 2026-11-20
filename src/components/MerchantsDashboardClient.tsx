@@ -24,13 +24,12 @@ import {
   XCircle,
   QrCode,
   MapPin,
-  Phone,
-  KeyRound,
   Smartphone,
 } from "lucide-react";
 import { NICHE_PRESETS, PLANS_INFO } from "@/lib/constants";
 import StandPreviewModal from "@/components/StandPreviewModal";
 import TopupModal from "@/components/TopupModal";
+import { useI18n } from "@/lib/i18n/context";
 
 interface MerchantData {
   id: string;
@@ -77,6 +76,7 @@ export default function MerchantsDashboardClient({
   initialMerchants,
   initialMetrics,
 }: MerchantsDashboardClientProps) {
+  const { t, isRTL } = useI18n();
   const [merchants, setMerchants] = useState<MerchantData[]>(initialMerchants);
   const [metrics, setMetrics] = useState(initialMetrics);
   const [searchTerm, setSearchTerm] = useState("");
@@ -87,6 +87,58 @@ export default function MerchantsDashboardClient({
   const [standModalMerchant, setStandModalMerchant] = useState<MerchantData | null>(null);
   const [topupModalMerchant, setTopupModalMerchant] = useState<MerchantData | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const d = t.admin?.dashboard || {
+    pageTitle: "لوحة الإدارة المركزية (Super Admin)",
+    pageSubtitle: "متابعة شاملة لجميع المتاجر، البطاقات المفعلة، والأرصدة في المغرب 🇲🇦",
+    kpiMerchants: "إجمالي المتاجر المشتركة",
+    kpiMerchantsActive: "نشط حالياً",
+    kpiMerchantsSub: "المقاهي، المطاعم، وصالونات الحلاقة",
+    kpiCustomers: "إجمالي البطاقات المفعلة",
+    kpiCustomersUnit: "عميل دائم",
+    kpiCustomersSub: "عبر Apple Wallet و Google Wallet و Web Pass",
+    kpiTransactions: "مجموع الزيارات والأختام",
+    kpiTransactionsUnit: "عملية مسجلة",
+    kpiTransactionsSub: "أختام مضافة ومكافآت مستفاد منها",
+    kpiCredits: "رصيد النقاط الموزع",
+    kpiCreditsUnit: "رصيد متاح",
+    kpiCreditsSub: "جاهز لإشعارات الرادار وحملات الاسترجاع",
+    searchPlaceholder: "بحث باسم المتجر، الرابط (Slug)، أو المدينة...",
+    allNiches: "كل الأنشطة التجارية",
+    allPlans: "كل الباقات",
+    merchantsListTitle: "قائمة المتاجر الشريكة",
+    noMerchants: "لا توجد متاجر مطابقة",
+    noMerchantsDesc: "جرّب تغيير كلمات البحث أو الفلاتر، أو قم بإضافة متجر جديد الآن.",
+    addMerchantBtn: "متجر جديد",
+    clients: "العملاء",
+    visits: "الزيارات",
+    credits: "الرصيد",
+    reward: "المكافأة:",
+    stampsRequired: "الأختام المطلوبة:",
+    stampsCount: "أختام",
+    topupCredits: "شحن الرصيد",
+    standNfc: "حامل الطاولة (NFC)",
+    viewLivePass: "معاينة بطاقة حية (Live Pass)",
+    registerFirstCustomer: "تسجيل أول عميل للبطاقة",
+    merchantDashboard: "لوحة المتجر",
+    customerLink: "رابط العملاء",
+    editMerchant: "تعديل",
+    enableMerchant: "تفعيل المتجر",
+    disableMerchant: "تعطيل المتجر",
+    activeStatus: "نشط",
+    inactiveStatus: "معطل",
+    pinLabel: "رمز PIN:",
+    nicheCafe: "المقاهي (Café)",
+    nicheBarber: "الحلاقة (Barber)",
+    nicheSnack: "المطاعم والوجبات السريعة (Snack)",
+    nicheWash: "غسيل السيارات (Car Wash)",
+    nicheBeauty: "صالونات التجميل (Beauty)",
+    nicheLaundry: "المصابن (Laundry)",
+    nicheOther: "أنشطة أخرى",
+    planStarter: "باقة STARTER",
+    planGrowth: "باقة GROWTH",
+    planMulti: "باقة MULTI",
+  };
 
   const filteredMerchants = merchants.filter((m) => {
     const matchesSearch =
@@ -109,7 +161,7 @@ export default function MerchantsDashboardClient({
         body: JSON.stringify({ isActive: !currentStatus }),
       });
 
-      if (!res.ok) throw new Error("فشل تحديث حالة المحل");
+      if (!res.ok) throw new Error("فشل تحديث حالة المتجر");
 
       setMerchants((prev) =>
         prev.map((m) => (m.id === merchantId ? { ...m, isActive: !currentStatus } : m))
@@ -123,7 +175,7 @@ export default function MerchantsDashboardClient({
       }));
     } catch (err) {
       console.error("Toggle status error:", err);
-      alert("وقع خطأ أثناء تغيير حالة المحل");
+      alert("وقع خطأ أثناء تغيير حالة المتجر");
     } finally {
       setTogglingId(null);
     }
@@ -145,13 +197,14 @@ export default function MerchantsDashboardClient({
 
   const getNicheBadge = (niche: string) => {
     const preset = NICHE_PRESETS[niche] || NICHE_PRESETS.other;
+    const label = (t.niches && t.niches[niche]?.label) || preset.label;
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21]">
         <span
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: preset.color }}
         />
-        <span>{preset.label}</span>
+        <span>{label}</span>
       </span>
     );
   };
@@ -168,14 +221,26 @@ export default function MerchantsDashboardClient({
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+      {/* Dynamic Localized Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-[#111B21] tracking-tight">
+            {d.pageTitle}
+          </h1>
+          <p className="text-xs text-[#54656F] mt-1">
+            {d.pageSubtitle}
+          </p>
+        </div>
+      </div>
+
       {/* 4 Light KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Merchants */}
-        <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
+        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#54656F]">
-              إجمالي المحلات المشتركة
+              {d.kpiMerchants}
             </span>
             <div className="w-10 h-10 rounded-2xl bg-[#008069]/10 text-[#008069] border border-[#008069]/20 flex items-center justify-center shadow-sm">
               <Store className="w-5 h-5" />
@@ -186,19 +251,19 @@ export default function MerchantsDashboardClient({
               {metrics.totalMerchants}
             </span>
             <span className="text-xs text-[#008069] font-bold">
-              ({metrics.activeMerchants} نشط حالياً)
+              ({metrics.activeMerchants} {d.kpiMerchantsActive})
             </span>
           </div>
           <p className="mt-2 text-[11px] text-[#54656F]">
-            محلات المقاهي، الحلاقة، والمطاعم
+            {d.kpiMerchantsSub}
           </p>
         </div>
 
         {/* Card 2: Customers */}
-        <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
+        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#54656F]">
-              إجمالي الكارطات المفعّلة
+              {d.kpiCustomers}
             </span>
             <div className="w-10 h-10 rounded-2xl bg-[#00A884]/10 text-[#008069] border border-[#00A884]/20 flex items-center justify-center shadow-sm">
               <Users className="w-5 h-5" />
@@ -208,18 +273,18 @@ export default function MerchantsDashboardClient({
             <span className="text-3xl font-bold font-mono text-[#111B21]">
               {metrics.totalCustomers.toLocaleString()}
             </span>
-            <span className="text-xs text-[#008069] font-bold">زبون دائم</span>
+            <span className="text-xs text-[#008069] font-bold">{d.kpiCustomersUnit}</span>
           </div>
           <p className="mt-2 text-[11px] text-[#54656F]">
-            عبر Apple Wallet و Google Wallet و Web Pass
+            {d.kpiCustomersSub}
           </p>
         </div>
 
         {/* Card 3: Visits & Stamps */}
-        <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
+        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#54656F]">
-              مجموع الزيارات والطوابع
+              {d.kpiTransactions}
             </span>
             <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center justify-center shadow-sm">
               <Award className="w-5 h-5" />
@@ -229,18 +294,18 @@ export default function MerchantsDashboardClient({
             <span className="text-3xl font-bold font-mono text-[#111B21]">
               {metrics.totalTransactions.toLocaleString()}
             </span>
-            <span className="text-xs text-purple-700 font-bold">عملية مسجلة</span>
+            <span className="text-xs text-purple-700 font-bold">{d.kpiTransactionsUnit}</span>
           </div>
           <p className="mt-2 text-[11px] text-[#54656F]">
-            طوابع مضافة ومكافآت مستفاد منها
+            {d.kpiTransactionsSub}
           </p>
         </div>
 
         {/* Card 4: Distributed Credits */}
-        <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
+        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#54656F]">
-              رصيد الكريدي الموزع
+              {d.kpiCredits}
             </span>
             <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center shadow-sm">
               <Coins className="w-5 h-5" />
@@ -250,10 +315,10 @@ export default function MerchantsDashboardClient({
             <span className="text-3xl font-bold font-mono text-amber-700">
               {metrics.totalCredits.toLocaleString()}
             </span>
-            <span className="text-xs text-amber-800 font-bold">كريدي متاح</span>
+            <span className="text-xs text-amber-800 font-bold">{d.kpiCreditsUnit}</span>
           </div>
           <p className="mt-2 text-[11px] text-[#54656F]">
-            جاهز لإشعارات الرادار وحملات الاسترجاع
+            {d.kpiCreditsSub}
           </p>
         </div>
       </div>
@@ -261,14 +326,14 @@ export default function MerchantsDashboardClient({
       {/* Control Bar: Search & Filter */}
       <div className="bg-white p-4 rounded-3xl border border-[#E9EDEF] shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="w-full md:w-96 relative">
-          <Search className="w-4 h-4 absolute right-3.5 top-3.5 text-[#54656F]" />
+          <Search className="w-4 h-4 absolute start-3.5 top-3.5 text-[#54656F]" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="بحث باسم المحل، الرابط، أو المدينة"
-            placeholder="بحث باسم المحل، الرابط (Slug)، أو المدينة..."
-            className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-2xl pr-10 pl-4 py-2.5 text-xs text-[#111B21] placeholder-[#54656F] focus:outline-none focus:border-[#008069] focus:bg-white transition"
+            aria-label={d.searchPlaceholder}
+            placeholder={d.searchPlaceholder}
+            className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-2xl ps-10 pe-4 py-2.5 text-xs text-[#111B21] placeholder-[#54656F] focus:outline-none focus:border-[#008069] focus:bg-white transition"
           />
         </div>
 
@@ -277,36 +342,38 @@ export default function MerchantsDashboardClient({
           <select
             value={selectedNiche}
             onChange={(e) => setSelectedNiche(e.target.value)}
+            aria-label={d.allNiches}
             className="bg-[#F0F2F5] border border-[#D1D7DB] rounded-2xl px-3 py-2 text-xs text-[#111B21] focus:outline-none focus:border-[#008069]"
           >
-            <option value="all">كل الأنشطة</option>
-            <option value="cafe">المقاهي (Café)</option>
-            <option value="barber">الحلاقة (Barber)</option>
-            <option value="snack">المطاعم والسناك (Snack)</option>
-            <option value="wash">غسيل السيارات (Car Wash)</option>
-            <option value="beauty">صالونات التجميل (Beauty)</option>
-            <option value="laundry">المصابن (Laundry)</option>
-            <option value="other">أنشطة أخرى</option>
+            <option value="all">{d.allNiches}</option>
+            <option value="cafe">{d.nicheCafe}</option>
+            <option value="barber">{d.nicheBarber}</option>
+            <option value="snack">{d.nicheSnack}</option>
+            <option value="wash">{d.nicheWash}</option>
+            <option value="beauty">{d.nicheBeauty}</option>
+            <option value="laundry">{d.nicheLaundry}</option>
+            <option value="other">{d.nicheOther}</option>
           </select>
 
           {/* Plan Filter */}
           <select
             value={selectedPlan}
             onChange={(e) => setSelectedPlan(e.target.value)}
+            aria-label={d.allPlans}
             className="bg-[#F0F2F5] border border-[#D1D7DB] rounded-2xl px-3 py-2 text-xs text-[#111B21] focus:outline-none focus:border-[#008069]"
           >
-            <option value="all">كل الباقات</option>
-            <option value="STARTER">باقة STARTER</option>
-            <option value="GROWTH">باقة GROWTH</option>
-            <option value="MULTI">باقة MULTI</option>
+            <option value="all">{d.allPlans}</option>
+            <option value="STARTER">{d.planStarter}</option>
+            <option value="GROWTH">{d.planGrowth}</option>
+            <option value="MULTI">{d.planMulti}</option>
           </select>
 
           <Link
             href="/admin/merchants/new"
-            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#008069]/20 transition whitespace-nowrap mr-auto md:mr-0"
+            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#008069]/20 transition whitespace-nowrap ms-auto md:ms-0"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>محل جديد</span>
+            <span>{d.addMerchantBtn}</span>
           </Link>
         </div>
       </div>
@@ -315,7 +382,7 @@ export default function MerchantsDashboardClient({
       <div className="space-y-4" id="merchants">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-[#111B21] flex items-center gap-2">
-            <span>قائمة المحلات الشريكة</span>
+            <span>{d.merchantsListTitle}</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-[#E9EDEF] text-[#54656F] font-mono">
               {filteredMerchants.length}
             </span>
@@ -325,16 +392,16 @@ export default function MerchantsDashboardClient({
         {filteredMerchants.length === 0 ? (
           <div className="bg-white p-12 rounded-3xl border border-[#E9EDEF] text-center shadow-sm">
             <Store className="w-12 h-12 text-[#54656F]/30 mx-auto mb-3" />
-            <h3 className="font-bold text-base text-[#111B21]">لا توجد محلات مطابقة</h3>
+            <h3 className="font-bold text-base text-[#111B21]">{d.noMerchants}</h3>
             <p className="text-xs text-[#54656F] mt-1 max-w-sm mx-auto">
-              جرب تغيير كلمات البحث أو الفلاتر، أو قم بإضافة محل جديد الآن.
+              {d.noMerchantsDesc}
             </p>
             <Link
               href="/admin/merchants/new"
               className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] text-white font-bold text-xs shadow-sm transition"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>إضافة محل جديد</span>
+              <span>{d.addMerchantBtn}</span>
             </Link>
           </div>
         ) : (
@@ -378,8 +445,8 @@ export default function MerchantsDashboardClient({
                       type="button"
                       onClick={() => handleToggleStatus(merchant.id, merchant.isActive)}
                       disabled={togglingId === merchant.id}
-                      title={merchant.isActive ? "تعطيل المحل" : "تفعيل المحل"}
-                      aria-label={merchant.isActive ? "تعطيل المحل" : "تفعيل المحل"}
+                      title={merchant.isActive ? d.disableMerchant : d.enableMerchant}
+                      aria-label={merchant.isActive ? d.disableMerchant : d.enableMerchant}
                       className={`p-1.5 rounded-xl border transition ${
                         merchant.isActive
                           ? "bg-emerald-50 border-emerald-300 text-emerald-800"
@@ -399,26 +466,26 @@ export default function MerchantsDashboardClient({
                     {getNicheBadge(merchant.niche)}
                     {getPlanBadge(merchant.plan)}
                     <span className="text-[11px] font-mono text-[#54656F] bg-[#F0F2F5] px-2 py-0.5 rounded-lg border border-[#E9EDEF]">
-                      PIN: {merchant.pinCode}
+                      {d.pinLabel} {merchant.pinCode}
                     </span>
                   </div>
 
                   {/* Merchant Stats Summary */}
                   <div className="grid grid-cols-3 gap-2 p-3 bg-[#F0F2F5] rounded-2xl border border-[#E9EDEF] text-center my-3">
                     <div>
-                      <span className="text-[10px] text-[#54656F] block">الكليان</span>
+                      <span className="text-[10px] text-[#54656F] block">{d.clients}</span>
                       <span className="font-mono font-bold text-sm text-[#111B21]">
                         {merchant._count?.customers || 0}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-[#54656F] block">الزيارات</span>
+                      <span className="text-[10px] text-[#54656F] block">{d.visits}</span>
                       <span className="font-mono font-bold text-sm text-[#111B21]">
                         {merchant._count?.transactions || 0}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-[#54656F] block">الكريدي</span>
+                      <span className="text-[10px] text-[#54656F] block">{d.credits}</span>
                       <span className="font-mono font-bold text-sm text-amber-700">
                         {merchant.credits.toLocaleString()}
                       </span>
@@ -428,15 +495,15 @@ export default function MerchantsDashboardClient({
                   {/* Reward & Stamps Info */}
                   <div className="p-3 bg-[#F0F2F5] rounded-2xl border border-[#E9EDEF] text-xs space-y-1.5 mb-4">
                     <div className="flex items-center justify-between text-[#111B21]">
-                      <span className="text-[#54656F]">المكافأة:</span>
+                      <span className="text-[#54656F]">{d.reward}</span>
                       <span className="font-bold text-amber-800">
                         {merchant.rewardName}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[#111B21]">
-                      <span className="text-[#54656F]">الطوابع المطلوبة:</span>
+                      <span className="text-[#54656F]">{d.stampsRequired}</span>
                       <span className="font-mono font-bold text-[#111B21]">
-                        {merchant.stampsRequired} طوابع
+                        {merchant.stampsRequired} {d.stampsCount}
                       </span>
                     </div>
                   </div>
@@ -452,7 +519,7 @@ export default function MerchantsDashboardClient({
                       className="w-full py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
                     >
                       <Coins className="w-3.5 h-3.5" />
-                      <span>شحن الكريدي</span>
+                      <span>{d.topupCredits}</span>
                     </button>
 
                     {/* Stand QR + NFC preview */}
@@ -462,7 +529,7 @@ export default function MerchantsDashboardClient({
                       className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#111B21] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
                     >
                       <QrCode className="w-3.5 h-3.5 text-[#008069]" />
-                      <span>الستاند (NFC)</span>
+                      <span>{d.standNfc}</span>
                     </button>
                   </div>
 
@@ -471,10 +538,10 @@ export default function MerchantsDashboardClient({
                     <Link
                       href={`/pass/${merchant.samplePassSerial}`}
                       className="w-full py-2 px-3 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 border border-[#008069]/20 text-[#008069] font-bold text-xs flex items-center justify-center gap-1.5 transition"
-                      title="عرض بطاقة حية لزبون مسجل"
+                      title={d.viewLivePass}
                     >
                       <Smartphone className="w-3.5 h-3.5 text-[#008069]" />
-                      <span>عرض كارت تجريبية (Live Pass)</span>
+                      <span>{d.viewLivePass}</span>
                     </Link>
                   ) : (
                     <Link
@@ -482,7 +549,7 @@ export default function MerchantsDashboardClient({
                       className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#54656F] text-xs flex items-center justify-center gap-1.5 transition font-medium"
                     >
                       <Smartphone className="w-3.5 h-3.5" />
-                      <span>تسجيل أول زبون للكارط</span>
+                      <span>{d.registerFirstCustomer}</span>
                     </Link>
                   )}
 
@@ -491,27 +558,27 @@ export default function MerchantsDashboardClient({
                     <Link
                       href={`/m/${merchant.slug}`}
                       className="text-[#54656F] hover:text-[#008069] font-medium transition flex items-center gap-1"
-                      title="معاينة لوحة تحكم التاجر"
+                      title={d.merchantDashboard}
                     >
-                      <span>لوحة التاجر</span>
+                      <span>{d.merchantDashboard}</span>
                       <ArrowUpRight className="w-3 h-3" />
                     </Link>
 
                     <Link
                       href={`/join/${merchant.slug}`}
                       className="text-[#54656F] hover:text-[#008069] font-medium transition flex items-center gap-1"
-                      title="رابط انضمام الزبائن والكارط"
+                      title={d.customerLink}
                     >
-                      <span>رابط الكليان</span>
+                      <span>{d.customerLink}</span>
                       <ArrowUpRight className="w-3 h-3" />
                     </Link>
 
                     <Link
                       href={`/admin/merchants/${merchant.id}`}
                       className="text-[#54656F] hover:text-[#008069] font-medium transition flex items-center gap-1"
-                      title="تعديل إعدادات المحل"
+                      title={d.editMerchant}
                     >
-                      <span>تعديل</span>
+                      <span>{d.editMerchant}</span>
                       <Edit className="w-3 h-3" />
                     </Link>
                   </div>
@@ -545,4 +612,3 @@ export default function MerchantsDashboardClient({
     </div>
   );
 }
-

@@ -18,6 +18,7 @@ import {
   Server,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useI18n } from "@/lib/i18n/context";
 
 interface AdminSidebarNavProps {
   onClose?: () => void;
@@ -30,6 +31,7 @@ export default function AdminSidebarNav({
 }: AdminSidebarNavProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t, isRTL } = useI18n();
 
   const handleLogout = async () => {
     try {
@@ -43,32 +45,62 @@ export default function AdminSidebarNav({
     }
   };
 
+  const s = t.admin?.sidebar || {
+    mainMenu: "القائمة الرئيسية",
+    dashboard: "لوحة التحكم المركزية",
+    dashboardDesc: "نظرة عامة على المتاجر والأرصدة",
+    automations: "محرك الأتمتة والذكاء",
+    automationsDesc: "رادار القرب، التقييمات، والإشعارات",
+    outreach: "استوديو المبيعات والتسويق",
+    outreachDesc: "توليد كروت الهبوط وحملات العملاء",
+    newMerchant: "إضافة متجر جديد",
+    newMerchantDesc: "تسجيل كافيه، مطعم أو صالون",
+    serverStatus: "خادم الإنتاج",
+    serverConnected: "متصل 99.9%",
+    serverNode: "Casablanca Node 22 (Hostinger Cloud)",
+    quickLinks: "بوابة الزوار والروابط السريعة",
+    developerPortal: "بوابة المطورين والرئيسية",
+    support: "مركز الدعم الفني",
+    terms: "شروط الخدمة",
+    privacy: "سياسة الخصوصية",
+    logout: "تسجيل الخروج من المنصة",
+    closeMenu: "إغلاق القائمة",
+    openMenu: "فتح القائمة الجانبية",
+    superAdminSuite: "Super Admin Suite v2.5",
+    viewWebsite: "عرض الموقع",
+    navHome: "الرئيسية",
+    navAutomations: "الأتمتة",
+    navOutreach: "المبيعات",
+    navNewMerchant: "متجر جديد",
+    addShort: "متجر",
+  };
+
   const mainNavItems = [
     {
       href: "/admin",
-      label: "لوحة التحكم المركزية",
-      description: "نظرة عامة على المتاجر والأرصدة",
+      label: s.dashboard,
+      description: s.dashboardDesc,
       icon: LayoutDashboard,
       active: pathname === "/admin",
     },
     {
       href: "/admin/automations",
-      label: "محرك الأتمتة والذكاء",
-      description: "رادار القرب، التقييمات، والإشعارات",
+      label: s.automations,
+      description: s.automationsDesc,
       icon: Sparkles,
       active: pathname === "/admin/automations",
     },
     {
       href: "/admin/outreach",
-      label: "استوديو المبيعات والتسويق",
-      description: "توليد كروت الهبوط وحملات العملاء",
+      label: s.outreach,
+      description: s.outreachDesc,
       icon: Target,
       active: pathname === "/admin/outreach",
     },
     {
       href: "/admin/merchants/new",
-      label: "إضافة متجر جديد",
-      description: "تسجيل كافيه، مطعم أو صالون",
+      label: s.newMerchant,
+      description: s.newMerchantDesc,
       icon: PlusCircle,
       active: pathname === "/admin/merchants/new",
       highlight: true,
@@ -78,25 +110,25 @@ export default function AdminSidebarNav({
   const quickLinks = [
     {
       href: "/",
-      label: "بوابة المطورين والرئيسية",
+      label: s.developerPortal,
       icon: ExternalLink,
       target: "_blank",
     },
     {
       href: "/support",
-      label: "مركز الدعم الفني",
+      label: s.support,
       icon: HelpCircle,
       target: "_blank",
     },
     {
       href: "/terms",
-      label: "شروط الخدمة",
+      label: s.terms,
       icon: FileText,
       target: "_blank",
     },
     {
       href: "/privacy",
-      label: "سياسة الخصوصية",
+      label: s.privacy,
       icon: Shield,
       target: "_blank",
     },
@@ -124,7 +156,7 @@ export default function AdminSidebarNav({
               </span>
             </div>
             <span className="text-[11px] text-neutral-400 font-medium">
-              Super Admin Suite v2.5
+              {s.superAdminSuite}
             </span>
           </div>
         </Link>
@@ -134,7 +166,7 @@ export default function AdminSidebarNav({
             type="button"
             onClick={onClose}
             className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800/80 transition"
-            aria-label="إغلاق القائمة"
+            aria-label={s.closeMenu}
           >
             <X className="w-5 h-5" />
           </button>
@@ -146,7 +178,7 @@ export default function AdminSidebarNav({
         {/* Core Navigation Group */}
         <div>
           <span className="px-3 text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-2">
-            القائمة الرئيسية
+            {s.mainMenu}
           </span>
           <nav className="space-y-1.5">
             {mainNavItems.map((item) => {
@@ -199,10 +231,10 @@ export default function AdminSidebarNav({
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-neutral-200 flex items-center gap-1.5">
               <Server className="w-3.5 h-3.5 text-[#00A884]" />
-              <span>خادم الإنتاج</span>
+              <span>{s.serverStatus}</span>
             </span>
             <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-              متصل 99.9%
+              {s.serverConnected}
             </span>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-neutral-400">
@@ -210,14 +242,14 @@ export default function AdminSidebarNav({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00A884] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00A884]"></span>
             </span>
-            <span>Casablanca Node 22 (Hostinger Cloud)</span>
+            <span>{s.serverNode}</span>
           </div>
         </div>
 
         {/* Secondary / External Pages Group */}
         <div>
           <span className="px-3 text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-2">
-            بوابة الزوار والروابط السريعة
+            {s.quickLinks}
           </span>
           <nav className="space-y-1">
             {quickLinks.map((link) => {
@@ -265,7 +297,7 @@ export default function AdminSidebarNav({
           className="w-full py-2.5 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98]"
         >
           <LogOut className="w-4 h-4" />
-          <span>تسجيل الخروج من المنصة</span>
+          <span>{s.logout}</span>
         </button>
       </div>
     </div>

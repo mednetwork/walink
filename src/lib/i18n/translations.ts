@@ -302,6 +302,86 @@ export interface TranslationDictionary {
     currencyLabel: string;
     previewStamps: string;
     previewCashback: string;
+    sidebar: {
+      mainMenu: string;
+      dashboard: string;
+      dashboardDesc: string;
+      automations: string;
+      automationsDesc: string;
+      outreach: string;
+      outreachDesc: string;
+      newMerchant: string;
+      newMerchantDesc: string;
+      serverStatus: string;
+      serverConnected: string;
+      serverNode: string;
+      quickLinks: string;
+      developerPortal: string;
+      support: string;
+      terms: string;
+      privacy: string;
+      logout: string;
+      closeMenu: string;
+      openMenu: string;
+      superAdminSuite: string;
+      viewWebsite: string;
+      navHome: string;
+      navAutomations: string;
+      navOutreach: string;
+      navNewMerchant: string;
+      addShort: string;
+    };
+    dashboard: {
+      pageTitle: string;
+      pageSubtitle: string;
+      kpiMerchants: string;
+      kpiMerchantsActive: string;
+      kpiMerchantsSub: string;
+      kpiCustomers: string;
+      kpiCustomersUnit: string;
+      kpiCustomersSub: string;
+      kpiTransactions: string;
+      kpiTransactionsUnit: string;
+      kpiTransactionsSub: string;
+      kpiCredits: string;
+      kpiCreditsUnit: string;
+      kpiCreditsSub: string;
+      searchPlaceholder: string;
+      allNiches: string;
+      allPlans: string;
+      merchantsListTitle: string;
+      noMerchants: string;
+      noMerchantsDesc: string;
+      addMerchantBtn: string;
+      clients: string;
+      visits: string;
+      credits: string;
+      reward: string;
+      stampsRequired: string;
+      stampsCount: string;
+      topupCredits: string;
+      standNfc: string;
+      viewLivePass: string;
+      registerFirstCustomer: string;
+      merchantDashboard: string;
+      customerLink: string;
+      editMerchant: string;
+      enableMerchant: string;
+      disableMerchant: string;
+      activeStatus: string;
+      inactiveStatus: string;
+      pinLabel: string;
+      nicheCafe: string;
+      nicheBarber: string;
+      nicheSnack: string;
+      nicheWash: string;
+      nicheBeauty: string;
+      nicheLaundry: string;
+      nicheOther: string;
+      planStarter: string;
+      planGrowth: string;
+      planMulti: string;
+    };
   };
   niches: Record<
     string,
@@ -680,8 +760,8 @@ export const translations: Record<Locale, TranslationDictionary> = {
       subtitle: "إدارة المتاجر، البطاقات، الحملات الإعلانية، واستوديو المبيعات",
       newMerchantBtn: "+ إضافة متجر جديد",
       automationsLink: "مركز الأتمتة والمهام المجدولة",
-      outreachLink: "استوديو المبيعات وقنص العملاء",
-      loyaltyModeLabel: "نظام الولاء المعتمد للمحل:",
+      outreachLink: "استوديو المبيعات واستقطاب العملاء",
+      loyaltyModeLabel: "نظام الولاء المعتمد للمتجر:",
       modeBoth: "النظامان معاً (العميل يختار عند التسجيل)",
       modeStamps: "نظام الأختام والمكافآت فقط",
       modeCashback: "نظام الكاش باك (%) فقط",
@@ -691,6 +771,86 @@ export const translations: Record<Locale, TranslationDictionary> = {
       currencyLabel: "رمز العملة",
       previewStamps: "معاينة بطاقة الأختام",
       previewCashback: "معاينة بطاقة الكاش باك",
+      sidebar: {
+        mainMenu: "القائمة الرئيسية",
+        dashboard: "لوحة التحكم المركزية",
+        dashboardDesc: "نظرة عامة على المتاجر والأرصدة",
+        automations: "محرك الأتمتة والذكاء",
+        automationsDesc: "رادار القرب، التقييمات، والإشعارات",
+        outreach: "استوديو المبيعات والتسويق",
+        outreachDesc: "توليد كروت الهبوط وحملات العملاء",
+        newMerchant: "إضافة متجر جديد",
+        newMerchantDesc: "تسجيل كافيه، مطعم أو صالون",
+        serverStatus: "خادم الإنتاج",
+        serverConnected: "متصل 99.9%",
+        serverNode: "Casablanca Node 22 (Hostinger Cloud)",
+        quickLinks: "بوابة الزوار والروابط السريعة",
+        developerPortal: "بوابة المطورين والرئيسية",
+        support: "مركز الدعم الفني",
+        terms: "شروط الخدمة",
+        privacy: "سياسة الخصوصية",
+        logout: "تسجيل الخروج من المنصة",
+        closeMenu: "إغلاق القائمة",
+        openMenu: "فتح القائمة الجانبية",
+        superAdminSuite: "Super Admin Suite v2.5",
+        viewWebsite: "عرض الموقع",
+        navHome: "الرئيسية",
+        navAutomations: "الأتمتة",
+        navOutreach: "المبيعات",
+        navNewMerchant: "متجر جديد",
+        addShort: "متجر",
+      },
+      dashboard: {
+        pageTitle: "لوحة الإدارة المركزية (Super Admin)",
+        pageSubtitle: "متابعة شاملة لجميع المتاجر، البطاقات المفعلة، والأرصدة في المغرب 🇲🇦",
+        kpiMerchants: "إجمالي المتاجر المشتركة",
+        kpiMerchantsActive: "نشط حالياً",
+        kpiMerchantsSub: "المقاهي، المطاعم، وصالونات الحلاقة",
+        kpiCustomers: "إجمالي البطاقات المفعلة",
+        kpiCustomersUnit: "عميل دائم",
+        kpiCustomersSub: "عبر Apple Wallet و Google Wallet و Web Pass",
+        kpiTransactions: "مجموع الزيارات والأختام",
+        kpiTransactionsUnit: "عملية مسجلة",
+        kpiTransactionsSub: "أختام مضافة ومكافآت مستفاد منها",
+        kpiCredits: "رصيد النقاط الموزع",
+        kpiCreditsUnit: "رصيد متاح",
+        kpiCreditsSub: "جاهز لإشعارات الرادار وحملات الاسترجاع",
+        searchPlaceholder: "بحث باسم المتجر، الرابط (Slug)، أو المدينة...",
+        allNiches: "كل الأنشطة التجارية",
+        allPlans: "كل الباقات",
+        merchantsListTitle: "قائمة المتاجر الشريكة",
+        noMerchants: "لا توجد متاجر مطابقة",
+        noMerchantsDesc: "جرّب تغيير كلمات البحث أو الفلاتر، أو قم بإضافة متجر جديد الآن.",
+        addMerchantBtn: "متجر جديد",
+        clients: "العملاء",
+        visits: "الزيارات",
+        credits: "الرصيد",
+        reward: "المكافأة:",
+        stampsRequired: "الأختام المطلوبة:",
+        stampsCount: "أختام",
+        topupCredits: "شحن الرصيد",
+        standNfc: "حامل الطاولة (NFC)",
+        viewLivePass: "معاينة بطاقة حية (Live Pass)",
+        registerFirstCustomer: "تسجيل أول عميل للبطاقة",
+        merchantDashboard: "لوحة المتجر",
+        customerLink: "رابط العملاء",
+        editMerchant: "تعديل",
+        enableMerchant: "تفعيل المتجر",
+        disableMerchant: "تعطيل المتجر",
+        activeStatus: "نشط",
+        inactiveStatus: "معطل",
+        pinLabel: "رمز PIN:",
+        nicheCafe: "المقاهي (Café)",
+        nicheBarber: "الحلاقة (Barber)",
+        nicheSnack: "المطاعم والوجبات السريعة (Snack)",
+        nicheWash: "غسيل السيارات (Car Wash)",
+        nicheBeauty: "صالونات التجميل (Beauty)",
+        nicheLaundry: "المصابن (Laundry)",
+        nicheOther: "أنشطة أخرى",
+        planStarter: "باقة STARTER",
+        planGrowth: "باقة GROWTH",
+        planMulti: "باقة MULTI",
+      },
     },
     niches: {
       cafe: {
@@ -1120,6 +1280,86 @@ export const translations: Record<Locale, TranslationDictionary> = {
       currencyLabel: "Devise",
       previewStamps: "Aperçu Carte Tampons",
       previewCashback: "Aperçu Carte Cashback",
+      sidebar: {
+        mainMenu: "MENU PRINCIPAL",
+        dashboard: "Tableau de Bord Central",
+        dashboardDesc: "Vue d'ensemble des commerces et soldes",
+        automations: "Moteur d'Automatisation & IA",
+        automationsDesc: "Radar de proximité, avis et push",
+        outreach: "Studio Commercial & Prospection",
+        outreachDesc: "Génération de stands et campagnes",
+        newMerchant: "Ajouter un Nouveau Commerce",
+        newMerchantDesc: "Enregistrer un café, restaurant ou salon",
+        serverStatus: "Serveur de Production",
+        serverConnected: "Connecté 99.9%",
+        serverNode: "Casablanca Node 22 (Hostinger Cloud)",
+        quickLinks: "PORTAIL VISITEURS & LIENS",
+        developerPortal: "Portail Développeurs & Accueil",
+        support: "Centre de Support Technique",
+        terms: "Conditions d'Utilisation",
+        privacy: "Politique de Confidentialité",
+        logout: "Se déconnecter de la plateforme",
+        closeMenu: "Fermer le menu",
+        openMenu: "Ouvrir le menu latéral",
+        superAdminSuite: "Super Admin Suite v2.5",
+        viewWebsite: "Voir le site",
+        navHome: "Accueil",
+        navAutomations: "Automatisations",
+        navOutreach: "Prospection",
+        navNewMerchant: "Nouveau",
+        addShort: "Commerce",
+      },
+      dashboard: {
+        pageTitle: "Console d'Administration Centrale (Super Admin)",
+        pageSubtitle: "Suivi global de tous les commerces, cartes activées et soldes au Maroc 🇲🇦",
+        kpiMerchants: "Total Commerces Partenaires",
+        kpiMerchantsActive: "actifs actuellement",
+        kpiMerchantsSub: "Cafés, restaurants et salons de coiffure",
+        kpiCustomers: "Total Cartes Activées",
+        kpiCustomersUnit: "clients fidèles",
+        kpiCustomersSub: "Via Apple Wallet, Google Wallet & Web Pass",
+        kpiTransactions: "Total Visites & Tampons",
+        kpiTransactionsUnit: "opérations enregistrées",
+        kpiTransactionsSub: "Tampons attribués et récompenses utilisées",
+        kpiCredits: "Solde de Crédits Distribué",
+        kpiCreditsUnit: "crédits disponibles",
+        kpiCreditsSub: "Prêt pour les alertes radar et campagnes",
+        searchPlaceholder: "Rechercher par nom de commerce, slug ou ville...",
+        allNiches: "Toutes les activités",
+        allPlans: "Tous les forfaits",
+        merchantsListTitle: "Liste des Commerces Partenaires",
+        noMerchants: "Aucun commerce correspondant",
+        noMerchantsDesc: "Modifiez vos filtres ou ajoutez un nouveau commerce maintenant.",
+        addMerchantBtn: "Nouveau commerce",
+        clients: "Clients",
+        visits: "Visites",
+        credits: "Crédits",
+        reward: "Récompense :",
+        stampsRequired: "Tampons requis :",
+        stampsCount: "tampons",
+        topupCredits: "Recharger le solde",
+        standNfc: "Chevalet (NFC)",
+        viewLivePass: "Voir carte test (Live Pass)",
+        registerFirstCustomer: "Enregistrer premier client",
+        merchantDashboard: "Portail commerçant",
+        customerLink: "Lien clients",
+        editMerchant: "Modifier",
+        enableMerchant: "Activer le commerce",
+        disableMerchant: "Désactiver le commerce",
+        activeStatus: "Actif",
+        inactiveStatus: "Désactivé",
+        pinLabel: "Code PIN :",
+        nicheCafe: "Cafés (Café)",
+        nicheBarber: "Salons de coiffure (Barber)",
+        nicheSnack: "Restauration rapide (Snack)",
+        nicheWash: "Lavage auto (Car Wash)",
+        nicheBeauty: "Instituts de beauté (Beauty)",
+        nicheLaundry: "Pressings (Laundry)",
+        nicheOther: "Autres activités",
+        planStarter: "Forfait STARTER",
+        planGrowth: "Forfait GROWTH",
+        planMulti: "Forfait MULTI",
+      },
     },
     niches: {
       cafe: {
@@ -1549,6 +1789,86 @@ export const translations: Record<Locale, TranslationDictionary> = {
       currencyLabel: "Moneda",
       previewStamps: "Vista previa Tarjeta Sellos",
       previewCashback: "Vista previa Tarjeta Cashback",
+      sidebar: {
+        mainMenu: "MENÚ PRINCIPAL",
+        dashboard: "Panel de Control Central",
+        dashboardDesc: "Resumen de comercios y saldos",
+        automations: "Motor de Automatización e IA",
+        automationsDesc: "Radar de proximidad, reseñas y push",
+        outreach: "Estudio Comercial y Ventas",
+        outreachDesc: "Generación de stands y campañas",
+        newMerchant: "Añadir Nuevo Comercio",
+        newMerchantDesc: "Registrar cafetería, restaurante o salón",
+        serverStatus: "Servidor de Producción",
+        serverConnected: "Conectado 99.9%",
+        serverNode: "Casablanca Node 22 (Hostinger Cloud)",
+        quickLinks: "PORTAL DE VISITANTES Y ENLACES",
+        developerPortal: "Portal de Desarrolladores e Inicio",
+        support: "Centro de Soporte Técnico",
+        terms: "Términos de Servicio",
+        privacy: "Política de Privacidad",
+        logout: "Cerrar sesión en la plataforma",
+        closeMenu: "Cerrar menú",
+        openMenu: "Abrir menú lateral",
+        superAdminSuite: "Super Admin Suite v2.5",
+        viewWebsite: "Ver sitio web",
+        navHome: "Inicio",
+        navAutomations: "Automatización",
+        navOutreach: "Ventas",
+        navNewMerchant: "Nuevo",
+        addShort: "Comercio",
+      },
+      dashboard: {
+        pageTitle: "Consola de Administración Central (Super Admin)",
+        pageSubtitle: "Seguimiento integral de todos los comercios, tarjetas activadas y saldos en Marruecos 🇲🇦",
+        kpiMerchants: "Total Comercios Asociados",
+        kpiMerchantsActive: "activos actualmente",
+        kpiMerchantsSub: "Cafeterías, restaurantes y barberías",
+        kpiCustomers: "Total Tarjetas Activadas",
+        kpiCustomersUnit: "clientes fieles",
+        kpiCustomersSub: "A través de Apple Wallet, Google Wallet y Web Pass",
+        kpiTransactions: "Total Visitas y Sellos",
+        kpiTransactionsUnit: "operaciones registradas",
+        kpiTransactionsSub: "Sellos otorgados y recompensas canjeadas",
+        kpiCredits: "Saldo de Créditos Distribuido",
+        kpiCreditsUnit: "créditos disponibles",
+        kpiCreditsSub: "Listo para alertas de radar y campañas",
+        searchPlaceholder: "Buscar por nombre de comercio, enlace (slug) o ciudad...",
+        allNiches: "Todas las actividades",
+        allPlans: "Todos los planes",
+        merchantsListTitle: "Lista de Comercios Asociados",
+        noMerchants: "No se encontraron comercios coincidentes",
+        noMerchantsDesc: "Intente cambiar los filtros o agregue un nuevo comercio ahora.",
+        addMerchantBtn: "Nuevo comercio",
+        clients: "Clientes",
+        visits: "Visitas",
+        credits: "Créditos",
+        reward: "Recompensa:",
+        stampsRequired: "Sellos requeridos:",
+        stampsCount: "sellos",
+        topupCredits: "Recargar saldo",
+        standNfc: "Soporte de mesa (NFC)",
+        viewLivePass: "Ver tarjeta de prueba (Live Pass)",
+        registerFirstCustomer: "Registrar primer cliente",
+        merchantDashboard: "Portal del comercio",
+        customerLink: "Enlace para clientes",
+        editMerchant: "Editar",
+        enableMerchant: "Activar comercio",
+        disableMerchant: "Desactivar comercio",
+        activeStatus: "Activo",
+        inactiveStatus: "Desactivado",
+        pinLabel: "Código PIN:",
+        nicheCafe: "Cafeterías (Café)",
+        nicheBarber: "Barberías y peluquerías (Barber)",
+        nicheSnack: "Comida rápida y restaurantes (Snack)",
+        nicheWash: "Lavado de autos (Car Wash)",
+        nicheBeauty: "Salones de belleza (Beauty)",
+        nicheLaundry: "Tintorerías y lavanderías (Laundry)",
+        nicheOther: "Otras actividades",
+        planStarter: "Plan STARTER",
+        planGrowth: "Plan GROWTH",
+        planMulti: "Plan MULTI",
+      },
     },
     niches: {
       cafe: {

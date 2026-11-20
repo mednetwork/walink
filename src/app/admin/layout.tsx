@@ -11,10 +11,10 @@ import {
   Sparkles,
   Target,
   ExternalLink,
-  Store,
 } from "lucide-react";
 import AdminSidebarNav from "@/components/AdminSidebarNav";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useI18n } from "@/lib/i18n/context";
 
 export default function AdminLayout({
   children,
@@ -23,6 +23,7 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t, isRTL } = useI18n();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Close mobile drawer on route change
@@ -58,35 +59,55 @@ export default function AdminLayout({
     return <>{children}</>;
   }
 
+  const s = t.admin?.sidebar || {
+    dashboard: "لوحة الإدارة المركزية",
+    viewWebsite: "عرض الموقع",
+    newMerchant: "إضافة متجر جديد",
+    navHome: "الرئيسية",
+    navAutomations: "الأتمتة",
+    navOutreach: "المبيعات",
+    navNewMerchant: "متجر جديد",
+    addShort: "متجر",
+    openMenu: "فتح القائمة الجانبية",
+    closeMenu: "إغلاق القائمة",
+    developerPortal: "بوابة المطورين",
+    support: "الدعم الفني",
+    terms: "الشروط",
+    privacy: "الخصوصية",
+  };
+
   const bottomNavItems = [
     {
       href: "/admin",
-      label: "الرئيسية",
+      label: s.navHome,
       icon: LayoutDashboard,
       active: pathname === "/admin",
     },
     {
       href: "/admin/automations",
-      label: "الأتمتة",
+      label: s.navAutomations,
       icon: Sparkles,
       active: pathname === "/admin/automations",
     },
     {
       href: "/admin/outreach",
-      label: "المبيعات",
+      label: s.navOutreach,
       icon: Target,
       active: pathname === "/admin/outreach",
     },
     {
       href: "/admin/merchants/new",
-      label: "متجر جديد",
+      label: s.navNewMerchant,
       icon: PlusCircle,
       active: pathname === "/admin/merchants/new",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex font-arabic text-[#111B21] antialiased selection:bg-[#008069] selection:text-white relative">
+    <div
+      dir={isRTL ? "rtl" : "ltr"}
+      className="min-h-screen bg-[#F8FAFC] flex font-arabic text-[#111B21] antialiased selection:bg-[#008069] selection:text-white relative"
+    >
       {/* 1. Desktop Fixed Dark Obsidian Sidebar */}
       <aside className="hidden lg:block fixed inset-y-0 start-0 z-30 w-64 xl:w-72 shadow-xl">
         <AdminSidebarNav />
@@ -100,7 +121,7 @@ export default function AdminLayout({
             type="button"
             className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-200 cursor-default"
             onClick={() => setMobileDrawerOpen(false)}
-            aria-label="إغلاق القائمة"
+            aria-label={s.closeMenu}
             tabIndex={-1}
           />
 
@@ -128,7 +149,7 @@ export default function AdminLayout({
               type="button"
               onClick={() => setMobileDrawerOpen(true)}
               className="p-2 -ms-2 rounded-xl text-neutral-300 hover:text-white hover:bg-neutral-800 transition"
-              aria-label="فتح القائمة الجانبية"
+              aria-label={s.openMenu}
               aria-expanded={mobileDrawerOpen}
             >
               <Menu className="w-5 h-5" />
@@ -151,7 +172,7 @@ export default function AdminLayout({
               className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] text-white font-bold text-xs flex items-center gap-1 shadow-sm"
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span>متجر</span>
+              <span>{s.addShort}</span>
             </Link>
           </div>
         </header>
@@ -164,7 +185,7 @@ export default function AdminLayout({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00A884] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#008069]"></span>
               </span>
-              <span>لوحة الإدارة المركزية</span>
+              <span>{s.dashboard}</span>
             </span>
           </div>
 
@@ -174,7 +195,7 @@ export default function AdminLayout({
               target="_blank"
               className="px-3 py-1.5 rounded-xl border border-neutral-200 hover:border-neutral-300 bg-white text-neutral-600 hover:text-neutral-900 text-xs font-medium flex items-center gap-1.5 transition shadow-sm"
             >
-              <span>عرض الموقع</span>
+              <span>{s.viewWebsite}</span>
               <ExternalLink className="w-3 h-3 text-neutral-400" />
             </Link>
 
@@ -183,7 +204,7 @@ export default function AdminLayout({
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-[#008069]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>إضافة متجر جديد</span>
+              <span>{s.newMerchant}</span>
             </Link>
           </div>
         </header>
@@ -196,22 +217,22 @@ export default function AdminLayout({
         {/* Desktop Footer */}
         <footer className="border-t border-[#E2E8F0] bg-white py-4 px-6 lg:px-8 text-xs text-[#54656F] hidden sm:block">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p>© {new Date().getFullYear()} Walink.ma • جميع الحقوق محفوظة لرواد الأعمال في المغرب 🇲🇦</p>
+            <p>© {new Date().getFullYear()} Walink.ma • {t.footer.copyright}</p>
             <div className="flex items-center gap-4 text-[#54656F]">
               <Link href="/" target="_blank" className="hover:text-[#008069] font-medium transition">
-                بوابة المطورين
+                {s.developerPortal}
               </Link>
               <span>•</span>
               <Link href="/support" target="_blank" className="hover:text-[#008069] font-medium transition">
-                الدعم الفني
+                {s.support}
               </Link>
               <span>•</span>
               <Link href="/terms" target="_blank" className="hover:text-[#008069] font-medium transition">
-                الشروط
+                {s.terms}
               </Link>
               <span>•</span>
               <Link href="/privacy" target="_blank" className="hover:text-[#008069] font-medium transition">
-                الخصوصية
+                {s.privacy}
               </Link>
             </div>
           </div>
