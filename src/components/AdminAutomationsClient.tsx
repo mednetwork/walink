@@ -216,7 +216,7 @@ export default function AdminAutomationsClient({
             محرك الأتمتة والرسائل الذكية
           </h1>
           <p className="text-sm text-[#54656F] mt-1 max-w-2xl leading-relaxed">
-            مراقبة وتشغيل الأتمتة الذكية لجميع المحلات: استرجاع الزبناء الغابرين بعد 15 يوماً، تحفيز قرب المكافأة، هدايا أعياد الميلاد، ورادار القرب الجغرافي.
+            مراقبة وتشغيل الأتمتة الذكية لجميع المتاجر: استرجاع العملاء الغائبين بعد 15 يوماً، تحفيز قرب المكافأة، هدايا أعياد الميلاد، ورادار القرب الجغرافي.
           </p>
         </div>
 
@@ -305,7 +305,7 @@ export default function AdminAutomationsClient({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>
               <label htmlFor="cron-merchant-select" className="block text-xs font-semibold text-[#111B21] mb-1.5">
-                تحديد المحل المستهدف:
+                تحديد المتجر المستهدف:
               </label>
               <select
                 id="cron-merchant-select"
@@ -313,7 +313,7 @@ export default function AdminAutomationsClient({
                 onChange={(e) => setSelectedMerchantId(e.target.value)}
                 className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3 py-2 text-xs text-[#111B21] focus:outline-none focus:border-[#008069]"
               >
-                <option value="ALL">جميع المحلات النشطة ({merchants.length})</option>
+                <option value="ALL">جميع المتاجر النشطة ({merchants.length})</option>
                 {merchants.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name} ({m.credits} نقطة رصيد)
@@ -350,7 +350,7 @@ export default function AdminAutomationsClient({
               ) : (
                 <>
                   <Zap className="w-4 h-4" />
-                  <span>⚡ تشغيل محرك الأتمتة دابا (Run Cron Now)</span>
+                  <span>⚡ تشغيل محرك الأتمتة الآن (Run Cron Now)</span>
                 </>
               )}
             </button>
@@ -368,7 +368,7 @@ export default function AdminAutomationsClient({
                 <span>تم تنفيذ دورة الأتمتة بنجاح!</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
-                <div>• محلات مفحوصة: {cronResult.merchantsProcessed}</div>
+                <div>• متاجر مفحوصة: {cronResult.merchantsProcessed}</div>
                 <div>• رسائل استرجاع: {cronResult.winbacksSent}</div>
                 <div>• تحفيز المكافأة: {cronResult.nearRewardsSent}</div>
                 <div>• أعياد ميلاد: {cronResult.birthdaysSent}</div>
@@ -383,22 +383,22 @@ export default function AdminAutomationsClient({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Store className="w-5 h-5 text-[#008069]" />
-            <h2 className="text-base font-bold text-[#111B21]">حالة أتمتة المحلات المشتركة</h2>
+            <h2 className="text-base font-bold text-[#111B21]">حالة أتمتة المتاجر المشتركة</h2>
           </div>
-          <span className="text-xs text-[#54656F]">{merchants.length} محلات</span>
+          <span className="text-xs text-[#54656F]">{merchants.length} متجر</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-right text-xs">
             <thead>
               <tr className="border-b border-[#E9EDEF] text-[#54656F] pb-3">
-                <th className="py-2.5 font-semibold">المحل</th>
+                <th className="py-2.5 font-semibold">المتجر</th>
                 <th className="py-2.5 font-semibold">الرصيد المتاح</th>
                 <th className="py-2.5 font-semibold">استرجاع 15 يوم</th>
                 <th className="py-2.5 font-semibold">قرب المكافأة</th>
                 <th className="py-2.5 font-semibold">تقييم خرائط Google</th>
                 <th className="py-2.5 font-semibold">رادار 100m</th>
-                <th className="py-2.5 font-semibold">الكليان</th>
+                <th className="py-2.5 font-semibold">العملاء</th>
                 <th className="py-2.5 font-semibold">الإشعارات</th>
                 <th className="py-2.5 font-semibold">إجراء سريع</th>
               </tr>
@@ -509,11 +509,11 @@ export default function AdminAutomationsClient({
               <thead>
                 <tr className="border-b border-[#E9EDEF] text-[#54656F] pb-3">
                   <th className="py-2.5 font-semibold">النوع</th>
-                  <th className="py-2.5 font-semibold">المحل</th>
-                  <th className="py-2.5 font-semibold">الزبون المستهدف</th>
+                  <th className="py-2.5 font-semibold">المتجر</th>
+                  <th className="py-2.5 font-semibold">العميل المستهدف</th>
                   <th className="py-2.5 font-semibold">نص الإشعار</th>
                   <th className="py-2.5 font-semibold">الوقت</th>
-                  <th className="py-2.5 font-semibold">معاينة الكارط</th>
+                  <th className="py-2.5 font-semibold">معاينة البطاقة</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E9EDEF] text-[#111B21]">

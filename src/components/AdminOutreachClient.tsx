@@ -175,13 +175,13 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-xs font-semibold mb-2">
             <Target className="w-3.5 h-3.5" />
-            <span>استوديو المبيعات وقنص الكليان (Cold Outreach Studio)</span>
+            <span>استوديو المبيعات واستقطاب المتاجر (Cold Outreach Studio)</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#111B21] tracking-tight">
-            استوديو قنص الكليان وإدارة الطلبات
+            استوديو استقطاب المتاجر وإدارة الطلبات
           </h1>
           <p className="text-sm text-[#54656F] mt-1 max-w-2xl leading-relaxed">
-            توليد روابط مخصصة بنقرة واحدة لأي محل في المغرب مع سيناريوهات رسائل واتساب وإنستغرام جاهزة، وإدارة الطلبات الواردة وتحويلها إلى محلات مفعّلة في المنصة.
+            توليد روابط مخصصة بنقرة واحدة لأي متجر في المغرب مع سيناريوهات رسائل واتساب وإنستغرام جاهزة، وإدارة الطلبات الواردة وتحويلها إلى متاجر مفعّلة في المنصة.
           </p>
         </div>
 

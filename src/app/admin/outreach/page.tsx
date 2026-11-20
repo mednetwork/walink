@@ -6,8 +6,8 @@ import AdminOutreachClient from "@/components/AdminOutreachClient";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "استوديو قنص الكليان وإدارة الطلبات | لوحة إدارة Walink",
-  description: "توليد روابط مخصصة بنقرة واحدة ورسائل واتساب جاهزة وإدارة الطلبات الواردة وتحويلها لمزيد من المحلات.",
+  title: "استوديو استقطاب المتاجر وإدارة الطلبات | لوحة إدارة Walink",
+  description: "توليد روابط مخصصة بنقرة واحدة ورسائل واتساب جاهزة وإدارة الطلبات الواردة وتحويلها إلى متاجر شريكة.",
 };
 
 export default async function AdminOutreachPage() {
