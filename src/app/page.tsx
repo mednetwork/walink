@@ -5,6 +5,7 @@ import Link from "next/link";
 import "./landing.css";
 import { useI18n } from "@/lib/i18n/context";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import SiteFooter from "@/components/SiteFooter";
 
 // Moroccan Cities Datalist
 const MOROCCAN_CITIES = [
@@ -3420,33 +3421,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer>
-        <div className="wrap">
-          <p>
-            © {new Date().getFullYear()} Walink (walink.ma) • {t.footer.copyright}
-          </p>
-          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", justifyContent: "center" }}>
-            <a
-              href="https://wa.me/212661848790"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t.footer.supportWa}
-            </a>
-            <span>•</span>
-            <Link href="/support">{t.footer.supportLink}</Link>
-            <span>•</span>
-            <Link href="/privacy">{t.footer.privacyLink}</Link>
-            <span>•</span>
-            <Link href="/terms">{t.footer.termsLink}</Link>
-            <span>•</span>
-            <Link href="/admin">{t.footer.adminLink}</Link>
-            <span>•</span>
-            <Link href="/admin/outreach">{t.footer.outreachLink}</Link>
-          </div>
-        </div>
-      </footer>
+      {/* Comprehensive Enterprise Footer */}
+      <SiteFooter />
 
       {/* Mobile Sticky Bar */}
       <div className={`mbar ${showMbar ? "show" : ""}`} id="mbar">

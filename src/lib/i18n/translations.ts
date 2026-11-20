@@ -193,6 +193,26 @@ export interface TranslationDictionary {
     privacyLink: string;
     termsLink: string;
     homeLink: string;
+    brandTagline: string;
+    moroccoBadge: string;
+    colPlatform: string;
+    colPricing: string;
+    colEssential: string;
+    colAdmin: string;
+    colSamples: string;
+    demoLink: string;
+    enginesLink: string;
+    radarLink: string;
+    standLink: string;
+    roiLink: string;
+    faqLink: string;
+    starterPack: string;
+    growthPack: string;
+    multiPack: string;
+    sampleCardLink: string;
+    sampleJoinLink: string;
+    adminLoginLink: string;
+    cndpNotice: string;
   };
   checkout: {
     title: string;
@@ -656,11 +676,31 @@ export const translations: Record<Locale, TranslationDictionary> = {
       copyright: "جميع الحقوق محفوظة لرواد الأعمال في المملكة المغربية 🇲🇦",
       supportWa: "واتساب الدعم (+212 661 848 790)",
       adminLink: "لوحة الإدارة المركزية",
-      outreachLink: "استوديو المبيعات المباشرة",
+      outreachLink: "استوديو استقطاب المتاجر",
       supportLink: "الدعم الفني وخدمة العملاء",
       privacyLink: "سياسة الخصوصية",
       termsLink: "شروط الاستخدام",
       homeLink: "الصفحة الرئيسية",
+      brandTagline: "المنصة المغربية الأولى لبطاقات الوفاء الذكية في Apple Wallet و Google Wallet بدون تطبيقات وبدون اشتراكات شهرية.",
+      moroccoBadge: "صُمم وطُوّر بكل فخر للمقاهي والمطاعم والمتاجر بالمغرب 🇲🇦",
+      colPlatform: "المنصة والمميزات",
+      colPricing: "الباقات والأسعار",
+      colEssential: "الصفحات الأساسية والدعم",
+      colAdmin: "الإدارة والنظام",
+      colSamples: "المعاينة الحية",
+      demoLink: "الديمو التفاعلي المباشر",
+      enginesLink: "محركات النمو الـ 4",
+      radarLink: "رادار القرب 100 متر (GPS)",
+      standLink: "ستاند الكاونتر الذكي (NFC)",
+      roiLink: "حاسبة العائد الاستثماري",
+      faqLink: "الأسئلة الشائعة",
+      starterPack: "باقة الانطلاق (1,200 درهم)",
+      growthPack: "باقة النمو الأكثر طلباً (2,400 درهم)",
+      multiPack: "باقة الفروع المتعددة (4,500 درهم)",
+      sampleCardLink: "معاينة بطاقة ولاء حية",
+      sampleJoinLink: "تجربة تسجيل عميل",
+      adminLoginLink: "تسجيل دخول الإدارة",
+      cndpNotice: "مطابق لمعايير حماية المعطيات ذات الطابع الشخصي بالمغرب (القانون رقم 09-08)",
     },
     checkout: {
       title: "تأكيد طلب باقة Walink",
@@ -1169,6 +1209,26 @@ export const translations: Record<Locale, TranslationDictionary> = {
       privacyLink: "Politique de confidentialité",
       termsLink: "Conditions d'utilisation",
       homeLink: "Accueil",
+      brandTagline: "La 1ère plateforme marocaine de cartes de fidélité intelligentes sur Apple Wallet et Google Wallet, sans application et sans abonnement mensuel.",
+      moroccoBadge: "Conçu et développé avec passion pour les commerces au Maroc 🇲🇦",
+      colPlatform: "Plateforme & Outils",
+      colPricing: "Tarifs & Packs",
+      colEssential: "Pages Essentielles & Support",
+      colAdmin: "Administration",
+      colSamples: "Aperçus en Direct",
+      demoLink: "Démo Interactive en Direct",
+      enginesLink: "Les 4 Moteurs de Croissance",
+      radarLink: "Radar de Proximité 100m (GPS)",
+      standLink: "Chevalet de Comptoir Connecté (NFC)",
+      roiLink: "Calculateur de Rentabilité (ROI)",
+      faqLink: "Foire Aux Questions (FAQ)",
+      starterPack: "Pack Starter (1 200 DH)",
+      growthPack: "Pack Croissance Populaire (2 400 DH)",
+      multiPack: "Pack Multi-Points de Vente (4 500 DH)",
+      sampleCardLink: "Aperçu Carte en Direct",
+      sampleJoinLink: "Expérience Inscription Client",
+      adminLoginLink: "Connexion Super Admin",
+      cndpNotice: "Conforme aux normes de protection des données personnelles au Maroc (Loi 09-08 / CNDP)",
     },
     checkout: {
       title: "Confirmer votre commande Walink",
@@ -1677,6 +1737,26 @@ export const translations: Record<Locale, TranslationDictionary> = {
       privacyLink: "Política de Privacidad",
       termsLink: "Condiciones de Uso",
       homeLink: "Inicio",
+      brandTagline: "La 1.ª plataforma marroquí de tarjetas de fidelización inteligentes en Apple Wallet y Google Wallet, sin aplicaciones y sin cuotas mensuales.",
+      moroccoBadge: "Diseñado y desarrollado con orgullo para los comercios de Marruecos 🇲🇦",
+      colPlatform: "Plataforma y Funciones",
+      colPricing: "Precios y Planes",
+      colEssential: "Páginas Esenciales y Soporte",
+      colAdmin: "Administración",
+      colSamples: "Vistas Previas en Vivo",
+      demoLink: "Demostración Interactiva en Vivo",
+      enginesLink: "Los 4 Motores de Crecimiento",
+      radarLink: "Radar de Proximidad 100m (GPS)",
+      standLink: "Soporte de Mesa Conectado (NFC)",
+      roiLink: "Calculadora de Rentabilidad (ROI)",
+      faqLink: "Preguntas Frecuentes (FAQ)",
+      starterPack: "Pack Starter (1.200 DH)",
+      growthPack: "Pack Crecimiento Popular (2.400 DH)",
+      multiPack: "Pack Multisede (4.500 DH)",
+      sampleCardLink: "Vista Previa de Tarjeta en Vivo",
+      sampleJoinLink: "Experiencia de Registro de Cliente",
+      adminLoginLink: "Acceso Super Admin",
+      cndpNotice: "Conforme con las normas de protección de datos personales en Marruecos (Ley 09-08 / CNDP)",
     },
     checkout: {
       title: "Confirmar pedido Walink",

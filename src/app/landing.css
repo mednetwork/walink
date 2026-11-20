@@ -918,10 +918,8 @@
 .walink-landing .final{padding:24px 0 96px}
 .walink-landing .final .box{text-align:center;padding:52px 24px;background:#FFFFFF;border:1px solid var(--hair);box-shadow:0 4px 20px rgba(11,20,26,.06)}
 .walink-landing .final .btn{margin-top:16px;min-width:240px}
-.walink-landing footer{border-top:1px solid var(--hair);padding:28px 0 calc(100px + env(safe-area-inset-bottom));color:var(--silver);font-size:13.5px;background:#FFFFFF}
-.walink-landing footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center}
-.walink-landing footer a{color:#111B21;font-weight:600;text-decoration:underline;text-underline-offset:4px}
-@media(min-width:880px){.walink-landing footer{padding-bottom:28px}}
+.walink-landing footer{padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+@media(min-width:880px){.walink-landing footer{padding-bottom:0}}
 
 .walink-landing .mbar{position:fixed;inset:auto 0 0 0;z-index:45;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);backdrop-filter:blur(16px);border-top:1px solid var(--hair);display:flex;gap:12px;align-items:center;transform:translateY(110%);transition:transform .35s var(--ease);box-shadow:0 -2px 10px rgba(11,20,26,.08)}
 .walink-landing .mbar.show{transform:none}
