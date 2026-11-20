@@ -528,11 +528,11 @@ export default function LandingPage() {
         text = `السلام عليكم فريق Walink 👋\nأرغب في طلب باقة بطاقة الولاء الرقمية لمتجري:\n\n🏢 اسم المحل: ${modalShop.trim()}\n📍 مجال النشاط: ${nicheName}\n🏙 المدينة: ${modalCity.trim()}\n📦 الباقة المختارة: ${planObj.title} (${planObj.price} درهم)\n${modalPhone.trim() ? `📞 الهاتف: ${modalPhone.trim()}\n` : ""}\nهل يمكنكم تجهيز التصميم الرقمي وستاند الكاونتر؟ شكراً لكم!`;
       }
 
-      const waUrl = `https://wa.me/212708107351?text=${encodeURIComponent(text)}`;
+      const waUrl = `https://wa.me/212661848790?text=${encodeURIComponent(text)}`;
       window.location.href = waUrl;
     } catch (err) {
       console.error("Order lead submission error:", err);
-      window.location.href = `https://wa.me/212708107351`;
+      window.location.href = `https://wa.me/212661848790`;
     } finally {
       setIsSubmitting(false);
     }
@@ -3427,7 +3427,7 @@ export default function LandingPage() {
           </p>
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
             <a
-              href="https://wa.me/212708107351"
+              href="https://wa.me/212661848790"
               target="_blank"
               rel="noopener noreferrer"
             >

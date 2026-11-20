@@ -571,7 +571,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
     },
     footer: {
       copyright: "جميع الحقوق محفوظة لرواد الأعمال في المملكة المغربية 🇲🇦",
-      supportWa: "واتساب الدعم (+212 708 107 351)",
+      supportWa: "واتساب الدعم (+212 661 848 790)",
       adminLink: "لوحة الإدارة المركزية",
       outreachLink: "استوديو المبيعات المباشرة",
     },
@@ -996,7 +996,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
     },
     footer: {
       copyright: "Tous droits réservés pour les commerçants et entrepreneurs au Maroc 🇲🇦",
-      supportWa: "Support WhatsApp (+212 708 107 351)",
+      supportWa: "Support WhatsApp (+212 661 848 790)",
       adminLink: "Console d'administration",
       outreachLink: "Studio de prospection",
     },
@@ -1421,7 +1421,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
     },
     footer: {
       copyright: "Todos los derechos reservados para los emprendedores en Marruecos 🇲🇦",
-      supportWa: "WhatsApp de soporte (+212 708 107 351)",
+      supportWa: "WhatsApp de soporte (+212 661 848 790)",
       adminLink: "Panel de administración",
       outreachLink: "Estudio de prospección",
     },

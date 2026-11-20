@@ -403,14 +403,14 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
 
 واش ممكن توجدو ليا التصميم والستاند ديال الكاونتر؟ شكراً!`;
 
-      const waUrl = `https://wa.me/212708107351?text=${encodeURIComponent(waMessage)}`;
+      const waUrl = `https://wa.me/212661848790?text=${encodeURIComponent(waMessage)}`;
       window.open(waUrl, "_blank");
 
       setIsCheckoutOpen(false);
     } catch (err) {
       console.error("Error submitting lead:", err);
       alert("حدث خطأ أثناء حفظ الطلب، سيتم توجيهك للواتساب مباشرة.");
-      window.open("https://wa.me/212708107351", "_blank");
+      window.open("https://wa.me/212661848790", "_blank");
     } finally {
       setIsSubmittingOrder(false);
     }
@@ -1970,12 +1970,12 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
 
           <div className="flex items-center gap-4 text-white/60">
             <a
-              href="https://wa.me/212708107351"
+              href="https://wa.me/212661848790"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-emerald-400 transition"
             >
-              واتساب الدعم (+212 708 107 351)
+              واتساب الدعم (+212 661 848 790)
             </a>
             <span>•</span>
             <Link href="/admin" className="hover:text-emerald-400 transition">
