@@ -11,7 +11,6 @@ export async function PATCH(
 
     const allowedSettings = [
       "autoWinback",
-      "autoBirthday",
       "autoReview",
       "autoRadar",
       "autoNearReward",
@@ -87,7 +86,6 @@ export async function PATCH(
         vipCashbackBonus: true,
         referralBonus: true,
         autoWinback: true,
-        autoBirthday: true,
         autoReview: true,
         autoRadar: true,
         autoNearReward: true,

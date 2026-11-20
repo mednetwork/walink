@@ -273,6 +273,9 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
             <input
               id="prospect-phone"
               type="tel"
+              inputMode="tel"
+              pattern="[0-9]*"
+              autoComplete="tel"
               value={prospectPhone}
               onChange={(e) => setProspectPhone(e.target.value)}
               placeholder="0661000000"

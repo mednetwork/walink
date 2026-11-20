@@ -3616,6 +3616,9 @@ export default function LandingPage() {
                 className="inp lat"
                 id="fPhone"
                 type="tel"
+                inputMode="tel"
+                pattern="[0-9]*"
+                autoComplete="tel"
                 placeholder={t.checkout.phonePlaceholder}
                 value={modalPhone}
                 onChange={(e) => setModalPhone(e.target.value)}

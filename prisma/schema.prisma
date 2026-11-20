@@ -42,7 +42,6 @@ model Merchant {
   plan            String        @default("GROWTH") // STARTER, GROWTH, MULTI
   credits         Int           @default(1000)
   autoWinback     Boolean       @default(true)
-  autoBirthday    Boolean       @default(true)
   autoReview      Boolean       @default(true)
   autoRadar       Boolean       @default(true)
   autoNearReward  Boolean       @default(false)
@@ -63,7 +62,6 @@ model Customer {
   merchant          Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   name              String
   phone             String
-  birthday          String?
   passSerial        String        @unique @default(cuid())
   memberCode        String        // 4-digit display ID e.g. "4821"
   stamps            Int           @default(0)

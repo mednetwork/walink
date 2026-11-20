@@ -277,11 +277,11 @@ export default function MerchantScannerModal({
           scan: () => Promise<void>;
           onreading: ((event: NDEFReadingEvent) => void) | null;
         }
-        interface WindowWithNfc extends Window {
-          NDEFReader: new () => NDEFReaderInstance;
+        type NDEFConstructor = new () => NDEFReaderInstance;
+        const NfcConstructor = ("NDEFReader" in window ? (window as Window & { NDEFReader: NDEFConstructor }).NDEFReader : null);
+        if (!NfcConstructor) {
+          throw new Error("NDEFReader not available");
         }
-
-        const NfcConstructor = (window as unknown as WindowWithNfc).NDEFReader;
         const ndef = new NfcConstructor();
         await ndef.scan();
         ndef.onreading = (event: NDEFReadingEvent) => {
@@ -670,6 +670,7 @@ export default function MerchantScannerModal({
                       </label>
                       <input
                         type="number"
+                        inputMode="decimal"
                         min="1"
                         step="any"
                         value={billAmount}
@@ -750,12 +751,14 @@ export default function MerchantScannerModal({
                       </div>
                       <input
                         type="number"
+                        inputMode="decimal"
                         min="1"
                         max={selectedCustomer.cashbackBalance || 0}
                         step="any"
                         value={redeemAmount}
                         onChange={(e) => setRedeemAmount(e.target.value)}
                         placeholder="0.00"
+                        aria-label="مبلغ الكاش باك المراد صرفه"
                         className="w-full px-3 py-2 rounded-xl bg-white border border-[#D1D7DB] text-[#111B21] font-mono text-sm focus:outline-none focus:border-amber-500 shadow-sm"
                       />
                     </div>
@@ -766,6 +769,7 @@ export default function MerchantScannerModal({
                       </label>
                       <input
                         type="number"
+                        inputMode="decimal"
                         min="0"
                         step="any"
                         value={redeemBillTotal}

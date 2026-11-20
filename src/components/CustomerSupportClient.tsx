@@ -425,6 +425,9 @@ ${message.trim()}
                   <input
                     id="sup-phone"
                     type="tel"
+                    inputMode="tel"
+                    pattern="[0-9]*"
+                    autoComplete="tel"
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}

@@ -46,22 +46,18 @@ async function handleCron(req: NextRequest) {
       merchantSlug: string;
       winbacks: number;
       nearRewards: number;
-      birthdays: number;
       creditsDeducted: number;
     }> = [];
 
     let totalWinbacks = 0;
     let totalNearRewards = 0;
-    let totalBirthdays = 0;
     let totalCreditsDeducted = 0;
 
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
-    const todayMonthDay = new Date().toISOString().slice(5, 10); // MM-DD
 
     for (const merchant of merchants) {
       let merchantWinbacks = 0;
       let merchantNearRewards = 0;
-      let merchantBirthdays = 0;
       let merchantCreditsUsed = 0;
 
       // -------------------------------------------------------------
@@ -164,55 +160,8 @@ async function handleCron(req: NextRequest) {
         }
       }
 
-      // -------------------------------------------------------------
-      // 3. Birthday Gift Engine (autoBirthday)
-      // -------------------------------------------------------------
-      if (merchant.autoBirthday) {
-        let birthdayCustomers = merchant.customers.filter((c) => {
-          if (!c.birthday) return false;
-          const bdayStr = new Date(c.birthday).toISOString().slice(5, 10);
-          return bdayStr === todayMonthDay;
-        });
-
-        if (birthdayCustomers.length === 0 && forceDemo && merchant.customers.length > 0) {
-          // In demo mode, select first customer with birthday or first customer
-          birthdayCustomers = [merchant.customers[0]];
-        }
-
-        for (const customer of birthdayCustomers) {
-          const currentMerchant = await prisma.merchant.findUnique({
-            where: { id: merchant.id },
-            select: { credits: true },
-          });
-
-          if (!currentMerchant || currentMerchant.credits < 1) {
-            break;
-          }
-
-          await prisma.notification.create({
-            data: {
-              merchantId: merchant.id,
-              customerId: customer.id,
-              type: "BIRTHDAY",
-              title: "عيد ميلاد سعيد! 🎉🎂",
-              body: `كل عام وأنت بخير ${customer.name}! ${merchant.name} عندها ليك ${merchant.rewardName} هدية اليوم 🎂`,
-              actionUrl: `/pass/${customer.passSerial}`,
-            },
-          });
-
-          await prisma.merchant.update({
-            where: { id: merchant.id },
-            data: { credits: { decrement: 1 } },
-          });
-
-          merchantBirthdays++;
-          merchantCreditsUsed++;
-        }
-      }
-
       totalWinbacks += merchantWinbacks;
       totalNearRewards += merchantNearRewards;
-      totalBirthdays += merchantBirthdays;
       totalCreditsDeducted += merchantCreditsUsed;
 
       executionLog.push({
@@ -220,7 +169,6 @@ async function handleCron(req: NextRequest) {
         merchantSlug: merchant.slug,
         winbacks: merchantWinbacks,
         nearRewards: merchantNearRewards,
-        birthdays: merchantBirthdays,
         creditsDeducted: merchantCreditsUsed,
       });
     }
@@ -232,8 +180,7 @@ async function handleCron(req: NextRequest) {
       stats: {
         winbacksSent: totalWinbacks,
         nearRewardsSent: totalNearRewards,
-        birthdaysSent: totalBirthdays,
-        totalNotifications: totalWinbacks + totalNearRewards + totalBirthdays,
+        totalNotifications: totalWinbacks + totalNearRewards,
         creditsDeducted: totalCreditsDeducted,
       },
       log: executionLog,

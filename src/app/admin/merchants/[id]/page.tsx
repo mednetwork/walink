@@ -41,7 +41,6 @@ export default async function EditMerchantPage({ params }: EditMerchantPageProps
     plan: merchant.plan,
     credits: merchant.credits,
     autoWinback: merchant.autoWinback,
-    autoBirthday: merchant.autoBirthday,
     autoReview: merchant.autoReview,
     autoRadar: merchant.autoRadar,
     autoNearReward: merchant.autoNearReward,

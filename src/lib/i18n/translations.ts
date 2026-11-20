@@ -250,7 +250,6 @@ export interface TranslationDictionary {
     namePlaceholder: string;
     phoneLabel: string;
     phonePlaceholder: string;
-    birthdayLabel: string;
     submitBtn: string;
     alreadyMember: string;
     existingCustomerNotice: string;
@@ -719,7 +718,6 @@ export const translations: Record<Locale, TranslationDictionary> = {
       namePlaceholder: "أدخل اسمك الكريم",
       phoneLabel: "رقم الهاتف المحمول *",
       phonePlaceholder: "0661234567",
-      birthdayLabel: "تاريخ الميلاد (اختياري لهدايا عيد الميلاد)",
       submitBtn: "احصل على بطاقتك الرقمية الآن",
       alreadyMember: "هل لديك بطاقة بالفعل؟",
       existingCustomerNotice: "مرحباً بعودتك! تم العثور على بطاقتك السابقة.",
@@ -1228,7 +1226,6 @@ export const translations: Record<Locale, TranslationDictionary> = {
       namePlaceholder: "Votre nom et prénom",
       phoneLabel: "Numéro de téléphone *",
       phonePlaceholder: "0661234567",
-      birthdayLabel: "Date de naissance (optionnel pour les cadeaux d'anniversaire)",
       submitBtn: "Obtenir ma carte digitale maintenant",
       alreadyMember: "Déjà membre ?",
       existingCustomerNotice: "Ravi de vous revoir ! Votre carte existante a été retrouvée.",
@@ -1737,7 +1734,6 @@ export const translations: Record<Locale, TranslationDictionary> = {
       namePlaceholder: "Tu nombre y apellidos",
       phoneLabel: "Número de teléfono *",
       phonePlaceholder: "0661234567",
-      birthdayLabel: "Fecha de nacimiento (opcional para regalos de cumpleaños)",
       submitBtn: "Obtener mi tarjeta digital ahora",
       alreadyMember: "¿Ya eres miembro?",
       existingCustomerNotice: "¡Nos alegra verte de nuevo! Encontramos tu tarjeta anterior.",

@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   AlertCircle,
-  Calendar,
   Lock,
 } from "lucide-react";
 import WalletPassPreview from "@/components/WalletPassPreview";
@@ -61,7 +60,6 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
     useState<"STAMPS" | "CASHBACK">(defaultType);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [birthday, setBirthday] = useState("");
   const [refCode, setRefCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +114,6 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         body: JSON.stringify({
           name: name.trim(),
           phone: phone.trim(),
-          birthday: birthday || undefined,
           loyaltyType: selectedLoyaltyType,
           refCode: refCode || undefined,
         }),
@@ -326,6 +323,9 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
             <div className="relative">
               <input
                 type="tel"
+                inputMode="tel"
+                pattern="[0-9]*"
+                autoComplete="tel"
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -333,21 +333,6 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 className="w-full px-4 py-3 rounded-2xl bg-[#FFFFFF] border-1.5 border-[#D1D7DB] text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-sm font-mono font-medium"
               />
               <Smartphone className={`w-4 h-4 text-[#8696A0] absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 pointer-events-none`} />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#111B21] block">
-              {t.onboarding.birthdayLabel}
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                value={birthday}
-                onChange={(e) => setBirthday(e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl bg-[#FFFFFF] border-1.5 border-[#D1D7DB] text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-sm font-mono font-medium"
-              />
-              <Calendar className={`w-4 h-4 text-[#8696A0] absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 pointer-events-none`} />
             </div>
           </div>
 

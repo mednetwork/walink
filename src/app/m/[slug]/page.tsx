@@ -130,7 +130,6 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     minCashbackRedeem: merchant.minCashbackRedeem,
     currency: merchant.currency,
     autoWinback: merchant.autoWinback,
-    autoBirthday: merchant.autoBirthday,
     autoReview: merchant.autoReview,
     autoRadar: merchant.autoRadar,
     autoNearReward: merchant.autoNearReward,

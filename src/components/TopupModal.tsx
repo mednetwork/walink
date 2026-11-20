@@ -154,6 +154,8 @@ export default function TopupModal({
             <div className="relative">
               <input
                 type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 min="50"
                 step="50"
                 value={customAmount}

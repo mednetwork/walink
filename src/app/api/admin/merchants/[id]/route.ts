@@ -87,7 +87,6 @@ export async function PATCH(
       "plan",
       "credits",
       "autoWinback",
-      "autoBirthday",
       "autoReview",
       "autoRadar",
       "autoNearReward",

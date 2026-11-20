@@ -50,7 +50,6 @@ async function main() {
       plan: "GROWTH",
       credits: 1000,
       autoWinback: true,
-      autoBirthday: true,
       autoReview: true,
       autoRadar: true,
       autoNearReward: false,
@@ -65,7 +64,6 @@ async function main() {
     {
       name: "ليلى التازي",
       phone: "0661998877",
-      birthday: "1995-04-12",
       passSerial: "pass-atlas-4821",
       memberCode: "4821",
       loyaltyType: "STAMPS",
@@ -81,7 +79,6 @@ async function main() {
     {
       name: "سارة الفاسي",
       phone: "0662334455",
-      birthday: "1998-08-23",
       passSerial: "pass-atlas-7193",
       memberCode: "7193",
       loyaltyType: "STAMPS",
@@ -97,7 +94,6 @@ async function main() {
     {
       name: "يوسف بنجلون",
       phone: "0663112233",
-      birthday: "1991-11-05",
       passSerial: "pass-atlas-3058",
       memberCode: "3058",
       loyaltyType: "STAMPS",
@@ -113,7 +109,6 @@ async function main() {
     {
       name: "نادية الإدريسي",
       phone: "0664556677",
-      birthday: "2000-01-30",
       passSerial: "pass-atlas-8912",
       memberCode: "8912",
       loyaltyType: "STAMPS",
@@ -129,7 +124,6 @@ async function main() {
     {
       name: "خديجة العلمي",
       phone: "0665778899",
-      birthday: "1993-06-17",
       passSerial: "pass-atlas-6240",
       memberCode: "6240",
       loyaltyType: "CASHBACK",
@@ -145,7 +139,6 @@ async function main() {
     {
       name: "مهدي الصقلي",
       phone: "0666224466",
-      birthday: "1989-12-09",
       passSerial: "pass-atlas-1537",
       memberCode: "1537",
       loyaltyType: "CASHBACK",
@@ -290,7 +283,6 @@ async function main() {
       plan: "STARTER",
       credits: 200,
       autoWinback: true,
-      autoBirthday: true,
       autoReview: true,
       autoRadar: true,
       autoNearReward: false,
@@ -306,7 +298,6 @@ async function main() {
       merchantId: barberAnas.id,
       name: "أمين التلمساني",
       phone: "0677889900",
-      birthday: "1994-03-15",
       passSerial: "pass-anas-5512",
       memberCode: "5512",
       loyaltyType: "STAMPS",

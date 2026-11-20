@@ -48,7 +48,6 @@ interface MerchantAutomationSummary {
   credits: number;
   autoWinback: boolean;
   autoNearReward: boolean;
-  autoBirthday: boolean;
   autoRadar: boolean;
   autoReview: boolean;
   customersCount: number;
@@ -59,7 +58,6 @@ interface AutomationStats {
   totalNotifications: number;
   winbackCount: number;
   nearRewardCount: number;
-  birthdayCount: number;
   radarCount: number;
   reviewCount: number;
   activeAutomatedMerchants: number;
@@ -85,7 +83,6 @@ export default function AdminAutomationsClient({
     merchantsProcessed: number;
     winbacksSent: number;
     nearRewardsSent: number;
-    birthdaysSent: number;
     totalNotifications: number;
     creditsDeducted: number;
   } | null>(null);
@@ -216,7 +213,7 @@ export default function AdminAutomationsClient({
             محرك الأتمتة والرسائل الذكية
           </h1>
           <p className="text-sm text-[#54656F] mt-1 max-w-2xl leading-relaxed">
-            مراقبة وتشغيل الأتمتة الذكية لجميع المتاجر: استرجاع العملاء الغائبين بعد 15 يوماً، تحفيز قرب المكافأة، هدايا أعياد الميلاد، ورادار القرب الجغرافي.
+            مراقبة وتشغيل الأتمتة الذكية لجميع المتاجر: استرجاع العملاء الغائبين بعد 15 يوماً، تحفيز قرب المكافأة، تقييمات Google، ورادار القرب الجغرافي.
           </p>
         </div>
 
@@ -367,11 +364,10 @@ export default function AdminAutomationsClient({
                 <CheckCircle2 className="w-4 h-4" />
                 <span>تم تنفيذ دورة الأتمتة بنجاح!</span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
                 <div>• متاجر مفحوصة: {cronResult.merchantsProcessed}</div>
                 <div>• رسائل استرجاع: {cronResult.winbacksSent}</div>
                 <div>• تحفيز المكافأة: {cronResult.nearRewardsSent}</div>
-                <div>• أعياد ميلاد: {cronResult.birthdaysSent}</div>
               </div>
             </div>
           )}
@@ -476,7 +472,7 @@ export default function AdminAutomationsClient({
 
           {/* Type Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-            {["ALL", "WINBACK", "NEAR_REWARD", "REVIEW", "RADAR", "BIRTHDAY", "STAMP"].map((type) => (
+            {["ALL", "WINBACK", "NEAR_REWARD", "REVIEW", "RADAR", "STAMP"].map((type) => (
               <button
                 key={type}
                 type="button"
@@ -492,7 +488,6 @@ export default function AdminAutomationsClient({
                 {type === "NEAR_REWARD" && "قرب المكافأة"}
                 {type === "REVIEW" && "تقييم Google"}
                 {type === "RADAR" && "رادار 100m"}
-                {type === "BIRTHDAY" && "أعياد ميلاد"}
                 {type === "STAMP" && "طوابع"}
               </button>
             ))}

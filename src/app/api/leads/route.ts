@@ -158,7 +158,6 @@ export async function PATCH(req: NextRequest) {
           isActive: true,
           autoWinback: true,
           autoNearReward: true,
-          autoBirthday: true,
           autoRadar: true,
           autoReview: true,
           radarMessage: `راك قريب من ${lead.shopName}! الكارط ديالك واجدة 🎁`,

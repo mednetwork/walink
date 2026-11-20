@@ -9,7 +9,7 @@ export async function POST(
   try {
     const { slug } = params;
     const body = await req.json();
-    const { name, phone, birthday, loyaltyType: requestedLoyaltyType, ref } = body;
+    const { name, phone, loyaltyType: requestedLoyaltyType, ref } = body;
 
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json(
@@ -131,7 +131,6 @@ export async function POST(
         merchantId: merchant.id,
         name: name.trim(),
         phone: normalizedPhone,
-        birthday: birthday ? String(birthday).trim() : null,
         memberCode,
         loyaltyType: effectiveLoyaltyType,
         stamps: isCashback ? 0 : 1, // 1 welcome stamp gift for STAMPS

@@ -56,7 +56,6 @@ interface MerchantFormData {
   plan: string;
   credits: number;
   autoWinback: boolean;
-  autoBirthday: boolean;
   autoReview: boolean;
   autoRadar: boolean;
   autoNearReward: boolean;
@@ -100,7 +99,6 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
     plan: initialData?.plan || "GROWTH",
     credits: initialData?.credits ?? 1000,
     autoWinback: initialData?.autoWinback ?? true,
-    autoBirthday: initialData?.autoBirthday ?? true,
     autoReview: initialData?.autoReview ?? true,
     autoRadar: initialData?.autoRadar ?? true,
     autoNearReward: initialData?.autoNearReward ?? false,
@@ -303,7 +301,9 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   رقم هاتف صاحب المحل
                 </label>
                 <input
-                  type="text"
+                  type="tel"
+                  inputMode="tel"
+                  pattern="[0-9]*"
                   value={formData.phone || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
@@ -319,6 +319,8 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                 </label>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={6}
                   value={formData.pinCode}
                   onChange={(e) =>
@@ -409,6 +411,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   </label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     min="1"
                     max="50"
                     value={formData.cashbackRate}
@@ -428,6 +431,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   </label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     min="0"
                     value={formData.welcomeCashback}
                     onChange={(e) =>
@@ -446,6 +450,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   </label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     min="0"
                     value={formData.minCashbackRedeem}
                     onChange={(e) =>
@@ -590,6 +595,8 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
               </label>
               <input
                 type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={formData.credits}
                 onChange={(e) =>
                   setFormData({
@@ -616,6 +623,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="any"
                   value={formData.latitude ?? ""}
                   onChange={(e) =>
@@ -635,6 +643,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="any"
                   value={formData.longitude ?? ""}
                   onChange={(e) =>
@@ -741,25 +750,6 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   </span>
                   <span className="text-[10px] text-[#54656F]">
                     إشعار فوري عند المرور بجانب المحل
-                  </span>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-3 p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] cursor-pointer hover:bg-[#E9EDEF] transition">
-                <input
-                  type="checkbox"
-                  checked={formData.autoBirthday}
-                  onChange={(e) =>
-                    setFormData({ ...formData, autoBirthday: e.target.checked })
-                  }
-                  className="w-4 h-4 accent-[#008069] rounded cursor-pointer"
-                />
-                <div>
-                  <span className="text-xs font-bold text-[#111B21] block">
-                    مكافأة عيد الميلاد
-                  </span>
-                  <span className="text-[10px] text-[#54656F]">
-                    طابع مضاعف أو هدية في يوم ميلاد الزبون
                   </span>
                 </div>
               </label>

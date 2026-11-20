@@ -104,7 +104,6 @@ interface MerchantDashboardClientProps {
     minCashbackRedeem?: number;
     currency?: string;
     autoWinback: boolean;
-    autoBirthday: boolean;
     autoReview: boolean;
     autoRadar: boolean;
     autoNearReward: boolean;
@@ -179,7 +178,6 @@ export default function MerchantDashboardClient({
   const [merchantCashbackRate, setMerchantCashbackRate] = useState(merchant.cashbackRate || 10);
   const [automations, setAutomations] = useState({
     autoWinback: merchant.autoWinback,
-    autoBirthday: merchant.autoBirthday,
     autoReview: merchant.autoReview,
     autoRadar: merchant.autoRadar,
     autoNearReward: merchant.autoNearReward,
@@ -448,6 +446,9 @@ export default function MerchantDashboardClient({
           <div className="space-y-3">
             <input
               type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="one-time-code"
               maxLength={4}
               value={pinInput}
               onChange={(e) => {
@@ -1031,14 +1032,6 @@ export default function MerchantDashboardClient({
                   message: `توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية`,
                   active: automations.autoWinback,
                   locked: merchant.plan === "STARTER",
-                },
-                {
-                  key: "autoBirthday" as const,
-                  title: "عيد الميلاد",
-                  badge: "بالكريدي",
-                  message: `عيد ميلاد سعيد! ${merchant.name} عندها ليك ${merchant.rewardName} اليوم`,
-                  active: automations.autoBirthday,
-                  locked: false,
                 },
                 {
                   key: "autoReview" as const,
