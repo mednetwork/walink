@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
 
 export async function GET(req: NextRequest) {
   return handleCron(req);
@@ -91,7 +92,7 @@ async function handleCron(req: NextRequest) {
           }
 
           // Create Notification
-          await prisma.notification.create({
+          const notif = await prisma.notification.create({
             data: {
               merchantId: merchant.id,
               customerId: customer.id,
@@ -101,6 +102,14 @@ async function handleCron(req: NextRequest) {
               actionUrl: `/pass/${customer.passSerial}`,
             },
           });
+
+          // Push to Google Wallet
+          pushGoogleWalletUpdate(
+            customer,
+            merchant,
+            notif.title,
+            notif.body
+          ).catch(() => {});
 
           // Deduct 1 credit
           await prisma.merchant.update({

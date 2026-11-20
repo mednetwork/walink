@@ -23,6 +23,7 @@ import {
   X,
   Compass,
   Coins,
+  Copy,
 } from "lucide-react";
 import WalletPassPreview from "@/components/WalletPassPreview";
 import { formatTimeAgoArabic } from "@/lib/utils";
@@ -126,6 +127,26 @@ interface NotificationBanner {
   actionUrl?: string;
 }
 
+function GoogleWalletIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="5" width="20" height="14" rx="3" fill="#1F1F1F" stroke="#555" strokeWidth="1" />
+      <path d="M2 9H22" stroke="#4285F4" strokeWidth="2" />
+      <path d="M5 14H10" stroke="#34A853" strokeWidth="2" strokeLinecap="round" />
+      <path d="M5 16.5H8" stroke="#FBBC04" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="15" y="12" width="4" height="4" rx="1" fill="#EA4335" />
+    </svg>
+  );
+}
+
+function AppleWalletIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.96.04-2.13.65-2.77 1.39-.58.65-1.09 1.71-1.01 2.76 1.07.08 2.16-.53 2.77-1.28" />
+    </svg>
+  );
+}
+
 export default function CustomerPassHubClient({
   initialCustomer,
   initialMerchant,
@@ -162,6 +183,27 @@ export default function CustomerPassHubClient({
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [pkpassJson, setPkpassJson] = useState<Record<string, unknown> | null>(null);
   const [showJsonInspector, setShowJsonInspector] = useState(false);
+
+  // Google Wallet State & Modal
+  const [isGoogleWalletLoading, setIsGoogleWalletLoading] = useState(false);
+  const [googleWalletModal, setGoogleWalletModal] = useState<{
+    isOpen: boolean;
+    configured: boolean;
+    mode: string;
+    saveUrl: string | null;
+    previewPayload: {
+      loyaltyClass?: Record<string, unknown>;
+      loyaltyObject?: Record<string, unknown>;
+    } | null;
+  }>({
+    isOpen: false,
+    configured: false,
+    mode: "mock",
+    saveUrl: null,
+    previewPayload: null,
+  });
+  const [copiedGooglePayload, setCopiedGooglePayload] = useState(false);
+  const [showGoogleJsonInspector, setShowGoogleJsonInspector] = useState(false);
 
   // Radar state
   const [isRadarActive, setIsRadarActive] = useState(merchant.autoRadar);
@@ -531,6 +573,36 @@ export default function CustomerPassHubClient({
     }
   };
 
+  // Handle Add to Google Wallet
+  const handleAddToGoogleWallet = async () => {
+    setIsGoogleWalletLoading(true);
+    try {
+      const res = await fetch(
+        `/api/pass/${customer.passSerial}/google-wallet?lang=${locale}&activate=1`,
+        { signal: AbortSignal.timeout(10000) }
+      );
+      const data = await res.json();
+      if (data.ok && data.configured && data.saveUrl) {
+        // Direct redirect / open Google Wallet save URL
+        window.location.href = data.saveUrl;
+      } else {
+        // Diagnostic or fallback preview modal
+        setGoogleWalletModal({
+          isOpen: true,
+          configured: Boolean(data.configured),
+          mode: data.mode || "mock",
+          saveUrl: data.saveUrl || null,
+          previewPayload: data.previewPayload || null,
+        });
+      }
+    } catch (err) {
+      console.error("Error generating Google Wallet link:", err);
+      alert("تعذر الاتصال بخادم Google Wallet، يرجى المحاولة لاحقاً");
+    } finally {
+      setIsGoogleWalletLoading(false);
+    }
+  };
+
   const isRewardReady = customer.stamps >= merchant.stampsRequired;
 
   return (
@@ -774,21 +846,40 @@ export default function CustomerPassHubClient({
             </div>
           )}
 
-        {/* Wallet Action Buttons (Apple / Google / WebPass) */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <button
-            type="button"
-            onClick={handleOpenWalletModal}
-            className="py-3 px-3.5 rounded-2xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm"
-          >
-            <Smartphone className="w-4 h-4 text-[#008069]" />
-            <span>{t.pass.addToAppleWallet}</span>
-          </button>
+        {/* Wallet Action Buttons (Google Wallet + Apple Wallet + Notifications) */}
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* Official Google Wallet Button */}
+            <button
+              type="button"
+              disabled={isGoogleWalletLoading}
+              onClick={handleAddToGoogleWallet}
+              className="py-3 px-3 rounded-2xl bg-[#111B21] hover:bg-[#202C33] text-white font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm border border-neutral-700/60 active:scale-[0.98] disabled:opacity-60"
+            >
+              {isGoogleWalletLoading ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <GoogleWalletIcon className="w-4 h-4 flex-shrink-0" />
+              )}
+              <span className="truncate">{t.pass.addToGoogleWallet}</span>
+            </button>
 
+            {/* Apple Wallet Button */}
+            <button
+              type="button"
+              onClick={handleOpenWalletModal}
+              className="py-3 px-3 rounded-2xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm active:scale-[0.98]"
+            >
+              <AppleWalletIcon className="w-4 h-4 flex-shrink-0 text-black" />
+              <span className="truncate">{t.pass.addToAppleWallet}</span>
+            </button>
+          </div>
+
+          {/* Browser Notifications Pill */}
           <button
             type="button"
             onClick={handleEnablePush}
-            className={`py-3 px-3.5 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm ${
+            className={`w-full py-2.5 px-3.5 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm ${
               notificationsEnabled
                 ? "bg-[#008069]/10 border-[#008069]/30 text-[#008069]"
                 : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
@@ -797,12 +888,12 @@ export default function CustomerPassHubClient({
             {notificationsEnabled ? (
               <>
                 <BellRing className="w-4 h-4 text-[#008069]" />
-                <span>الإشعارات مفعّلة</span>
+                <span>الإشعارات الفورية مفعّلة على هذا الجهاز</span>
               </>
             ) : (
               <>
                 <Bell className="w-4 h-4 text-amber-500" />
-                <span>تفعيل الإشعارات</span>
+                <span>تفعيل إشعارات الشاشة والقرب (Push Notifications)</span>
               </>
             )}
           </button>
@@ -1160,6 +1251,119 @@ export default function CustomerPassHubClient({
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] text-white font-bold text-xs shadow-md transition"
             >
               فهمت، شكراً
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Google Wallet Modal (Diagnostic & Direct Save Link) */}
+      {googleWalletModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-sm bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-6 text-[#111B21] space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
+              <div className="flex items-center gap-2">
+                <GoogleWalletIcon className="w-5 h-5 flex-shrink-0" />
+                <h3 className="font-bold text-base text-[#111B21]">Google Wallet (Android)</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGoogleWalletModal((prev) => ({ ...prev, isOpen: false }))}
+                className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {googleWalletModal.configured && googleWalletModal.saveUrl ? (
+              <div className={`space-y-3 ${isRTL ? "text-right" : "text-left"}`}>
+                <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>Google Wallet متصل ومفعل في الإنتاج بنجاح!</span>
+                </div>
+                <p className="text-xs text-[#54656F] leading-relaxed">
+                  اضغط أدناه لفتح الرابط وإضافة البطاقة مباشرة إلى تطبيق Google Wallet على هاتفك:
+                </p>
+                <a
+                  href={googleWalletModal.saveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 rounded-xl bg-[#111B21] hover:bg-[#202C33] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition"
+                >
+                  <GoogleWalletIcon className="w-4 h-4" />
+                  <span>{t.pass.addToGoogleWallet}</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            ) : (
+              <div className={`space-y-3 ${isRTL ? "text-right" : "text-left"}`}>
+                <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span>Google Wallet جاهز برمجياً ومربوط بـ Walink API</span>
+                </div>
+                <p className="text-xs text-[#54656F] leading-relaxed">
+                  تم توليد معمارية البطاقة (LoyaltyClass &amp; LoyaltyObject) بنجاح مع دعم الأختام والكاش باك والتنبيهات المباشرة.
+                </p>
+
+                {/* Developer Payload Inspector */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowGoogleJsonInspector(!showGoogleJsonInspector)}
+                    className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#54656F] text-xs flex items-center justify-between transition"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Code className="w-3.5 h-3.5 text-[#008069]" />
+                      <span>معاينة حزمة Google Wallet Payload</span>
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${
+                        showGoogleJsonInspector ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {showGoogleJsonInspector && googleWalletModal.previewPayload && (
+                    <div className="mt-2 space-y-2">
+                      <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-[10px] font-mono text-emerald-400 max-h-48 overflow-y-auto text-left dir-ltr">
+                        <pre>{JSON.stringify(googleWalletModal.previewPayload, null, 2)}</pre>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (googleWalletModal.previewPayload) {
+                            navigator.clipboard.writeText(
+                              JSON.stringify(googleWalletModal.previewPayload, null, 2)
+                            );
+                            setCopiedGooglePayload(true);
+                            setTimeout(() => setCopiedGooglePayload(false), 2000);
+                          }
+                        }}
+                        className="w-full py-1.5 px-3 rounded-lg bg-[#E9EDEF] hover:bg-[#D1D7DB] text-xs font-medium text-[#111B21] flex items-center justify-center gap-1.5 transition"
+                      >
+                        {copiedGooglePayload ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-[#008069]" />
+                            <span>تم نسخ البيانات!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>نسخ كود JSON</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setGoogleWalletModal((prev) => ({ ...prev, isOpen: false }))}
+              className="w-full py-2.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#111B21] font-semibold text-xs transition"
+            >
+              إغلاق
             </button>
           </div>
         </div>

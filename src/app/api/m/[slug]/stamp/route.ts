@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { normalizeMoroccanPhone } from "@/lib/utils";
+import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
 
 export async function POST(
   req: NextRequest,
@@ -23,7 +24,9 @@ export async function POST(
       where: { slug },
       select: {
         id: true,
+        slug: true,
         name: true,
+        primaryColor: true,
         rewardName: true,
         stampsRequired: true,
         loyaltyMode: true,
@@ -31,7 +34,14 @@ export async function POST(
         welcomeCashback: true,
         minCashbackRedeem: true,
         currency: true,
+        latitude: true,
+        longitude: true,
+        radarZones: true,
         googleMapsUrl: true,
+        menuUrl: true,
+        instagramUrl: true,
+        phone: true,
+        termsText: true,
         autoReview: true,
         isActive: true,
         cooldownMinutes: true,
@@ -247,6 +257,14 @@ export async function POST(
         });
       }
 
+      // Asynchronously push update to Google Wallet
+      pushGoogleWalletUpdate(
+        updatedCustomer,
+        merchant,
+        merchant.name,
+        notification.body
+      ).catch((err) => console.warn("[GoogleWallet] push error:", err));
+
       return NextResponse.json({
         success: true,
         action: "CASHBACK_EARN",
@@ -334,6 +352,14 @@ export async function POST(
         });
       }
 
+      // Asynchronously push update to Google Wallet
+      pushGoogleWalletUpdate(
+        updatedCustomer,
+        merchant,
+        merchant.name,
+        notification.body
+      ).catch((err) => console.warn("[GoogleWallet] push error:", err));
+
       return NextResponse.json({
         success: true,
         action: "CASHBACK_REDEEM",
@@ -394,6 +420,14 @@ export async function POST(
           },
         });
       }
+
+      // Asynchronously push update to Google Wallet
+      pushGoogleWalletUpdate(
+        updatedCustomer,
+        merchant,
+        merchant.name,
+        notification.body
+      ).catch((err) => console.warn("[GoogleWallet] push error:", err));
 
       return NextResponse.json({
         success: true,
@@ -471,6 +505,14 @@ export async function POST(
         },
       });
     }
+
+    // Asynchronously push update to Google Wallet
+    pushGoogleWalletUpdate(
+      updatedCustomer,
+      merchant,
+      merchant.name,
+      notification.body
+    ).catch((err) => console.warn("[GoogleWallet] push error:", err));
 
     return NextResponse.json({
       success: true,

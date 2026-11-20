@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
 
 export async function POST(
   req: NextRequest,
@@ -95,7 +96,7 @@ export async function POST(
       }),
     ]);
 
-    // Create Notification records for target customers
+    // Create Notification records for target customers & push to Google Wallet
     for (const c of customersToNotify) {
       await prisma.notification.create({
         data: {
@@ -107,6 +108,14 @@ export async function POST(
           createdAt: now,
         },
       });
+
+      // Push real-time lock-screen notification to Google Wallet
+      pushGoogleWalletUpdate(
+        c,
+        merchant,
+        title ? title.trim() : merchant.name,
+        message.trim()
+      ).catch(() => {});
     }
 
     return NextResponse.json({

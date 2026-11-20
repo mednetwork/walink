@@ -17,12 +17,13 @@ export async function GET() {
     });
 
     return NextResponse.json(merchants);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching merchants:", error);
+    const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       {
         error: "تعذر جلب قائمة المحلات",
-        details: error?.message || String(error),
+        details: msg,
       },
       { status: 500 }
     );
