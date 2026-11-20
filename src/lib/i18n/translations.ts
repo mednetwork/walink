@@ -189,6 +189,10 @@ export interface TranslationDictionary {
     supportWa: string;
     adminLink: string;
     outreachLink: string;
+    supportLink: string;
+    privacyLink: string;
+    termsLink: string;
+    homeLink: string;
   };
   checkout: {
     title: string;
@@ -574,6 +578,10 @@ export const translations: Record<Locale, TranslationDictionary> = {
       supportWa: "واتساب الدعم (+212 661 848 790)",
       adminLink: "لوحة الإدارة المركزية",
       outreachLink: "استوديو المبيعات المباشرة",
+      supportLink: "الدعم الفني وخدمة العملاء",
+      privacyLink: "سياسة الخصوصية",
+      termsLink: "شروط الاستخدام",
+      homeLink: "الصفحة الرئيسية",
     },
     checkout: {
       title: "تأكيد طلب باقة Walink",
@@ -999,6 +1007,10 @@ export const translations: Record<Locale, TranslationDictionary> = {
       supportWa: "Support WhatsApp (+212 661 848 790)",
       adminLink: "Console d'administration",
       outreachLink: "Studio de prospection",
+      supportLink: "Support & Centre d'aide",
+      privacyLink: "Politique de confidentialité",
+      termsLink: "Conditions d'utilisation",
+      homeLink: "Accueil",
     },
     checkout: {
       title: "Confirmer votre commande Walink",
@@ -1424,6 +1436,10 @@ export const translations: Record<Locale, TranslationDictionary> = {
       supportWa: "WhatsApp de soporte (+212 661 848 790)",
       adminLink: "Panel de administración",
       outreachLink: "Estudio de prospección",
+      supportLink: "Soporte y Atención al Cliente",
+      privacyLink: "Política de Privacidad",
+      termsLink: "Condiciones de Uso",
+      homeLink: "Inicio",
     },
     checkout: {
       title: "Confirmar pedido Walink",

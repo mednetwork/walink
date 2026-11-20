@@ -497,6 +497,9 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
             <a href="#faq" className="hover:text-emerald-400 transition">
               الأسئلة الشائعة
             </a>
+            <Link href="/support" className="hover:text-emerald-400 transition text-emerald-400">
+              الدعم والمساعدة
+            </Link>
           </nav>
 
           {/* Action CTAs */}
@@ -1968,15 +1971,27 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© {new Date().getFullYear()} Walink (walink.ma) • جميع الحقوق محفوظة لرواد الأعمال في المغرب 🇲🇦</p>
 
-          <div className="flex items-center gap-4 text-white/60">
+          <div className="flex flex-wrap items-center justify-center gap-3.5 text-white/60">
             <a
               href="https://wa.me/212661848790"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-emerald-400 transition"
             >
-              واتساب الدعم (+212 661 848 790)
+              واتساب (+212 661 848 790)
             </a>
+            <span>•</span>
+            <Link href="/support" className="hover:text-emerald-400 transition">
+              مركز الدعم الفني
+            </Link>
+            <span>•</span>
+            <Link href="/privacy" className="hover:text-emerald-400 transition">
+              سياسة الخصوصية
+            </Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-emerald-400 transition">
+              شروط الاستخدام
+            </Link>
             <span>•</span>
             <Link href="/admin" className="hover:text-emerald-400 transition">
               لوحة الإدارة

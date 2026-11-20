@@ -717,6 +717,7 @@ export default function LandingPage() {
             <a href="#how">{t.nav.howItWorks}</a>
             <a href="#pricing">{t.nav.pricing}</a>
             <a href="#faq">{t.nav.faq}</a>
+            <Link href="/support">{t.footer.supportLink}</Link>
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <LanguageSwitcher size="sm" />
@@ -3425,7 +3426,7 @@ export default function LandingPage() {
           <p>
             © {new Date().getFullYear()} Walink (walink.ma) • {t.footer.copyright}
           </p>
-          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", justifyContent: "center" }}>
             <a
               href="https://wa.me/212661848790"
               target="_blank"
@@ -3433,6 +3434,12 @@ export default function LandingPage() {
             >
               {t.footer.supportWa}
             </a>
+            <span>•</span>
+            <Link href="/support">{t.footer.supportLink}</Link>
+            <span>•</span>
+            <Link href="/privacy">{t.footer.privacyLink}</Link>
+            <span>•</span>
+            <Link href="/terms">{t.footer.termsLink}</Link>
             <span>•</span>
             <Link href="/admin">{t.footer.adminLink}</Link>
             <span>•</span>
