@@ -1,19 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ShieldCheck,
-  Store,
+  Menu,
   PlusCircle,
   LayoutDashboard,
-  ExternalLink,
-  Radio,
   Sparkles,
   Target,
-  LogOut,
+  ExternalLink,
+  Store,
 } from "lucide-react";
+import AdminSidebarNav from "@/components/AdminSidebarNav";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function AdminLayout({
@@ -23,157 +23,232 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileDrawerOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (mobileDrawerOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileDrawerOpen]);
+
+  // Handle escape key to close drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileDrawerOpen) {
+        setMobileDrawerOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileDrawerOpen]);
+
+  // Bypass layout for admin login
   if (pathname === "/admin/login") {
     return <>{children}</>;
   }
 
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/admin/auth/logout", { method: "POST" });
-    } catch (err) {
-      console.warn("Logout error:", err);
-    } finally {
-      router.push("/admin/login");
-      router.refresh();
-    }
-  };
-
-  const navLinks = [
+  const bottomNavItems = [
     {
       href: "/admin",
-      label: "لوحة التحكم",
+      label: "الرئيسية",
       icon: LayoutDashboard,
       active: pathname === "/admin",
     },
     {
       href: "/admin/automations",
-      label: "محرك الأتمتة",
+      label: "الأتمتة",
       icon: Sparkles,
       active: pathname === "/admin/automations",
     },
     {
       href: "/admin/outreach",
-      label: "استوديو المبيعات",
+      label: "المبيعات",
       icon: Target,
       active: pathname === "/admin/outreach",
     },
     {
       href: "/admin/merchants/new",
-      label: "إضافة متجر جديد",
+      label: "متجر جديد",
       icon: PlusCircle,
       active: pathname === "/admin/merchants/new",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-arabic text-[#111B21] antialiased selection:bg-[#008069] selection:text-white">
-      {/* Top Navigation Bar - Meta Business Suite Light Style */}
-      <header className="sticky top-0 z-40 w-full border-b border-[#E9EDEF] bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo & Platform Name */}
-          <div className="flex items-center gap-6">
-            <Link href="/admin" className="flex items-center gap-2.5 group">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] flex items-center justify-center text-white font-bold shadow-md shadow-[#008069]/20 group-hover:scale-105 transition-transform duration-200">
-                <ShieldCheck className="w-6 h-6 stroke-[2.5]" />
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-lg text-[#111B21] tracking-tight">
-                    walink<span className="text-[#008069]">.ma</span>
-                  </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#008069]/10 text-[#008069] border border-[#008069]/20 font-bold">
-                    والينك
-                  </span>
-                </div>
-                <span className="text-[10px] text-[#54656F] -mt-0.5 font-medium">
-                  لوحة إدارة المنصة (Super Admin)
-                </span>
-              </div>
-            </Link>
+    <div className="min-h-screen bg-[#F8FAFC] flex font-arabic text-[#111B21] antialiased selection:bg-[#008069] selection:text-white relative">
+      {/* 1. Desktop Fixed Dark Obsidian Sidebar */}
+      <aside className="hidden lg:block fixed inset-y-0 start-0 z-30 w-64 xl:w-72 shadow-xl">
+        <AdminSidebarNav />
+      </aside>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1 mr-6">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
-                      link.active
-                        ? "bg-[#008069]/10 text-[#008069] border border-[#008069]/20 shadow-sm"
-                        : "text-[#54656F] hover:text-[#111B21] hover:bg-[#F0F2F5]"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{link.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
+      {/* 2. Mobile Slide-Over Drawer & Backdrop */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop */}
+          <button
+            type="button"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-200 cursor-default"
+            onClick={() => setMobileDrawerOpen(false)}
+            aria-label="إغلاق القائمة"
+            tabIndex={-1}
+          />
+
+          {/* Drawer Panel */}
+          <div
+            className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10 animate-in slide-in-from-start duration-300"
+            role="dialog"
+            aria-modal="true"
+            aria-label="قائمة التنقل الجانبية"
+          >
+            <AdminSidebarNav
+              isMobileDrawer={true}
+              onClose={() => setMobileDrawerOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 3. Main Content Viewport */}
+      <div className="flex-1 lg:ps-64 xl:ps-72 flex flex-col min-h-screen w-full">
+        {/* Mobile Sticky Top Header (< lg) */}
+        <header className="sticky top-0 z-20 lg:hidden w-full h-14 bg-[#0B141A] text-white border-b border-[#1F2C34] px-4 flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(true)}
+              className="p-2 -ms-2 rounded-xl text-neutral-300 hover:text-white hover:bg-neutral-800 transition"
+              aria-label="فتح القائمة الجانبية"
+              aria-expanded={mobileDrawerOpen}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00A884] to-[#008069] flex items-center justify-center text-white shadow-sm font-bold">
+                <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <span className="font-bold text-sm tracking-tight text-white">
+                walink<span className="text-[#00A884]">.ma</span>
+              </span>
+            </Link>
           </div>
 
-          {/* Right Header Status Badges & Quick Action */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <LanguageSwitcher size="sm" />
+            <Link
+              href="/admin/merchants/new"
+              className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] text-white font-bold text-xs flex items-center gap-1 shadow-sm"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>متجر</span>
+            </Link>
+          </div>
+        </header>
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+        {/* Desktop Sticky Header Bar (lg:) */}
+        <header className="hidden lg:flex sticky top-0 z-20 w-full h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-6 lg:px-8 items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00A884] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#008069]"></span>
               </span>
-              <span>خادم الدار البيضاء نشط</span>
-            </div>
+              <span>لوحة الإدارة المركزية</span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              target="_blank"
+              className="px-3 py-1.5 rounded-xl border border-neutral-200 hover:border-neutral-300 bg-white text-neutral-600 hover:text-neutral-900 text-xs font-medium flex items-center gap-1.5 transition shadow-sm"
+            >
+              <span>عرض الموقع</span>
+              <ExternalLink className="w-3 h-3 text-neutral-400" />
+            </Link>
 
             <Link
               href="/admin/merchants/new"
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#008069]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-[#008069]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <PlusCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">إضافة متجر جديد</span>
-              <span className="sm:hidden">إضافة</span>
-            </Link>
-
-            {/* Logout Button */}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs flex items-center gap-1.5 transition-all shadow-sm"
-              title="تسجيل الخروج من لوحة الإدارة"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">خروج</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-[#E9EDEF] bg-white py-6 text-center text-xs text-[#54656F]">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© {new Date().getFullYear()} Walink (walink.ma) • جميع الحقوق محفوظة لرواد الأعمال في المغرب 🇲🇦</p>
-          <div className="flex items-center gap-4 text-[#54656F]">
-            <Link href="/" className="hover:text-[#008069] font-medium transition">
-              بوابة المطورين
-            </Link>
-            <span>•</span>
-            <Link href="/m/cafe-atlas" className="hover:text-[#008069] font-medium transition">
-              تجربة لوحة التاجر
-            </Link>
-            <span>•</span>
-            <Link href="/join/cafe-atlas" className="hover:text-[#008069] font-medium transition">
-              تجربة انضمام الزبون
+              <span>إضافة متجر جديد</span>
             </Link>
           </div>
-        </div>
-      </footer>
+        </header>
+
+        {/* Page Main Content */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24 lg:pb-10">
+          {children}
+        </main>
+
+        {/* Desktop Footer */}
+        <footer className="border-t border-[#E2E8F0] bg-white py-4 px-6 lg:px-8 text-xs text-[#54656F] hidden sm:block">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p>© {new Date().getFullYear()} Walink.ma • جميع الحقوق محفوظة لرواد الأعمال في المغرب 🇲🇦</p>
+            <div className="flex items-center gap-4 text-[#54656F]">
+              <Link href="/" target="_blank" className="hover:text-[#008069] font-medium transition">
+                بوابة المطورين
+              </Link>
+              <span>•</span>
+              <Link href="/support" target="_blank" className="hover:text-[#008069] font-medium transition">
+                الدعم الفني
+              </Link>
+              <span>•</span>
+              <Link href="/terms" target="_blank" className="hover:text-[#008069] font-medium transition">
+                الشروط
+              </Link>
+              <span>•</span>
+              <Link href="/privacy" target="_blank" className="hover:text-[#008069] font-medium transition">
+                الخصوصية
+              </Link>
+            </div>
+          </div>
+        </footer>
+
+        {/* 4. Mobile Floating Bottom Navigation Dock (< lg) */}
+        <nav
+          className="fixed bottom-0 inset-x-0 z-30 lg:hidden bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] shadow-2xl h-16 px-2 flex items-center justify-around"
+          aria-label="شريط التنقل السريع للهاتف"
+        >
+          {bottomNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center gap-1 min-w-[64px] min-h-[44px] rounded-xl px-2 py-1 transition-all ${
+                  item.active
+                    ? "text-[#008069] font-bold"
+                    : "text-neutral-500 hover:text-neutral-900 font-medium"
+                }`}
+              >
+                <div
+                  className={`p-1 rounded-xl transition ${
+                    item.active
+                      ? "bg-[#008069]/10 text-[#008069]"
+                      : "text-neutral-500"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] leading-tight">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 }
-

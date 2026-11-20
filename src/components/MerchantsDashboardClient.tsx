@@ -146,9 +146,9 @@ export default function MerchantsDashboardClient({
   const getNicheBadge = (niche: string) => {
     const preset = NICHE_PRESETS[niche] || NICHE_PRESETS.other;
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium bg-white/5 border border-white/10 text-white/90">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21]">
         <span
-          className="w-2 h-2 rounded-full"
+          className="w-2 h-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: preset.color }}
         />
         <span>{preset.label}</span>
