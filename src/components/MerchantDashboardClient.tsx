@@ -37,6 +37,10 @@ import {
   Loader2,
   Globe,
   Navigation,
+  Plus,
+  Trash2,
+  Edit3,
+  BookmarkPlus,
 } from "lucide-react";
 import MerchantScannerModal, { CustomerSummary } from "@/components/MerchantScannerModal";
 import StandPreviewModal from "@/components/StandPreviewModal";
@@ -45,6 +49,12 @@ import MerchantCreditsModal from "@/components/MerchantCreditsModal";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n/context";
 import { formatTimeAgoArabic } from "@/lib/utils";
+
+export interface PromoTemplateItem {
+  id: string;
+  label: string;
+  text: string;
+}
 
 interface CustomerData {
   id: string;
@@ -113,6 +123,7 @@ interface MerchantDashboardClientProps {
     longitude?: number;
     googleMapsUrl?: string;
     radarMessage?: string;
+    promoTemplates?: string;
     autoWinback: boolean;
     autoReview: boolean;
     autoRadar: boolean;
@@ -176,12 +187,173 @@ export default function MerchantDashboardClient({
   const [crmSearch, setCrmSearch] = useState("");
   const [crmFilter, setCrmFilter] = useState<"ALL" | "VIP" | "ACTIVE" | "QUIET">("ALL");
 
-  // Tab 3 (Promo) States
-  const [promoTemplate, setPromoTemplate] = useState("weekend");
-  const [promoMessage, setPromoMessage] = useState(`عرض الويكاند: -20% هاد السبت والحد ف ${merchant.name}`);
+  // Tab 3 (Promo) States & Dynamic Templates
+  const [templates, setTemplates] = useState<PromoTemplateItem[]>(() => {
+    if (merchant.promoTemplates) {
+      try {
+        const parsed = JSON.parse(merchant.promoTemplates);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (err) {
+        console.warn("Failed to parse initial promoTemplates:", err);
+      }
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`walink_promo_templates_${merchant.slug}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (err) {
+        console.warn("Failed to load promoTemplates from localStorage:", err);
+      }
+    }
+    return [];
+  });
+  const [promoTemplate, setPromoTemplate] = useState<string | null>(null);
+  const [promoMessage, setPromoMessage] = useState("");
   const [promoAudience, setPromoAudience] = useState<"ALL" | "QUIET" | "NEAR_REWARD" | "VIP">("ALL");
   const [sendingPromo, setSendingPromo] = useState(false);
   const [promoSuccessMsg, setPromoSuccessMsg] = useState<string | null>(null);
+
+  // Template Modal State
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [templateLabelInput, setTemplateLabelInput] = useState("");
+  const [templateTextInput, setTemplateTextInput] = useState("");
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+  const syncTemplates = async (newTemplates: PromoTemplateItem[]) => {
+    setTemplates(newTemplates);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(
+          `walink_promo_templates_${merchant.slug}`,
+          JSON.stringify(newTemplates)
+        );
+      } catch (err) {
+        console.warn("Failed to save promoTemplates to localStorage:", err);
+      }
+    }
+    try {
+      await fetch(`/api/m/${merchant.slug}/settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(6000),
+        body: JSON.stringify({
+          promoTemplates: JSON.stringify(newTemplates),
+        }),
+      });
+    } catch (err) {
+      console.warn("Could not sync templates to server:", err);
+    }
+  };
+
+  const handleOpenAddTemplate = (prefillMessage?: string) => {
+    setEditingTemplateId(null);
+    setTemplateLabelInput("");
+    setTemplateTextInput(prefillMessage || "");
+    setIsTemplateModalOpen(true);
+  };
+
+  const handleOpenEditTemplate = (tpl: PromoTemplateItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingTemplateId(tpl.id);
+    setTemplateLabelInput(tpl.label);
+    setTemplateTextInput(tpl.text);
+    setIsTemplateModalOpen(true);
+  };
+
+  const handleDeleteTemplate = async (tplId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const newTemplates = templates.filter((t) => t.id !== tplId);
+    if (promoTemplate === tplId) {
+      setPromoTemplate(null);
+    }
+    await syncTemplates(newTemplates);
+  };
+
+  const handleSaveTemplate = async () => {
+    const label = templateLabelInput.trim();
+    const text = templateTextInput.trim();
+    if (!label || !text) return;
+
+    setIsSavingTemplate(true);
+    try {
+      let updated: PromoTemplateItem[];
+      if (editingTemplateId) {
+        updated = templates.map((t) =>
+          t.id === editingTemplateId ? { ...t, label, text } : t
+        );
+      } else {
+        const newTpl: PromoTemplateItem = {
+          id: `tpl_${Date.now()}`,
+          label,
+          text,
+        };
+        updated = [...templates, newTpl];
+        setPromoTemplate(newTpl.id);
+        const resolvedText = text.replace(/\{shop\}/g, merchant.name);
+        setPromoMessage(resolvedText);
+      }
+      await syncTemplates(updated);
+      setIsTemplateModalOpen(false);
+      setEditingTemplateId(null);
+      setTemplateLabelInput("");
+      setTemplateTextInput("");
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+  const handleSelectTemplate = (tpl: PromoTemplateItem) => {
+    setPromoTemplate(tpl.id);
+    const resolvedText = tpl.text.replace(/\{shop\}/g, merchant.name);
+    setPromoMessage(resolvedText);
+  };
+
+  const PRESET_SUGGESTIONS = [
+    {
+      id: "weekend",
+      label: locale === "fr" ? "Promo weekend" : locale === "es" ? "Promo fin de semana" : "عرض الويكاند",
+      text:
+        locale === "fr"
+          ? `Promo Weekend : -20% ce samedi et dimanche chez ${merchant.name}`
+          : locale === "es"
+          ? `Promo Fin de Semana: -20% este sábado y domingo en ${merchant.name}`
+          : `عرض الويكاند: -20% هاد السبت والحد ف ${merchant.name}`,
+    },
+    {
+      id: "new",
+      label: locale === "fr" ? "Nouveau au menu" : locale === "es" ? "Novedad en carta" : "جديد فالمونيو",
+      text:
+        locale === "fr"
+          ? `Nouveau au menu chez ${merchant.name}. Venez le tester en avant-première !`
+          : locale === "es"
+          ? `¡Novedad en la carta de ${merchant.name}! Pruébalo antes que nadie.`
+          : `جديد فالمونيو ف ${merchant.name}. أجي ذوقو قبل الناس`,
+    },
+    {
+      id: "double",
+      label: locale === "fr" ? "Double tampon" : locale === "es" ? "Doble sello" : "طابع دوبل",
+      text:
+        locale === "fr"
+          ? `Aujourd'hui, double tampon chez ${merchant.name} jusqu'à 18h !`
+          : locale === "es"
+          ? `¡Hoy doble sello en ${merchant.name} hasta las 18h!`
+          : `اليوم الطابع دوبل ف ${merchant.name} حتى لـ 6 دالعشية`,
+    },
+    {
+      id: "miss",
+      label: locale === "fr" ? "Vous nous manquez" : locale === "es" ? "Te echamos de menos" : "توحشناك",
+      text:
+        locale === "fr"
+          ? `Vous nous manquez ! Passez cette semaine chez ${merchant.name} : un tampon offert.`
+          : locale === "es"
+          ? `¡Te echamos de menos! Pásate esta semana por ${merchant.name} y llévate un sello de regalo.`
+          : `توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية`,
+    },
+  ];
 
   // Tab 4 (Settings) States
   const [merchantLoyaltyMode, setMerchantLoyaltyMode] = useState(merchant.loyaltyMode || "BOTH");
@@ -934,38 +1106,102 @@ export default function MerchantDashboardClient({
         {/* Tab 3: پروموسيون (Broadcast Promotions) */}
         {activeTab === "promo" && (
           <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
-            {/* Template Chips */}
-            <div className="space-y-1.5">
-              <span className="text-[11px] text-[#54656F] font-semibold block">قوالب جاهزة:</span>
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-                {[
-                  { id: "weekend", label: "Promo weekend", text: `عرض الويكاند: -20% هاد السبت والحد ف ${merchant.name}` },
-                  { id: "new", label: "جديد فالمونيو", text: `جديد فالمونيو ف ${merchant.name}. أجي ذوقو قبل الناس` },
-                  { id: "double", label: "طابع دوبل", text: `اليوم الطابع دوبل ف ${merchant.name} حتى لـ 6 دالعشية` },
-                  { id: "miss", label: "توحشناك", text: `توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية` },
-                ].map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    onClick={() => {
-                      setPromoTemplate(tpl.id);
-                      setPromoMessage(tpl.text);
-                    }}
-                    className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-[11px] font-semibold ${promoTemplate === tpl.id
-                      ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                      : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
-                      }`}
-                  >
-                    {tpl.label}
-                  </button>
-                ))}
+            {/* Dynamic Template Chips or Empty State */}
+            {templates.length === 0 ? (
+              <div className="p-3.5 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-[#111B21] block">
+                    {t.demo.noTemplatesYet}
+                  </span>
+                  <p className="text-[11px] text-[#54656F]">
+                    {locale === "fr"
+                      ? "Créez vos modèles d'offres pour les envoyer en un clic."
+                      : locale === "es"
+                      ? "Crea tus plantillas para enviar ofertas en un solo clic."
+                      : "أنشئ قوالب العروض المفضلة لديك لإرسالها بنقرة واحدة."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpenAddTemplate()}
+                  className="px-3 py-2 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 text-[#008069] border border-[#008069]/30 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{t.demo.addTemplate}</span>
+                </button>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[11px] text-[#54656F] font-semibold">
+                    {t.demo.presetSuggestions}:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddTemplate()}
+                    className="text-[11px] text-[#008069] hover:underline font-bold flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>{t.demo.addTemplate}</span>
+                  </button>
+                </div>
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                  {templates.map((tpl) => (
+                    <div
+                      key={tpl.id}
+                      className={`group inline-flex items-center rounded-xl border whitespace-nowrap transition text-[11px] font-semibold px-2 py-1 gap-1 ${
+                        promoTemplate === tpl.id
+                          ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                          : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleSelectTemplate(tpl)}
+                        className="py-0.5 px-0.5 text-inherit font-semibold"
+                      >
+                        {tpl.label}
+                      </button>
+                      <div className="flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition">
+                        <button
+                          type="button"
+                          onClick={(e) => handleOpenEditTemplate(tpl, e)}
+                          title="تعديل القالب"
+                          aria-label="تعديل القالب"
+                          className="p-1 rounded-md hover:bg-black/10 transition"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteTemplate(tpl.id, e)}
+                          title="حذف القالب"
+                          aria-label="حذف القالب"
+                          className="p-1 rounded-md hover:bg-black/10 transition text-red-400 hover:text-red-600"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddTemplate()}
+                    className="p-1.5 rounded-xl border border-dashed border-[#008069] text-[#008069] hover:bg-[#008069]/10 transition text-xs flex items-center gap-1 flex-shrink-0"
+                    title={t.demo.addTemplate}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
 
-            {/* Message Textarea */}
-            <div className="space-y-1">
+            {/* Message Textarea - ALWAYS AVAILABLE */}
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-[#54656F]">
-                <span className="font-semibold text-[#111B21]">نص الإشعار:</span>
+                <span className="font-semibold text-[#111B21]">
+                  {t.demo.notificationMessage}:
+                </span>
                 <span className="font-mono text-[10px]">{promoMessage.length}/110</span>
               </div>
               <textarea
@@ -973,8 +1209,23 @@ export default function MerchantDashboardClient({
                 maxLength={110}
                 value={promoMessage}
                 onChange={(e) => setPromoMessage(e.target.value)}
-                className="w-full bg-white border border-[#D1D7DB] rounded-2xl p-3 text-xs text-[#111B21] focus:outline-none focus:border-[#008069] shadow-sm"
+                placeholder={t.demo.notificationPlaceholder}
+                className="w-full bg-white border border-[#D1D7DB] rounded-2xl p-3 text-xs text-[#111B21] focus:outline-none focus:border-[#008069] shadow-sm leading-relaxed"
               />
+
+              {/* Requirement 2: Subtle Quick "Save Current Text as Template" Shortcut */}
+              {promoMessage.trim().length > 0 && (
+                <div className="flex justify-end pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddTemplate(promoMessage.trim())}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#008069] hover:text-[#00705c] bg-[#008069]/10 hover:bg-[#008069]/15 px-2.5 py-1 rounded-lg border border-[#008069]/20 transition active:scale-95"
+                  >
+                    <BookmarkPlus className="w-3.5 h-3.5" />
+                    <span>{t.demo.saveAsTemplate}</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* 2x2 Audience Selector Grid */}
@@ -1594,6 +1845,144 @@ export default function MerchantDashboardClient({
         title={peekNotification.title}
         message={peekNotification.message}
       />
+
+      {/* Add/Edit Template Modal */}
+      {isTemplateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div
+            className="w-full max-w-sm bg-white rounded-3xl p-5 border border-[#E9EDEF] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            dir={isRTL ? "rtl" : "ltr"}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
+              <h3 className="text-sm font-bold text-[#111B21] flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#008069]" />
+                <span>
+                  {editingTemplateId
+                    ? locale === "fr"
+                      ? "Modifier le modèle"
+                      : locale === "es"
+                      ? "Editar plantilla"
+                      : "تعديل القالب"
+                    : t.demo.createTemplateTitle}
+                </span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsTemplateModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#54656F] flex items-center justify-center text-xs transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Preset Quick Fill Suggestions */}
+            {!editingTemplateId && (
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-[#54656F] uppercase block">
+                  {t.demo.presetSuggestions}:
+                </span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {PRESET_SUGGESTIONS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        setTemplateLabelInput(preset.label);
+                        setTemplateTextInput(preset.text);
+                      }}
+                      className="p-2 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-start transition text-[11px] font-medium text-[#111B21]"
+                    >
+                      <span className="font-bold text-[#008069] block truncate">
+                        {preset.label}
+                      </span>
+                      <span className="text-[9px] text-[#54656F] line-clamp-1">
+                        {preset.text}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Template Inputs */}
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label htmlFor="tpl-label-input" className="text-xs font-semibold text-[#111B21] block">
+                  {t.demo.templateName}:
+                </label>
+                <input
+                  id="tpl-label-input"
+                  type="text"
+                  maxLength={30}
+                  value={templateLabelInput}
+                  onChange={(e) => setTemplateLabelInput(e.target.value)}
+                  placeholder={locale === "fr" ? "Ex: Promo weekend" : locale === "es" ? "Ej: Promo fin de semana" : "مثال: عرض الويكاند"}
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3 py-2 text-xs text-[#111B21] focus:outline-none focus:border-[#008069] focus:bg-white"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <label htmlFor="tpl-text-input" className="font-semibold text-[#111B21]">
+                    {t.demo.templateText}:
+                  </label>
+                  <span className="font-mono text-[10px] text-[#54656F]">
+                    {templateTextInput.length}/110
+                  </span>
+                </div>
+                <textarea
+                  id="tpl-text-input"
+                  rows={3}
+                  maxLength={110}
+                  value={templateTextInput}
+                  onChange={(e) => setTemplateTextInput(e.target.value)}
+                  placeholder={locale === "fr" ? "Texte de la notification..." : locale === "es" ? "Texto de la notificación..." : "نص الإشعار..."}
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl p-3 text-xs text-[#111B21] focus:outline-none focus:border-[#008069] focus:bg-white leading-relaxed"
+                />
+                <p className="text-[10px] text-[#54656F]">
+                  {locale === "fr"
+                    ? "Astuce : Vous pouvez utiliser {shop} pour insérer le nom du magasin automatiquement."
+                    : locale === "es"
+                    ? "Consejo: Puedes usar {shop} para insertar el nombre de la tienda automáticamente."
+                    : "نصيحة: يمكنك كتابة {shop} لإدراج اسم متجرك تلقائياً."}
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                disabled={isSavingTemplate || !templateLabelInput.trim() || !templateTextInput.trim()}
+                onClick={handleSaveTemplate}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#008069]/20 transition disabled:opacity-50"
+              >
+                {isSavingTemplate ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Save className="w-3.5 h-3.5" />
+                )}
+                <span>
+                  {editingTemplateId
+                    ? locale === "fr"
+                      ? "Enregistrer les modifications"
+                      : locale === "es"
+                      ? "Guardar cambios"
+                      : "حفظ التعديلات"
+                    : t.demo.addTemplate}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsTemplateModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#54656F] font-bold text-xs transition"
+              >
+                {locale === "fr" ? "Annuler" : locale === "es" ? "Cancelar" : "إلغاء"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

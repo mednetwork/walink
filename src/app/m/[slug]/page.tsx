@@ -133,6 +133,7 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     longitude: merchant.longitude ?? -7.5898,
     googleMapsUrl: merchant.googleMapsUrl || "",
     radarMessage: merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.",
+    promoTemplates: merchant.promoTemplates || "[]",
     autoWinback: merchant.autoWinback,
     autoReview: merchant.autoReview,
     autoRadar: merchant.autoRadar,

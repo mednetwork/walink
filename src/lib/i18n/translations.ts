@@ -72,6 +72,18 @@ export interface TranslationDictionary {
     creditsBalance: string;
     sendBroadcastBtn: string;
     simulatingSuccess: string;
+    addTemplate: string;
+    saveAsTemplate: string;
+    noTemplatesYet: string;
+    createTemplateTitle: string;
+    templateName: string;
+    templateText: string;
+    presetSuggestions: string;
+    deleteTemplate: string;
+    notificationMessage: string;
+    notificationPlaceholder: string;
+    templateSavedSuccess: string;
+    templateDeletedSuccess: string;
   };
   engines: {
     sectionTitle: string;
@@ -570,6 +582,18 @@ export const translations: Record<Locale, TranslationDictionary> = {
       creditsBalance: "رصيدك الحالي",
       sendBroadcastBtn: "إرسال الإشعار لجميع الهواتف الآن",
       simulatingSuccess: "تم إرسال الإشعار بنجاح إلى هواتف العملاء!",
+      addTemplate: "إضافة قالب",
+      saveAsTemplate: "📌 حفظ هذا النص كقالب",
+      noTemplatesYet: "لا توجد قوالب محفوظة للمتجر بعد",
+      createTemplateTitle: "إنشاء قالب عرض ترويجي",
+      templateName: "اسم القالب (مختصر)",
+      templateText: "نص العرض / الإشعار",
+      presetSuggestions: "💡 قوالب مقترحة بنقرة واحدة",
+      deleteTemplate: "حذف القالب",
+      notificationMessage: "نص الإشعار",
+      notificationPlaceholder: "اكتب نص الإشعار هنا بحرية، أو اختر قالباً أعلاه...",
+      templateSavedSuccess: "تم حفظ القالب بنجاح",
+      templateDeletedSuccess: "تم حذف القالب",
     },
     engines: {
       sectionTitle: "4 محركات نمو ذكية تعمل في الخلفية لمضاعفة مبيعاتك",
@@ -1108,6 +1132,18 @@ export const translations: Record<Locale, TranslationDictionary> = {
       creditsBalance: "Votre solde crédits",
       sendBroadcastBtn: "Diffuser la notification maintenant",
       simulatingSuccess: "Notification diffusée avec succès aux smartphones !",
+      addTemplate: "Ajouter un modèle",
+      saveAsTemplate: "📌 Enregistrer comme modèle",
+      noTemplatesYet: "Aucun modèle enregistré pour cette boutique",
+      createTemplateTitle: "Créer un modèle de promotion",
+      templateName: "Nom du modèle",
+      templateText: "Texte de la promo",
+      presetSuggestions: "💡 Suggestions prêtes en un clic",
+      deleteTemplate: "Supprimer le modèle",
+      notificationMessage: "Texte de la notification",
+      notificationPlaceholder: "Écrivez votre message librement ou choisissez un modèle...",
+      templateSavedSuccess: "Modèle enregistré avec succès",
+      templateDeletedSuccess: "Modèle supprimé",
     },
     engines: {
       sectionTitle: "4 moteurs de croissance automatisés pour décupler vos ventes",
@@ -1646,6 +1682,18 @@ export const translations: Record<Locale, TranslationDictionary> = {
       creditsBalance: "Tu saldo de créditos",
       sendBroadcastBtn: "Difundir notificación ahora",
       simulatingSuccess: "¡Notificación enviada con éxito a los teléfonos!",
+      addTemplate: "Añadir plantilla",
+      saveAsTemplate: "📌 Guardar como plantilla",
+      noTemplatesYet: "No hay plantillas guardadas para esta tienda",
+      createTemplateTitle: "Crear plantilla de promoción",
+      templateName: "Nombre de la plantilla",
+      templateText: "Texto de la promoción",
+      presetSuggestions: "💡 Sugerencias rápidas en un clic",
+      deleteTemplate: "Eliminar plantilla",
+      notificationMessage: "Texto de la notificación",
+      notificationPlaceholder: "Escribe tu mensaje libremente o elige una plantilla...",
+      templateSavedSuccess: "Plantilla guardada con éxito",
+      templateDeletedSuccess: "Plantilla eliminada",
     },
     engines: {
       sectionTitle: "4 motores de crecimiento automatizados para disparar tus ventas",

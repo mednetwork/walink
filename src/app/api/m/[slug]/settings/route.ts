@@ -94,6 +94,14 @@ export async function PATCH(
       updateData.city = body.city.trim();
     }
 
+    if (body.promoTemplates !== undefined) {
+      if (typeof body.promoTemplates === "string") {
+        updateData.promoTemplates = body.promoTemplates;
+      } else if (Array.isArray(body.promoTemplates)) {
+        updateData.promoTemplates = JSON.stringify(body.promoTemplates);
+      }
+    }
+
     const updated = await prisma.merchant.update({
       where: { slug },
       data: updateData,
@@ -107,6 +115,7 @@ export async function PATCH(
         googleMapsUrl: true,
         radarMessage: true,
         city: true,
+        promoTemplates: true,
         cooldownMinutes: true,
         staffMembers: true,
         radarZones: true,
