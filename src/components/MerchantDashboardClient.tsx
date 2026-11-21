@@ -31,6 +31,12 @@ import {
   Search,
   Check,
   Zap,
+  Settings,
+  MapPin,
+  Save,
+  Loader2,
+  Globe,
+  Navigation,
 } from "lucide-react";
 import MerchantScannerModal, { CustomerSummary } from "@/components/MerchantScannerModal";
 import StandPreviewModal from "@/components/StandPreviewModal";
@@ -103,6 +109,10 @@ interface MerchantDashboardClientProps {
     welcomeCashback?: number;
     minCashbackRedeem?: number;
     currency?: string;
+    latitude?: number;
+    longitude?: number;
+    googleMapsUrl?: string;
+    radarMessage?: string;
     autoWinback: boolean;
     autoReview: boolean;
     autoRadar: boolean;
@@ -131,7 +141,7 @@ export default function MerchantDashboardClient({
   initialCampaigns,
   initialMetrics,
 }: MerchantDashboardClientProps) {
-  const { locale, dir, t, isRTL } = useI18n();
+  const { locale, dir, t, isRTL, setLocale } = useI18n();
 
   // PIN Gate State
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -139,7 +149,7 @@ export default function MerchantDashboardClient({
   const [pinError, setPinError] = useState(false);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<"home" | "customers" | "promo" | "auto">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "customers" | "promo" | "settings">("home");
 
   // Phone Bezel Frame Mode
   const [isFrameMode, setIsFrameMode] = useState(false);
@@ -173,48 +183,164 @@ export default function MerchantDashboardClient({
   const [sendingPromo, setSendingPromo] = useState(false);
   const [promoSuccessMsg, setPromoSuccessMsg] = useState<string | null>(null);
 
-  // Tab 4 (Automations) Settings
+  // Tab 4 (Settings) States
   const [merchantLoyaltyMode, setMerchantLoyaltyMode] = useState(merchant.loyaltyMode || "BOTH");
   const [merchantCashbackRate, setMerchantCashbackRate] = useState(merchant.cashbackRate || 10);
+  const [merchantLatitude, setMerchantLatitude] = useState<number | string>(merchant.latitude ?? 33.5731);
+  const [merchantLongitude, setMerchantLongitude] = useState<number | string>(merchant.longitude ?? -7.5898);
+  const [merchantGoogleMapsUrl, setMerchantGoogleMapsUrl] = useState(merchant.googleMapsUrl || "");
+  const [merchantRadarMessage, setMerchantRadarMessage] = useState(
+    merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة."
+  );
+
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+  const [isDetectingGps, setIsDetectingGps] = useState(false);
+  const [gpsStatus, setGpsStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
   const [automations, setAutomations] = useState({
     autoWinback: merchant.autoWinback,
     autoReview: merchant.autoReview,
     autoRadar: merchant.autoRadar,
     autoNearReward: merchant.autoNearReward,
   });
-  const [savingSettings, setSavingSettings] = useState(false);
 
-  const handleUpdateLoyaltyMode = async (mode: string) => {
-    setMerchantLoyaltyMode(mode);
-    setSavingSettings(true);
-    try {
-      await fetch(`/api/m/${merchant.slug}/settings`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({ loyaltyMode: mode }),
+  const hasUnsavedChanges =
+    merchantLoyaltyMode !== (merchant.loyaltyMode || "BOTH") ||
+    Number(merchantCashbackRate) !== Number(merchant.cashbackRate || 10) ||
+    Number(merchantLatitude) !== Number(merchant.latitude ?? 33.5731) ||
+    Number(merchantLongitude) !== Number(merchant.longitude ?? -7.5898) ||
+    merchantGoogleMapsUrl !== (merchant.googleMapsUrl || "") ||
+    merchantRadarMessage !== (merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.");
+
+  // Smart Coordinate Extraction from Google Maps URL
+  const extractCoordinatesFromGoogleMapsUrl = (url: string): { lat: number; lng: number } | null => {
+    if (!url) return null;
+    const atMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
+    const qMatch = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (qMatch) return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
+    const llMatch = url.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (llMatch) return { lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) };
+    const destMatch = url.match(/[?&]destination=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (destMatch) return { lat: parseFloat(destMatch[1]), lng: parseFloat(destMatch[2]) };
+    return null;
+  };
+
+  const handleGoogleMapsUrlChange = (val: string) => {
+    setMerchantGoogleMapsUrl(val);
+    const parsed = extractCoordinatesFromGoogleMapsUrl(val);
+    if (parsed) {
+      setMerchantLatitude(parsed.lat);
+      setMerchantLongitude(parsed.lng);
+      setGpsStatus({
+        type: "success",
+        msg:
+          locale === "fr"
+            ? "Coordonnées extraites du lien Google Maps !"
+            : locale === "es"
+            ? "¡Coordenadas extraídas del enlace de Google Maps!"
+            : "تم استخراج الإحداثيات تلقائياً من رابط خرائط Google بنجاح 🎯",
       });
-      setMerchant((m) => ({ ...m, loyaltyMode: mode }));
-    } catch (err) {
-      console.error("Error saving loyalty mode:", err);
-    } finally {
-      setSavingSettings(false);
     }
   };
 
-  const handleUpdateCashbackRate = async (rate: number) => {
-    setMerchantCashbackRate(rate);
+  const handleDetectGps = () => {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      setGpsStatus({
+        type: "error",
+        msg:
+          locale === "fr"
+            ? "La géolocalisation n'est pas supportée par votre navigateur"
+            : locale === "es"
+            ? "Geolocalización no soportada por su navegador"
+            : "خاصية تحديد الموقع غير مدعومة في متصفحك",
+      });
+      return;
+    }
+    setIsDetectingGps(true);
+    setGpsStatus(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lng = Number(pos.coords.longitude.toFixed(6));
+        setMerchantLatitude(lat);
+        setMerchantLongitude(lng);
+        setIsDetectingGps(false);
+        setGpsStatus({
+          type: "success",
+          msg:
+            locale === "fr"
+              ? `Position GPS détectée avec succès (±${Math.round(pos.coords.accuracy)}m)`
+              : locale === "es"
+              ? `Ubicación GPS detectada con éxito (±${Math.round(pos.coords.accuracy)}m)`
+              : `تم التقاط إحداثيات موقعك الجغرافي بنجاح (دقة ±${Math.round(pos.coords.accuracy)} متر) 📍`,
+        });
+      },
+      (err) => {
+        setIsDetectingGps(false);
+        setGpsStatus({
+          type: "error",
+          msg:
+            locale === "fr"
+              ? "Impossible d'accéder au GPS. Veuillez autoriser la localisation."
+              : locale === "es"
+              ? "Acceso GPS denegado. Permita la localización."
+              : "تعذر الوصول للموقع. يرجى تفعيل إذن الموقع الجغرافي بالمتصفح.",
+        });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const handleSaveSettings = async () => {
     setSavingSettings(true);
+    setSaveSuccessMsg(null);
     try {
-      await fetch(`/api/m/${merchant.slug}/settings`, {
+      const latNum = Number(merchantLatitude);
+      const lngNum = Number(merchantLongitude);
+
+      const res = await fetch(`/api/m/${merchant.slug}/settings`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({ cashbackRate: rate }),
+        body: JSON.stringify({
+          loyaltyMode: merchantLoyaltyMode,
+          cashbackRate: Number(merchantCashbackRate),
+          latitude: isNaN(latNum) ? undefined : latNum,
+          longitude: isNaN(lngNum) ? undefined : lngNum,
+          googleMapsUrl: merchantGoogleMapsUrl.trim(),
+          radarMessage: merchantRadarMessage.trim(),
+        }),
       });
-      setMerchant((m) => ({ ...m, cashbackRate: rate }));
+
+      if (!res.ok) {
+        throw new Error("Failed to save settings");
+      }
+
+      setMerchant((m) => ({
+        ...m,
+        loyaltyMode: merchantLoyaltyMode,
+        cashbackRate: Number(merchantCashbackRate),
+        latitude: isNaN(latNum) ? m.latitude : latNum,
+        longitude: isNaN(lngNum) ? m.longitude : lngNum,
+        googleMapsUrl: merchantGoogleMapsUrl.trim(),
+        radarMessage: merchantRadarMessage.trim(),
+      }));
+
+      setSaveSuccessMsg(t.demo.savedSuccess);
+      setTimeout(() => setSaveSuccessMsg(null), 3500);
     } catch (err) {
-      console.error("Error saving cashback rate:", err);
+      console.error("Error saving merchant settings:", err);
+      setGpsStatus({
+        type: "error",
+        msg:
+          locale === "fr"
+            ? "Erreur lors de l'enregistrement"
+            : locale === "es"
+            ? "Error al guardar"
+            : "تعذر حفظ الإعدادات، يرجى المحاولة ثانية",
+      });
     } finally {
       setSavingSettings(false);
     }
@@ -520,8 +646,6 @@ export default function MerchantDashboardClient({
           </div>
 
           <div className="flex items-center gap-2">
-            <LanguageSwitcher size="sm" variant="dark" />
-
             {/* Live Credits Counter Pill */}
             <button
               type="button"
@@ -943,11 +1067,50 @@ export default function MerchantDashboardClient({
           </div>
         )}
 
-        {/* Tab 4: أوتوماتيك (Automations) */}
-        {activeTab === "auto" && (
+        {/* Tab 4: الإعدادات (Settings & Location) */}
+        {(activeTab === "settings" || (activeTab as string) === "auto") && (
           <div className="p-3.5 space-y-3.5 flex-1 animate-in fade-in duration-200">
-            <div className="p-3 rounded-2xl bg-[#008069]/10 border border-[#008069]/20 text-xs text-[#008069] font-semibold leading-relaxed">
-              ميساجات كتخدم بوحدها — شعّلها مرة وحدة، و Walink تكلف بالباقي ⚡️
+            {/* Language Switcher Bar */}
+            <div className="p-3.5 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-[#111B21] flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-[#008069]" />
+                  <span>
+                    {locale === "fr"
+                      ? "Langue de la plateforme"
+                      : locale === "es"
+                      ? "Idioma de la plataforma"
+                      : "لغة لوحة التحكم"}
+                  </span>
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F0F2F5] text-[#54656F] font-mono font-bold uppercase">
+                  {locale}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { key: "ar" as const, label: "العربية", flag: "🇲🇦" },
+                  { key: "fr" as const, label: "Français", flag: "🇫🇷" },
+                  { key: "es" as const, label: "Español", flag: "🇪🇸" },
+                ].map((l) => {
+                  const isSel = locale === l.key;
+                  return (
+                    <button
+                      key={l.key}
+                      type="button"
+                      onClick={() => setLocale(l.key)}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+                        isSel
+                          ? "bg-[#008069] text-white border-[#008069] shadow-sm scale-[1.02]"
+                          : "bg-[#F7F8FA] hover:bg-[#F0F2F5] text-[#54656F] border-[#E9EDEF]"
+                      }`}
+                    >
+                      <span className="text-sm">{l.flag}</span>
+                      <span>{l.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Loyalty Program Settings Card */}
@@ -957,13 +1120,20 @@ export default function MerchantDashboardClient({
                   <Coins className="w-4 h-4 text-amber-500" />
                   <span>نظام الولاء للمحل</span>
                 </span>
-                <span className="text-[10px] text-[#008069] font-bold font-mono">
-                  {merchantLoyaltyMode === "BOTH"
-                    ? "أختام + كاش باك"
-                    : merchantLoyaltyMode === "CASHBACK"
-                      ? "كاش باك فقط"
-                      : "أختام فقط"}
-                </span>
+                <div className="flex items-center gap-2">
+                  {hasUnsavedChanges && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-300 animate-pulse">
+                      {t.demo.unsavedChanges}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-[#008069] font-bold font-mono">
+                    {merchantLoyaltyMode === "BOTH"
+                      ? "أختام + كاش باك"
+                      : merchantLoyaltyMode === "CASHBACK"
+                        ? "كاش باك فقط"
+                        : "أختام فقط"}
+                  </span>
+                </div>
               </div>
 
               {/* Mode Selector */}
@@ -980,12 +1150,12 @@ export default function MerchantDashboardClient({
                     <button
                       key={m.id}
                       type="button"
-                      disabled={savingSettings}
-                      onClick={() => handleUpdateLoyaltyMode(m.id)}
-                      className={`py-1.5 px-2 rounded-xl border text-center transition ${merchantLoyaltyMode === m.id
-                        ? "bg-[#008069] text-white border-[#008069] shadow-sm"
-                        : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
-                        }`}
+                      onClick={() => setMerchantLoyaltyMode(m.id)}
+                      className={`py-1.5 px-2 rounded-xl border text-center transition ${
+                        merchantLoyaltyMode === m.id
+                          ? "bg-[#008069] text-white border-[#008069] shadow-sm"
+                          : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                      }`}
                     >
                       {m.label}
                     </button>
@@ -994,35 +1164,241 @@ export default function MerchantDashboardClient({
               </div>
 
               {/* Cashback Rate Selector */}
-              {(merchantLoyaltyMode === "CASHBACK" ||
-                merchantLoyaltyMode === "BOTH") && (
-                  <div className="space-y-1 pt-1.5 border-t border-[#E9EDEF]">
-                    <div className="flex items-center justify-between text-[10px] text-[#54656F]">
-                      <span className="font-semibold text-[#111B21]">نسبة الكاش باك من كل فاتورة:</span>
-                      <span className="font-bold text-amber-600 font-mono text-xs">
-                        {merchantCashbackRate}%
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {[5, 10, 15, 20].map((rate) => (
-                        <button
-                          key={rate}
-                          type="button"
-                          disabled={savingSettings}
-                          onClick={() => handleUpdateCashbackRate(rate)}
-                          className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${merchantCashbackRate === rate
-                            ? "bg-amber-100 text-amber-800 border-amber-300"
-                            : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
-                            }`}
-                        >
-                          {rate}%
-                        </button>
-                      ))}
-                    </div>
+              {(merchantLoyaltyMode === "CASHBACK" || merchantLoyaltyMode === "BOTH") && (
+                <div className="space-y-1 pt-1.5 border-t border-[#E9EDEF]">
+                  <div className="flex items-center justify-between text-[10px] text-[#54656F]">
+                    <span className="font-semibold text-[#111B21]">نسبة الكاش باك من كل فاتورة:</span>
+                    <span className="font-bold text-amber-600 font-mono text-xs">
+                      {merchantCashbackRate}%
+                    </span>
                   </div>
-                )}
+                  <div className="flex items-center gap-1.5">
+                    {[5, 10, 15, 20].map((rate) => (
+                      <button
+                        key={rate}
+                        type="button"
+                        onClick={() => setMerchantCashbackRate(rate)}
+                        className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${
+                          Number(merchantCashbackRate) === rate
+                            ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
+                            : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                        }`}
+                      >
+                        {rate}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Explicit Save Changes Button for Loyalty */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  disabled={savingSettings}
+                  onClick={handleSaveSettings}
+                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${
+                    hasUnsavedChanges
+                      ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
+                      : "bg-[#008069] text-white hover:bg-[#00705c]"
+                  } disabled:opacity-50`}
+                >
+                  {savingSettings ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>{t.demo.saving}</span>
+                    </>
+                  ) : saveSuccessMsg ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-white" />
+                      <span>{saveSuccessMsg}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{t.demo.saveChanges}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
+            {/* Store Location & GPS Radar Card */}
+            <div className="p-3.5 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
+                <span className="font-bold text-xs text-[#111B21] flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-rose-500" />
+                  <span>{t.demo.storeLocation}</span>
+                </span>
+                {Number(merchantLatitude) && Number(merchantLongitude) ? (
+                  <a
+                    href={`https://www.google.com/maps?q=${merchantLatitude},${merchantLongitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-[#008069] hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    <span>{t.demo.mapPreview}</span>
+                    <ExternalLink className="w-3 h-3 opacity-80" />
+                  </a>
+                ) : null}
+              </div>
+
+              <p className="text-[11px] text-[#54656F] leading-relaxed">
+                {locale === "fr"
+                  ? "Coordonnées GPS utilisées pour le radar de proximité 100m et la géolocalisation sur Apple et Google Wallet."
+                  : locale === "es"
+                  ? "Coordenadas GPS utilizadas para el radar de proximidad de 100m y la ubicación en Apple y Google Wallet."
+                  : "إحداثيات GPS تُستخدم لتشغيل رادار الـ 100 متر على بطاقات Apple و Google Wallet ومساعدة الزبائن في العثور عليك."}
+              </p>
+
+              {/* Google Maps Link Input with Smart Coordinate Parser */}
+              <div className="space-y-1">
+                <label htmlFor="gmaps-url-input" className="text-[10px] text-[#54656F] font-semibold block">
+                  {t.demo.googleMapsUrl}:
+                </label>
+                <div className="relative">
+                  <input
+                    id="gmaps-url-input"
+                    type="url"
+                    value={merchantGoogleMapsUrl}
+                    onChange={(e) => handleGoogleMapsUrlChange(e.target.value)}
+                    placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
+                    className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21] placeholder-[#8696A0]"
+                    dir="ltr"
+                  />
+                </div>
+                <span className="text-[9px] text-[#8696A0] block">
+                  {locale === "fr"
+                    ? "💡 Collez un lien Google Maps et les coordonnées GPS seront extraites automatiquement."
+                    : locale === "es"
+                    ? "💡 Pegue un enlace de Google Maps y las coordenadas GPS se extraerán automáticamente."
+                    : "💡 الصق رابط موقعك من Google Maps وسيتم استخراج الإحداثيات تلقائياً حتى لو كنت في المنزل."}
+                </span>
+              </div>
+
+              {/* Coordinates Inputs: Latitude & Longitude */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label htmlFor="lat-input" className="text-[10px] text-[#54656F] font-semibold block">
+                    {locale === "fr" ? "Latitude" : locale === "es" ? "Latitud" : "خط العرض (Latitude)"}
+                  </label>
+                  <input
+                    id="lat-input"
+                    type="number"
+                    step="any"
+                    value={merchantLatitude}
+                    onChange={(e) => setMerchantLatitude(e.target.value)}
+                    placeholder="33.5731"
+                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
+                    dir="ltr"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="lng-input" className="text-[10px] text-[#54656F] font-semibold block">
+                    {locale === "fr" ? "Longitude" : locale === "es" ? "Longitud" : "خط الطول (Longitude)"}
+                  </label>
+                  <input
+                    id="lng-input"
+                    type="number"
+                    step="any"
+                    value={merchantLongitude}
+                    onChange={(e) => setMerchantLongitude(e.target.value)}
+                    placeholder="-7.5898"
+                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+
+              {/* GPS Auto-detect Button */}
+              <div>
+                <button
+                  type="button"
+                  disabled={isDetectingGps}
+                  onClick={handleDetectGps}
+                  className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-xs font-bold text-[#111B21] flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                >
+                  {isDetectingGps ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#008069]" />
+                      <span>
+                        {locale === "fr"
+                          ? "Recherche de la position GPS..."
+                          : locale === "es"
+                          ? "Buscando ubicación GPS..."
+                          : "جاري التقاط إحداثيات GPS الدقيقة..."}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="w-3.5 h-3.5 text-[#008069]" />
+                      <span>{t.demo.detectGps}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* GPS Status Message Toast */}
+              {gpsStatus && (
+                <div
+                  className={`p-2 rounded-xl text-[11px] font-semibold ${
+                    gpsStatus.type === "success"
+                      ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                      : "bg-red-50 border border-red-200 text-red-700"
+                  }`}
+                >
+                  {gpsStatus.msg}
+                </div>
+              )}
+
+              {/* Radar Lock Screen Message */}
+              <div className="space-y-1 pt-1.5 border-t border-[#E9EDEF]">
+                <label htmlFor="radar-msg-input" className="text-[10px] text-[#54656F] font-semibold block">
+                  {t.demo.radarMessage}:
+                </label>
+                <input
+                  id="radar-msg-input"
+                  type="text"
+                  value={merchantRadarMessage}
+                  onChange={(e) => setMerchantRadarMessage(e.target.value)}
+                  placeholder="أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة."
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21]"
+                />
+              </div>
+
+              {/* Save Location Button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  disabled={savingSettings}
+                  onClick={handleSaveSettings}
+                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${
+                    hasUnsavedChanges
+                      ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
+                      : "bg-[#008069] text-white hover:bg-[#00705c]"
+                  } disabled:opacity-50`}
+                >
+                  {savingSettings ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>{t.demo.saving}</span>
+                    </>
+                  ) : saveSuccessMsg ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-white" />
+                      <span>{saveSuccessMsg}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{t.demo.saveChanges}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Smart Automations Toggles Card */}
             <div className="space-y-2.5">
               {[
                 {
@@ -1133,10 +1509,10 @@ export default function MerchantDashboardClient({
         {/* Bottom Navigation Bar */}
         <nav className="sticky bottom-0 z-30 bg-white border-t border-[#E9EDEF] grid grid-cols-4 p-2 text-center text-xs shadow-lg">
           {[
-            { id: "home", label: "الرئيسية", icon: LayoutDashboard },
-            { id: "customers", label: "الكليان", icon: Users },
-            { id: "promo", label: "پروموسيون", icon: Megaphone },
-            { id: "auto", label: "أوتوماتيك", icon: Sparkles },
+            { id: "home" as const, label: t.demo.ownerHome, icon: LayoutDashboard },
+            { id: "customers" as const, label: t.demo.ownerClients, icon: Users },
+            { id: "promo" as const, label: t.demo.ownerPromos, icon: Megaphone },
+            { id: "settings" as const, label: t.demo.ownerSettings, icon: Settings },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1144,11 +1520,16 @@ export default function MerchantDashboardClient({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                onClick={() => setActiveTab(tab.id)}
                 className={`py-2 rounded-xl flex flex-col items-center gap-1 transition ${isActive ? "text-[#008069] font-bold" : "text-[#54656F] hover:text-[#111B21]"
                   }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "stroke-[2.5]" : ""}`} />
+                <div className="relative">
+                  <Icon className={`w-4 h-4 ${isActive ? "stroke-[2.5]" : ""}`} />
+                  {tab.id === "settings" && hasUnsavedChanges && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
+                  )}
+                </div>
                 <span className="text-[10px]">{tab.label}</span>
               </button>
             );

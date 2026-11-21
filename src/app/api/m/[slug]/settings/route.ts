@@ -68,6 +68,32 @@ export async function PATCH(
       updateData.referralBonus = Math.max(0, Number(body.referralBonus));
     }
 
+    if (body.latitude !== undefined && !isNaN(Number(body.latitude))) {
+      const lat = Number(body.latitude);
+      if (lat >= -90 && lat <= 90) {
+        updateData.latitude = lat;
+      }
+    }
+
+    if (body.longitude !== undefined && !isNaN(Number(body.longitude))) {
+      const lng = Number(body.longitude);
+      if (lng >= -180 && lng <= 180) {
+        updateData.longitude = lng;
+      }
+    }
+
+    if (body.googleMapsUrl !== undefined) {
+      updateData.googleMapsUrl = body.googleMapsUrl ? String(body.googleMapsUrl).trim() : null;
+    }
+
+    if (body.radarMessage !== undefined && typeof body.radarMessage === "string") {
+      updateData.radarMessage = body.radarMessage.trim();
+    }
+
+    if (body.city !== undefined && typeof body.city === "string") {
+      updateData.city = body.city.trim();
+    }
+
     const updated = await prisma.merchant.update({
       where: { slug },
       data: updateData,
@@ -76,6 +102,11 @@ export async function PATCH(
         slug: true,
         loyaltyMode: true,
         cashbackRate: true,
+        latitude: true,
+        longitude: true,
+        googleMapsUrl: true,
+        radarMessage: true,
+        city: true,
         cooldownMinutes: true,
         staffMembers: true,
         radarZones: true,

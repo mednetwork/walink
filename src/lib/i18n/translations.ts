@@ -47,6 +47,16 @@ export interface TranslationDictionary {
     ownerClients: string;
     ownerPromos: string;
     ownerAuto: string;
+    ownerSettings: string;
+    saveChanges: string;
+    saving: string;
+    savedSuccess: string;
+    unsavedChanges: string;
+    storeLocation: string;
+    detectGps: string;
+    mapPreview: string;
+    googleMapsUrl: string;
+    radarMessage: string;
     kpiTotalVisits: string;
     kpiReturning: string;
     kpiCashbackGiven: string;
@@ -535,6 +545,16 @@ export const translations: Record<Locale, TranslationDictionary> = {
       ownerClients: "العملاء",
       ownerPromos: "العروض",
       ownerAuto: "التلقائي",
+      ownerSettings: "الإعدادات",
+      saveChanges: "حفظ التغييرات",
+      saving: "جاري الحفظ...",
+      savedSuccess: "تم الحفظ بنجاح",
+      unsavedChanges: "تغييرات غير محفوظة",
+      storeLocation: "الموقع الجغرافي للمحل",
+      detectGps: "تحديد موقعي الحالي (GPS)",
+      mapPreview: "معاينة الموقع على الخريطة",
+      googleMapsUrl: "رابط خرائط جوجل (Google Maps)",
+      radarMessage: "رسالة إشعار رادار 100 متر",
       kpiTotalVisits: "إجمالي الزيارات",
       kpiReturning: "العملاء المتكررون",
       kpiCashbackGiven: "كاش باك ممنوح",
@@ -1063,6 +1083,16 @@ export const translations: Record<Locale, TranslationDictionary> = {
       ownerClients: "Clients",
       ownerPromos: "Promos",
       ownerAuto: "Automatisations",
+      ownerSettings: "Paramètres",
+      saveChanges: "Enregistrer les modifications",
+      saving: "Enregistrement...",
+      savedSuccess: "Enregistré avec succès",
+      unsavedChanges: "Modifications non enregistrées",
+      storeLocation: "Emplacement du commerce",
+      detectGps: "Détecter ma position (GPS)",
+      mapPreview: "Voir sur la carte",
+      googleMapsUrl: "Lien Google Maps",
+      radarMessage: "Message de notification radar 100m",
       kpiTotalVisits: "Visites totales",
       kpiReturning: "Clients récurrents",
       kpiCashbackGiven: "Cashback accordé",
@@ -1591,6 +1621,16 @@ export const translations: Record<Locale, TranslationDictionary> = {
       ownerClients: "Clientes",
       ownerPromos: "Promos",
       ownerAuto: "Automático",
+      ownerSettings: "Ajustes",
+      saveChanges: "Guardar cambios",
+      saving: "Guardando...",
+      savedSuccess: "Guardado con éxito",
+      unsavedChanges: "Cambios no guardados",
+      storeLocation: "Ubicación del comercio",
+      detectGps: "Detectar mi ubicación (GPS)",
+      mapPreview: "Ver en el mapa",
+      googleMapsUrl: "Enlace de Google Maps",
+      radarMessage: "Mensaje de notificación radar 100m",
       kpiTotalVisits: "Visitas totales",
       kpiReturning: "Clientes recurrentes",
       kpiCashbackGiven: "Cashback otorgado",
