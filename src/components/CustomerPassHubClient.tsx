@@ -127,22 +127,40 @@ interface NotificationBanner {
   actionUrl?: string;
 }
 
-function GoogleWalletIcon({ className }: { className?: string }) {
+function OfficialGoogleWalletIcon({ className = "w-10 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="5" width="20" height="14" rx="3" fill="#1F1F1F" stroke="#555" strokeWidth="1" />
-      <path d="M2 9H22" stroke="#4285F4" strokeWidth="2" />
-      <path d="M5 14H10" stroke="#34A853" strokeWidth="2" strokeLinecap="round" />
-      <path d="M5 16.5H8" stroke="#FBBC04" strokeWidth="1.5" strokeLinecap="round" />
-      <rect x="15" y="12" width="4" height="4" rx="1" fill="#EA4335" />
+    <svg className={className} viewBox="0 0 50 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="3" width="40" height="24" rx="4" fill="#EA4335" />
+      <rect x="5" y="6.5" width="40" height="22" rx="4" fill="#FBBC04" />
+      <rect x="5" y="10" width="40" height="20" rx="4" fill="#34A853" />
+      <path
+        d="M5 15C5 12.7909 6.79086 11 9 11H41C43.2091 11 45 12.7909 45 15V29C45 31.2091 43.2091 33 41 33H9C6.79086 33 5 31.2091 5 29V15Z"
+        fill="#4285F4"
+      />
+      <path
+        d="M9 15H41V19C41 19 35 21 25 21C15 21 9 19 9 19V15Z"
+        fill="#1A73E8"
+        opacity="0.85"
+      />
     </svg>
   );
 }
 
-function AppleWalletIcon({ className }: { className?: string }) {
+function OfficialAppleWalletIcon({ className = "w-10 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.96.04-2.13.65-2.77 1.39-.58.65-1.09 1.71-1.01 2.76 1.07.08 2.16-.53 2.77-1.28" />
+    <svg className={className} viewBox="0 0 52 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="2" width="44" height="26" rx="4" fill="#007AFF" />
+      <rect x="4" y="5.5" width="44" height="24" rx="4" fill="#FF9500" />
+      <rect x="4" y="9" width="44" height="22" rx="4" fill="#FFCC00" />
+      <rect x="4" y="12.5" width="44" height="20" rx="4" fill="#34C759" />
+      <path
+        d="M4 16C4 13.7909 5.79086 12 8 12H44C46.2091 12 48 13.7909 48 16V32C48 34.2091 46.2091 36 44 36H8C5.79086 36 4 34.2091 4 32V16Z"
+        fill="#E5E5EA"
+      />
+      <path
+        d="M19 12C19 15.866 22.134 19 26 19C29.866 19 33 15.866 33 12H19Z"
+        fill="#FF3B30"
+      />
     </svg>
   );
 }
@@ -161,13 +179,46 @@ export default function CustomerPassHubClient({
   const [latestCampaign, setLatestCampaign] =
     useState<CampaignData | null>(initialCampaign);
 
-  // Mode B: Detect phone OS language on mount
+  // Mode B: Detect language from URL search param > localStorage > phone OS
   const [locale, setLocale] = useState<Locale>("ar");
 
   useEffect(() => {
-    const detected = detectPhoneLocale("fr");
-    setLocale(detected);
+    let initialLocale: Locale = "ar";
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlLang = params.get("lang") as Locale | null;
+      if (urlLang && (urlLang === "ar" || urlLang === "fr" || urlLang === "es")) {
+        initialLocale = urlLang;
+      } else {
+        const stored = localStorage.getItem("walink_customer_locale") as Locale | null;
+        if (stored && (stored === "ar" || stored === "fr" || stored === "es")) {
+          initialLocale = stored;
+        } else {
+          initialLocale = detectPhoneLocale("fr");
+        }
+      }
+      try {
+        localStorage.setItem("walink_customer_locale", initialLocale);
+      } catch (err) {
+        console.warn("localStorage locale error:", err);
+      }
+    }
+    setLocale(initialLocale);
   }, []);
+
+  const changeLocale = (newLocale: Locale) => {
+    setLocale(newLocale);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("walink_customer_locale", newLocale);
+        const url = new URL(window.location.href);
+        url.searchParams.set("lang", newLocale);
+        window.history.replaceState({}, "", url.toString());
+      } catch (err) {
+        console.warn("localStorage locale update error:", err);
+      }
+    }
+  };
 
   const t = translations[locale] || translations.ar;
   const isRTL = locale === "ar";
@@ -205,16 +256,9 @@ export default function CustomerPassHubClient({
   const [copiedGooglePayload, setCopiedGooglePayload] = useState(false);
   const [showGoogleJsonInspector, setShowGoogleJsonInspector] = useState(false);
 
-  // Radar state
-  const [isRadarActive, setIsRadarActive] = useState(merchant.autoRadar);
-  const [simulatingRadar, setSimulatingRadar] = useState(false);
-
-  // Dynamic 60-Second Rotating Security QR
+  // Rotating Security QR Token
   const [timeToken, setTimeToken] = useState(() =>
     Math.floor(Date.now() / 60000).toString(36)
-  );
-  const [countdownSecs, setCountdownSecs] = useState(() =>
-    60 - (Math.floor(Date.now() / 1000) % 60)
   );
   const [copiedRef, setCopiedRef] = useState(false);
 
@@ -222,22 +266,10 @@ export default function CustomerPassHubClient({
     const timer = setInterval(() => {
       const now = Date.now();
       const token = Math.floor(now / 60000).toString(36);
-      const secsLeft = 60 - (Math.floor(now / 1000) % 60);
       setTimeToken(token);
-      setCountdownSecs(secsLeft);
-    }, 1000);
+    }, 10000);
     return () => clearInterval(timer);
   }, []);
-
-  // Multi-zone geofencing parser
-  let parsedRadarZones: Array<{ name: string; lat: number; lng: number; message?: string }> = [];
-  try {
-    if (merchant.radarZones) {
-      parsedRadarZones = JSON.parse(merchant.radarZones);
-    }
-  } catch {
-    parsedRadarZones = [];
-  }
 
   // Push notifications state
   const [notificationsEnabled, setNotificationsEnabled] = useState(
@@ -528,32 +560,6 @@ export default function CustomerPassHubClient({
     }
   };
 
-  // 100m Radar Simulator
-  const handleSimulateRadar = async () => {
-    setSimulatingRadar(true);
-
-    try {
-      await fetch(`/api/pass/${customer.passSerial}/radar`, {
-        method: "POST",
-        signal: AbortSignal.timeout(8000),
-      });
-    } catch (err) {
-      console.warn("Radar simulator server trigger warning:", err);
-    }
-
-    setTimeout(() => {
-      setSimulatingRadar(false);
-      showBanner({
-        id: `radar-ping-${Date.now()}`,
-        title: `📍 رادار القرب 100m: ${merchant.name}`,
-        message: merchant.radarMessage,
-        time: "الآن",
-        icon: "radar",
-        actionUrl: `/pass/${customer.passSerial}`,
-      });
-    }, 1200);
-  };
-
   // Fetch PassKit Apple Wallet JSON
   const handleOpenWalletModal = async () => {
     setIsWalletModalOpen(true);
@@ -693,7 +699,7 @@ export default function CustomerPassHubClient({
             <div className="flex items-center gap-1 bg-[#E9EDEF] border border-[#D1D7DB] rounded-full p-0.5 text-[10px] font-semibold">
               <button
                 type="button"
-                onClick={() => setLocale("ar")}
+                onClick={() => changeLocale("ar")}
                 className={`px-1.5 py-0.5 rounded-full transition ${
                   locale === "ar"
                     ? "bg-white text-[#008069] shadow-sm font-bold"
@@ -704,7 +710,7 @@ export default function CustomerPassHubClient({
               </button>
               <button
                 type="button"
-                onClick={() => setLocale("fr")}
+                onClick={() => changeLocale("fr")}
                 className={`px-1.5 py-0.5 rounded-full transition ${
                   locale === "fr"
                     ? "bg-white text-[#008069] shadow-sm font-bold"
@@ -715,7 +721,7 @@ export default function CustomerPassHubClient({
               </button>
               <button
                 type="button"
-                onClick={() => setLocale("es")}
+                onClick={() => changeLocale("es")}
                 className={`px-1.5 py-0.5 rounded-full transition ${
                   locale === "es"
                     ? "bg-white text-[#008069] shadow-sm font-bold"
@@ -793,24 +799,6 @@ export default function CustomerPassHubClient({
             compact={false}
             locale={locale}
           />
-
-          {/* Dynamic 60-Second Rotating Security QR Badge */}
-          <div className="mt-3 p-3.5 rounded-2xl bg-white border border-[#E9EDEF] text-center space-y-1.5 shadow-sm">
-            <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-[#008069]">
-              <span className="w-2 h-2 rounded-full bg-[#00A884] animate-pulse" />
-              <span>{t.walletEnterprise.security.dynamicQr}</span>
-            </div>
-            <div className="w-full bg-[#E9EDEF] rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-[#008069] h-full transition-all duration-1000 ease-linear rounded-full"
-                style={{ width: `${(countdownSecs / 60) * 100}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[10px] text-[#54656F] font-mono px-1">
-              <span>TOKEN #{timeToken}</span>
-              <span className="font-bold text-[#111B21]">{countdownSecs}s</span>
-            </div>
-          </div>
         </div>
 
         {/* Google Maps 5-Star Review Prompt (Conditional) */}
@@ -846,34 +834,48 @@ export default function CustomerPassHubClient({
             </div>
           )}
 
-        {/* Wallet Action Buttons (Google Wallet + Apple Wallet + Notifications) */}
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2.5">
-            {/* Official Google Wallet Button */}
-            <button
-              type="button"
-              disabled={isGoogleWalletLoading}
-              onClick={handleAddToGoogleWallet}
-              className="py-3 px-3 rounded-2xl bg-[#111B21] hover:bg-[#202C33] text-white font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm border border-neutral-700/60 active:scale-[0.98] disabled:opacity-60"
-            >
-              {isGoogleWalletLoading ? (
-                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              ) : (
-                <GoogleWalletIcon className="w-4 h-4 flex-shrink-0" />
-              )}
-              <span className="truncate">{t.pass.addToGoogleWallet}</span>
-            </button>
+        {/* Official Full-Width Wallet Action Buttons (Apple Wallet + Google Wallet + Notifications) */}
+        <div className="space-y-3 pt-1">
+          {/* Apple Wallet Official Full-Width Button */}
+          <button
+            type="button"
+            onClick={handleOpenWalletModal}
+            className="w-full h-[58px] rounded-2xl bg-black hover:bg-neutral-900 text-white flex items-center justify-center gap-3.5 border border-white/20 shadow-md transition-all active:scale-[0.98]"
+            dir="ltr"
+          >
+            <OfficialAppleWalletIcon className="w-10 h-8 flex-shrink-0" />
+            <div className="flex flex-col text-left leading-tight text-white select-none">
+              <span className="text-[11px] font-normal tracking-tight text-neutral-300">
+                {locale === "ar" ? "إضافة إلى" : locale === "fr" ? "Ajouter à" : locale === "es" ? "Añadir a" : "Add to"}
+              </span>
+              <span className="text-[17px] font-bold tracking-tight text-white -mt-0.5">
+                Apple Wallet
+              </span>
+            </div>
+          </button>
 
-            {/* Apple Wallet Button */}
-            <button
-              type="button"
-              onClick={handleOpenWalletModal}
-              className="py-3 px-3 rounded-2xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm active:scale-[0.98]"
-            >
-              <AppleWalletIcon className="w-4 h-4 flex-shrink-0 text-black" />
-              <span className="truncate">{t.pass.addToAppleWallet}</span>
-            </button>
-          </div>
+          {/* Google Wallet Official Full-Width Pill Button */}
+          <button
+            type="button"
+            disabled={isGoogleWalletLoading}
+            onClick={handleAddToGoogleWallet}
+            className="w-full h-[58px] rounded-full bg-black hover:bg-neutral-900 text-white flex items-center justify-center gap-3.5 border border-white/20 shadow-md transition-all active:scale-[0.98] disabled:opacity-60"
+            dir="ltr"
+          >
+            {isGoogleWalletLoading ? (
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              <OfficialGoogleWalletIcon className="w-10 h-8 flex-shrink-0" />
+            )}
+            <div className="flex flex-col text-left leading-tight text-white select-none">
+              <span className="text-[11px] font-normal tracking-tight text-neutral-300">
+                {locale === "ar" ? "إضافة إلى" : locale === "fr" ? "Ajouter à" : locale === "es" ? "Añadir a" : "Add to"}
+              </span>
+              <span className="text-[17px] font-bold tracking-tight text-white -mt-0.5">
+                Google Wallet
+              </span>
+            </div>
+          </button>
 
           {/* Browser Notifications Pill */}
           <button
@@ -1015,62 +1017,6 @@ export default function CustomerPassHubClient({
             </div>
           )}
         </div>
-
-        {/* 100m Geofencing Radar Live Tracker & Simulator */}
-        {merchant.autoRadar && (
-          <div className="p-4 rounded-2xl bg-white border border-[#E9EDEF] space-y-3 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00A884] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#008069]"></span>
-                </span>
-                <span className="text-xs font-bold text-[#111B21]">
-                  رادار القرب الجغرافي (100m Radar)
-                </span>
-              </div>
-              <span className="text-[10px] text-[#008069] bg-[#008069]/10 px-2 py-0.5 rounded-md border border-[#008069]/20 font-semibold">
-                نشط
-              </span>
-            </div>
-
-            <p className={`text-[11px] text-[#54656F] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
-              كلما اقتربت بـ 100 متر من {merchant.name}، يوقظ الهاتف شاشتك بإشعار لتذكيرك برصيدك ومكافآتك.
-            </p>
-
-            {parsedRadarZones.length > 0 && (
-              <div className="pt-1 flex flex-wrap gap-1.5">
-                <span className="text-[10px] bg-[#008069]/10 text-[#008069] font-medium px-2 py-0.5 rounded-full border border-[#008069]/20">
-                  📍 {merchant.city} (الفرع الرئيسي)
-                </span>
-                {parsedRadarZones.map((zone, zIdx) => (
-                  <span
-                    key={zIdx}
-                    className="text-[10px] bg-[#F0F2F5] text-[#54656F] font-medium px-2 py-0.5 rounded-full border border-[#D1D7DB]"
-                  >
-                    📍 {zone.name}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <button
-              type="button"
-              disabled={simulatingRadar}
-              onClick={handleSimulateRadar}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#111B21] text-xs font-semibold flex items-center justify-center gap-2 transition disabled:opacity-50"
-            >
-              <Compass
-                className={`w-4 h-4 text-[#008069] ${
-                  simulatingRadar ? "animate-spin" : ""
-                }`}
-              />
-              <span>
-                {simulatingRadar ? "جاري قياس المسافة..." : "جرّب رادار الـ 100 متر الآن"}
-              </span>
-            </button>
-          </div>
-        )}
 
         {/* Pass Details & Recent Activity Drawer */}
         <div className={`p-5 rounded-2xl bg-white border border-[#E9EDEF] space-y-4 shadow-sm ${isRTL ? "text-right" : "text-left"}`}>
@@ -1262,7 +1208,7 @@ export default function CustomerPassHubClient({
           <div className="relative w-full max-w-sm bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-6 text-[#111B21] space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
               <div className="flex items-center gap-2">
-                <GoogleWalletIcon className="w-5 h-5 flex-shrink-0" />
+                <OfficialGoogleWalletIcon className="w-6 h-5 flex-shrink-0" />
                 <h3 className="font-bold text-base text-[#111B21]">Google Wallet (Android)</h3>
               </div>
               <button
@@ -1289,7 +1235,7 @@ export default function CustomerPassHubClient({
                   rel="noopener noreferrer"
                   className="w-full py-3 px-4 rounded-xl bg-[#111B21] hover:bg-[#202C33] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition"
                 >
-                  <GoogleWalletIcon className="w-4 h-4" />
+                  <OfficialGoogleWalletIcon className="w-5 h-4" />
                   <span>{t.pass.addToGoogleWallet}</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>

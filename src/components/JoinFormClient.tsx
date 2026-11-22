@@ -41,13 +41,43 @@ interface JoinFormClientProps {
 export default function JoinFormClient({ merchant }: JoinFormClientProps) {
   const router = useRouter();
 
-  // Mode B: Detect phone OS language on mount
+  // Mode B: Detect phone OS language on mount & sync with localStorage/URL
   const [locale, setLocale] = useState<Locale>("ar");
 
   useEffect(() => {
-    const detected = detectPhoneLocale("fr");
-    setLocale(detected);
+    let initialLocale: Locale = "ar";
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlLang = params.get("lang") as Locale | null;
+      if (urlLang && (urlLang === "ar" || urlLang === "fr" || urlLang === "es")) {
+        initialLocale = urlLang;
+      } else {
+        const stored = localStorage.getItem("walink_customer_locale") as Locale | null;
+        if (stored && (stored === "ar" || stored === "fr" || stored === "es")) {
+          initialLocale = stored;
+        } else {
+          initialLocale = detectPhoneLocale("fr");
+        }
+      }
+      try {
+        localStorage.setItem("walink_customer_locale", initialLocale);
+      } catch (err) {
+        console.warn("localStorage locale save error:", err);
+      }
+    }
+    setLocale(initialLocale);
   }, []);
+
+  const changeLocale = (newLocale: Locale) => {
+    setLocale(newLocale);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("walink_customer_locale", newLocale);
+      } catch (err) {
+        console.warn("localStorage locale save error:", err);
+      }
+    }
+  };
 
   const t = translations[locale] || translations.ar;
   const isRTL = locale === "ar";
@@ -125,7 +155,15 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         throw new Error(data.error || "Failed to create pass");
       }
 
-      router.push(`/pass/${data.passSerial}`);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("walink_customer_locale", locale);
+        } catch (err) {
+          console.warn("localStorage locale save error:", err);
+        }
+      }
+
+      router.push(`/pass/${data.passSerial}?lang=${locale}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "حدث خطأ أثناء إنشاء البطاقة";
       setError(msg);
@@ -150,7 +188,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           <div className="flex items-center gap-1 bg-[#F0F2F5] border border-[#E9EDEF] rounded-full p-0.5 text-[11px] font-bold">
             <button
               type="button"
-              onClick={() => setLocale("ar")}
+              onClick={() => changeLocale("ar")}
               className={`px-2.5 py-0.5 rounded-full transition ${
                 locale === "ar"
                   ? "bg-[#008069] text-white shadow-sm"
@@ -161,7 +199,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
             </button>
             <button
               type="button"
-              onClick={() => setLocale("fr")}
+              onClick={() => changeLocale("fr")}
               className={`px-2.5 py-0.5 rounded-full transition ${
                 locale === "fr"
                   ? "bg-[#008069] text-white shadow-sm"
@@ -172,7 +210,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
             </button>
             <button
               type="button"
-              onClick={() => setLocale("es")}
+              onClick={() => changeLocale("es")}
               className={`px-2.5 py-0.5 rounded-full transition ${
                 locale === "es"
                   ? "bg-[#008069] text-white shadow-sm"
