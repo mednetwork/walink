@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { getMainUrl } from "@/lib/urls";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n/context";
 
@@ -136,8 +137,8 @@ function LoginFormContent() {
       <header className="sticky top-0 z-30 w-full bg-white/90 backdrop-blur-md border-b border-[#E9EDEF] shadow-[0_1px_3px_rgba(11,20,26,0.04)]">
         <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo & Platform Name */}
-          <Link
-            href="/"
+          <a
+            href={getMainUrl("/")}
             className="flex items-center gap-2.5 group transition-transform active:scale-95"
             aria-label="Walink.ma Homepage"
           >
@@ -182,13 +183,13 @@ function LoginFormContent() {
                   : "ولينك المغرب"}
               </span>
             </div>
-          </Link>
+          </a>
 
           {/* Right Header Navigation & Actions */}
           <div className="flex items-center gap-3">
             {/* Back to Homepage Link */}
-            <Link
-              href="/"
+            <a
+              href={getMainUrl("/")}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#54656F] hover:text-[#008069] transition-colors duration-150 py-1.5 px-2.5 rounded-lg hover:bg-[#F0F2F5]"
             >
               <svg
@@ -211,7 +212,7 @@ function LoginFormContent() {
                   ? "Volver al sitio"
                   : "الموقع الرئيسي"}
               </span>
-            </Link>
+            </a>
 
             {/* Subdomain / Status Indicator Pill */}
             <div className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-[11px] font-bold">

@@ -54,8 +54,14 @@ export default function AdminLayout({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mobileDrawerOpen]);
 
-  // Bypass layout for admin login
-  if (pathname === "/admin/login") {
+  // Bypass layout for admin login (supports both /admin/login and /login on wadmin subdomain)
+  const isLoginPage =
+    pathname === "/admin/login" ||
+    pathname === "/login" ||
+    pathname?.endsWith("/login") ||
+    pathname?.endsWith("/login/");
+
+  if (isLoginPage) {
     return <>{children}</>;
   }
 
