@@ -114,6 +114,20 @@ export async function POST(
         });
       }
 
+      // Case 1.5: Scanned Full URL containing /pass/([a-zA-Z0-9_-]+)
+      if (!customer && rawIdent.includes("/pass/")) {
+        const urlMatch = rawIdent.match(/\/pass\/([a-zA-Z0-9_-]+)/);
+        if (urlMatch && urlMatch[1]) {
+          const extractedSerial = urlMatch[1].split("?")[0].split(":")[0].trim();
+          customer = await prisma.customer.findFirst({
+            where: {
+              merchantId: merchant.id,
+              passSerial: extractedSerial,
+            },
+          });
+        }
+      }
+
       // Case 2: Direct passSerial (with optional timeToken)
       if (!customer) {
         const directPayload = rawIdent.split(":")[0].trim();
