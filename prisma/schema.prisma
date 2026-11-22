@@ -36,8 +36,8 @@ model Merchant {
   vipCashbackBonus   Float         @default(5)      // Extra % cashback for VIPs (e.g., 10% + 5% = 15%)
   referralBonus      Float         @default(10)     // Cashback DH bonus for referring a friend (or 1 free stamp)
   radarZones         String        @default("[]") @db.Text   // JSON array of up to 10 { name, lat, lng, message } zones
-  promoTemplates     String        @default("[]") @db.Text   // JSON array of custom promo templates { id, label, text }
-  branches           String        @default("[]") @db.Text   // JSON array of branch locations { id, name, city, latitude, longitude, googleMapsUrl, radarMessage, isMain }
+  promoTemplates     String?       @default("[]") @db.Text   // JSON array of custom promo templates { id, label, text }
+  branches           String?       @default("[]") @db.Text   // JSON array of branch locations { id, name, city, latitude, longitude, googleMapsUrl, radarMessage, isMain }
   menuUrl            String?       @default("https://instagram.com")
   instagramUrl       String?       @default("https://instagram.com")
   termsText          String        @default("البطاقة صالحة في جميع فروع المتجر. لا يمكن استبدال المكافآت نقداً.") @db.Text
