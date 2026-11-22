@@ -133,6 +133,19 @@ interface NotificationBanner {
   actionUrl?: string;
 }
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
+
+function isStandaloneNavigator(nav: Navigator): nav is NavigatorWithStandalone {
+  return "standalone" in nav;
+}
+
 function OfficialGoogleWalletIcon({ className = "w-10 h-8" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 50 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -364,6 +377,105 @@ export default function CustomerPassHubClient({
       setPinChangeError(msg);
     } finally {
       setIsSavingPin(false);
+    }
+  };
+
+  // Android PWA Direct Home Screen Installation State
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [isAndroidInstallModalOpen, setIsAndroidInstallModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const ua = navigator.userAgent || "";
+      const isAndroidDevice = /android/i.test(ua);
+      setIsAndroid(isAndroidDevice);
+
+      // Check if already in standalone display mode
+      const isStandaloneMode =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (isStandaloneNavigator(navigator) && navigator.standalone === true);
+      if (isStandaloneMode) {
+        setIsInstalled(true);
+      }
+
+      // Ensure dynamic per-pass manifest link is injected in document head
+      const existingLink = document.querySelector<HTMLLinkElement>("link[rel='manifest']");
+      const manifestUrl = `/api/pass/${customer.passSerial}/manifest`;
+      if (existingLink) {
+        existingLink.href = manifestUrl;
+      } else {
+        const link = document.createElement("link");
+        link.rel = "manifest";
+        link.href = manifestUrl;
+        document.head.appendChild(link);
+      }
+
+      const handleBeforeInstallPrompt = (e: Event) => {
+        e.preventDefault();
+        setDeferredInstallPrompt(e as BeforeInstallPromptEvent);
+      };
+
+      const handleAppInstalled = () => {
+        setIsInstalled(true);
+        setDeferredInstallPrompt(null);
+      };
+
+      window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.addEventListener("appinstalled", handleAppInstalled);
+
+      return () => {
+        window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+        window.removeEventListener("appinstalled", handleAppInstalled);
+      };
+    }
+  }, [customer.passSerial]);
+
+  const handleInstallAndroidApp = async () => {
+    if (isInstalled) {
+      showBanner({
+        id: "already-installed",
+        title: locale === "ar" ? "البطاقة مثبتة" : locale === "fr" ? "Carte installée" : "Tarjeta instalada",
+        message:
+          locale === "ar"
+            ? "البطاقة مثبتة بالفعل على شاشتك الرئيسية!"
+            : locale === "fr"
+            ? "La carte est déjà installée sur votre écran d'accueil !"
+            : "¡La tarjeta ya está instalada en tu pantalla de inicio!",
+        time: "الآن",
+        icon: "reward",
+      });
+      return;
+    }
+
+    if (deferredInstallPrompt) {
+      try {
+        await deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice.outcome === "accepted") {
+          setIsInstalled(true);
+          setDeferredInstallPrompt(null);
+          showBanner({
+            id: "install-success",
+            title: locale === "ar" ? "تم التثبيت بنجاح!" : locale === "fr" ? "Installation réussie !" : "¡Instalado con éxito!",
+            message:
+              locale === "ar"
+                ? "تمت إضافة البطاقة إلى شاشتك الرئيسية بنجاح!"
+                : locale === "fr"
+                ? "La carte a été ajoutée à votre écran d'accueil !"
+                : "¡La tarjeta se ha añadido a tu pantalla de inicio!",
+            time: "الآن",
+            icon: "reward",
+          });
+        }
+      } catch (err) {
+        console.warn("Failed to prompt install:", err);
+        setIsAndroidInstallModalOpen(true);
+      }
+    } else {
+      setIsAndroidInstallModalOpen(true);
     }
   };
 
@@ -961,6 +1073,41 @@ export default function CustomerPassHubClient({
               </span>
             </div>
           </button>
+
+          {/* Android-Only Direct Home Screen Installation Button (PWA) */}
+          {isAndroid && (
+            <button
+              type="button"
+              onClick={handleInstallAndroidApp}
+              className="w-full h-[58px] rounded-2xl bg-gradient-to-r from-[#0F5132] via-[#008069] to-[#0A4738] hover:from-[#0B3D26] hover:to-[#006D59] text-white flex items-center justify-center gap-3.5 border border-emerald-400/40 shadow-md transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20">
+                <Smartphone className="w-5 h-5 text-emerald-200" />
+              </div>
+              <div className="flex flex-col text-start leading-tight select-none">
+                <span className="text-[11px] font-normal tracking-tight text-emerald-200">
+                  {locale === "ar"
+                    ? "تثبيت البطاقة كتطبيق بدون Wallet"
+                    : locale === "fr"
+                    ? "Installer l'application sans Wallet"
+                    : "Instalar aplicación sin Wallet"}
+                </span>
+                <span className="text-[15px] font-bold tracking-tight text-white -mt-0.5">
+                  {isInstalled
+                    ? (locale === "ar"
+                        ? "✅ البطاقة مثبتة في شاشتك الرئيسية"
+                        : locale === "fr"
+                        ? "✅ Carte déjà installée sur l'écran"
+                        : "✅ Tarjeta instalada en inicio")
+                    : (locale === "ar"
+                        ? "📲 إضافة إلى الشاشة الرئيسية (Android)"
+                        : locale === "fr"
+                        ? "📲 Ajouter à l'écran d'accueil"
+                        : "📲 Añadir a la pantalla de inicio")}
+                </span>
+              </div>
+            </button>
+          )}
 
           {/* Browser Notifications Pill */}
           <button
@@ -1627,6 +1774,97 @@ export default function CustomerPassHubClient({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Android PWA Visual Guide Modal (Fallback when prompt not immediately triggered) */}
+      {isAndroidInstallModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            dir={isRTL ? "rtl" : "ltr"}
+            className="relative w-full max-w-sm bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-6 text-[#111B21] space-y-4"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#E8F5E9] text-[#008069] flex items-center justify-center">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#111B21]">
+                    {locale === "ar"
+                      ? "تثبيت البطاقة على الشاشة الرئيسية"
+                      : locale === "fr"
+                      ? "Installer sur l'écran d'accueil"
+                      : "Instalar en la pantalla de inicio"}
+                  </h3>
+                  <span className="text-[10px] text-[#54656F] block">
+                    {merchant.name} (Android)
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAndroidInstallModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <p className="text-[11px] text-[#54656F] leading-relaxed">
+                {locale === "ar"
+                  ? "لإضافة بطاقتك مباشرة إلى شاشة هاتفك والوصول إليها بنقرة واحدة كأي تطبيق:"
+                  : "Pour ajouter votre carte à l'écran d'accueil et y accéder en un clic :"}
+              </p>
+
+              {/* Step 1 */}
+              <div className="p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                  1
+                </div>
+                <div className="space-y-0.5">
+                  <span className="font-bold text-[#111B21] block">
+                    {locale === "ar"
+                      ? "اضغط على زر القائمة (⋮)"
+                      : "Appuyez sur le menu (⋮)"}
+                  </span>
+                  <span className="text-[11px] text-[#54656F] block">
+                    {locale === "ar"
+                      ? "في الزاوية العليا لمتصفح Chrome أو Samsung Internet."
+                      : "En haut à droite de votre navigateur Chrome."}
+                  </span>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                  2
+                </div>
+                <div className="space-y-0.5">
+                  <span className="font-bold text-[#111B21] block">
+                    {locale === "ar"
+                      ? 'اختر "إضافة إلى الشاشة الرئيسية" أو "تثبيت التطبيق"'
+                      : 'Choisissez "Ajouter à l\'écran d\'accueil" ou "Installer"'}
+                  </span>
+                  <span className="text-[11px] text-[#54656F] block">
+                    {locale === "ar"
+                      ? `ستظهر أيقونة ${merchant.name} في شاشتك وتفتح بطاقتك مباشرة!`
+                      : `L'icône ${merchant.name} apparaîtra sur votre écran d'accueil !`}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsAndroidInstallModalOpen(false)}
+              className="w-full py-2.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white font-bold text-xs shadow-sm transition cursor-pointer"
+            >
+              {locale === "ar" ? "حسناً، فهمت" : "Compris"}
+            </button>
           </div>
         </div>
       )}

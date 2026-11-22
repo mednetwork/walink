@@ -37,6 +37,7 @@ export async function generateMetadata({
   return {
     title: `بطاقة ${customer.name} - ${customer.merchant.name} (${customer.merchant.city}) | Walink`,
     description: `بطاقة الوفاء الرقمية الخاصة بـ ${customer.name} في ${customer.merchant.name}. كود العضوية #${customer.memberCode}.`,
+    manifest: `/api/pass/${serial}/manifest`,
   };
 }
 
