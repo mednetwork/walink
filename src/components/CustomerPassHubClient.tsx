@@ -387,6 +387,7 @@ export default function CustomerPassHubClient({
     useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isAndroidInstallModalOpen, setIsAndroidInstallModalOpen] = useState(false);
+  const [showStandalonePushPrompt, setShowStandalonePushPrompt] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -400,6 +401,14 @@ export default function CustomerPassHubClient({
         (isStandaloneNavigator(navigator) && navigator.standalone === true);
       if (isStandaloneMode) {
         setIsInstalled(true);
+        if ("Notification" in window && Notification.permission === "default") {
+          const timer = setTimeout(() => {
+            setShowStandalonePushPrompt(true);
+          }, 1200);
+          return () => {
+            clearTimeout(timer);
+          };
+        }
       }
 
       // Ensure dynamic per-pass manifest link is injected in document head
@@ -433,52 +442,6 @@ export default function CustomerPassHubClient({
       };
     }
   }, [customer.passSerial]);
-
-  const handleInstallAndroidApp = async () => {
-    if (isInstalled) {
-      showBanner({
-        id: "already-installed",
-        title: locale === "ar" ? "البطاقة مثبتة" : locale === "fr" ? "Carte installée" : "Tarjeta instalada",
-        message:
-          locale === "ar"
-            ? "البطاقة مثبتة بالفعل على شاشتك الرئيسية!"
-            : locale === "fr"
-            ? "La carte est déjà installée sur votre écran d'accueil !"
-            : "¡La tarjeta ya está instalada en tu pantalla de inicio!",
-        time: "الآن",
-        icon: "reward",
-      });
-      return;
-    }
-
-    if (deferredInstallPrompt) {
-      try {
-        await deferredInstallPrompt.prompt();
-        const choice = await deferredInstallPrompt.userChoice;
-        if (choice.outcome === "accepted") {
-          setIsInstalled(true);
-          setDeferredInstallPrompt(null);
-          showBanner({
-            id: "install-success",
-            title: locale === "ar" ? "تم التثبيت بنجاح!" : locale === "fr" ? "Installation réussie !" : "¡Instalado con éxito!",
-            message:
-              locale === "ar"
-                ? "تمت إضافة البطاقة إلى شاشتك الرئيسية بنجاح!"
-                : locale === "fr"
-                ? "La carte a été ajoutée à votre écran d'accueil !"
-                : "¡La tarjeta se ha añadido a tu pantalla de inicio!",
-            time: "الآن",
-            icon: "reward",
-          });
-        }
-      } catch (err) {
-        console.warn("Failed to prompt install:", err);
-        setIsAndroidInstallModalOpen(true);
-      }
-    } else {
-      setIsAndroidInstallModalOpen(true);
-    }
-  };
 
   const prevStampsRef = useRef<number>(customer.stamps);
   const prevRewardsRef = useRef<number>(customer.rewardsRedeemed);
@@ -517,6 +480,129 @@ export default function CustomerPassHubClient({
       setActiveBanner((current) => (current?.id === banner.id ? null : current));
     }, 6000);
   }, []);
+
+  // Handle Push Permission (Trilingual with Immediate Status Sync)
+  const handleEnablePush = useCallback(async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      alert("المتصفح لا يدعم الإشعارات المباشرة");
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        setNotificationsEnabled(true);
+        setShowStandalonePushPrompt(false);
+
+        await fetch(`/api/pass/${customer.passSerial}/subscribe`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(8000),
+          body: JSON.stringify({
+            pushSubscription: "browser-active",
+            walletType: "WEBPASS",
+          }),
+        });
+
+        showBanner({
+          id: "push-granted",
+          title:
+            locale === "fr"
+              ? "Notifications activées 🔔"
+              : locale === "es"
+              ? "Notificaciones activadas 🔔"
+              : "تم تفعيل الإشعارات بنجاح 🔔",
+          message:
+            locale === "fr"
+              ? "Vous recevrez des notifications directes pour vos tampons et cadeaux."
+              : locale === "es"
+              ? "Recibirás notificaciones directas para tus sellos y recompensas."
+              : "ستتلقى إشعاراً فورياً على شاشة هاتفك عند إضافة ختم، كاش باك، أو عروض خاصة.",
+          time: "الآن",
+          icon: "stamp",
+        });
+      }
+    } catch (err) {
+      console.error("Notification permission error:", err);
+    }
+  }, [customer.passSerial, locale, showBanner]);
+
+  // Handle Android PWA Direct Home Screen Installation with Smart Push Chaining
+  const handleInstallAndroidApp = useCallback(async () => {
+    if (isInstalled) {
+      showBanner({
+        id: "already-installed",
+        title: locale === "ar" ? "البطاقة مثبتة" : locale === "fr" ? "Carte installée" : "Tarjeta instalada",
+        message:
+          locale === "ar"
+            ? "البطاقة مثبتة بالفعل على شاشتك الرئيسية!"
+            : locale === "fr"
+            ? "La carte est déjà installée sur votre écran d'accueil !"
+            : "¡La tarjeta ya está instalada en tu pantalla de inicio!",
+        time: "الآن",
+        icon: "reward",
+      });
+      return;
+    }
+
+    if (deferredInstallPrompt) {
+      // Case A: Native install prompt is available
+      try {
+        // 1. Call prompt() FIRST to preserve the active user gesture for the native PWA install dialog
+        await deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice.outcome === "accepted") {
+          setIsInstalled(true);
+          setDeferredInstallPrompt(null);
+          showBanner({
+            id: "install-success",
+            title: locale === "ar" ? "تم التثبيت بنجاح!" : locale === "fr" ? "Installation réussie !" : "¡Instalado con éxito!",
+            message:
+              locale === "ar"
+                ? "تمت إضافة البطاقة إلى شاشتك الرئيسية بنجاح!"
+                : locale === "fr"
+                ? "La carte a été ajoutée à votre écran d'accueil !"
+                : "¡La tarjeta se ha añadido a tu pantalla de inicio!",
+            time: "الآن",
+            icon: "reward",
+          });
+
+          // 2. Chained Push Notification Request after installation accepted
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+            try {
+              const res = await Notification.requestPermission();
+              if (res === "granted") {
+                await handleEnablePush();
+              } else if (res === "default") {
+                // If browser requires separate click gesture, show sleek floating banner
+                setShowStandalonePushPrompt(true);
+              }
+            } catch (pErr) {
+              console.warn("Notification request after install caught:", pErr);
+              setShowStandalonePushPrompt(true);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to prompt install:", err);
+        setIsAndroidInstallModalOpen(true);
+      }
+    } else {
+      // Case B: deferredInstallPrompt is null (Fallback Visual Guide Modal)
+      // Since no native install dialog is competing for the user gesture,
+      // trigger Notification.requestPermission() IMMEDIATELY on this same click!
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+        void handleEnablePush();
+      }
+      setIsAndroidInstallModalOpen(true);
+    }
+  }, [
+    deferredInstallPrompt,
+    handleEnablePush,
+    isInstalled,
+    locale,
+    showBanner,
+  ]);
 
   // Initial welcome notification on landing
   useEffect(() => {
@@ -726,42 +812,6 @@ export default function CustomerPassHubClient({
     t,
   ]);
 
-  // Handle Push Permission
-  const handleEnablePush = async () => {
-    if (typeof window === "undefined" || !("Notification" in window)) {
-      alert("المتصفح لا يدعم الإشعارات المباشرة");
-      return;
-    }
-
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        setNotificationsEnabled(true);
-
-        await fetch(`/api/pass/${customer.passSerial}/subscribe`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(8000),
-          body: JSON.stringify({
-            pushSubscription: "browser-active",
-            walletType: "WEBPASS",
-          }),
-        });
-
-        showBanner({
-          id: "push-granted",
-          title: "تم تفعيل الإشعارات بنجاح 🔔",
-          message:
-            "ستتلقى إشعاراً فورياً على شاشة هاتفك عند إضافة ختم، كاش باك، أو عروض خاصة.",
-          time: "الآن",
-          icon: "stamp",
-        });
-      }
-    } catch (err) {
-      console.error("Notification permission error:", err);
-    }
-  };
-
   // Fetch PassKit Apple Wallet JSON
   const handleOpenWalletModal = async () => {
     setIsWalletModalOpen(true);
@@ -873,6 +923,53 @@ export default function CustomerPassHubClient({
             >
               <X className="w-3.5 h-3.5" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Standalone Home Screen Push Notification Prompt Banner */}
+      {showStandalonePushPrompt && !notificationsEnabled && (
+        <div className="fixed top-3 left-0 right-0 z-50 px-4 max-w-[430px] mx-auto animate-in slide-in-from-top-4 duration-300">
+          <div className="p-3.5 rounded-3xl border border-[#00A884]/30 bg-[#0B141A]/95 text-white shadow-2xl backdrop-blur-md flex items-center justify-between gap-3">
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] flex items-center justify-center flex-shrink-0 shadow-md">
+              <BellRing className="w-5 h-5 text-white animate-bounce" />
+            </div>
+            <div className={`flex-1 min-w-0 ${isRTL ? "text-right" : "text-left"}`}>
+              <p className="text-xs font-bold truncate">
+                {locale === "fr"
+                  ? "Activer les notifications 🔔"
+                  : locale === "es"
+                  ? "Activar notificaciones 🔔"
+                  : "تفعيل إشعارات الرصيد والعروض 🔔"}
+              </p>
+              <p className="text-[10px] text-white/70 leading-tight mt-0.5">
+                {locale === "fr"
+                  ? "Recevez vos tampons et cadeaux en direct"
+                  : locale === "es"
+                  ? "Recibe tus sellos y recompensas al instante"
+                  : "لتصلك أختامك وكاشباك مشترياتك فورياً على الشاشة"}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                type="button"
+                onClick={async () => {
+                  await handleEnablePush();
+                  setShowStandalonePushPrompt(false);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-[#00A884] hover:bg-[#008069] text-white text-xs font-bold shadow-md transition active:scale-95 flex items-center gap-1"
+              >
+                <span>{locale === "fr" ? "Activer" : locale === "es" ? "Activar" : "تفعيل"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowStandalonePushPrompt(false)}
+                className="w-7 h-7 rounded-xl bg-white/10 hover:bg-white/20 text-white/60 hover:text-white flex items-center justify-center transition"
+                aria-label="إغلاق"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
