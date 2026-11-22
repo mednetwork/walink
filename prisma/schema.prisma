@@ -80,6 +80,9 @@ model Customer {
   walletType        String        @default("WEBPASS") // APPLE, GOOGLE, WEBPASS
   pushSubscription  String?       @db.Text        // JSON string for Web Push API
   applePushToken    String?       @db.Text        // APNs token for Apple Wallet
+  securityPin       String        @default("0000") // 4-digit security PIN chosen by customer (or defaulting to memberCode for legacy users)
+  failedPinAttempts Int           @default(0)      // Tracks consecutive failed recovery attempts
+  pinLockedUntil    DateTime?                      // Lockout timestamp after 5 failed attempts (15-min cooldown)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

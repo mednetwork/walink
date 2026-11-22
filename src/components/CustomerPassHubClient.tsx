@@ -24,6 +24,9 @@ import {
   Compass,
   Coins,
   Copy,
+  ShieldCheck,
+  KeyRound,
+  Lock,
 } from "lucide-react";
 import WalletPassPreview from "@/components/WalletPassPreview";
 import { formatTimeAgoArabic } from "@/lib/utils";
@@ -50,6 +53,9 @@ interface CustomerData {
   lastVisitAt: string | Date;
   walletType: string;
   pushSubscription: string | null;
+  securityPin?: string;
+  failedPinAttempts?: number;
+  pinLockedUntil?: string | null;
 }
 
 interface MerchantData {
@@ -274,9 +280,92 @@ export default function CustomerPassHubClient({
   // Push notifications state
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     typeof window !== "undefined" &&
-      "Notification" in window &&
-      Notification.permission === "granted"
+    "Notification" in window &&
+    Notification.permission === "granted"
   );
+
+  // Card Security & Recovery State
+  const [isPinChangeModalOpen, setIsPinChangeModalOpen] = useState(false);
+  const [oldPinInput, setOldPinInput] = useState("");
+  const [newPinInput, setNewPinInput] = useState("");
+  const [confirmPinInput, setConfirmPinInput] = useState("");
+  const [pinChangeError, setPinChangeError] = useState<string | null>(null);
+  const [pinChangeSuccess, setPinChangeSuccess] = useState<string | null>(null);
+  const [isSavingPin, setIsSavingPin] = useState(false);
+  const [currentSecurityPin, setCurrentSecurityPin] = useState(
+    customer.securityPin || customer.memberCode
+  );
+
+  const handleSavePin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinChangeError(null);
+    setPinChangeSuccess(null);
+
+    if (!newPinInput || !/^\d{4}$/.test(newPinInput.trim())) {
+      setPinChangeError(
+        locale === "ar"
+          ? "رمز PIN الجديد يجب أن يتكون من 4 أرقام حصراً (مثال: 1234)"
+          : locale === "fr"
+          ? "Le nouveau PIN doit comporter 4 chiffres (ex: 1234)"
+          : "El nuevo PIN debe tener 4 dígitos (ej: 1234)"
+      );
+      return;
+    }
+
+    if (newPinInput.trim() !== confirmPinInput.trim()) {
+      setPinChangeError(
+        locale === "ar"
+          ? "تأكيد الرمز غير متطابق"
+          : locale === "fr"
+          ? "Les codes PIN ne correspondent pas"
+          : "Los códigos PIN no coinciden"
+      );
+      return;
+    }
+
+    setIsSavingPin(true);
+
+    try {
+      const res = await fetch(`/api/pass/${customer.passSerial}/pin`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          oldPin: oldPinInput.trim() || undefined,
+          newPin: newPinInput.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "فشل تغيير الرمز");
+      }
+
+      const updatedPin = data.securityPin || newPinInput.trim();
+      setCurrentSecurityPin(updatedPin);
+      setCustomer((prev) => ({ ...prev, securityPin: updatedPin }));
+      setPinChangeSuccess(
+        data.message ||
+          (locale === "ar"
+            ? "تم تحديث رمز PIN بنجاح!"
+            : locale === "fr"
+            ? "Code PIN mis à jour avec succès !"
+            : "¡PIN actualizado con éxito!")
+      );
+      setTimeout(() => {
+        setIsPinChangeModalOpen(false);
+        setOldPinInput("");
+        setNewPinInput("");
+        setConfirmPinInput("");
+        setPinChangeSuccess(null);
+      }, 1500);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "حدث خطأ أثناء حفظ الرمز";
+      setPinChangeError(msg);
+    } finally {
+      setIsSavingPin(false);
+    }
+  };
 
   const prevStampsRef = useRef<number>(customer.stamps);
   const prevRewardsRef = useRef<number>(customer.rewardsRedeemed);
@@ -325,25 +414,25 @@ export default function CustomerPassHubClient({
           locale === "ar"
             ? `مرحباً بك في ${merchant.name}! 🎁`
             : locale === "fr"
-            ? `Bienvenue chez ${merchant.name} ! 🎁`
-            : `¡Bienvenido a ${merchant.name}! 🎁`,
+              ? `Bienvenue chez ${merchant.name} ! 🎁`
+              : `¡Bienvenido a ${merchant.name}! 🎁`,
         message: isCashback
           ? locale === "ar"
             ? `تم تفعيل بطاقة الكاش باك (${cashbackRate}%). رصيدك المتاح: ${Number(
-                customer.cashbackBalance || 0
-              ).toFixed(2)} ${currency}.`
+              customer.cashbackBalance || 0
+            ).toFixed(2)} ${currency}.`
             : locale === "fr"
-            ? `Carte cashback (${cashbackRate}%) activée. Solde disponible : ${Number(
+              ? `Carte cashback (${cashbackRate}%) activée. Solde disponible : ${Number(
                 customer.cashbackBalance || 0
               ).toFixed(2)} ${currency}.`
-            : `Tarjeta cashback (${cashbackRate}%) activada. Saldo disponible: ${Number(
+              : `Tarjeta cashback (${cashbackRate}%) activada. Saldo disponible: ${Number(
                 customer.cashbackBalance || 0
               ).toFixed(2)} ${currency}.`
           : locale === "ar"
-          ? "حصلت على أول ختم هدية ترحيبية على بطاقة الولاء الخاصة بك."
-          : locale === "fr"
-          ? "Vous avez reçu votre premier tampon de bienvenue offert."
-          : "Has recibido tu primer sello de bienvenida de regalo.",
+            ? "حصلت على أول ختم هدية ترحيبية على بطاقة الولاء الخاصة بك."
+            : locale === "fr"
+              ? "Vous avez reçu votre premier tampon de bienvenue offert."
+              : "Has recibido tu primer sello de bienvenida de regalo.",
         time: "الآن",
         icon: isCashback ? "cashback" : "gift",
       });
@@ -700,33 +789,30 @@ export default function CustomerPassHubClient({
               <button
                 type="button"
                 onClick={() => changeLocale("ar")}
-                className={`px-1.5 py-0.5 rounded-full transition ${
-                  locale === "ar"
-                    ? "bg-white text-[#008069] shadow-sm font-bold"
-                    : "text-[#54656F] hover:text-[#111B21]"
-                }`}
+                className={`px-1.5 py-0.5 rounded-full transition ${locale === "ar"
+                  ? "bg-white text-[#008069] shadow-sm font-bold"
+                  : "text-[#54656F] hover:text-[#111B21]"
+                  }`}
               >
                 عربي
               </button>
               <button
                 type="button"
                 onClick={() => changeLocale("fr")}
-                className={`px-1.5 py-0.5 rounded-full transition ${
-                  locale === "fr"
-                    ? "bg-white text-[#008069] shadow-sm font-bold"
-                    : "text-[#54656F] hover:text-[#111B21]"
-                }`}
+                className={`px-1.5 py-0.5 rounded-full transition ${locale === "fr"
+                  ? "bg-white text-[#008069] shadow-sm font-bold"
+                  : "text-[#54656F] hover:text-[#111B21]"
+                  }`}
               >
                 FR
               </button>
               <button
                 type="button"
                 onClick={() => changeLocale("es")}
-                className={`px-1.5 py-0.5 rounded-full transition ${
-                  locale === "es"
-                    ? "bg-white text-[#008069] shadow-sm font-bold"
-                    : "text-[#54656F] hover:text-[#111B21]"
-                }`}
+                className={`px-1.5 py-0.5 rounded-full transition ${locale === "es"
+                  ? "bg-white text-[#008069] shadow-sm font-bold"
+                  : "text-[#54656F] hover:text-[#111B21]"
+                  }`}
               >
                 ES
               </button>
@@ -805,9 +891,8 @@ export default function CustomerPassHubClient({
         {merchant.autoReview &&
           (isRewardReady || customer.rewardsRedeemed > 0) && (
             <div
-              className={`p-4 rounded-2xl border border-amber-200 bg-white space-y-2 shadow-sm ${
-                isRTL ? "text-right" : "text-left"
-              }`}
+              className={`p-4 rounded-2xl border border-amber-200 bg-white space-y-2 shadow-sm ${isRTL ? "text-right" : "text-left"
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-amber-600 font-bold text-xs">
@@ -881,11 +966,10 @@ export default function CustomerPassHubClient({
           <button
             type="button"
             onClick={handleEnablePush}
-            className={`w-full py-2.5 px-3.5 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm ${
-              notificationsEnabled
-                ? "bg-[#008069]/10 border-[#008069]/30 text-[#008069]"
-                : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
-            }`}
+            className={`w-full py-2.5 px-3.5 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm ${notificationsEnabled
+              ? "bg-[#008069]/10 border-[#008069]/30 text-[#008069]"
+              : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+              }`}
           >
             {notificationsEnabled ? (
               <>
@@ -915,15 +999,14 @@ export default function CustomerPassHubClient({
           <p className="text-xs text-[#54656F] leading-relaxed">
             {isCashback
               ? t.walletEnterprise.referral.cashbackDesc
-                  .replace("{bonus}", String(merchant.referralBonus || 10))
-                  .replace("{currency}", currency)
+                .replace("{bonus}", String(merchant.referralBonus || 10))
+                .replace("{currency}", currency)
               : t.walletEnterprise.referral.stampsDesc}
           </p>
           <div className="flex items-center gap-2 pt-1">
             <a
               href={`https://wa.me/?text=${encodeURIComponent(
-                `${merchant.name}: تفضل بطاقة ولاء رقمية مجانية واحصل على هدية ترحيبية فورية! سجل عبر هذا الرابط: ${
-                  typeof window !== "undefined" ? window.location.origin : "https://walink.ma"
+                `${merchant.name}: تفضل بطاقة ولاء رقمية مجانية واحصل على هدية ترحيبية فورية! سجل عبر هذا الرابط: ${typeof window !== "undefined" ? window.location.origin : "https://walink.ma"
                 }/join/${merchant.slug}?ref=${customer.memberCode}`
               )}`}
               target="_blank"
@@ -1018,6 +1101,107 @@ export default function CustomerPassHubClient({
           )}
         </div>
 
+        {/* Card Security & Smart Recovery Section */}
+        <div className={`p-4 rounded-2xl bg-white border border-[#E9EDEF] space-y-3 shadow-sm ${isRTL ? "text-right" : "text-left"}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[#111B21] font-bold text-xs">
+              <ShieldCheck className="w-4 h-4 text-[#008069]" />
+              <span>
+                {locale === "ar"
+                  ? "أمان واسترجاع البطاقة الذكية"
+                  : locale === "fr"
+                  ? "Sécurité & Récupération du pass"
+                  : "Seguridad y Recuperación del pass"}
+              </span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E8F5E9] text-[#008069] border border-[#C8E6C9]">
+              {locale === "ar" ? "محمية 100%" : locale === "fr" ? "100% Sécurisé" : "100% Protegido"}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[#54656F] text-[11px]">
+                {locale === "ar"
+                  ? "رمز استرجاع البطاقة (PIN):"
+                  : locale === "fr"
+                  ? "Code PIN de récupération :"
+                  : "Código PIN de recuperación:"}
+              </span>
+              <span className="font-mono font-bold text-[#111B21] tracking-widest text-sm bg-white px-2.5 py-0.5 rounded-lg border border-[#E9EDEF]">
+                {currentSecurityPin}
+              </span>
+            </div>
+            <p className="text-[11px] text-[#54656F] leading-snug">
+              {currentSecurityPin === customer.memberCode
+                ? locale === "ar"
+                  ? `💡 رمز الأمان الافتراضي هو كود عضويتك (#${customer.memberCode}). يُستخدم لاسترجاع بطاقتك فوراً في حال تغيير هاتفك أو مسح البطاقة.`
+                  : locale === "fr"
+                  ? `💡 Votre code PIN par défaut est votre code membre (#${customer.memberCode}). Il sert à récupérer votre pass à tout moment.`
+                  : `💡 Tu código PIN por defecto es tu código de socio (#${customer.memberCode}).`
+                : locale === "ar"
+                ? "🔐 تم تفعيل رمز أمان PIN مخصص لحماية رصيدك وبطاقتك من أي محاولة استرجاع غير مصرح بها."
+                : locale === "fr"
+                ? "🔐 Votre pass est protégé par un code PIN personnalisé."
+                : "🔐 Tu tarjeta está protegida con un código PIN personalizado."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            {/* WhatsApp 1-tap personal backup button */}
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                locale === "ar"
+                  ? `🔐 رابط بطاقة الولاء الخاصة بي في ${merchant.name}:\n${
+                      typeof window !== "undefined"
+                        ? window.location.href
+                        : `https://walink.ma/pass/${customer.passSerial}`
+                    }\n\n💡 رمز الاسترجاع (PIN): ${currentSecurityPin}`
+                  : `🔐 Lien de mon pass fidélité chez ${merchant.name} :\n${
+                      typeof window !== "undefined"
+                        ? window.location.href
+                        : `https://walink.ma/pass/${customer.passSerial}`
+                    }\n\n💡 Code PIN de récupération : ${currentSecurityPin}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2.5 px-3 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/30 text-[#075E54] text-xs font-bold flex items-center justify-center gap-2 transition"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>
+                {locale === "ar"
+                  ? "📲 حفظ الرابط في واتسابي"
+                  : locale === "fr"
+                  ? "📲 Sauvegarder sur WhatsApp"
+                  : "📲 Guardar en WhatsApp"}
+              </span>
+            </a>
+
+            {/* Change PIN button */}
+            <button
+              type="button"
+              onClick={() => {
+                setOldPinInput("");
+                setNewPinInput("");
+                setConfirmPinInput("");
+                setPinChangeError(null);
+                setPinChangeSuccess(null);
+                setIsPinChangeModalOpen(true);
+              }}
+              className="w-full py-2.5 px-3 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 border border-[#008069]/30 text-[#008069] text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>
+                {locale === "ar"
+                  ? "تغيير رمز PIN"
+                  : locale === "fr"
+                  ? "Modifier le code PIN"
+                  : "Cambiar código PIN"}
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* Pass Details & Recent Activity Drawer */}
         <div className={`p-5 rounded-2xl bg-white border border-[#E9EDEF] space-y-4 shadow-sm ${isRTL ? "text-right" : "text-left"}`}>
           <h2 className="text-xs font-bold text-[#111B21] flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
@@ -1094,12 +1278,11 @@ export default function CustomerPassHubClient({
                   </div>
 
                   <span
-                    className={`font-mono font-bold text-xs ${
-                      (tx.cashbackDelta && tx.cashbackDelta > 0) ||
+                    className={`font-mono font-bold text-xs ${(tx.cashbackDelta && tx.cashbackDelta > 0) ||
                       tx.stampsDelta > 0
-                        ? "text-[#008069]"
-                        : "text-amber-600"
-                    }`}
+                      ? "text-[#008069]"
+                      : "text-amber-600"
+                      }`}
                   >
                     {tx.cashbackDelta
                       ? `${tx.cashbackDelta > 0 ? "+" : ""}${tx.cashbackDelta} ${currency}`
@@ -1178,9 +1361,8 @@ export default function CustomerPassHubClient({
                   <span>معاينة كود Apple Wallet (pass.json)</span>
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform ${
-                    showJsonInspector ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 transition-transform ${showJsonInspector ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -1262,9 +1444,8 @@ export default function CustomerPassHubClient({
                       <span>معاينة حزمة Google Wallet Payload</span>
                     </span>
                     <ChevronDown
-                      className={`w-4 h-4 transition-transform ${
-                        showGoogleJsonInspector ? "rotate-180" : ""
-                      }`}
+                      className={`w-4 h-4 transition-transform ${showGoogleJsonInspector ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
@@ -1311,6 +1492,141 @@ export default function CustomerPassHubClient({
             >
               إغلاق
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Change PIN Modal */}
+      {isPinChangeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            dir={isRTL ? "rtl" : "ltr"}
+            className="relative w-full max-w-sm bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-6 text-[#111B21] space-y-4"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#E8F5E9] text-[#008069] flex items-center justify-center">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#111B21]">
+                    {locale === "ar"
+                      ? "تغيير رمز أمان البطاقة (PIN)"
+                      : locale === "fr"
+                      ? "Modifier le code PIN"
+                      : "Cambiar código PIN"}
+                  </h3>
+                  <span className="text-[10px] text-[#54656F] block">
+                    {merchant.name} • Walink Security
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPinChangeModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {pinChangeError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+                {pinChangeError}
+              </div>
+            )}
+
+            {pinChangeSuccess && (
+              <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs font-semibold flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-green-600" />
+                <span>{pinChangeSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSavePin} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#111B21] block">
+                  {locale === "ar"
+                    ? "رمز الأمان الحالي (أو كود العضوية):"
+                    : "Code PIN actuel (ou code membre) :"}
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={oldPinInput}
+                  onChange={(e) => setOldPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder={`الافتراضي: ${customer.memberCode}`}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] placeholder-[#8696A0] focus:bg-white focus:outline-none focus:border-[#008069] text-xs font-mono tracking-widest"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#111B21] block">
+                  {locale === "ar"
+                    ? "رمز الأمان الجديد (4 أرقام):"
+                    : "Nouveau code PIN (4 chiffres) :"}
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  required
+                  value={newPinInput}
+                  onChange={(e) => setNewPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="••••"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#D1D7DB] text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] text-xs font-mono tracking-widest text-center text-lg font-bold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#111B21] block">
+                  {locale === "ar"
+                    ? "تأكيد الرمز الجديد:"
+                    : "Confirmer le nouveau code PIN :"}
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  required
+                  value={confirmPinInput}
+                  onChange={(e) => setConfirmPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="••••"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#D1D7DB] text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] text-xs font-mono tracking-widest text-center text-lg font-bold"
+                />
+              </div>
+
+              <p className="text-[10px] text-[#54656F] leading-snug">
+                {locale === "ar"
+                  ? "احفظ هذا الرمز جيداً. ستطلبه المنصة عند استرجاع بطاقتك على أي هاتف جديد لحماية رصيد مكافآتك."
+                  : "Gardez ce code précieusement. Il vous sera demandé pour récupérer votre carte."}
+              </p>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPinChangeModalOpen(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-[#D1D7DB] text-xs font-bold text-[#54656F] hover:bg-[#F0F2F5] transition"
+                >
+                  {locale === "ar" ? "إلغاء" : "Annuler"}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingPin || newPinInput.length !== 4}
+                  className="flex-2 py-2.5 px-4 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {isSavingPin ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span>{locale === "ar" ? "حفظ رمز PIN" : "Enregistrer"}</span>
+                      <Check className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

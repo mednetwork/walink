@@ -42,6 +42,8 @@ import {
   Edit3,
   BookmarkPlus,
   Building2,
+  X,
+  ShieldCheck,
 } from "lucide-react";
 import MerchantScannerModal, { CustomerSummary } from "@/components/MerchantScannerModal";
 import StandPreviewModal from "@/components/StandPreviewModal";
@@ -83,6 +85,9 @@ interface CustomerData {
   totalVisits: number;
   rewardsRedeemed: number;
   lastVisitAt: string | Date;
+  securityPin?: string;
+  failedPinAttempts?: number;
+  pinLockedUntil?: string | null;
 }
 
 interface TransactionData {
@@ -203,6 +208,126 @@ export default function MerchantDashboardClient({
   // Tab 2 (CRM) Search & Filter
   const [crmSearch, setCrmSearch] = useState("");
   const [crmFilter, setCrmFilter] = useState<"ALL" | "VIP" | "ACTIVE" | "QUIET">("ALL");
+
+  // Cashier PIN Reset & Account Security Modal State
+  const [pinResetModal, setPinResetModal] = useState<{
+    isOpen: boolean;
+    customer: CustomerData | null;
+    newPin: string;
+    isSubmitting: boolean;
+    error: string | null;
+    success: string | null;
+  }>({
+    isOpen: false,
+    customer: null,
+    newPin: "",
+    isSubmitting: false,
+    error: null,
+    success: null,
+  });
+
+  const handleOpenPinReset = (cust: CustomerData) => {
+    setPinResetModal({
+      isOpen: true,
+      customer: cust,
+      newPin: "",
+      isSubmitting: false,
+      error: null,
+      success: null,
+    });
+  };
+
+  const handleResetPinSubmit = async () => {
+    if (!pinResetModal.customer) return;
+    if (!/^\d{4}$/.test(pinResetModal.newPin.trim())) {
+      setPinResetModal((prev) => ({
+        ...prev,
+        error:
+          locale === "ar"
+            ? "رمز PIN يجب أن يتكون من 4 أرقام حصراً (مثال: 1234)"
+            : locale === "fr"
+            ? "Le PIN doit être composé de 4 chiffres (ex: 1234)"
+            : "El PIN debe tener 4 dígitos (ej: 1234)",
+      }));
+      return;
+    }
+    setPinResetModal((prev) => ({ ...prev, isSubmitting: true, error: null }));
+    try {
+      const res = await fetch(`/api/m/${merchant.slug}/customers/security`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: pinResetModal.customer.id,
+          action: "RESET_PIN",
+          newPin: pinResetModal.newPin.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to reset PIN");
+      }
+      setCustomers((prev) =>
+        prev.map((c) =>
+          c.id === pinResetModal.customer?.id
+            ? {
+                ...c,
+                securityPin: data.customer.securityPin,
+                failedPinAttempts: 0,
+                pinLockedUntil: null,
+              }
+            : c
+        )
+      );
+      setPinResetModal((prev) => ({
+        ...prev,
+        isSubmitting: false,
+        success:
+          data.message ||
+          (locale === "ar"
+            ? "تم تعيين رمز PIN بنجاح!"
+            : "Code PIN mis à jour avec succès !"),
+      }));
+      setTimeout(() => {
+        setPinResetModal({
+          isOpen: false,
+          customer: null,
+          newPin: "",
+          isSubmitting: false,
+          error: null,
+          success: null,
+        });
+      }, 1500);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "حدث خطأ";
+      setPinResetModal((prev) => ({ ...prev, isSubmitting: false, error: msg }));
+    }
+  };
+
+  const handleUnlockCustomer = async (cust: CustomerData) => {
+    try {
+      const res = await fetch(`/api/m/${merchant.slug}/customers/security`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: cust.id,
+          action: "UNLOCK_ACCOUNT",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to unlock");
+      }
+      setCustomers((prev) =>
+        prev.map((c) =>
+          c.id === cust.id
+            ? { ...c, failedPinAttempts: 0, pinLockedUntil: null }
+            : c
+        )
+      );
+    } catch (err) {
+      console.error("Error unlocking customer:", err);
+    }
+  };
 
   // Tab 3 (Promo) States & Dynamic Templates
   const [templates, setTemplates] = useState<PromoTemplateItem[]>(() => {
@@ -1424,56 +1549,102 @@ export default function MerchantDashboardClient({
                   const isQuiet = new Date(c.lastVisitAt) <= new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
                   const isVip = c.totalVisits >= 10;
                   const isCashbackCust = c.loyaltyType === "CASHBACK";
+                  const isLocked = Boolean(c.pinLockedUntil && new Date(c.pinLockedUntil) > new Date());
                   return (
-                    <button
+                    <div
                       key={c.id}
-                      type="button"
-                      onClick={() => setIsScannerOpen(true)}
-                      className="w-full text-start p-3 rounded-2xl bg-white border border-[#E9EDEF] hover:border-[#008069]/40 shadow-sm flex items-center justify-between text-xs transition"
+                      className={`w-full p-3.5 rounded-2xl bg-white border ${
+                        isLocked ? "border-red-300 ring-1 ring-red-300 bg-red-50/20" : "border-[#E9EDEF]"
+                      } shadow-sm space-y-2.5 text-xs transition`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-[#F0F2F5] text-[#111B21] border border-[#E9EDEF] font-bold flex items-center justify-center">
-                          {c.name.slice(0, 1)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-[#111B21]">{c.name}</span>
-                            <span className="font-mono text-[10px] text-[#54656F]">
-                              #{c.memberCode}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-[#F0F2F5] text-[#111B21] border border-[#E9EDEF] font-bold flex items-center justify-center shrink-0">
+                            {c.name.slice(0, 1)}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-[#111B21]">{c.name}</span>
+                              <span className="font-mono text-[10px] text-[#54656F]">
+                                #{c.memberCode}
+                              </span>
+                              {isLocked && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-700 border border-red-200 animate-pulse">
+                                  🔒 مقفل مؤقتاً
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-[#54656F] block">
+                              {c.phone} • {c.totalVisits} زيارات • آخر زيارة: {formatTimeAgoArabic(c.lastVisitAt)}
                             </span>
                           </div>
-                          <span className="text-[10px] text-[#54656F] block">
-                            {c.totalVisits} زيارات • آخر زيارة: {formatTimeAgoArabic(c.lastVisitAt)}
+                        </div>
+
+                        <div className="text-end flex items-center gap-2">
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${isVip
+                              ? "bg-amber-100 text-amber-800 border border-amber-200"
+                              : isQuiet
+                                ? "bg-red-100 text-red-800 border border-red-200"
+                                : isCashbackCust
+                                  ? "bg-amber-100 text-amber-800 border border-amber-200"
+                                  : "bg-[#008069]/10 text-[#008069] border border-[#008069]/20"
+                              }`}
+                          >
+                            {isVip ? "VIP" : isQuiet ? "غائب" : isCashbackCust ? "كاش باك" : "أختام"}
                           </span>
+                          <div className="text-end">
+                            {isCashbackCust ? (
+                              <span className="font-mono font-bold text-amber-600 text-xs block">
+                                {Number(c.cashbackBalance || 0).toFixed(2)} {merchant.currency || "DH"}
+                              </span>
+                            ) : (
+                              <span className="font-mono font-bold text-[#008069] text-xs block">
+                                {c.stamps}/{merchant.stampsRequired}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="text-end flex items-center gap-2">
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${isVip
-                            ? "bg-amber-100 text-amber-800 border border-amber-200"
-                            : isQuiet
-                              ? "bg-red-100 text-red-800 border border-red-200"
-                              : isCashbackCust
-                                ? "bg-amber-100 text-amber-800 border border-amber-200"
-                                : "bg-[#008069]/10 text-[#008069] border border-[#008069]/20"
-                            }`}
-                        >
-                          {isVip ? "VIP" : isQuiet ? "غائب" : isCashbackCust ? "كاش باك" : "أختام"}
-                        </span>
-                        <div className="text-end">
-                          {isCashbackCust ? (
-                            <span className="font-mono font-bold text-amber-600 text-xs block">
-                              {Number(c.cashbackBalance || 0).toFixed(2)} {merchant.currency || "DH"}
-                            </span>
-                          ) : (
-                            <span className="font-mono font-bold text-[#008069] text-xs block">
-                              {c.stamps}/{merchant.stampsRequired}
-                            </span>
+                      {/* Quick Cashier Actions Row */}
+                      <div className="flex items-center justify-between pt-2 border-t border-[#F0F2F5] gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* Security PIN Badge & Cashier Reset Action */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenPinReset(c)}
+                            className="px-2.5 py-1 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#111B21] text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                            title="إدارة أو تغيير رمز PIN"
+                          >
+                            <KeyRound className="w-3.5 h-3.5 text-[#008069]" />
+                            <span>PIN: <strong className="font-mono">{c.securityPin || c.memberCode}</strong></span>
+                          </button>
+
+                          {/* Instant Account Unlock Action */}
+                          {isLocked && (
+                            <button
+                              type="button"
+                              onClick={() => handleUnlockCustomer(c)}
+                              className="px-2.5 py-1 rounded-xl bg-red-100 hover:bg-red-200 border border-red-300 text-red-800 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                              title="إلغاء قفل الحساب فوراً"
+                            >
+                              <Unlock className="w-3.5 h-3.5 text-red-600" />
+                              <span>{locale === "ar" ? "فك القفل" : "Débloquer"}</span>
+                            </button>
                           )}
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsScannerOpen(true)}
+                          className="px-3 py-1 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 text-[#008069] text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ms-auto"
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
+                          <span>{locale === "ar" ? "مسح الزبون" : "Scanner"}</span>
+                        </button>
                       </div>
-                    </button>
+                    </div>
                   );
                 })
               )}
@@ -2713,6 +2884,154 @@ export default function MerchantDashboardClient({
                 className="px-4 py-2.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#54656F] font-bold text-xs transition"
               >
                 {locale === "fr" ? "Annuler" : locale === "es" ? "Cancelar" : "إلغاء"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cashier PIN Reset Modal */}
+      {pinResetModal.isOpen && pinResetModal.customer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            dir={isRTL ? "rtl" : "ltr"}
+            className="relative w-full max-w-sm bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-6 text-[#111B21] space-y-4"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#E8F5E9] text-[#008069] flex items-center justify-center">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#111B21]">
+                    {locale === "ar"
+                      ? "إدارة رمز الأمان (PIN) للزبون"
+                      : "Gestion du code PIN client"}
+                  </h3>
+                  <span className="text-[10px] text-[#54656F] block">
+                    {pinResetModal.customer.name} (#{pinResetModal.customer.memberCode})
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setPinResetModal({
+                    isOpen: false,
+                    customer: null,
+                    newPin: "",
+                    isSubmitting: false,
+                    error: null,
+                    success: null,
+                  })
+                }
+                className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {pinResetModal.error && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+                {pinResetModal.error}
+              </div>
+            )}
+
+            {pinResetModal.success && (
+              <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs font-semibold flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-green-600" />
+                <span>{pinResetModal.success}</span>
+              </div>
+            )}
+
+            <div className="p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-1.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[#54656F]">
+                  {locale === "ar" ? "الرمز الحالي المسجل:" : "Code PIN actuel :"}
+                </span>
+                <span className="font-mono font-bold text-sm bg-white px-2 py-0.5 rounded border border-[#D1D7DB]">
+                  {pinResetModal.customer.securityPin || pinResetModal.customer.memberCode}
+                </span>
+              </div>
+              <span className="text-[10px] text-[#54656F] block">
+                {locale === "ar"
+                  ? "يستخدم الزبون هذا الرمز لاسترجاع بطاقته إذا غير هاتفه أو حذفها."
+                  : "Le client utilise ce code pour récupérer son pass en cas de perte."}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-[#111B21] flex items-center justify-between">
+                <span>
+                  {locale === "ar"
+                    ? "تعيين رمز PIN جديد (4 أرقام):"
+                    : "Nouveau PIN (4 chiffres) :"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rnd = Math.floor(1000 + Math.random() * 9000).toString();
+                    setPinResetModal((prev) => ({ ...prev, newPin: rnd }));
+                  }}
+                  className="text-[10px] text-[#008069] font-bold hover:underline cursor-pointer"
+                >
+                  {locale === "ar" ? "توليد عشوائي 🎲" : "Générer aléatoire 🎲"}
+                </button>
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                value={pinResetModal.newPin}
+                onChange={(e) =>
+                  setPinResetModal((prev) => ({
+                    ...prev,
+                    newPin: e.target.value.replace(/\D/g, "").slice(0, 4),
+                  }))
+                }
+                placeholder="••••"
+                className="w-full px-4 py-2.5 rounded-xl bg-white border-2 border-[#D1D7DB] focus:border-[#008069] text-center text-xl font-mono font-bold tracking-widest text-[#111B21]"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setPinResetModal({
+                    isOpen: false,
+                    customer: null,
+                    newPin: "",
+                    isSubmitting: false,
+                    error: null,
+                    success: null,
+                  })
+                }
+                className="flex-1 py-2.5 px-4 rounded-xl border border-[#D1D7DB] text-xs font-bold text-[#54656F] hover:bg-[#F0F2F5] transition"
+              >
+                {locale === "ar" ? "إلغاء" : "Annuler"}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPinSubmit}
+                disabled={
+                  pinResetModal.isSubmitting ||
+                  pinResetModal.newPin.length !== 4
+                }
+                className="flex-2 py-2.5 px-4 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                {pinResetModal.isSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>
+                      {locale === "ar"
+                        ? "حفظ رمز PIN الجديد"
+                        : "Enregistrer PIN"}
+                    </span>
+                    <Check className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </div>
           </div>

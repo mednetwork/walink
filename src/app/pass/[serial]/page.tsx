@@ -115,6 +115,7 @@ export default async function CustomerPassPage({ params }: PassPageProps) {
     lastVisitAt: customer.lastVisitAt.toISOString(),
     walletType: customer.walletType,
     pushSubscription: customer.pushSubscription,
+    securityPin: customer.securityPin || customer.memberCode,
   };
 
   const serializedMerchant = {

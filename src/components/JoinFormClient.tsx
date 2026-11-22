@@ -11,6 +11,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Lock,
+  ShieldCheck,
+  KeyRound,
+  X,
 } from "lucide-react";
 import WalletPassPreview from "@/components/WalletPassPreview";
 import { isValidMoroccanPhone } from "@/lib/utils";
@@ -90,9 +93,27 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
     useState<"STAMPS" | "CASHBACK">(defaultType);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [customPin, setCustomPin] = useState("");
+  const [showPinInput, setShowPinInput] = useState(false);
   const [refCode, setRefCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Security Recovery PIN Modal State
+  const [pinModal, setPinModal] = useState<{
+    isOpen: boolean;
+    maskedName?: string;
+    maskedPhone?: string;
+    attemptsRemaining: number;
+    locked?: boolean;
+    minsRemaining?: number;
+    errorMsg?: string | null;
+  }>({
+    isOpen: false,
+    attemptsRemaining: 5,
+  });
+  const [pinCode, setPinCode] = useState("");
+  const [verifyingPin, setVerifyingPin] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -108,6 +129,84 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
   const cashbackRate = merchant.cashbackRate || 10;
   const welcomeCashback = merchant.welcomeCashback ?? 5;
   const currency = merchant.currency || "DH";
+
+  const handleVerifyPin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!pinCode || pinCode.trim().length !== 4) {
+      setPinModal((prev) => ({
+        ...prev,
+        errorMsg:
+          locale === "ar"
+            ? "يرجى إدخال رمز الأمان المكون من 4 أرقام"
+            : locale === "fr"
+            ? "Veuillez entrer le code PIN à 4 chiffres"
+            : "Por favor introduce el código PIN de 4 dígitos",
+      }));
+      return;
+    }
+
+    setVerifyingPin(true);
+    setPinModal((prev) => ({ ...prev, errorMsg: null }));
+
+    try {
+      const res = await fetch(`/api/join/${merchant.slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phone.trim(),
+          securityPin: pinCode.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 423 || data.locked) {
+        setPinModal((prev) => ({
+          ...prev,
+          locked: true,
+          attemptsRemaining: 0,
+          minsRemaining: data.minsRemaining || 15,
+          errorMsg:
+            data.error ||
+            (locale === "ar"
+              ? "تم قفل محاولات الاسترجاع مؤقتاً لمدة 15 دقيقة لحماية الحساب."
+              : "Compte verrouillé temporairement pendant 15 minutes."),
+        }));
+        setVerifyingPin(false);
+        return;
+      }
+
+      if (!res.ok) {
+        setPinModal((prev) => ({
+          ...prev,
+          attemptsRemaining:
+            typeof data.attemptsRemaining === "number"
+              ? data.attemptsRemaining
+              : Math.max(0, prev.attemptsRemaining - 1),
+          errorMsg:
+            data.error ||
+            (locale === "ar" ? "رمز الأمان غير صحيح" : "Code PIN incorrect"),
+        }));
+        setVerifyingPin(false);
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("walink_customer_locale", locale);
+        } catch (err) {
+          console.warn("localStorage locale save error:", err);
+        }
+      }
+
+      router.push(`/pass/${data.passSerial}?lang=${locale}`);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "حدث خطأ أثناء التحقق من الرمز";
+      setPinModal((prev) => ({ ...prev, errorMsg: msg }));
+      setVerifyingPin(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -146,10 +245,36 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           phone: phone.trim(),
           loyaltyType: selectedLoyaltyType,
           refCode: refCode || undefined,
+          securityPin: customPin.trim() || undefined,
         }),
       });
 
       const data = await res.json();
+
+      if (res.status === 423 || data.locked) {
+        setPinModal({
+          isOpen: true,
+          locked: true,
+          attemptsRemaining: 0,
+          minsRemaining: data.minsRemaining || 15,
+          errorMsg: data.error,
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (data.requiresPin) {
+        setPinModal({
+          isOpen: true,
+          maskedName: data.maskedName,
+          maskedPhone: data.maskedPhone,
+          attemptsRemaining: data.attemptsRemaining ?? 5,
+          locked: false,
+          errorMsg: null,
+        });
+        setLoading(false);
+        return;
+      }
 
       if (!res.ok) {
         throw new Error(data.error || "Failed to create pass");
@@ -374,6 +499,51 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
             </div>
           </div>
 
+          {/* Optional Security PIN Creation for New Pass */}
+          <div className="space-y-1.5 pt-0.5">
+            <button
+              type="button"
+              onClick={() => setShowPinInput(!showPinInput)}
+              className="text-[11px] font-bold text-[#008069] hover:underline flex items-center gap-1.5 cursor-pointer"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>
+                {showPinInput
+                  ? (locale === "ar" ? "إخفاء رمز الأمان (PIN)" : locale === "fr" ? "Masquer code PIN" : "Ocultar PIN")
+                  : (locale === "ar" ? "+ تعيين رمز أمان مخصص للبطاقة (PIN اختياري)" : locale === "fr" ? "+ Définir un code PIN personnalisé (optionnel)" : "+ Definir PIN personalizado (opcional)")}
+              </span>
+            </button>
+
+            {showPinInput && (
+              <div className="p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-1.5 animate-in fade-in duration-150">
+                <label className="text-[11px] font-bold text-[#111B21] flex items-center justify-between">
+                  <span>{locale === "ar" ? "رمز أمان البطاقة (4 أرقام):" : locale === "fr" ? "Code PIN de sécurité (4 chiffres):" : "Código PIN de seguridad (4 dígitos):"}</span>
+                  <span className="text-[10px] text-[#54656F] font-normal">{locale === "ar" ? "اختياري" : "Optionnel"}</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    pattern="[0-9]*"
+                    value={customPin}
+                    onChange={(e) => setCustomPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    placeholder={locale === "ar" ? "مثال: 1234 (الافتراضي كود العضوية)" : "Ex: 1234"}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#D1D7DB] text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-1 focus:ring-[#008069] text-xs font-mono tracking-widest"
+                  />
+                  <Lock className={`w-3.5 h-3.5 text-[#8696A0] absolute ${isRTL ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 pointer-events-none`} />
+                </div>
+                <p className="text-[10px] text-[#54656F] leading-snug">
+                  {locale === "ar"
+                    ? "يُستخدم هذا الرمز لحماية رصيدك واسترجاع بطاقتك إذا قمت بحذفها أو غيرت هاتفك. في حال عدم إدخاله، سيكون رمزك هو كود عضويتك."
+                    : locale === "fr"
+                    ? "Utilisé pour protéger vos récompenses et récupérer votre pass. Par défaut, votre code sera votre numéro d'adhérent."
+                    : "Usado para proteger tus puntos y recuperar tu tarjeta. Por defecto, será tu código de socio."}
+                </p>
+              </div>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -399,6 +569,184 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         </div>
         <p>© {new Date().getFullYear()} Walink (walink.ma)</p>
       </div>
+
+      {/* Security PIN Verification Modal for Existing Customers */}
+      {pinModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            dir={isRTL ? "rtl" : "ltr"}
+            className="relative w-full max-w-sm bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-6 text-[#111B21] space-y-4"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#E8F5E9] text-[#008069] flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#111B21]">
+                    {locale === "ar"
+                      ? "استرجاع البطاقة وتأكيد الهوية"
+                      : locale === "fr"
+                      ? "Récupération sécurisée du pass"
+                      : "Recuperación segura de tarjeta"}
+                  </h3>
+                  <span className="text-[10px] text-[#54656F] block">
+                    {merchant.name} • Walink Security
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setPinModal({
+                    isOpen: false,
+                    attemptsRemaining: 5,
+                    errorMsg: null,
+                  })
+                }
+                className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Locked State Alert */}
+            {pinModal.locked ? (
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 space-y-2 text-xs">
+                <div className="flex items-center gap-2 font-bold text-red-900">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>
+                    {locale === "ar"
+                      ? "تم قفل محاولات الاسترجاع مؤقتاً"
+                      : "Compte temporairement verrouillé"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-red-700 leading-relaxed">
+                  {pinModal.errorMsg ||
+                    (locale === "ar"
+                      ? `لحماية رصيدك من محاولات التخمين، تم قفل الحساب لمدة ${
+                          pinModal.minsRemaining || 15
+                        } دقيقة. يمكنك مراجعة الكاشير في المتجر لإلغاء القفل فوراً.`
+                      : "Compte verrouillé pour 15 min. Contactez le caissier pour débloquer immédiatement.")}
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPinModal({
+                      isOpen: false,
+                      attemptsRemaining: 5,
+                      errorMsg: null,
+                    })
+                  }
+                  className="w-full mt-2 py-2.5 rounded-xl bg-red-600 text-white font-bold text-xs hover:bg-red-700 transition"
+                >
+                  {locale === "ar" ? "حسناً، فهمت" : "Compris"}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleVerifyPin} className="space-y-4">
+                {/* Masked Customer Identity */}
+                <div className="p-3.5 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-2">
+                  <span className="text-[11px] text-[#54656F] block">
+                    {locale === "ar"
+                      ? "تم العثور على بطاقة مسجلة بهذا الرقم:"
+                      : "Un pass existe déjà pour ce numéro :"}
+                  </span>
+                  <div className="flex items-center justify-between text-xs font-bold text-[#111B21]">
+                    <span>
+                      {locale === "ar" ? "الاسم:" : "Nom :"} {pinModal.maskedName || "••••"}
+                    </span>
+                    <span className="font-mono text-[#008069]">
+                      {pinModal.maskedPhone || phone}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Error Banner */}
+                {pinModal.errorMsg && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                    <span>{pinModal.errorMsg}</span>
+                  </div>
+                )}
+
+                {/* PIN Input */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#111B21] flex items-center justify-between">
+                    <span>
+                      {locale === "ar"
+                        ? "أدخل رمز الأمان (PIN من 4 أرقام):"
+                        : "Entrez votre code PIN (4 chiffres) :"}
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-600">
+                      {locale === "ar"
+                        ? `متبقي ${pinModal.attemptsRemaining} محاولات`
+                        : `${pinModal.attemptsRemaining} essais restants`}
+                    </span>
+                  </label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    pattern="[0-9]*"
+                    autoFocus
+                    required
+                    value={pinCode}
+                    onChange={(e) =>
+                      setPinCode(e.target.value.replace(/\D/g, "").slice(0, 4))
+                    }
+                    placeholder="••••"
+                    className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-2xl bg-white border-2 border-[#D1D7DB] focus:border-[#008069] focus:outline-none transition font-bold"
+                  />
+                </div>
+
+                {/* Helpful Hint */}
+                <p className="text-[11px] text-[#54656F] leading-snug">
+                  {locale === "ar"
+                    ? "💡 رمز الأمان الافتراضي هو كود عضويتك المكون من 4 أرقام (#xxxx) الموجود على بطاقتك السابقة أو إشعار المتجر، أو الرمز المخصص الذي اخترته."
+                    : "💡 Le code PIN par défaut est votre code membre (#xxxx) à 4 chiffres."}
+                </p>
+
+                {/* Buttons */}
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPinModal({
+                        isOpen: false,
+                        attemptsRemaining: 5,
+                        errorMsg: null,
+                      })
+                    }
+                    className="flex-1 py-3 px-4 rounded-xl border border-[#D1D7DB] text-xs font-bold text-[#54656F] hover:bg-[#F0F2F5] transition"
+                  >
+                    {locale === "ar" ? "إلغاء" : "Annuler"}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={verifyingPin || pinCode.length !== 4}
+                    className="flex-2 py-3 px-5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#009071] hover:to-[#006D59] text-white text-xs font-bold shadow-md shadow-[#008069]/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {verifyingPin ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>
+                          {locale === "ar"
+                            ? "تأكيد واسترجاع البطاقة"
+                            : "Vérifier & Récupérer"}
+                        </span>
+                        <CheckCircle2 className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

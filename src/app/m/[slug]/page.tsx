@@ -182,6 +182,9 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     totalSpent: c.totalSpent,
     totalVisits: c.totalVisits,
     rewardsRedeemed: c.rewardsRedeemed,
+    securityPin: c.securityPin || c.memberCode,
+    failedPinAttempts: c.failedPinAttempts || 0,
+    pinLockedUntil: c.pinLockedUntil ? c.pinLockedUntil.toISOString() : null,
     lastVisitAt: c.lastVisitAt.toISOString(),
   }));
 
