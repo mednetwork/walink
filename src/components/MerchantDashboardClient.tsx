@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { getAdminUrl, getPassUrl } from "@/lib/urls";
 import {
@@ -1005,7 +1005,7 @@ export default function MerchantDashboardClient({
     }
   };
 
-  const handleActionComplete = (updatedCustomer: CustomerSummary, msg: string) => {
+  const handleActionComplete = useCallback((updatedCustomer: CustomerSummary, msg: string) => {
     setCustomers((prev) =>
       prev.map((c) =>
         c.id === updatedCustomer.id
@@ -1043,7 +1043,7 @@ export default function MerchantDashboardClient({
       },
     };
     setTransactions((prev) => [newTx, ...prev.slice(0, 14)]);
-  };
+  }, []);
 
   // Handle Switch to Promo Tab from Home Alert
   const handleSwitchToPromoQuiet = () => {

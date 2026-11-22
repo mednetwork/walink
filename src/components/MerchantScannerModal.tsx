@@ -198,6 +198,11 @@ export default function MerchantScannerModal({
     setCameraState("idle");
   }, []);
 
+  const handleModalClose = useCallback(() => {
+    stopCamera();
+    onClose();
+  }, [stopCamera, onClose]);
+
   // Process decoded QR text
   const handleScannedCode = useCallback(
     (code: string) => {
@@ -271,6 +276,12 @@ export default function MerchantScannerModal({
         }
       }
 
+      const el = typeof document !== "undefined" ? document.getElementById("walink-qr-viewfinder") : null;
+      if (!el) {
+        console.warn("Viewfinder container not found in DOM");
+        return;
+      }
+
       const { Html5Qrcode } = await import("html5-qrcode");
       const scanner = new Html5Qrcode("walink-qr-viewfinder", { verbose: false });
       html5QrCodeRef.current = scanner;
@@ -342,21 +353,12 @@ export default function MerchantScannerModal({
     }
   }, [stopCamera, handleScannedCode]);
 
-  // Scanner Lifecycle
+  // Scanner Lifecycle: Clean up camera hardware if modal closed or tab changed
   useEffect(() => {
     if (!isOpen || activeTab !== "camera") {
       stopCamera();
-      return;
     }
-
-    startCamera();
-
-    return () => {
-      stopCamera();
-    };
-  }, [isOpen, activeTab, startCamera, stopCamera]);
-
-  if (!isOpen) return null;
+  }, [isOpen, activeTab, stopCamera]);
 
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -475,11 +477,6 @@ export default function MerchantScannerModal({
     }
   };
 
-  const handleModalClose = useCallback(() => {
-    stopCamera();
-    onClose();
-  }, [stopCamera, onClose]);
-
   const isCashback = selectedCustomer?.loyaltyType === "CASHBACK";
   const isRewardReady = selectedCustomer
     ? selectedCustomer.stamps >= stampsRequired
@@ -492,6 +489,8 @@ export default function MerchantScannerModal({
   const parsedRedeem = parseFloat(redeemAmount) || 0;
   const parsedBillTotal = parseFloat(redeemBillTotal) || 0;
   const remainingCashToPay = Math.max(0, parsedBillTotal - parsedRedeem);
+
+  if (!isOpen) return null;
 
   return (
     <div
