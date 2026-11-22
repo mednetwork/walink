@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import type { Html5Qrcode } from "html5-qrcode";
+import jsQR from "jsqr";
 import {
   X,
   Camera,
@@ -21,6 +21,22 @@ import {
 } from "lucide-react";
 import { soundEngine } from "@/lib/sound";
 import { Locale, translations } from "@/lib/i18n/translations";
+
+interface BarcodeDetectorResult {
+  rawValue: string;
+}
+
+interface BarcodeDetectorInstance {
+  detect: (source: CanvasImageSource) => Promise<BarcodeDetectorResult[]>;
+}
+
+type BarcodeDetectorConstructor = new (options?: { formats: string[] }) => BarcodeDetectorInstance;
+
+declare global {
+  interface Window {
+    BarcodeDetector?: BarcodeDetectorConstructor;
+  }
+}
 
 export interface CustomerSummary {
   id: string;
@@ -100,13 +116,17 @@ export default function MerchantScannerModal({
   const t = translations[locale] || translations.ar;
   const isRTL = locale === "ar";
 
-  // Camera & Real-Time QR Scanner State
+  // Camera & Real-Time QR Scanner State (Native <video> + jsQR & BarcodeDetector)
   const [cameraState, setCameraState] = useState<
     "idle" | "requesting" | "active" | "permission_denied" | "error"
   >("idle");
   const [cameraErrorMessage, setCameraErrorMessage] = useState<string | null>(null);
-  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scanTimerRef = useRef<NodeJS.Timeout | number | null>(null);
   const scanLockRef = useRef<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleSelectCustomer = useCallback((c: CustomerSummary) => {
     setSelectedCustomer(c);
@@ -181,19 +201,22 @@ export default function MerchantScannerModal({
     [slug, locale, staffName, branchName, onActionComplete]
   );
 
-  // Stop Camera & Release Hardware
-  const stopCamera = useCallback(async () => {
-    if (html5QrCodeRef.current) {
+  // Stop Camera & Release Hardware Cleanly
+  const stopCamera = useCallback(() => {
+    if (scanTimerRef.current) {
+      clearInterval(scanTimerRef.current as NodeJS.Timeout);
+      scanTimerRef.current = null;
+    }
+    if (streamRef.current) {
       try {
-        if (html5QrCodeRef.current.isScanning) {
-          await html5QrCodeRef.current.stop();
-        }
-        await html5QrCodeRef.current.clear();
+        streamRef.current.getTracks().forEach((track) => track.stop());
       } catch (err) {
-        console.warn("Could not cleanly stop scanner:", err);
-      } finally {
-        html5QrCodeRef.current = null;
+        console.warn("Could not stop stream tracks:", err);
       }
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setCameraState("idle");
   }, []);
@@ -257,101 +280,226 @@ export default function MerchantScannerModal({
     [customers, handleSelectCustomer, locale, executeStampRequest]
   );
 
-  // Start Camera with Dynamic Import & Fallbacks
+  // Real-Time Frame Scanner (Engine A: jsQR + Engine B: BarcodeDetector Boost)
+  const scanFrame = useCallback(() => {
+    if (scanLockRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+      return;
+    }
+
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (vw <= 0 || vh <= 0) return;
+
+    // Centered crop (80% of min dimension) for maximum QR precision
+    const minDim = Math.min(vw, vh);
+    const cropSize = Math.floor(minDim * 0.8);
+    const sx = (vw - cropSize) / 2;
+    const sy = (vh - cropSize) / 2;
+
+    const targetSize = 400;
+    canvas.width = targetSize;
+    canvas.height = targetSize;
+
+    ctx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, targetSize, targetSize);
+    const imageData = ctx.getImageData(0, 0, targetSize, targetSize);
+
+    // Engine A: jsQR with both regular and inverted pattern recognition
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "attemptBoth",
+    });
+
+    if (code && code.data && code.data.trim()) {
+      scanLockRef.current = true;
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate([40, 60, 40]);
+      }
+      soundEngine.playStampChime();
+      stopCamera();
+      handleScannedCode(code.data.trim());
+      return;
+    }
+
+    // Engine B: Native hardware-accelerated BarcodeDetector if supported
+    if (typeof window !== "undefined" && window.BarcodeDetector) {
+      try {
+        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+        detector
+          .detect(canvas)
+          .then((barcodes) => {
+            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue && !scanLockRef.current) {
+              scanLockRef.current = true;
+              if (typeof navigator !== "undefined" && navigator.vibrate) {
+                navigator.vibrate([40, 60, 40]);
+              }
+              soundEngine.playStampChime();
+              stopCamera();
+              handleScannedCode(barcodes[0].rawValue.trim());
+            }
+          })
+          .catch(() => {});
+      } catch {
+        // jsQR already handles frames
+      }
+    }
+  }, [handleScannedCode, stopCamera]);
+
+  // 3-Tier Progressive getUserMedia Waterfall (Multi-Lens iPhone Safe)
   const startCamera = useCallback(async () => {
     if (typeof window === "undefined") return;
+    stopCamera();
     setCameraState("requesting");
     setCameraErrorMessage(null);
     scanLockRef.current = false;
 
-    try {
-      if (html5QrCodeRef.current) {
-        try {
-          if (html5QrCodeRef.current.isScanning) {
-            await html5QrCodeRef.current.stop();
-          }
-          await html5QrCodeRef.current.clear();
-        } catch {
-          // ignore
-        }
-      }
-
-      const el = typeof document !== "undefined" ? document.getElementById("walink-qr-viewfinder") : null;
-      if (!el) {
-        console.warn("Viewfinder container not found in DOM");
-        return;
-      }
-
-      const { Html5Qrcode } = await import("html5-qrcode");
-      const scanner = new Html5Qrcode("walink-qr-viewfinder", { verbose: false });
-      html5QrCodeRef.current = scanner;
-
-      const onScanSuccess = (decodedText: string) => {
-        if (scanLockRef.current) return;
-        scanLockRef.current = true;
-
-        if (typeof navigator !== "undefined" && navigator.vibrate) {
-          navigator.vibrate([40, 60, 40]);
-        }
-        soundEngine.playStampChime();
-
-        // Release camera hardware immediately
-        stopCamera();
-
-        // Process decoded string
-        handleScannedCode(decodedText);
-      };
-
-      const config = {
-        fps: 15,
-        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-          const edge = Math.floor(minEdge * 0.75);
-          return { width: edge, height: edge };
-        },
-        aspectRatio: 1.777778,
-      };
-
-      try {
-        await scanner.start(
-          { facingMode: { ideal: "environment" } },
-          config,
-          onScanSuccess,
-          () => {}
-        );
-        setCameraState("active");
-      } catch (envErr: unknown) {
-        console.warn("Camera facingMode ideal environment failed, attempting fallback:", envErr);
-        const cameras = await Html5Qrcode.getCameras().catch(() => []);
-        if (cameras && cameras.length > 0) {
-          const backCam =
-            cameras.find((c) => /back|rear|environment/i.test(c.label)) || cameras[0];
-          await scanner.start(backCam.id, config, onScanSuccess, () => {});
-          setCameraState("active");
-        } else {
-          await scanner.start({ facingMode: "user" }, config, onScanSuccess, () => {});
-          setCameraState("active");
-        }
-      }
-    } catch (err: unknown) {
-      console.warn("Camera initialization failed:", err);
-      const isNotAllowed =
-        err instanceof Error &&
-        (err.name === "NotAllowedError" ||
-          err.name === "PermissionDeniedError" ||
-          err.message.toLowerCase().includes("permission") ||
-          err.message.toLowerCase().includes("not allowed"));
-
-      if (isNotAllowed) {
-        setCameraState("permission_denied");
-      } else {
-        setCameraState("error");
-      }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraState("error");
       setCameraErrorMessage(
-        err instanceof Error ? err.message : "تعذر تشغيل الكاميرا"
+        locale === "ar"
+          ? "الكاميرا غير مدعومة في هذا المتصفح أو يتطلب الموقع اتصالاً آمناً (HTTPS)."
+          : locale === "fr"
+          ? "Caméra non prise en charge ou connexion sécurisée (HTTPS) requise."
+          : "Cámara no soportada o se requiere conexión segura (HTTPS)."
       );
+      return;
     }
-  }, [stopCamera, handleScannedCode]);
+
+    let activeStream: MediaStream | null = null;
+
+    // Attempt 1: Ideal environment
+    try {
+      activeStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: "environment" } },
+      });
+    } catch (err1: unknown) {
+      console.warn("Camera Attempt 1 (ideal environment) failed, trying Attempt 2:", err1);
+      // Attempt 2: Plain environment string (Safari / iOS multi-lens friendly)
+      try {
+        activeStream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: "environment" },
+        });
+      } catch (err2: unknown) {
+        console.warn("Camera Attempt 2 (environment) failed, trying Attempt 3:", err2);
+        // Attempt 3: Universal video fallback
+        try {
+          activeStream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: true,
+          });
+        } catch (err3: unknown) {
+          console.error("All 3 Camera attempts failed:", err3);
+          const errObj = err3 as { name?: string; message?: string } | null;
+          const errName = errObj?.name || "";
+          const rawMsg = typeof err3 === "string" ? err3 : errObj?.message || String(err3);
+
+          if (
+            errName === "NotAllowedError" ||
+            errName === "PermissionDeniedError" ||
+            rawMsg.toLowerCase().includes("denied") ||
+            rawMsg.toLowerCase().includes("not allowed")
+          ) {
+            setCameraState("permission_denied");
+          } else {
+            setCameraState("error");
+          }
+          setCameraErrorMessage(errName ? `${errName}: ${rawMsg}` : rawMsg);
+          return;
+        }
+      }
+    }
+
+    if (!activeStream) {
+      setCameraState("error");
+      setCameraErrorMessage("تعذر استلام بث الكاميرا");
+      return;
+    }
+
+    streamRef.current = activeStream;
+
+    const video = videoRef.current;
+    if (video) {
+      video.srcObject = activeStream;
+      video.setAttribute("playsinline", "true");
+      video.setAttribute("webkit-playsinline", "true");
+      video.muted = true;
+      try {
+        await video.play();
+      } catch (playErr) {
+        console.warn("Video play was interrupted or pending:", playErr);
+      }
+    }
+
+    setCameraState("active");
+
+    // Start throttled frame scanning loop (~10 FPS = 100ms)
+    scanTimerRef.current = setInterval(() => {
+      scanFrame();
+    }, 100);
+  }, [scanFrame, stopCamera, locale]);
+
+  // Native Camera Photo Snapshot Fallback (capture="environment")
+  const handleNativeImageCapture = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxDim = 1000;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, w, h);
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const code = jsQR(imgData.data, imgData.width, imgData.height, {
+          inversionAttempts: "attemptBoth",
+        });
+
+        if (code && code.data && code.data.trim()) {
+          if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate([40, 60, 40]);
+          }
+          soundEngine.playStampChime();
+          stopCamera();
+          handleScannedCode(code.data.trim());
+        } else {
+          setMessage({
+            text:
+              locale === "ar"
+                ? "لم يتم العثور على رمز QR واضح في الصورة. حاول التقاط الصورة من مسافة أقرب."
+                : locale === "fr"
+                ? "Aucun code QR détecté dans la photo. Rapprochez l'appareil."
+                : "No se detectó código QR en la foto. Acerque la cámara.",
+            type: "error",
+          });
+        }
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }, [handleScannedCode, locale, stopCamera]);
 
   // Scanner Lifecycle: Clean up camera hardware if modal closed or tab changed
   useEffect(() => {
@@ -599,10 +747,28 @@ export default function MerchantScannerModal({
         {activeTab === "camera" && (
           <div className="space-y-3">
             <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center">
-              {/* HTML5 QR Code Mount Element (Always in DOM with full dimensions) */}
-              <div
-                id="walink-qr-viewfinder"
-                className="absolute inset-0 w-full h-full object-cover [&>video]:w-full [&>video]:h-full [&>video]:object-cover [&>video]:rounded-2xl overflow-hidden"
+              {/* Native Video Element (Always mounted in DOM to prevent iOS WebKit unmount race conditions) */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`absolute inset-0 w-full h-full object-cover rounded-2xl transition-opacity duration-300 ${
+                  cameraState === "active" ? "opacity-100" : "opacity-0 pointer-events-none"
+                }`}
+              />
+
+              {/* Offscreen Canvas for jsQR Frame Decoding */}
+              <canvas ref={canvasRef} className="hidden" />
+
+              {/* Native Camera Photo Snapshot File Input (capture="environment") */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleNativeImageCapture}
+                className="hidden"
               />
 
               {/* Viewfinder Target Overlays & Laser when active */}
@@ -648,20 +814,36 @@ export default function MerchantScannerModal({
                         : "Toca para activar la cámara"}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={startCamera}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#008069]/30 active:scale-95 transition mx-auto cursor-pointer"
-                  >
-                    <Camera className="w-4 h-4 stroke-[2.5]" />
-                    <span>
-                      {locale === "ar"
-                        ? "تشغيل الكاميرا والمسح 📷"
-                        : locale === "fr"
-                        ? "Activer la caméra 📷"
-                        : "Activar la cámara 📷"}
-                    </span>
-                  </button>
+                  <div className="flex flex-col sm:flex-row items-center gap-2 pt-1 w-full max-w-xs px-2">
+                    <button
+                      type="button"
+                      onClick={startCamera}
+                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#008069]/30 active:scale-95 transition cursor-pointer"
+                    >
+                      <Camera className="w-4 h-4 stroke-[2.5]" />
+                      <span>
+                        {locale === "ar"
+                          ? "تشغيل الكاميرا والمسح 📷"
+                          : locale === "fr"
+                          ? "Activer la caméra 📷"
+                          : "Activar la cámara 📷"}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/90 font-medium text-[11px] flex items-center justify-center gap-1.5 transition border border-white/10 cursor-pointer"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>
+                        {locale === "ar"
+                          ? "📸 التقاط صورة"
+                          : locale === "fr"
+                          ? "📸 Prendre photo"
+                          : "📸 Tomar foto"}
+                      </span>
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -688,19 +870,19 @@ export default function MerchantScannerModal({
                     <p className="text-[11px] text-rose-200/90 mt-1 leading-relaxed">
                       {cameraState === "permission_denied"
                         ? locale === "ar"
-                          ? "يرجى تفعيل إذن الكاميرا من إعدادات المتصفح أو التطبيق ثم إعادة المحاولة."
+                          ? "يرجى تفعيل إذن الكاميرا من إعدادات المتصفح أو إعدادات النظام ثم إعادة المحاولة، أو استخدم زر التقاط صورة أدناه."
                           : locale === "fr"
-                          ? "Veuillez autoriser la caméra dans les paramètres de votre navigateur."
-                          : "Active el permiso de cámara en los ajustes del navegador."
+                          ? "Veuillez autoriser la caméra dans les paramètres de votre navigateur, ou prenez une photo directe ci-dessous."
+                          : "Active el permiso de cámara en los ajustes o tome una foto directamente abajo."
                         : cameraErrorMessage ||
                           (locale === "ar"
-                            ? "تأكد من عدم استخدام الكاميرا من قِبل تطبيق آخر."
+                            ? "تأكد من عدم استخدام الكاميرا من قِبل تطبيق آخر، أو التقط صورة مباشرة للرمز أدناه."
                             : locale === "fr"
-                            ? "Vérifiez qu'aucune autre application n'utilise la caméra."
-                            : "Verifique que otra aplicación no esté usando la cámara.")}
+                            ? "Vérifiez qu'aucune autre application n'utilise la caméra, ou prenez une photo."
+                            : "Verifique que otra aplicación no esté usando la cámara, o tome una foto.")}
                     </p>
                   </div>
-                  <div className="flex items-center justify-center gap-2 pt-1">
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                     <button
                       type="button"
                       onClick={startCamera}
@@ -708,6 +890,14 @@ export default function MerchantScannerModal({
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
                       <span>{locale === "ar" ? "إعادة المحاولة" : locale === "fr" ? "Réessayer" : "Reintentar"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>{locale === "ar" ? "📸 التقاط صورة للرمز" : locale === "fr" ? "📸 Prendre photo" : "📸 Tomar foto"}</span>
                     </button>
                     <button
                       type="button"
@@ -722,22 +912,43 @@ export default function MerchantScannerModal({
               )}
             </div>
 
-            {/* Camera Control Bar when Active */}
-            {cameraState === "active" && (
-              <div className="flex items-center justify-between px-1">
-                <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                  {locale === "ar" ? "الماسح نشط، وجّه الكاميرا إلى كود QR" : locale === "fr" ? "Scanner actif, visez le QR code" : "Escáner activo, enfoque el código QR"}
-                </span>
+            {/* Camera Control Bar & Snapshot Rescue Pill */}
+            <div className="flex items-center justify-between px-1">
+              {cameraState === "active" ? (
+                <>
+                  <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                    {locale === "ar"
+                      ? "الماسح نشط، وجّه الكاميرا إلى كود QR"
+                      : locale === "fr"
+                      ? "Scanner actif, visez le QR code"
+                      : "Escáner activo, enfoque el código QR"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={stopCamera}
+                    className="text-[11px] text-[#54656F] hover:text-[#111B21] font-bold underline cursor-pointer"
+                  >
+                    {locale === "ar" ? "إيقاف الكاميرا" : locale === "fr" ? "Arrêter" : "Detener"}
+                  </button>
+                </>
+              ) : (
                 <button
                   type="button"
-                  onClick={stopCamera}
-                  className="text-[11px] text-[#54656F] hover:text-[#111B21] font-bold underline cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-[11px] text-[#008069] hover:text-[#00A884] font-bold flex items-center gap-1.5 transition underline cursor-pointer py-0.5"
                 >
-                  {locale === "ar" ? "إيقاف الكاميرا" : locale === "fr" ? "Arrêter" : "Detener"}
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>
+                    {locale === "ar"
+                      ? "📸 مسح بديل عبر التقاط صورة بالكاميرا"
+                      : locale === "fr"
+                      ? "📸 Scanner via photo directe"
+                      : "📸 Escanear mediante foto"}
+                  </span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Quick Fast-Picker from seeded customers */}
             <div className="space-y-1.5">
