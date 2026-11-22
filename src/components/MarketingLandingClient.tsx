@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
+import { getStoreUrl } from "@/lib/urls";
 import { useSearchParams } from "next/navigation";
 import {
   ShieldCheck,
@@ -1069,13 +1070,14 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
 
                       {/* Full Real App Link */}
                       <div className="text-center pt-1 border-t border-white/5">
-                        <Link
-                          href="/m/cafe-atlas"
+                        <a
+                          href={getStoreUrl("cafe-atlas")}
                           target="_blank"
+                          rel="noopener noreferrer"
                           className="text-[10px] text-emerald-400 hover:underline flex items-center justify-center gap-1 font-semibold"
                         >
                           <span>جرّب النظام الحقيقي الكامل ↗</span>
-                        </Link>
+                        </a>
                       </div>
                     </div>
                   )}

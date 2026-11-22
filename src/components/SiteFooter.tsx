@@ -208,23 +208,6 @@ export default function SiteFooter() {
                   {t.footer.multiPack}
                 </a>
               </li>
-              <li className="pt-2 border-t border-white/10">
-                <Link
-                  href="/admin"
-                  className="hover:text-[#00A884] transition font-bold text-white flex items-center gap-1.5 py-1"
-                >
-                  <Lock className="w-3.5 h-3.5 flex-shrink-0 text-[#00A884]" />
-                  <span>{t.footer.adminLink}</span>
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/outreach"
-                  className="hover:text-white transition block py-1 text-white/60 font-medium"
-                >
-                  {t.footer.outreachLink}
-                </Link>
-              </li>
             </ul>
           </div>
 

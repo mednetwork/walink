@@ -312,7 +312,7 @@ export function buildLoyaltyObject(
   const visitsLabel = locale === "fr" ? "Visites" : locale === "es" ? "Visitas" : "مجموع الزيارات";
   const referralLabel =
     locale === "fr" ? "Inviter un ami" : locale === "es" ? "Invitar amigo" : "رابط دعوة أصدقائك";
-  const referralUrl = `https://walink.ma/join/${merchant.slug}?ref=${customer.memberCode}`;
+  const referralUrl = `https://wjoin.walink.ma/join/${merchant.slug}?ref=${customer.memberCode}`;
 
   const textModulesData: Array<{ id: string; header: string; body: string }> = [
     {
@@ -393,7 +393,15 @@ export function generateGoogleWalletSaveUrl(
 
   const nowSeconds = Math.floor(Date.now() / 1000);
   const origins = Array.from(
-    new Set(["https://walink.ma", "https://www.walink.ma", origin].filter(Boolean))
+    new Set([
+      "https://walink.ma",
+      "https://www.walink.ma",
+      "https://wclient.walink.ma",
+      "https://wjoin.walink.ma",
+      "https://wstore.walink.ma",
+      "https://wadmin.walink.ma",
+      origin,
+    ].filter(Boolean))
   );
 
   const jwtPayload: Record<string, unknown> = {

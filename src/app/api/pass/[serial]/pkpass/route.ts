@@ -179,7 +179,10 @@ export async function GET(
       passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || "pass.ma.walink.loyalty",
       serialNumber: customer.passSerial,
       teamIdentifier: process.env.APPLE_TEAM_ID || "WALINKMA01",
-      webServiceURL: `${origin}/api/apple`,
+      webServiceURL:
+        process.env.NODE_ENV === "production"
+          ? "https://wclient.walink.ma/api/apple"
+          : `${origin}/api/apple`,
       authenticationToken: customer.passSerial,
       organizationName: merchant.name,
       description: passStrings.description,

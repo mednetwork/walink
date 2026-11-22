@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { getAdminUrl, getPassUrl } from "@/lib/urls";
 import {
   LayoutDashboard,
   Users,
@@ -1150,9 +1151,9 @@ export default function MerchantDashboardClient({
           </div>
 
           <div className="pt-2 text-center">
-            <Link href="/admin" className="text-[11px] text-[#54656F] hover:text-[#008069] font-medium transition">
+            <a href={getAdminUrl()} className="text-[11px] text-[#54656F] hover:text-[#008069] font-medium transition">
               الرجوع للوحة السوبر أدمن
-            </Link>
+            </a>
           </div>
         </div>
       </div>
@@ -2483,14 +2484,14 @@ export default function MerchantDashboardClient({
           <span>{isFrameMode ? "إلغاء إطار الهاتف" : "معاينة داخل آيفون"}</span>
         </button>
 
-        <Link
-          href={`/pass/${customers[0]?.passSerial || "pass-atlas-4821"}`}
+        <a
+          href={getPassUrl(customers[0]?.passSerial || "pass-atlas-4821")}
           target="_blank"
           rel="noopener noreferrer"
           className="px-3 py-2 rounded-xl bg-[#008069] hover:bg-[#00A884] text-white text-xs flex items-center gap-1.5 shadow-md font-bold"
         >
           <span>فتح كارط الزبون (Live Pass) ↗</span>
-        </Link>
+        </a>
       </div>
 
       {/* Modals */}

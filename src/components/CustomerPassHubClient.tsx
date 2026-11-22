@@ -33,6 +33,7 @@ import { formatTimeAgoArabic } from "@/lib/utils";
 import { soundEngine } from "@/lib/sound";
 import { Locale, translations } from "@/lib/i18n/translations";
 import { detectPhoneLocale } from "@/lib/i18n/context";
+import { getJoinUrl } from "@/lib/urls";
 
 interface CustomerData {
   id: string;
@@ -1153,8 +1154,7 @@ export default function CustomerPassHubClient({
           <div className="flex items-center gap-2 pt-1">
             <a
               href={`https://wa.me/?text=${encodeURIComponent(
-                `${merchant.name}: تفضل بطاقة ولاء رقمية مجانية واحصل على هدية ترحيبية فورية! سجل عبر هذا الرابط: ${typeof window !== "undefined" ? window.location.origin : "https://walink.ma"
-                }/join/${merchant.slug}?ref=${customer.memberCode}`
+                `${merchant.name}: تفضل بطاقة ولاء رقمية مجانية واحصل على هدية ترحيبية فورية! سجل عبر هذا الرابط: ${getJoinUrl(merchant.slug, customer.memberCode)}`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -1167,7 +1167,7 @@ export default function CustomerPassHubClient({
               type="button"
               onClick={() => {
                 if (typeof window !== "undefined") {
-                  const url = `${window.location.origin}/join/${merchant.slug}?ref=${customer.memberCode}`;
+                  const url = getJoinUrl(merchant.slug, customer.memberCode);
                   navigator.clipboard.writeText(url);
                   setCopiedRef(true);
                   setTimeout(() => setCopiedRef(false), 2000);

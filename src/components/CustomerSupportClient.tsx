@@ -588,10 +588,6 @@ ${message.trim()}
             <Link href="/terms" className="hover:text-[#008069] transition">
               {t.footer.termsLink}
             </Link>
-            <span>•</span>
-            <Link href="/admin" className="hover:text-[#008069] transition">
-              {t.footer.adminLink}
-            </Link>
           </div>
         </div>
       </footer>

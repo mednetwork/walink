@@ -302,10 +302,6 @@ export default function TermsOfServiceClient() {
             <Link href="/privacy" className="hover:text-[#008069] transition">
               {t.footer.privacyLink}
             </Link>
-            <span>•</span>
-            <Link href="/admin" className="hover:text-[#008069] transition">
-              {t.footer.adminLink}
-            </Link>
           </div>
         </div>
       </footer>

@@ -11,6 +11,7 @@ import {
   Sparkles,
   QrCode as QrIcon,
 } from "lucide-react";
+import { getJoinUrl } from "@/lib/urls";
 
 interface StandPreviewModalProps {
   isOpen: boolean;
@@ -32,16 +33,8 @@ export default function StandPreviewModal({
 }: StandPreviewModalProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
-  const [origin, setOrigin] = useState<string>("https://walink.ma");
   const standRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setOrigin(window.location.origin);
-    }
-  }, []);
-
-  const joinUrl = `${origin}/join/${merchant.slug}`;
+  const joinUrl = getJoinUrl(merchant.slug);
 
   useEffect(() => {
     if (!isOpen) return;

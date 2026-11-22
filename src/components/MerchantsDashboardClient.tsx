@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getStoreUrl, getJoinUrl, getPassUrl } from "@/lib/urls";
 import {
   Store,
   Users,
@@ -535,43 +536,51 @@ export default function MerchantsDashboardClient({
 
                   {/* Live Customer Pass Link */}
                   {merchant.samplePassSerial ? (
-                    <Link
-                      href={`/pass/${merchant.samplePassSerial}`}
+                    <a
+                      href={getPassUrl(merchant.samplePassSerial)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-full py-2 px-3 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 border border-[#008069]/20 text-[#008069] font-bold text-xs flex items-center justify-center gap-1.5 transition"
                       title={d.viewLivePass}
                     >
                       <Smartphone className="w-3.5 h-3.5 text-[#008069]" />
                       <span>{d.viewLivePass}</span>
-                    </Link>
+                    </a>
                   ) : (
-                    <Link
-                      href={`/join/${merchant.slug}`}
+                    <a
+                      href={getJoinUrl(merchant.slug)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-[#54656F] text-xs flex items-center justify-center gap-1.5 transition font-medium"
                     >
                       <Smartphone className="w-3.5 h-3.5" />
                       <span>{d.registerFirstCustomer}</span>
-                    </Link>
+                    </a>
                   )}
 
                   {/* Direct Links */}
                   <div className="flex items-center justify-between gap-1 text-[11px] pt-1">
-                    <Link
-                      href={`/m/${merchant.slug}`}
+                    <a
+                      href={getStoreUrl(merchant.slug)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-[#54656F] hover:text-[#008069] font-medium transition flex items-center gap-1"
                       title={d.merchantDashboard}
                     >
                       <span>{d.merchantDashboard}</span>
                       <ArrowUpRight className="w-3 h-3" />
-                    </Link>
+                    </a>
 
-                    <Link
-                      href={`/join/${merchant.slug}`}
+                    <a
+                      href={getJoinUrl(merchant.slug)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-[#54656F] hover:text-[#008069] font-medium transition flex items-center gap-1"
                       title={d.customerLink}
                     >
                       <span>{d.customerLink}</span>
                       <ArrowUpRight className="w-3 h-3" />
-                    </Link>
+                    </a>
 
                     <Link
                       href={`/admin/merchants/${merchant.id}`}

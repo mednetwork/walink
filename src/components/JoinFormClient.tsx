@@ -19,6 +19,7 @@ import WalletPassPreview from "@/components/WalletPassPreview";
 import { isValidMoroccanPhone } from "@/lib/utils";
 import { Locale, translations } from "@/lib/i18n/translations";
 import { detectPhoneLocale } from "@/lib/i18n/context";
+import { getPassUrl } from "@/lib/urls";
 
 interface JoinFormMerchant {
   name: string;
@@ -199,7 +200,8 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         }
       }
 
-      router.push(`/pass/${data.passSerial}?lang=${locale}`);
+      // Smooth cross-subdomain transition from wjoin.walink.ma to wclient.walink.ma
+      window.location.assign(getPassUrl(data.passSerial, locale));
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "حدث خطأ أثناء التحقق من الرمز";
@@ -288,7 +290,8 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         }
       }
 
-      router.push(`/pass/${data.passSerial}?lang=${locale}`);
+      // Smooth cross-subdomain transition from wjoin.walink.ma to wclient.walink.ma
+      window.location.assign(getPassUrl(data.passSerial, locale));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "حدث خطأ أثناء إنشاء البطاقة";
       setError(msg);

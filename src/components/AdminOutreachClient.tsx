@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { getStoreUrl } from "@/lib/urls";
 import {
   Target,
   Copy,
@@ -203,14 +204,15 @@ export default function AdminOutreachClient({ initialLeads }: AdminOutreachClien
             <span className="font-bold">{conversionMessage.text}</span>
           </div>
           {conversionMessage.slug && (
-            <Link
-              href={`/m/${conversionMessage.slug}`}
+            <a
+              href={getStoreUrl(conversionMessage.slug)}
               target="_blank"
+              rel="noopener noreferrer"
               className="px-3 py-1.5 rounded-xl bg-[#008069] text-white font-bold text-xs hover:bg-[#00A884] transition flex items-center gap-1 shadow-sm"
             >
               <span>فتح لوحة التاجر الجديدة ↗</span>
               <ExternalLink className="w-3 h-3" />
-            </Link>
+            </a>
           )}
         </div>
       )}
