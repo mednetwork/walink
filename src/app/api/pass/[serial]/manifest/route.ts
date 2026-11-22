@@ -1,8 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
+const MANIFEST_HEADERS = {
+  "Content-Type": "application/manifest+json; charset=utf-8",
+  "Cache-Control": "private, no-cache, no-store, must-revalidate",
+  "Vary": "Referer, Host",
+};
+
+const STANDARD_ICONS = [
+  {
+    src: "/icon-192.png",
+    sizes: "192x192",
+    type: "image/png",
+    purpose: "any maskable",
+  },
+  {
+    src: "/icon-512.png",
+    sizes: "512x512",
+    type: "image/png",
+    purpose: "any maskable",
+  },
+  {
+    src: "/icon.svg",
+    sizes: "any",
+    type: "image/svg+xml",
+    purpose: "any maskable",
+  },
+  {
+    src: "/favicon.ico",
+    sizes: "32x32 48x48",
+    type: "image/x-icon",
+  },
+];
+
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: { serial: string } }
 ) {
   try {
@@ -31,38 +65,24 @@ export async function GET(
     const primaryColor = customer.merchant.primaryColor || "#008069";
 
     const manifestData = {
-      name: `${merchantName} — Walink Pass`,
+      name: `${merchantName} — بطاقة الوفاء`,
       short_name: merchantName,
       description: `بطاقة الوفاء الرقمية الخاصة بـ ${customer.name} في ${merchantName}`,
       start_url: `/pass/${serial}`,
       scope: `/pass/${serial}`,
+      id: `/pass/${serial}`,
       display: "standalone",
       orientation: "portrait",
       background_color: "#060B18",
       theme_color: primaryColor,
       dir: "rtl",
       lang: "ar",
-      icons: [
-        {
-          src: "/icon.svg",
-          sizes: "192x192 512x512",
-          type: "image/svg+xml",
-          purpose: "any maskable",
-        },
-        {
-          src: "/favicon.ico",
-          sizes: "any",
-          type: "image/x-icon",
-        },
-      ],
+      icons: STANDARD_ICONS,
     };
 
     return new NextResponse(JSON.stringify(manifestData, null, 2), {
       status: 200,
-      headers: {
-        "Content-Type": "application/manifest+json; charset=utf-8",
-        "Cache-Control": "public, max-age=3600, s-maxage=86400",
-      },
+      headers: MANIFEST_HEADERS,
     });
   } catch (error) {
     console.error("Error generating dynamic manifest:", error);

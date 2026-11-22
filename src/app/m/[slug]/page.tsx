@@ -30,6 +30,12 @@ export async function generateMetadata({
   return {
     title: `لوحة التاجر - ${merchant.name} (${merchant.city}) | Walink`,
     description: `لوحة التحكم السريعة للتاجر، ماسح الكاميرا لطبع الطوابع وإرسال العروض الترويجية.`,
+    manifest: `/api/m/${slug}/manifest`,
+    appleWebApp: {
+      capable: true,
+      title: merchant.name,
+      statusBarStyle: "black-translucent",
+    },
   };
 }
 

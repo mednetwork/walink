@@ -45,7 +45,22 @@ import {
   Building2,
   X,
   ShieldCheck,
+  Download,
+  Share2,
 } from "lucide-react";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
+
+function isStandaloneNavigator(nav: Navigator): nav is NavigatorWithStandalone {
+  return "standalone" in nav;
+}
 import MerchantScannerModal, { CustomerSummary } from "@/components/MerchantScannerModal";
 import StandPreviewModal from "@/components/StandPreviewModal";
 import LockScreenPeekModal from "@/components/LockScreenPeekModal";
@@ -205,6 +220,14 @@ export default function MerchantDashboardClient({
     title: "",
     shopName: "",
   });
+
+  // PWA Home Screen Installation State
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstallDismissed, setIsInstallDismissed] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSInstallGuide, setShowIOSInstallGuide] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
 
   // Tab 2 (CRM) Search & Filter
   const [crmSearch, setCrmSearch] = useState("");
@@ -902,6 +925,75 @@ export default function MerchantDashboardClient({
     }
   }, [merchant.slug]);
 
+  // PWA Home Screen Installation & Detection
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Detect standalone display mode
+    const isStandaloneMode =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (isStandaloneNavigator(navigator) && navigator.standalone === true);
+    if (isStandaloneMode) {
+      setIsInstalled(true);
+    }
+
+    // Detect iOS
+    const ua = navigator.userAgent.toLowerCase();
+    const isIOSDevice = /iphone|ipad|ipod/.test(ua);
+    setIsIOS(isIOSDevice);
+
+    // Ensure dynamic merchant manifest link is present in document head
+    const existingLink = document.querySelector<HTMLLinkElement>("link[rel='manifest']");
+    const manifestUrl = `/api/m/${merchant.slug}/manifest`;
+    if (existingLink) {
+      existingLink.href = manifestUrl;
+    } else {
+      const link = document.createElement("link");
+      link.rel = "manifest";
+      link.href = manifestUrl;
+      document.head.appendChild(link);
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredInstallPrompt(null);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, [merchant.slug]);
+
+  const handleInstallApp = async () => {
+    if (isInstalled) return;
+
+    if (deferredInstallPrompt) {
+      try {
+        await deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice.outcome === "accepted") {
+          setIsInstalled(true);
+          setDeferredInstallPrompt(null);
+        }
+      } catch (err) {
+        console.warn("PWA install error:", err);
+      }
+    } else if (isIOS) {
+      setShowIOSInstallGuide(true);
+    } else {
+      setShowIOSInstallGuide(true);
+    }
+  };
+
   const handleVerifyPin = (code: string) => {
     if (code === merchant.pinCode || code === "1234") {
       setIsUnlocked(true);
@@ -1212,8 +1304,68 @@ export default function MerchantDashboardClient({
             >
               <QrCode className="w-4 h-4 text-white" />
             </button>
+
+            {/* Install App Button (Hidden if already standalone) */}
+            {!isInstalled && (
+              <button
+                type="button"
+                onClick={handleInstallApp}
+                title={locale === "ar" ? "تثبيت لوحة المتجر على الشاشة الرئيسية" : "Installer sur l'écran d'accueil"}
+                aria-label="تثبيت لوحة المتجر على الشاشة الرئيسية"
+                className="p-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-emerald-300 hover:text-white transition shadow-sm"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </header>
+
+        {/* PWA Home Screen Installation Prompt Banner (Hidden if standalone or dismissed) */}
+        {!isInstalled && !isInstallDismissed && (
+          <div className="mx-3.5 mt-3 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-[#075E54]/80 to-emerald-950/80 border border-emerald-500/30 text-white shadow-lg backdrop-blur-sm flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0 text-emerald-300">
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold truncate text-white">
+                  {locale === "ar"
+                    ? `تثبيت تطبيق ${merchant.name}`
+                    : locale === "fr"
+                    ? `Installer l'application ${merchant.name}`
+                    : `Instalar la app de ${merchant.name}`}
+                </p>
+                <p className="text-[11px] text-emerald-200/80 truncate">
+                  {locale === "ar"
+                    ? "وصول سريع بنقرة واحدة للشاشة الرئيسية"
+                    : locale === "fr"
+                    ? "Accès rapide en 1 clic sur l'écran d'accueil"
+                    : "Acceso rápido en 1 toque en inicio"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleInstallApp}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>
+                  {locale === "ar" ? "تثبيت" : locale === "fr" ? "Installer" : "Instalar"}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsInstallDismissed(true)}
+                aria-label="إغلاق إشعار التثبيت"
+                className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Prominent Scanner Bar Button (Always on Top) */}
         <div className="p-3.5 pb-2">
@@ -3041,6 +3193,71 @@ export default function MerchantDashboardClient({
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* iOS Safari Home Screen Visual Guide Modal */}
+      {showIOSInstallGuide && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setShowIOSInstallGuide(false)}
+        >
+          <div
+            className="bg-[#0F172A] border border-slate-700/80 rounded-3xl p-5 max-w-sm w-full text-white shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowIOSInstallGuide(false)}
+              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-white/10 text-white/60 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">
+                  {locale === "ar"
+                    ? `إضافة ${merchant.name} للشاشة الرئيسية`
+                    : locale === "fr"
+                    ? `Ajouter ${merchant.name} à l'écran d'accueil`
+                    : `Añadir ${merchant.name} a inicio`}
+                </h3>
+                <p className="text-xs text-slate-400">iPhone / iPad Safari</p>
+              </div>
+            </div>
+            <div className="space-y-3 text-xs text-slate-300">
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center shrink-0">1</span>
+                <p>
+                  {locale === "ar"
+                    ? "اضغط على زر المشاركة (Share) في أسفل شاشة Safari"
+                    : locale === "fr"
+                    ? "Appuyez sur le bouton Partager en bas de Safari"
+                    : "Toca el botón Compartir en la parte inferior de Safari"}
+                </p>
+              </div>
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center shrink-0">2</span>
+                <p>
+                  {locale === "ar"
+                    ? 'مرّر للأسفل واختر "إضافة إلى الصفحة الرئيسية" (+)'
+                    : locale === "fr"
+                    ? 'Faites défiler vers le bas et sélectionnez "Sur l\'écran d\'accueil" (+)'
+                    : 'Desplaza hacia abajo y selecciona "Añadir a pantalla de inicio" (+)'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowIOSInstallGuide(false)}
+              className="w-full mt-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition"
+            >
+              {locale === "ar" ? "فهمت" : locale === "fr" ? "J'ai compris" : "Entendido"}
+            </button>
           </div>
         </div>
       )}

@@ -38,6 +38,11 @@ export async function generateMetadata({
     title: `بطاقة ${customer.name} - ${customer.merchant.name} (${customer.merchant.city}) | Walink`,
     description: `بطاقة الوفاء الرقمية الخاصة بـ ${customer.name} في ${customer.merchant.name}. كود العضوية #${customer.memberCode}.`,
     manifest: `/api/pass/${serial}/manifest`,
+    appleWebApp: {
+      capable: true,
+      title: customer.merchant.name,
+      statusBarStyle: "black-translucent",
+    },
   };
 }
 

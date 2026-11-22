@@ -131,21 +131,21 @@ interface CustomerPassHubClientProps {
 
 interface BannerMeta {
   kind:
-    | "welcome"
-    | "stamp_added"
-    | "reward_unlocked"
-    | "reward_redeemed"
-    | "cashback_earned"
-    | "cashback_redeemed"
-    | "push_granted"
-    | "pwa_installed"
-    | "pwa_already_installed"
-    | "promo"
-    | "vip"
-    | "review"
-    | "near_reward"
-    | "winback"
-    | "radar";
+  | "welcome"
+  | "stamp_added"
+  | "reward_unlocked"
+  | "reward_redeemed"
+  | "cashback_earned"
+  | "cashback_redeemed"
+  | "push_granted"
+  | "pwa_installed"
+  | "pwa_already_installed"
+  | "promo"
+  | "vip"
+  | "review"
+  | "near_reward"
+  | "winback"
+  | "radar";
   params?: {
     stampsLeft?: number;
     amount?: string;
@@ -552,8 +552,8 @@ export default function CustomerPassHubClient({
         locale === "ar"
           ? "رمز PIN الجديد يجب أن يتكون من 4 أرقام حصراً (مثال: 1234)"
           : locale === "fr"
-          ? "Le nouveau PIN doit comporter 4 chiffres (ex: 1234)"
-          : "El nuevo PIN debe tener 4 dígitos (ej: 1234)"
+            ? "Le nouveau PIN doit comporter 4 chiffres (ex: 1234)"
+            : "El nuevo PIN debe tener 4 dígitos (ej: 1234)"
       );
       return;
     }
@@ -563,8 +563,8 @@ export default function CustomerPassHubClient({
         locale === "ar"
           ? "تأكيد الرمز غير متطابق"
           : locale === "fr"
-          ? "Les codes PIN ne correspondent pas"
-          : "Los códigos PIN no coinciden"
+            ? "Les codes PIN ne correspondent pas"
+            : "Los códigos PIN no coinciden"
       );
       return;
     }
@@ -592,9 +592,9 @@ export default function CustomerPassHubClient({
       setCustomer((prev) => ({ ...prev, securityPin: updatedPin }));
       setPinChangeSuccess(
         data.message ||
-          (locale === "ar"
-            ? "تم تحديث رمز PIN بنجاح!"
-            : locale === "fr"
+        (locale === "ar"
+          ? "تم تحديث رمز PIN بنجاح!"
+          : locale === "fr"
             ? "Code PIN mis à jour avec succès !"
             : "¡PIN actualizado con éxito!")
       );
@@ -859,9 +859,9 @@ export default function CustomerPassHubClient({
           : t.pass.welcomeStampsTitle.replace(MERCHANT_PLACEHOLDER, merchant.name),
         message: isCashback
           ? t.pass.welcomeCashbackBody
-              .replace("{rate}", String(cashbackRate))
-              .replace("{balance}", Number(customer.cashbackBalance || 0).toFixed(2))
-              .replace("{currency}", currency)
+            .replace("{rate}", String(cashbackRate))
+            .replace("{balance}", Number(customer.cashbackBalance || 0).toFixed(2))
+            .replace("{currency}", currency)
           : t.pass.welcomeStampsBody,
         time: t.pass.timeNow,
         icon: isCashback ? "cashback" : "gift",
@@ -1281,15 +1281,15 @@ export default function CustomerPassHubClient({
                 {locale === "fr"
                   ? "Activer les notifications 🔔"
                   : locale === "es"
-                  ? "Activar notificaciones 🔔"
-                  : "تفعيل إشعارات الرصيد والعروض 🔔"}
+                    ? "Activar notificaciones 🔔"
+                    : "تفعيل إشعارات الرصيد والعروض 🔔"}
               </p>
               <p className="text-[10px] text-white/70 leading-tight mt-0.5">
                 {locale === "fr"
                   ? "Recevez vos tampons et cadeaux en direct"
                   : locale === "es"
-                  ? "Recibe tus sellos y recompensas al instante"
-                  : "لتصلك أختامك وكاشباك مشترياتك فورياً على الشاشة"}
+                    ? "Recibe tus sellos y recompensas al instante"
+                    : "لتصلك أختامك وكاشباك مشترياتك فورياً على الشاشة"}
               </p>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -1529,19 +1529,19 @@ export default function CustomerPassHubClient({
                   {locale === "ar"
                     ? "تثبيت البطاقة كتطبيق بدون Wallet"
                     : locale === "fr"
-                    ? "Installer l'application sans Wallet"
-                    : "Instalar aplicación sin Wallet"}
+                      ? "Installer l'application sans Wallet"
+                      : "Instalar aplicación sin Wallet"}
                 </span>
                 <span className="text-[15px] font-bold tracking-tight text-white -mt-0.5">
                   {isInstalled
                     ? (locale === "ar"
-                        ? "✅ البطاقة مثبتة في شاشتك الرئيسية"
-                        : locale === "fr"
+                      ? "✅ البطاقة مثبتة في شاشتك الرئيسية"
+                      : locale === "fr"
                         ? "✅ Carte déjà installée sur l'écran"
                         : "✅ Tarjeta instalada en inicio")
                     : (locale === "ar"
-                        ? "📲 إضافة إلى الشاشة الرئيسية (Android)"
-                        : locale === "fr"
+                      ? "📲 إضافة إلى الشاشة الرئيسية (Android)"
+                      : locale === "fr"
                         ? "📲 Ajouter à l'écran d'accueil"
                         : "📲 Añadir a la pantalla de inicio")}
                 </span>
@@ -1696,8 +1696,8 @@ export default function CustomerPassHubClient({
                 {locale === "ar"
                   ? "أمان واسترجاع البطاقة الذكية"
                   : locale === "fr"
-                  ? "Sécurité & Récupération du pass"
-                  : "Seguridad y Recuperación del pass"}
+                    ? "Sécurité & Récupération du pass"
+                    : "Seguridad y Recuperación del pass"}
               </span>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E8F5E9] text-[#008069] border border-[#C8E6C9]">
@@ -1711,8 +1711,8 @@ export default function CustomerPassHubClient({
                 {locale === "ar"
                   ? "رمز استرجاع البطاقة (PIN):"
                   : locale === "fr"
-                  ? "Code PIN de récupération :"
-                  : "Código PIN de recuperación:"}
+                    ? "Code PIN de récupération :"
+                    : "Código PIN de recuperación:"}
               </span>
               <span className="font-mono font-bold text-[#111B21] tracking-widest text-sm bg-white px-2.5 py-0.5 rounded-lg border border-[#E9EDEF]">
                 {currentSecurityPin}
@@ -1723,13 +1723,13 @@ export default function CustomerPassHubClient({
                 ? locale === "ar"
                   ? `💡 رمز الأمان الافتراضي هو كود عضويتك (#${customer.memberCode}). يُستخدم لاسترجاع بطاقتك فوراً في حال تغيير هاتفك أو مسح البطاقة.`
                   : locale === "fr"
-                  ? `💡 Votre code PIN par défaut est votre code membre (#${customer.memberCode}). Il sert à récupérer votre pass à tout moment.`
-                  : `💡 Tu código PIN por defecto es tu código de socio (#${customer.memberCode}).`
+                    ? `💡 Votre code PIN par défaut est votre code membre (#${customer.memberCode}). Il sert à récupérer votre pass à tout moment.`
+                    : `💡 Tu código PIN por defecto es tu código de socio (#${customer.memberCode}).`
                 : locale === "ar"
-                ? "🔐 تم تفعيل رمز أمان PIN مخصص لحماية رصيدك وبطاقتك من أي محاولة استرجاع غير مصرح بها."
-                : locale === "fr"
-                ? "🔐 Votre pass est protégé par un code PIN personnalisé."
-                : "🔐 Tu tarjeta está protegida con un código PIN personalizado."}
+                  ? "🔐 تم تفعيل رمز أمان PIN مخصص لحماية رصيدك وبطاقتك من أي محاولة استرجاع غير مصرح بها."
+                  : locale === "fr"
+                    ? "🔐 Votre pass est protégé par un code PIN personnalisé."
+                    : "🔐 Tu tarjeta está protegida con un código PIN personalizado."}
             </p>
           </div>
 
@@ -1738,16 +1738,14 @@ export default function CustomerPassHubClient({
             <a
               href={`https://wa.me/?text=${encodeURIComponent(
                 locale === "ar"
-                  ? `🔐 رابط بطاقة الولاء الخاصة بي في ${merchant.name}:\n${
-                      typeof window !== "undefined"
-                        ? window.location.href
-                        : `https://walink.ma/pass/${customer.passSerial}`
-                    }\n\n💡 رمز الاسترجاع (PIN): ${currentSecurityPin}`
-                  : `🔐 Lien de mon pass fidélité chez ${merchant.name} :\n${
-                      typeof window !== "undefined"
-                        ? window.location.href
-                        : `https://walink.ma/pass/${customer.passSerial}`
-                    }\n\n💡 Code PIN de récupération : ${currentSecurityPin}`
+                  ? `🔐 رابط بطاقة الولاء الخاصة بي في ${merchant.name}:\n${typeof window !== "undefined"
+                    ? window.location.href
+                    : `https://walink.ma/pass/${customer.passSerial}`
+                  }\n\n💡 رمز الاسترجاع (PIN): ${currentSecurityPin}`
+                  : `🔐 Lien de mon pass fidélité chez ${merchant.name} :\n${typeof window !== "undefined"
+                    ? window.location.href
+                    : `https://walink.ma/pass/${customer.passSerial}`
+                  }\n\n💡 Code PIN de récupération : ${currentSecurityPin}`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -1758,8 +1756,8 @@ export default function CustomerPassHubClient({
                 {locale === "ar"
                   ? "📲 حفظ الرابط في واتسابي"
                   : locale === "fr"
-                  ? "📲 Sauvegarder sur WhatsApp"
-                  : "📲 Guardar en WhatsApp"}
+                    ? "📲 Sauvegarder sur WhatsApp"
+                    : "📲 Guardar en WhatsApp"}
               </span>
             </a>
 
@@ -1781,8 +1779,8 @@ export default function CustomerPassHubClient({
                 {locale === "ar"
                   ? "تغيير رمز PIN"
                   : locale === "fr"
-                  ? "Modifier le code PIN"
-                  : "Cambiar código PIN"}
+                    ? "Modifier le code PIN"
+                    : "Cambiar código PIN"}
               </span>
             </button>
           </div>
@@ -2099,8 +2097,8 @@ export default function CustomerPassHubClient({
                     {locale === "ar"
                       ? "تغيير رمز أمان البطاقة (PIN)"
                       : locale === "fr"
-                      ? "Modifier le code PIN"
-                      : "Cambiar código PIN"}
+                        ? "Modifier le code PIN"
+                        : "Cambiar código PIN"}
                   </h3>
                   <span className="text-[10px] text-[#54656F] block">
                     {merchant.name} • Walink Security
@@ -2237,8 +2235,8 @@ export default function CustomerPassHubClient({
                     {locale === "ar"
                       ? "تثبيت البطاقة على الشاشة الرئيسية"
                       : locale === "fr"
-                      ? "Installer sur l'écran d'accueil"
-                      : "Instalar en la pantalla de inicio"}
+                        ? "Installer sur l'écran d'accueil"
+                        : "Instalar en la pantalla de inicio"}
                   </h3>
                   <span className="text-[10px] text-[#54656F] block">
                     {merchant.name} (Android)
