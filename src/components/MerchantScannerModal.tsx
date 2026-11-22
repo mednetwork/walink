@@ -600,24 +600,22 @@ export default function MerchantScannerModal({
         {activeTab === "camera" && (
           <div className="space-y-3">
             <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center">
-              {/* HTML5 QR Code Mount Element */}
+              {/* HTML5 QR Code Mount Element (Always in DOM with full dimensions) */}
               <div
                 id="walink-qr-viewfinder"
-                className={`w-full h-full object-cover [&>video]:w-full [&>video]:h-full [&>video]:object-cover [&>video]:rounded-2xl ${
-                  cameraState === "active" ? "block" : "hidden"
-                }`}
+                className="absolute inset-0 w-full h-full object-cover [&>video]:w-full [&>video]:h-full [&>video]:object-cover [&>video]:rounded-2xl overflow-hidden"
               />
 
               {/* Viewfinder Target Overlays & Laser when active */}
               {cameraState === "active" && (
-                <div className="absolute inset-8 border-2 border-[#00A884] rounded-2xl pointer-events-none flex items-center justify-center">
+                <div className="absolute inset-8 border-2 border-[#00A884] rounded-2xl pointer-events-none flex items-center justify-center z-10">
                   <span className="w-full h-0.5 bg-[#00A884] absolute shadow-[0_0_12px_#00A884] animate-pulse" />
                 </div>
               )}
 
               {/* Camera State 1: Requesting / Loading */}
               {cameraState === "requesting" && (
-                <div className="text-center p-4 space-y-2.5 z-10">
+                <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 space-y-2.5 z-10 text-center">
                   <div className="w-10 h-10 border-3 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto" />
                   <p className="text-xs text-slate-300 font-medium">
                     {locale === "ar"
@@ -631,7 +629,7 @@ export default function MerchantScannerModal({
 
               {/* Camera State 2: Idle (Prompt to start with direct user gesture) */}
               {cameraState === "idle" && (
-                <div className="text-center p-4 space-y-3 z-10">
+                <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 space-y-3 z-10 text-center">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center mx-auto text-emerald-300">
                     <Camera className="w-6 h-6 stroke-[2.2]" />
                   </div>
@@ -670,7 +668,7 @@ export default function MerchantScannerModal({
 
               {/* Camera State 3: Permission Denied or Error */}
               {(cameraState === "permission_denied" || cameraState === "error") && (
-                <div className="text-center p-4 space-y-3 z-10 max-w-xs">
+                <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 space-y-3 z-10 text-center">
                   <div className="w-11 h-11 rounded-2xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center mx-auto text-rose-300">
                     <AlertCircle className="w-6 h-6" />
                   </div>
