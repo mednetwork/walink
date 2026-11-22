@@ -296,6 +296,28 @@ export interface TranslationDictionary {
     activityDrawerTitle: string;
     totalVisits: string;
     totalEarned: string;
+    rewardRedeemedTitle: string;
+    rewardRedeemedBody: string;
+    timeNow: string;
+    openActionLink: string;
+    promoBroadcastFallback: string;
+    vipUnlockedTitle: string;
+    vipUnlockedBody: string;
+    browserNoPushSupport: string;
+    nearRewardTitle: string;
+    nearRewardBody: string;
+    winbackTitle: string;
+    winbackBody: string;
+    welcomeCashbackTitle: string;
+    welcomeCashbackBody: string;
+    welcomeStampsTitle: string;
+    welcomeStampsBody: string;
+    pushGrantedTitle: string;
+    pushGrantedBody: string;
+    pwaInstalledTitle: string;
+    pwaInstalledBody: string;
+    pwaAlreadyInstalledTitle: string;
+    pwaAlreadyInstalledBody: string;
   };
   onboarding: {
     welcomeGiftStamps: string;
@@ -523,6 +545,13 @@ export interface TranslationDictionary {
       importBtn: string;
       importSuccess: string;
     };
+  };
+  lockScreenPeek: {
+    defaultTitle: string;
+    caption: string;
+    closeBtn: string;
+    dateSample: string;
+    timeNow: string;
   };
 }
 
@@ -823,6 +852,28 @@ export const translations: Record<Locale, TranslationDictionary> = {
       activityDrawerTitle: "سجل الزيارات والنشاط",
       totalVisits: "إجمالي الزيارات:",
       totalEarned: "إجمالي ما وفرته:",
+      rewardRedeemedTitle: "مبروك! تم استلام المكافأة 🎁",
+      rewardRedeemedBody: "تم تسليم {reward} بنجاح! تم تجديد بطاقتك لمواصلة جمع الأختام.",
+      timeNow: "الآن",
+      openActionLink: "فتح الرابط ⭐",
+      promoBroadcastFallback: "عرض خاص جديد!",
+      vipUnlockedTitle: "👑 ترقية لفئة VIP الذهبية!",
+      vipUnlockedBody: "👑 تهانينا {name}! لقد تمت ترقية بطاقتك إلى فئة VIP الذهبية مع مزايا ومكافآت مضاعفة!",
+      browserNoPushSupport: "المتصفح لا يدعم الإشعارات المباشرة",
+      nearRewardTitle: "متبقي لديك ختم واحد فقط! ☕",
+      nearRewardBody: "متبقي لديك ختم واحد فقط للحصول على {reward} في {merchant}! أكمل بطاقتك اليوم.",
+      winbackTitle: "اشتقنا لزيارتك! 🎁",
+      winbackBody: "اشتقنا لزيارتك {name}! تفضل بزيارة {merchant} هذا الأسبوع واحصل على ختم هدية 🎁",
+      welcomeCashbackTitle: "مرحباً بك في {merchant}! 🎁",
+      welcomeCashbackBody: "استمتع باسترداد نقدي {rate}% على مشترياتك. رصيدك الحالي: {balance} {currency}.",
+      welcomeStampsTitle: "مرحباً بك في {merchant}! 🎁",
+      welcomeStampsBody: "بطاقتك الرقمية جاهزة. اجمع الأختام في كل زيارة وافتح مكافأتك القادمة!",
+      pushGrantedTitle: "تم تفعيل الإشعارات بنجاح 🔔",
+      pushGrantedBody: "ستتلقى إشعاراً فورياً على شاشة هاتفك عند إضافة ختم، كاش باك، أو عروض خاصة.",
+      pwaInstalledTitle: "تم التثبيت بنجاح!",
+      pwaInstalledBody: "تمت إضافة البطاقة إلى شاشتك الرئيسية بنجاح!",
+      pwaAlreadyInstalledTitle: "البطاقة مثبتة",
+      pwaAlreadyInstalledBody: "البطاقة مثبتة بالفعل على شاشتك الرئيسية!",
     },
     onboarding: {
       welcomeGiftStamps: "🎁 ختم ترحيبي هدية عند التسجيل!",
@@ -1091,6 +1142,13 @@ export const translations: Record<Locale, TranslationDictionary> = {
         importBtn: "بدء الاستيراد وإنشاء البطاقات",
         importSuccess: "تم استيراد وإنشاء {count} بطاقة عميل بنجاح!",
       },
+    },
+    lockScreenPeek: {
+      defaultTitle: "إشعار جديد في شاشة الهاتف",
+      caption: "✦ هكذا يظهر الإشعار للعميل في شاشة هاتفه ✦",
+      closeBtn: "إغلاق المعاينة",
+      dateSample: "الأحد، 15 نوفمبر",
+      timeNow: "الآن",
     },
   },
 
@@ -1390,6 +1448,28 @@ export const translations: Record<Locale, TranslationDictionary> = {
       activityDrawerTitle: "Historique & Visites",
       totalVisits: "Visites totales :",
       totalEarned: "Total économisé :",
+      rewardRedeemedTitle: "Félicitations pour votre récompense ! 🎁",
+      rewardRedeemedBody: "Votre récompense ({reward}) a été remise avec succès ! Carte renouvelée.",
+      timeNow: "À l'instant",
+      openActionLink: "Ouvrir le lien ⭐",
+      promoBroadcastFallback: "Nouvelle offre spéciale !",
+      vipUnlockedTitle: "👑 Statut VIP Gold débloqué !",
+      vipUnlockedBody: "👑 Félicitations {name} ! Votre carte passe en VIP Gold avec des avantages exclusifs !",
+      browserNoPushSupport: "Ce navigateur ne prend pas en charge les notifications directes",
+      nearRewardTitle: "Plus qu'un seul tampon ! ☕",
+      nearRewardBody: "Plus qu'un seul tampon pour obtenir votre récompense ({reward}) chez {merchant} ! Complétez votre carte aujourd'hui.",
+      winbackTitle: "Vous nous manquez ! 🎁",
+      winbackBody: "Vous nous manquez {name} ! Passez chez {merchant} cette semaine et profitez d'un tampon cadeau 🎁",
+      welcomeCashbackTitle: "Bienvenue chez {merchant} ! 🎁",
+      welcomeCashbackBody: "Profitez de {rate}% de cashback sur tous vos achats. Solde actuel : {balance} {currency}.",
+      welcomeStampsTitle: "Bienvenue chez {merchant} ! 🎁",
+      welcomeStampsBody: "Votre carte numérique est prête. Cumulez des tampons à chaque visite et débloquez vos cadeaux !",
+      pushGrantedTitle: "Notifications activées 🔔",
+      pushGrantedBody: "Vous recevrez des notifications directes pour vos tampons, cashback et offres exclusives.",
+      pwaInstalledTitle: "Installation réussie !",
+      pwaInstalledBody: "La carte a été ajoutée avec succès à votre écran d'accueil !",
+      pwaAlreadyInstalledTitle: "Carte déjà installée",
+      pwaAlreadyInstalledBody: "La carte est déjà installée sur votre écran d'accueil !",
     },
     onboarding: {
       welcomeGiftStamps: "🎁 Tampon de bienvenue offert à l'inscription !",
@@ -1658,6 +1738,13 @@ export const translations: Record<Locale, TranslationDictionary> = {
         importBtn: "Lancer l'importation",
         importSuccess: "{count} cartes clients créées avec succès !",
       },
+    },
+    lockScreenPeek: {
+      defaultTitle: "Nouvelle notification sur l'écran",
+      caption: "✦ Voici comment la notification s'affiche sur le mobile du client ✦",
+      closeBtn: "Fermer l'aperçu",
+      dateSample: "Dimanche 15 nov.",
+      timeNow: "À l'instant",
     },
   },
 
@@ -1957,6 +2044,28 @@ export const translations: Record<Locale, TranslationDictionary> = {
       activityDrawerTitle: "Historial y visitas",
       totalVisits: "Visitas totales:",
       totalEarned: "Total ahorrado:",
+      rewardRedeemedTitle: "¡Felicidades por tu recompensa! 🎁",
+      rewardRedeemedBody: "¡Tu recompensa ({reward}) ha sido entregada con éxito! Tarjeta renovada.",
+      timeNow: "Ahora",
+      openActionLink: "Abrir enlace ⭐",
+      promoBroadcastFallback: "¡Nueva oferta especial!",
+      vipUnlockedTitle: "👑 ¡Ascenso a VIP Gold!",
+      vipUnlockedBody: "👑 ¡Felicidades {name}! Tu tarjeta ha sido actualizada a VIP Gold con ventajas exclusivas.",
+      browserNoPushSupport: "Este navegador no soporta notificaciones directas",
+      nearRewardTitle: "¡Solo te falta un sello! ☕",
+      nearRewardBody: "¡Solo te falta un sello para conseguir tu recompensa ({reward}) en {merchant}! Completa tu tarjeta hoy.",
+      winbackTitle: "¡Te extrañamos! 🎁",
+      winbackBody: "¡Te extrañamos {name}! Visita {merchant} esta semana y recibe un sello de regalo 🎁",
+      welcomeCashbackTitle: "¡Bienvenido a {merchant}! 🎁",
+      welcomeCashbackBody: "Disfruta de {rate}% de cashback en todas tus compras. Saldo actual: {balance} {currency}.",
+      welcomeStampsTitle: "¡Bienvenido a {merchant}! 🎁",
+      welcomeStampsBody: "Tu tarjeta digital está lista. ¡Acumula sellos en cada visita y desbloquea tus premios!",
+      pushGrantedTitle: "Notificaciones activadas 🔔",
+      pushGrantedBody: "Recibirás notificaciones directas para tus sellos, cashback y promociones exclusivas.",
+      pwaInstalledTitle: "¡Instalado con éxito!",
+      pwaInstalledBody: "¡Tu tarjeta se ha añadido a la pantalla de inicio con éxito!",
+      pwaAlreadyInstalledTitle: "Tarjeta instalada",
+      pwaAlreadyInstalledBody: "¡La tarjeta ya está instalada en tu pantalla de inicio!",
     },
     onboarding: {
       welcomeGiftStamps: "🎁 ¡Sello de bienvenida de regalo al unirte!",
@@ -2225,6 +2334,13 @@ export const translations: Record<Locale, TranslationDictionary> = {
         importBtn: "Iniciar importación",
         importSuccess: "¡{count} tarjetas de clientes creadas con éxito!",
       },
+    },
+    lockScreenPeek: {
+      defaultTitle: "Nueva notificación en pantalla",
+      caption: "✦ Así se muestra la notificación en el móvil del cliente ✦",
+      closeBtn: "Cerrar vista previa",
+      dateSample: "Domingo 15 nov.",
+      timeNow: "Ahora",
     },
   },
 };

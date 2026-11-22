@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getLocalizedRewardName } from "@/lib/i18n/rewards";
+import { Locale } from "@/lib/i18n/translations";
 
 export async function GET(
   req: NextRequest,
@@ -71,6 +73,79 @@ export async function GET(
       take: 5,
     });
 
+    const langParam = req.nextUrl.searchParams.get("lang");
+    const lang: Locale =
+      langParam === "fr" || langParam === "es" ? langParam : "ar";
+    const localizedReward = getLocalizedRewardName(
+      customer.merchant.rewardName,
+      lang
+    );
+
+    const localizedNotifications = notifications.map((n) => {
+      if (lang === "ar") return n;
+
+      let title = n.title;
+      let body = n.body;
+
+      if (n.type === "STAMP") {
+        title =
+          lang === "fr"
+            ? "Nouveau tampon ajouté ! 🎉"
+            : "¡Nuevo sello añadido! 🎉";
+        body =
+          lang === "fr"
+            ? `Merci de votre visite ! Présentez votre carte pour débloquer ${localizedReward}.`
+            : `¡Gracias por tu visita! Muestra tu tarjeta para desbloquear ${localizedReward}.`;
+      } else if (n.type === "REWARD") {
+        title =
+          lang === "fr"
+            ? "Félicitations pour votre récompense ! 🎁"
+            : "¡Felicidades por tu recompensa! 🎁";
+        body =
+          lang === "fr"
+            ? `Votre récompense (${localizedReward}) est prête chez ${customer.merchant.name} !`
+            : `¡Tu recompensa (${localizedReward}) está lista en ${customer.merchant.name}!`;
+      } else if (n.type === "REVIEW") {
+        title =
+          lang === "fr"
+            ? `Votre avis compte pour ${customer.merchant.name} ⭐`
+            : `Tu opinión importa para ${customer.merchant.name} ⭐`;
+        body =
+          lang === "fr"
+            ? "Merci pour votre visite ! Déposez un avis 5 étoiles sur Google Maps."
+            : "¡Gracias por tu visita! Deja una reseña de 5 estrellas en Google Maps.";
+      } else if (n.type === "WINBACK") {
+        title = lang === "fr" ? "Vous nous manquez ! 🎁" : "¡Te extrañamos! 🎁";
+        body =
+          lang === "fr"
+            ? `Passez chez ${customer.merchant.name} cette semaine et profitez d'un tampon cadeau 🎁`
+            : `¡Visita ${customer.merchant.name} esta semana y recibe un sello de regalo 🎁!`;
+      } else if (n.type === "NEAR_REWARD") {
+        title =
+          lang === "fr"
+            ? "Plus qu'un seul tampon ! ☕"
+            : "¡Solo te falta un sello! ☕";
+        body =
+          lang === "fr"
+            ? `Plus qu'un seul tampon pour obtenir ${localizedReward} chez ${customer.merchant.name} !`
+            : `¡Solo te falta un sello para conseguir ${localizedReward} en ${customer.merchant.name}!`;
+      } else if (n.type === "RADAR") {
+        title = customer.merchant.name;
+        body =
+          lang === "fr"
+            ? customer.merchant.radarMessage ||
+              "Vous êtes à proximité ! Passez nous rendre visite."
+            : customer.merchant.radarMessage ||
+              "¡Estás cerca! Ven a visitarnos.";
+      }
+
+      return {
+        ...n,
+        title,
+        body,
+      };
+    });
+
     return NextResponse.json({
       customer: {
         id: customer.id,
@@ -88,7 +163,7 @@ export async function GET(
       merchant: customer.merchant,
       transactions: customer.transactions,
       latestCampaign,
-      notifications,
+      notifications: localizedNotifications,
     });
   } catch (error: unknown) {
     console.error("Error fetching pass data:", error);

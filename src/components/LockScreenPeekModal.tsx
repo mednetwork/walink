@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { X, Sparkles, ShieldCheck, Bell } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { soundEngine } from "@/lib/sound";
+import { useI18n } from "@/lib/i18n/context";
+import { Locale } from "@/lib/i18n/translations";
 
 interface LockScreenPeekModalProps {
   isOpen: boolean;
@@ -10,6 +12,7 @@ interface LockScreenPeekModalProps {
   shopName: string;
   message: string;
   title?: string;
+  locale?: Locale;
 }
 
 export default function LockScreenPeekModal({
@@ -17,8 +20,12 @@ export default function LockScreenPeekModal({
   onClose,
   shopName,
   message,
-  title = "إشعار جديد فـ شاشة الهاتف",
+  title,
+  locale: propLocale,
 }: LockScreenPeekModalProps) {
+  const { locale: contextLocale, t, isRTL } = useI18n();
+  const activeLocale = propLocale || contextLocale || "ar";
+
   useEffect(() => {
     if (isOpen) {
       soundEngine.playStampChime();
@@ -26,6 +33,8 @@ export default function LockScreenPeekModal({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const displayTitle = title || t.lockScreenPeek.defaultTitle;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -38,7 +47,7 @@ export default function LockScreenPeekModal({
         {/* Lock Screen Time & Date */}
         <div className="text-center pt-8 pb-4">
           <div className="text-xs font-semibold text-[#54656F]">
-            الأحد، 15 نونبر
+            {t.lockScreenPeek.dateSample}
           </div>
           <div className="text-6xl font-light tracking-tight font-sans text-[#111B21]">
             9:41
@@ -47,7 +56,7 @@ export default function LockScreenPeekModal({
 
         {/* Dropping Lock Screen Notification Banner */}
         <div className="my-auto animate-in slide-in-from-top-6 duration-300">
-          <div className="p-4 rounded-3xl border border-[#E9EDEF] bg-white/95 backdrop-blur-md shadow-xl text-right space-y-1.5">
+          <div className={`p-4 rounded-3xl border border-[#E9EDEF] bg-white/95 backdrop-blur-md shadow-xl ${isRTL ? "text-right" : "text-left"} space-y-1.5`}>
             {/* Header: App Name & Time */}
             <div className="flex items-center justify-between text-[11px] text-[#54656F]">
               <div className="flex items-center gap-1.5 font-bold text-[#111B21]">
@@ -56,21 +65,21 @@ export default function LockScreenPeekModal({
                 </div>
                 <span>WALINK • {shopName}</span>
               </div>
-              <span className="font-mono text-[10px]">الآن</span>
+              <span className="font-mono text-[10px]">{t.lockScreenPeek.timeNow}</span>
             </div>
 
             {/* Title & Content */}
             <div className="font-bold text-xs text-[#111B21]">
-              {title}
+              {displayTitle}
             </div>
-            <p className="text-xs text-[#54656F] leading-relaxed font-arabic">
+            <p className="text-xs text-[#54656F] leading-relaxed">
               {message}
             </p>
           </div>
 
           <div className="text-center mt-3">
             <span className="text-[10px] text-[#008069] font-mono font-bold tracking-wider">
-              ✦ هكا كيوصل الإشعار للكليان فـ شاشة التيليفون ✦
+              {t.lockScreenPeek.caption}
             </span>
           </div>
         </div>
@@ -82,7 +91,7 @@ export default function LockScreenPeekModal({
             onClick={onClose}
             className="w-full py-2.5 rounded-xl bg-white hover:bg-[#F0F2F5] text-[#111B21] border border-[#D1D7DB] font-semibold text-xs transition shadow-sm"
           >
-            إغلاق المعاينة
+            {t.lockScreenPeek.closeBtn}
           </button>
           <div className="w-28 h-1 bg-slate-400 rounded-full mx-auto"></div>
         </div>

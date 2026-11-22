@@ -161,7 +161,10 @@ export default function MerchantScannerModal({
         signal: AbortSignal.timeout(8000),
         body: JSON.stringify({
           ...payload,
-          staffName: staffName || "المدير",
+          lang: locale,
+          staffName:
+            staffName ||
+            (locale === "fr" ? "Gérant" : locale === "es" ? "Gerente" : "المدير"),
           branchName: branchName || undefined,
           overrideCooldown: override,
         }),

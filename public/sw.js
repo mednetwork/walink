@@ -63,13 +63,13 @@ self.addEventListener("notificationclick", (event) => {
 // Bridge message from active web pass page
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SHOW_NOTIFICATION") {
-    const { title, body, icon, url } = event.data;
+    const { title, body, icon, url, dir, lang } = event.data;
     const options = {
       body: body || "",
       icon: icon || "/favicon.ico",
       badge: "/favicon.ico",
-      dir: "rtl",
-      lang: "ar",
+      dir: dir || (lang === "ar" ? "rtl" : "ltr"),
+      lang: lang || "ar",
       data: { url: url || "/" },
     };
 

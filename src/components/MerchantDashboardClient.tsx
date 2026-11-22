@@ -2532,6 +2532,7 @@ export default function MerchantDashboardClient({
         shopName={peekNotification.shopName || merchant.name}
         title={peekNotification.title}
         message={peekNotification.message}
+        locale={locale}
       />
 
       {/* Add/Edit Template Modal */}

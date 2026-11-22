@@ -31,7 +31,11 @@ import {
 import WalletPassPreview from "@/components/WalletPassPreview";
 import { formatTimeAgoArabic } from "@/lib/utils";
 import { soundEngine } from "@/lib/sound";
-import { Locale, translations } from "@/lib/i18n/translations";
+import { Locale, translations, TranslationDictionary } from "@/lib/i18n/translations";
+import { getLocalizedRewardName } from "@/lib/i18n/rewards";
+
+const MERCHANT_PLACEHOLDER = "{merchant}";
+const REWARD_PLACEHOLDER = "{reward}";
 import { detectPhoneLocale } from "@/lib/i18n/context";
 import { getJoinUrl } from "@/lib/urls";
 
@@ -125,6 +129,40 @@ interface CustomerPassHubClientProps {
   initialNotifications?: NotificationData[];
 }
 
+interface BannerMeta {
+  kind:
+    | "welcome"
+    | "stamp_added"
+    | "reward_unlocked"
+    | "reward_redeemed"
+    | "cashback_earned"
+    | "cashback_redeemed"
+    | "push_granted"
+    | "pwa_installed"
+    | "pwa_already_installed"
+    | "promo"
+    | "vip"
+    | "review"
+    | "near_reward"
+    | "winback"
+    | "radar";
+  params?: {
+    stampsLeft?: number;
+    amount?: string;
+    rate?: number;
+    currency?: string;
+    balance?: string;
+    rewardName?: string;
+    merchantName?: string;
+    customerName?: string;
+    campaignTitle?: string;
+    campaignMessage?: string;
+    isCashback?: boolean;
+  };
+  customTitle?: Record<Locale, string>;
+  customMessage?: Record<Locale, string>;
+}
+
 interface NotificationBanner {
   id: string;
   title: string;
@@ -132,6 +170,200 @@ interface NotificationBanner {
   time: string;
   icon: "stamp" | "reward" | "radar" | "gift" | "cashback";
   actionUrl?: string;
+  meta?: BannerMeta;
+}
+
+function resolveBannerContent(
+  banner: NotificationBanner,
+  locale: Locale,
+  t: TranslationDictionary,
+  fallbackMerchant: { name: string; rewardName: string; radarMessage?: string | null },
+  fallbackCustomer: { name: string }
+): { title: string; message: string; time: string; actionText: string } {
+  const time = t.pass.timeNow;
+  const actionText = t.pass.openActionLink;
+
+  if (!banner.meta) {
+    return {
+      title: banner.title,
+      message: banner.message,
+      time: banner.time || time,
+      actionText,
+    };
+  }
+
+  const { kind, params, customTitle, customMessage } = banner.meta;
+
+  if (customTitle && customMessage) {
+    return {
+      title: customTitle[locale] || banner.title,
+      message: customMessage[locale] || banner.message,
+      time,
+      actionText,
+    };
+  }
+
+  const localizedReward = getLocalizedRewardName(
+    params?.rewardName || fallbackMerchant.rewardName,
+    locale
+  );
+  const merchantName = params?.merchantName || fallbackMerchant.name;
+  const customerName = params?.customerName || fallbackCustomer.name;
+
+  switch (kind) {
+    case "welcome":
+      if (params?.isCashback) {
+        return {
+          title: t.pass.welcomeCashbackTitle.replace(MERCHANT_PLACEHOLDER, merchantName),
+          message: t.pass.welcomeCashbackBody
+            .replace("{rate}", String(params.rate ?? 10))
+            .replace("{balance}", params.balance ?? "0.00")
+            .replace("{currency}", params.currency ?? "DH"),
+          time,
+          actionText,
+        };
+      }
+      return {
+        title: t.pass.welcomeStampsTitle.replace(MERCHANT_PLACEHOLDER, merchantName),
+        message: t.pass.welcomeStampsBody,
+        time,
+        actionText,
+      };
+
+    case "stamp_added":
+      return {
+        title: t.pass.stampAddedTitle,
+        message: t.pass.stampAddedBody.replace(
+          "{left}",
+          String(params?.stampsLeft ?? 1)
+        ),
+        time,
+        actionText,
+      };
+
+    case "reward_unlocked":
+      return {
+        title: t.pass.rewardUnlockedTitle,
+        message: `${t.pass.rewardUnlockedBody} (${localizedReward})`,
+        time,
+        actionText,
+      };
+
+    case "reward_redeemed":
+      return {
+        title: t.pass.rewardRedeemedTitle,
+        message: t.pass.rewardRedeemedBody.replace("{reward}", localizedReward),
+        time,
+        actionText,
+      };
+
+    case "cashback_earned":
+      return {
+        title: t.pass.cashbackEarnedTitle,
+        message: t.pass.cashbackEarnedBody
+          .replace("{amount}", params?.amount ?? "0.00")
+          .replace("{rate}", String(params?.rate ?? 10))
+          .replace("{currency}", params?.currency ?? "DH")
+          .replace("{balance}", params?.balance ?? "0.00"),
+        time,
+        actionText,
+      };
+
+    case "cashback_redeemed":
+      return {
+        title: t.pass.cashbackRedeemedTitle,
+        message: t.pass.cashbackRedeemedBody
+          .replace("{amount}", params?.amount ?? "0.00")
+          .replace("{currency}", params?.currency ?? "DH")
+          .replace("{balance}", params?.balance ?? "0.00"),
+        time,
+        actionText,
+      };
+
+    case "push_granted":
+      return {
+        title: t.pass.pushGrantedTitle,
+        message: t.pass.pushGrantedBody,
+        time,
+        actionText,
+      };
+
+    case "pwa_installed":
+      return {
+        title: t.pass.pwaInstalledTitle,
+        message: t.pass.pwaInstalledBody,
+        time,
+        actionText,
+      };
+
+    case "pwa_already_installed":
+      return {
+        title: t.pass.pwaAlreadyInstalledTitle,
+        message: t.pass.pwaAlreadyInstalledBody,
+        time,
+        actionText,
+      };
+
+    case "vip":
+      return {
+        title: t.pass.vipUnlockedTitle,
+        message: t.pass.vipUnlockedBody.replace("{name}", customerName),
+        time,
+        actionText,
+      };
+
+    case "review":
+      return {
+        title: t.pass.reviewAlertTitle,
+        message: t.pass.reviewAlertBody,
+        time,
+        actionText,
+      };
+
+    case "near_reward":
+      return {
+        title: t.pass.nearRewardTitle,
+        message: t.pass.nearRewardBody
+          .replace(REWARD_PLACEHOLDER, localizedReward)
+          .replace(MERCHANT_PLACEHOLDER, merchantName),
+        time,
+        actionText,
+      };
+
+    case "winback":
+      return {
+        title: t.pass.winbackTitle,
+        message: t.pass.winbackBody
+          .replace("{name}", customerName)
+          .replace(MERCHANT_PLACEHOLDER, merchantName),
+        time,
+        actionText,
+      };
+
+    case "radar":
+      return {
+        title: t.pass.radarAlertTitle,
+        message: fallbackMerchant.radarMessage || t.pass.radarAlertBody,
+        time,
+        actionText,
+      };
+
+    case "promo":
+      return {
+        title: params?.campaignTitle || t.pass.promoBroadcastFallback,
+        message: params?.campaignMessage || banner.message,
+        time,
+        actionText,
+      };
+
+    default:
+      return {
+        title: banner.title,
+        message: banner.message,
+        time,
+        actionText,
+      };
+  }
 }
 
 interface BeforeInstallPromptEvent extends Event {
@@ -465,26 +697,56 @@ export default function CustomerPassHubClient({
     }
   }, []);
 
-  // Trigger floating iOS 18 glass notification banner
-  const showBanner = useCallback((banner: NotificationBanner) => {
-    setActiveBanner(banner);
-    if (banner.icon === "reward" || banner.icon === "cashback") {
-      soundEngine.playRewardChime();
-    } else if (banner.icon === "radar") {
-      soundEngine.playRadarPing();
-    } else {
-      soundEngine.playStampChime();
-    }
+  // Trigger floating iOS 18 glass notification banner + Native OS notification sync
+  const showBanner = useCallback(
+    (banner: NotificationBanner) => {
+      setActiveBanner(banner);
+      if (banner.icon === "reward" || banner.icon === "cashback") {
+        soundEngine.playRewardChime();
+      } else if (banner.icon === "radar") {
+        soundEngine.playRadarPing();
+      } else {
+        soundEngine.playStampChime();
+      }
 
-    setTimeout(() => {
-      setActiveBanner((current) => (current?.id === banner.id ? null : current));
-    }, 6000);
-  }, []);
+      // Forward localized notification to Service Worker for Native OS Lock-Screen Push
+      if (
+        typeof window !== "undefined" &&
+        "serviceWorker" in navigator &&
+        navigator.serviceWorker.controller
+      ) {
+        try {
+          const resolved = resolveBannerContent(
+            banner,
+            locale,
+            t,
+            merchant,
+            customer
+          );
+          navigator.serviceWorker.controller.postMessage({
+            type: "SHOW_NOTIFICATION",
+            title: resolved.title,
+            body: resolved.message,
+            lang: locale,
+            dir: locale === "ar" ? "rtl" : "ltr",
+            url: banner.actionUrl || window.location.pathname,
+          });
+        } catch (swErr) {
+          console.warn("ServiceWorker notification sync warning:", swErr);
+        }
+      }
+
+      setTimeout(() => {
+        setActiveBanner((current) => (current?.id === banner.id ? null : current));
+      }, 6000);
+    },
+    [customer, locale, merchant, t]
+  );
 
   // Handle Push Permission (Trilingual with Immediate Status Sync)
   const handleEnablePush = useCallback(async () => {
     if (typeof window === "undefined" || !("Notification" in window)) {
-      alert("المتصفح لا يدعم الإشعارات المباشرة");
+      alert(t.pass.browserNoPushSupport);
       return;
     }
 
@@ -506,41 +768,28 @@ export default function CustomerPassHubClient({
 
         showBanner({
           id: "push-granted",
-          title:
-            locale === "fr"
-              ? "Notifications activées 🔔"
-              : locale === "es"
-              ? "Notificaciones activadas 🔔"
-              : "تم تفعيل الإشعارات بنجاح 🔔",
-          message:
-            locale === "fr"
-              ? "Vous recevrez des notifications directes pour vos tampons et cadeaux."
-              : locale === "es"
-              ? "Recibirás notificaciones directas para tus sellos y recompensas."
-              : "ستتلقى إشعاراً فورياً على شاشة هاتفك عند إضافة ختم، كاش باك، أو عروض خاصة.",
-          time: "الآن",
+          title: t.pass.pushGrantedTitle,
+          message: t.pass.pushGrantedBody,
+          time: t.pass.timeNow,
           icon: "stamp",
+          meta: { kind: "push_granted" },
         });
       }
     } catch (err) {
       console.error("Notification permission error:", err);
     }
-  }, [customer.passSerial, locale, showBanner]);
+  }, [customer.passSerial, showBanner, t]);
 
   // Handle Android PWA Direct Home Screen Installation with Smart Push Chaining
   const handleInstallAndroidApp = useCallback(async () => {
     if (isInstalled) {
       showBanner({
         id: "already-installed",
-        title: locale === "ar" ? "البطاقة مثبتة" : locale === "fr" ? "Carte installée" : "Tarjeta instalada",
-        message:
-          locale === "ar"
-            ? "البطاقة مثبتة بالفعل على شاشتك الرئيسية!"
-            : locale === "fr"
-            ? "La carte est déjà installée sur votre écran d'accueil !"
-            : "¡La tarjeta ya está instalada en tu pantalla de inicio!",
-        time: "الآن",
+        title: t.pass.pwaAlreadyInstalledTitle,
+        message: t.pass.pwaAlreadyInstalledBody,
+        time: t.pass.timeNow,
         icon: "reward",
+        meta: { kind: "pwa_already_installed" },
       });
       return;
     }
@@ -556,15 +805,11 @@ export default function CustomerPassHubClient({
           setDeferredInstallPrompt(null);
           showBanner({
             id: "install-success",
-            title: locale === "ar" ? "تم التثبيت بنجاح!" : locale === "fr" ? "Installation réussie !" : "¡Instalado con éxito!",
-            message:
-              locale === "ar"
-                ? "تمت إضافة البطاقة إلى شاشتك الرئيسية بنجاح!"
-                : locale === "fr"
-                ? "La carte a été ajoutée à votre écran d'accueil !"
-                : "¡La tarjeta se ha añadido a tu pantalla de inicio!",
-            time: "الآن",
+            title: t.pass.pwaInstalledTitle,
+            message: t.pass.pwaInstalledBody,
+            time: t.pass.timeNow,
             icon: "reward",
+            meta: { kind: "pwa_installed" },
           });
 
           // 2. Chained Push Notification Request after installation accepted
@@ -600,8 +845,8 @@ export default function CustomerPassHubClient({
     deferredInstallPrompt,
     handleEnablePush,
     isInstalled,
-    locale,
     showBanner,
+    t,
   ]);
 
   // Initial welcome notification on landing
@@ -609,36 +854,40 @@ export default function CustomerPassHubClient({
     const timer = setTimeout(() => {
       showBanner({
         id: "welcome-stamp",
-        title:
-          locale === "ar"
-            ? `مرحباً بك في ${merchant.name}! 🎁`
-            : locale === "fr"
-              ? `Bienvenue chez ${merchant.name} ! 🎁`
-              : `¡Bienvenido a ${merchant.name}! 🎁`,
+        title: isCashback
+          ? t.pass.welcomeCashbackTitle.replace(MERCHANT_PLACEHOLDER, merchant.name)
+          : t.pass.welcomeStampsTitle.replace(MERCHANT_PLACEHOLDER, merchant.name),
         message: isCashback
-          ? locale === "ar"
-            ? `تم تفعيل بطاقة الكاش باك (${cashbackRate}%). رصيدك المتاح: ${Number(
-              customer.cashbackBalance || 0
-            ).toFixed(2)} ${currency}.`
-            : locale === "fr"
-              ? `Carte cashback (${cashbackRate}%) activée. Solde disponible : ${Number(
-                customer.cashbackBalance || 0
-              ).toFixed(2)} ${currency}.`
-              : `Tarjeta cashback (${cashbackRate}%) activada. Saldo disponible: ${Number(
-                customer.cashbackBalance || 0
-              ).toFixed(2)} ${currency}.`
-          : locale === "ar"
-            ? "حصلت على أول ختم هدية ترحيبية على بطاقة الولاء الخاصة بك."
-            : locale === "fr"
-              ? "Vous avez reçu votre premier tampon de bienvenue offert."
-              : "Has recibido tu primer sello de bienvenida de regalo.",
-        time: "الآن",
+          ? t.pass.welcomeCashbackBody
+              .replace("{rate}", String(cashbackRate))
+              .replace("{balance}", Number(customer.cashbackBalance || 0).toFixed(2))
+              .replace("{currency}", currency)
+          : t.pass.welcomeStampsBody,
+        time: t.pass.timeNow,
         icon: isCashback ? "cashback" : "gift",
+        meta: {
+          kind: "welcome",
+          params: {
+            isCashback,
+            rate: cashbackRate,
+            balance: Number(customer.cashbackBalance || 0).toFixed(2),
+            currency,
+            merchantName: merchant.name,
+          },
+        },
       });
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [merchant.name, showBanner, isCashback, cashbackRate, customer.cashbackBalance, currency, locale]);
+  }, [
+    merchant.name,
+    showBanner,
+    isCashback,
+    cashbackRate,
+    customer.cashbackBalance,
+    currency,
+    t,
+  ]);
 
   // Real-time Background Polling every 2.5 seconds
   useEffect(() => {
@@ -649,7 +898,7 @@ export default function CustomerPassHubClient({
       if (document.hidden) return;
 
       try {
-        const res = await fetch(`/api/pass/${customer.passSerial}`, {
+        const res = await fetch(`/api/pass/${customer.passSerial}?lang=${locale}`, {
           signal: controller.signal,
           cache: "no-store",
         });
@@ -672,21 +921,38 @@ export default function CustomerPassHubClient({
               showBanner({
                 id: `reward-unlocked-${Date.now()}`,
                 title: t.pass.rewardUnlockedTitle,
-                message: `${t.pass.rewardUnlockedBody} (${merchant.rewardName})`,
-                time: "الآن",
+                message: `${t.pass.rewardUnlockedBody} (${getLocalizedRewardName(
+                  merchant.rewardName,
+                  locale
+                )})`,
+                time: t.pass.timeNow,
                 icon: "reward",
+                meta: {
+                  kind: "reward_unlocked",
+                  params: { rewardName: merchant.rewardName },
+                },
               });
             } else {
+              const stampsLeft = merchant.stampsRequired - newStamps;
               showBanner({
                 id: `stamp-added-${Date.now()}`,
                 title: t.pass.stampAddedTitle,
                 message: t.pass.stampAddedBody.replace(
                   "{left}",
-                  String(merchant.stampsRequired - newStamps)
+                  String(stampsLeft)
                 ),
-                time: "الآن",
+                time: t.pass.timeNow,
                 icon: "stamp",
+                meta: {
+                  kind: "stamp_added",
+                  params: { stampsLeft },
+                },
               });
+            }
+
+            // Sync notification ID to prevent double firing duplicate DB notification
+            if (Array.isArray(data.notifications) && data.notifications.length > 0) {
+              lastKnownNotificationIdRef.current = data.notifications[0].id;
             }
           } else {
             prevStampsRef.current = newStamps;
@@ -697,11 +963,22 @@ export default function CustomerPassHubClient({
             prevRewardsRef.current = newRewards;
             showBanner({
               id: `reward-redeemed-${Date.now()}`,
-              title: "🎁 بصحتك المكافأة!",
-              message: `تم تسليم ${merchant.rewardName} بنجاح. تم تجديد البطاقة لمواصلة جمع الأختام.`,
-              time: "الآن",
+              title: t.pass.rewardRedeemedTitle,
+              message: t.pass.rewardRedeemedBody.replace(
+                "{reward}",
+                getLocalizedRewardName(merchant.rewardName, locale)
+              ),
+              time: t.pass.timeNow,
               icon: "reward",
+              meta: {
+                kind: "reward_redeemed",
+                params: { rewardName: merchant.rewardName },
+              },
             });
+
+            if (Array.isArray(data.notifications) && data.notifications.length > 0) {
+              lastKnownNotificationIdRef.current = data.notifications[0].id;
+            }
           } else {
             prevRewardsRef.current = newRewards;
           }
@@ -718,8 +995,17 @@ export default function CustomerPassHubClient({
                   .replace("{rate}", String(cashbackRate))
                   .replace("{currency}", currency)
                   .replace("{balance}", newCashback.toFixed(2)),
-                time: "الآن",
+                time: t.pass.timeNow,
                 icon: "cashback",
+                meta: {
+                  kind: "cashback_earned",
+                  params: {
+                    amount: gained,
+                    rate: cashbackRate,
+                    currency,
+                    balance: newCashback.toFixed(2),
+                  },
+                },
               });
             } else {
               const spent = (oldCashback - newCashback).toFixed(2);
@@ -730,11 +1016,23 @@ export default function CustomerPassHubClient({
                   .replace("{amount}", spent)
                   .replace("{currency}", currency)
                   .replace("{balance}", newCashback.toFixed(2)),
-                time: "الآن",
+                time: t.pass.timeNow,
                 icon: "cashback",
+                meta: {
+                  kind: "cashback_redeemed",
+                  params: {
+                    amount: spent,
+                    currency,
+                    balance: newCashback.toFixed(2),
+                  },
+                },
               });
             }
             prevCashbackRef.current = newCashback;
+
+            if (Array.isArray(data.notifications) && data.notifications.length > 0) {
+              lastKnownNotificationIdRef.current = data.notifications[0].id;
+            }
           }
 
           // 4. Detect Broadcast Campaign Push
@@ -745,10 +1043,17 @@ export default function CustomerPassHubClient({
             prevCampaignIdRef.current = data.latestCampaign.id;
             showBanner({
               id: `promo-broadcast-${data.latestCampaign.id}`,
-              title: `📣 ${data.latestCampaign.title || "عرض خاص جديد!"}`,
+              title: `📣 ${data.latestCampaign.title || t.pass.promoBroadcastFallback}`,
               message: data.latestCampaign.message,
-              time: "الآن",
+              time: t.pass.timeNow,
               icon: "reward",
+              meta: {
+                kind: "promo",
+                params: {
+                  campaignTitle: data.latestCampaign.title,
+                  campaignMessage: data.latestCampaign.message,
+                },
+              },
             });
           }
 
@@ -765,21 +1070,45 @@ export default function CustomerPassHubClient({
 
               let bannerIcon: "stamp" | "reward" | "radar" | "gift" | "cashback" =
                 "gift";
-              if (latestNotif.type === "STAMP") bannerIcon = "stamp";
-              else if (
-                latestNotif.type === "REWARD" ||
-                latestNotif.type === "REVIEW"
-              )
+              let bannerKind: BannerMeta["kind"] = "promo";
+
+              if (latestNotif.type === "STAMP") {
+                bannerIcon = "stamp";
+                bannerKind = "stamp_added";
+              } else if (latestNotif.type === "REWARD") {
                 bannerIcon = "reward";
-              else if (latestNotif.type === "RADAR") bannerIcon = "radar";
+                bannerKind = "reward_unlocked";
+              } else if (latestNotif.type === "REVIEW") {
+                bannerIcon = "reward";
+                bannerKind = "review";
+              } else if (latestNotif.type === "RADAR") {
+                bannerIcon = "radar";
+                bannerKind = "radar";
+              } else if (latestNotif.type === "WINBACK") {
+                bannerIcon = "gift";
+                bannerKind = "winback";
+              } else if (latestNotif.type === "NEAR_REWARD") {
+                bannerIcon = "stamp";
+                bannerKind = "near_reward";
+              }
 
               showBanner({
                 id: latestNotif.id,
                 title: latestNotif.title,
                 message: latestNotif.body,
-                time: "الآن",
+                time: t.pass.timeNow,
                 icon: bannerIcon,
                 actionUrl: latestNotif.actionUrl || undefined,
+                meta: {
+                  kind: bannerKind,
+                  params: {
+                    rewardName: merchant.rewardName,
+                    merchantName: merchant.name,
+                    customerName: customer.name,
+                    campaignTitle: latestNotif.title,
+                    campaignMessage: latestNotif.body,
+                  },
+                },
               });
             }
           }
@@ -804,11 +1133,14 @@ export default function CustomerPassHubClient({
     };
   }, [
     customer.passSerial,
+    customer.name,
     merchant.stampsRequired,
     merchant.rewardName,
+    merchant.name,
     cashbackRate,
     currency,
     showBanner,
+    locale,
     t,
   ]);
 
@@ -874,58 +1206,68 @@ export default function CustomerPassHubClient({
       }}
     >
       {/* iOS 18 Floating Notification Banner Stack */}
-      {activeBanner && (
-        <div className="fixed top-3 left-0 right-0 z-50 px-4 max-w-[430px] mx-auto animate-in slide-in-from-top-4 duration-300">
-          <div className="p-3.5 rounded-3xl border border-[#E9EDEF] shadow-xl flex items-start gap-3 bg-white/95 backdrop-blur-md">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] text-white flex items-center justify-center flex-shrink-0 shadow-md">
-              {activeBanner.icon === "reward" ? (
-                <Gift className="w-5 h-5 animate-spin" />
-              ) : activeBanner.icon === "cashback" ? (
-                <Coins className="w-5 h-5 animate-bounce" />
-              ) : activeBanner.icon === "radar" ? (
-                <MapPin className="w-5 h-5 animate-pulse" />
-              ) : (
-                <Sparkles className="w-5 h-5" />
-              )}
-            </div>
-
-            <div className={`flex-1 min-w-0 ${isRTL ? "text-right" : "text-left"}`}>
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-xs text-[#111B21] truncate">
-                  {activeBanner.title}
-                </span>
-                <span className="text-[10px] text-[#54656F] font-mono">
-                  {activeBanner.time}
-                </span>
+      {activeBanner && (() => {
+        const resolved = resolveBannerContent(
+          activeBanner,
+          locale,
+          t,
+          merchant,
+          customer
+        );
+        return (
+          <div className="fixed top-3 left-0 right-0 z-50 px-4 max-w-[430px] mx-auto animate-in slide-in-from-top-4 duration-300">
+            <div className="p-3.5 rounded-3xl border border-[#E9EDEF] shadow-xl flex items-start gap-3 bg-white/95 backdrop-blur-md">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                {activeBanner.icon === "reward" ? (
+                  <Gift className="w-5 h-5 animate-spin" />
+                ) : activeBanner.icon === "cashback" ? (
+                  <Coins className="w-5 h-5 animate-bounce" />
+                ) : activeBanner.icon === "radar" ? (
+                  <MapPin className="w-5 h-5 animate-pulse" />
+                ) : (
+                  <Sparkles className="w-5 h-5" />
+                )}
               </div>
-              <p className="text-[11px] text-[#54656F] mt-0.5 leading-relaxed">
-                {activeBanner.message}
-              </p>
-              {activeBanner.actionUrl && (
-                <div className="mt-2">
-                  <a
-                    href={activeBanner.actionUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 font-bold text-[11px] hover:bg-amber-300 transition-colors shadow-sm"
-                  >
-                    <span>فتح الرابط ⭐</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              )}
-            </div>
 
-            <button
-              type="button"
-              onClick={() => setActiveBanner(null)}
-              className="text-[#54656F] hover:text-[#111B21] p-1"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+              <div className={`flex-1 min-w-0 ${isRTL ? "text-right" : "text-left"}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-[#111B21] truncate">
+                    {resolved.title}
+                  </span>
+                  <span className="text-[10px] text-[#54656F] font-mono">
+                    {resolved.time}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#54656F] mt-0.5 leading-relaxed">
+                  {resolved.message}
+                </p>
+                {activeBanner.actionUrl && (
+                  <div className="mt-2">
+                    <a
+                      href={activeBanner.actionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 font-bold text-[11px] hover:bg-amber-300 transition-colors shadow-sm"
+                    >
+                      <span>{resolved.actionText}</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveBanner(null)}
+                className="text-[#54656F] hover:text-[#111B21] p-1"
+                aria-label={locale === "fr" ? "Fermer" : locale === "es" ? "Cerrar" : "إغلاق"}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Standalone Home Screen Push Notification Prompt Banner */}
       {showStandalonePushPrompt && !notificationsEnabled && (
