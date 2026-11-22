@@ -52,6 +52,7 @@ interface MerchantScannerModalProps {
   locale?: Locale;
   staffName?: string;
   userRole?: "OWNER" | "STAFF";
+  branchName?: string;
 }
 
 export default function MerchantScannerModal({
@@ -69,6 +70,7 @@ export default function MerchantScannerModal({
   locale = "ar",
   staffName = "المدير",
   userRole = "OWNER",
+  branchName,
 }: MerchantScannerModalProps) {
   const [activeTab, setActiveTab] = useState<"camera" | "manual">("camera");
   const [searchQuery, setSearchQuery] = useState("");
@@ -160,6 +162,7 @@ export default function MerchantScannerModal({
         body: JSON.stringify({
           ...payload,
           staffName: staffName || "المدير",
+          branchName: branchName || undefined,
           overrideCooldown: override,
         }),
       });
@@ -348,9 +351,16 @@ export default function MerchantScannerModal({
               <h3 className="font-bold text-base text-[#111B21]">
                 {t.merchant.scannerBtn}
               </h3>
-              <p className="text-[11px] text-[#54656F]">
-                امسح الرمز أو اختر عميلاً بالرقم
-              </p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-[11px] text-[#54656F]">
+                  امسح الرمز أو اختر عميلاً بالرقم
+                </p>
+                {branchName && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#008069]/10 text-[#008069] font-bold border border-[#008069]/20">
+                    📍 {branchName}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button

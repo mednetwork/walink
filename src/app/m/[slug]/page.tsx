@@ -109,6 +109,33 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     if (c.totalVisits >= 10) vipCount++;
   }
 
+  // Resolve or initialize default main branch for MULTI plan (Refinement 3)
+  let effectiveBranchesStr = merchant.branches || "[]";
+  if (merchant.plan === "MULTI") {
+    let parsedBranches: unknown[] = [];
+    try {
+      parsedBranches = JSON.parse(effectiveBranchesStr);
+    } catch {
+      parsedBranches = [];
+    }
+    if (!Array.isArray(parsedBranches) || parsedBranches.length === 0) {
+      const defaultMainBranch = [
+        {
+          id: "br_main",
+          name: `الفرع الرئيسي (${merchant.city})`,
+          city: merchant.city,
+          latitude: merchant.latitude ?? 33.5731,
+          longitude: merchant.longitude ?? -7.5898,
+          googleMapsUrl: merchant.googleMapsUrl || "",
+          radarMessage: merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.",
+          phone: merchant.phone || "",
+          isMain: true,
+        },
+      ];
+      effectiveBranchesStr = JSON.stringify(defaultMainBranch);
+    }
+  }
+
   // Serialize dates for Client Component
   const serializedMerchant = {
     id: merchant.id,
@@ -134,6 +161,8 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     googleMapsUrl: merchant.googleMapsUrl || "",
     radarMessage: merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.",
     promoTemplates: merchant.promoTemplates || "[]",
+    branches: effectiveBranchesStr,
+    staffMembers: merchant.staffMembers || "[]",
     autoWinback: merchant.autoWinback,
     autoReview: merchant.autoReview,
     autoRadar: merchant.autoRadar,
@@ -160,6 +189,7 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     id: tx.id,
     type: tx.type,
     stampsDelta: tx.stampsDelta,
+    branchName: tx.branchName || null,
     note: tx.note,
     createdAt: tx.createdAt.toISOString(),
     customer: {

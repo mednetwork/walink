@@ -102,6 +102,52 @@ export async function PATCH(
       }
     }
 
+    if (body.branches !== undefined) {
+      let branchesArray: Array<{
+        id: string;
+        name: string;
+        city?: string;
+        latitude?: number;
+        longitude?: number;
+        googleMapsUrl?: string;
+        radarMessage?: string;
+        phone?: string;
+        isMain?: boolean;
+      }> = [];
+
+      if (Array.isArray(body.branches)) {
+        branchesArray = body.branches;
+      } else if (typeof body.branches === "string") {
+        try {
+          branchesArray = JSON.parse(body.branches);
+        } catch {
+          branchesArray = [];
+        }
+      }
+
+      updateData.branches = JSON.stringify(branchesArray);
+
+      // Refinement 4: Sync all branch coordinates and radarMessage into radarZones for Google & Apple Wallet (up to 10 locations)
+      if (branchesArray.length > 0) {
+        const zones = branchesArray.slice(0, 10).map((b) => ({
+          name: b.name || "فرع المحل",
+          lat: Number(b.latitude) || 33.5731,
+          lng: Number(b.longitude) || -7.5898,
+          message: b.radarMessage || "أنت بالقرب من فرعنا! تفضل بزيارتنا وبطاقتك جاهزة.",
+        }));
+        updateData.radarZones = JSON.stringify(zones);
+
+        // If there is a main branch or first branch, synchronize the primary location fields
+        const mainBranch = branchesArray.find((b) => b.isMain) || branchesArray[0];
+        if (mainBranch && mainBranch.latitude !== undefined && mainBranch.longitude !== undefined) {
+          updateData.latitude = Number(mainBranch.latitude);
+          updateData.longitude = Number(mainBranch.longitude);
+          if (mainBranch.googleMapsUrl) updateData.googleMapsUrl = mainBranch.googleMapsUrl;
+          if (mainBranch.city) updateData.city = mainBranch.city;
+        }
+      }
+    }
+
     const updated = await prisma.merchant.update({
       where: { slug },
       data: updateData,
@@ -116,6 +162,7 @@ export async function PATCH(
         radarMessage: true,
         city: true,
         promoTemplates: true,
+        branches: true,
         cooldownMinutes: true,
         staffMembers: true,
         radarZones: true,

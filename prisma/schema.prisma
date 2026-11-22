@@ -37,6 +37,7 @@ model Merchant {
   referralBonus      Float         @default(10)     // Cashback DH bonus for referring a friend (or 1 free stamp)
   radarZones         String        @default("[]") @db.Text   // JSON array of up to 10 { name, lat, lng, message } zones
   promoTemplates     String        @default("[]") @db.Text   // JSON array of custom promo templates { id, label, text }
+  branches           String        @default("[]") @db.Text   // JSON array of branch locations { id, name, city, latitude, longitude, googleMapsUrl, radarMessage, isMain }
   menuUrl            String?       @default("https://instagram.com")
   instagramUrl       String?       @default("https://instagram.com")
   termsText          String        @default("البطاقة صالحة في جميع فروع المتجر. لا يمكن استبدال المكافآت نقداً.") @db.Text
@@ -101,6 +102,7 @@ model Transaction {
   cashbackDelta Float?    // +amount earned or -amount redeemed
   note          String?   @db.Text
   staffName     String    @default("المدير") // Tracks which staff member performed the scan
+  branchName    String?   // Tracks which branch processed this transaction
   createdAt     DateTime  @default(now())
 
   @@index([merchantId, createdAt])

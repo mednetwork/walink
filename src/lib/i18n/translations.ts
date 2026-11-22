@@ -84,6 +84,23 @@ export interface TranslationDictionary {
     notificationPlaceholder: string;
     templateSavedSuccess: string;
     templateDeletedSuccess: string;
+    allBranches: string;
+    branch: string;
+    selectBranch: string;
+    addBranch: string;
+    editBranch: string;
+    deleteBranch: string;
+    manageBranches: string;
+    branchName: string;
+    mainBranch: string;
+    setAsMainBranch: string;
+    branchLocationSaved: string;
+    branchDeleted: string;
+    branchStatsComparison: string;
+    branchActivityBreakdown: string;
+    branchVisitsLabel: string;
+    currentDeviceBranch: string;
+    changeDeviceBranch: string;
   };
   engines: {
     sectionTitle: string;
@@ -594,6 +611,23 @@ export const translations: Record<Locale, TranslationDictionary> = {
       notificationPlaceholder: "اكتب نص الإشعار هنا بحرية، أو اختر قالباً أعلاه...",
       templateSavedSuccess: "تم حفظ القالب بنجاح",
       templateDeletedSuccess: "تم حذف القالب",
+      allBranches: "جميع الفروع (إجمالي)",
+      branch: "الفرع",
+      selectBranch: "اختر الفرع",
+      addBranch: "إضافة فرع جديد",
+      editBranch: "تعديل الفرع",
+      deleteBranch: "حذف الفرع",
+      manageBranches: "إدارة الفروع والمواقع",
+      branchName: "اسم الفرع",
+      mainBranch: "الفرع الرئيسي",
+      setAsMainBranch: "تعيين كفرع رئيسي",
+      branchLocationSaved: "تم حفظ بيانات الفرع بنجاح",
+      branchDeleted: "تم حذف الفرع",
+      branchStatsComparison: "مقارنة أداء الفروع",
+      branchActivityBreakdown: "توزيع الزيارات حسب الفروع",
+      branchVisitsLabel: "زيارات الفرع",
+      currentDeviceBranch: "الفرع الحالي على هذا الجهاز",
+      changeDeviceBranch: "تغيير فرع هذا الجهاز",
     },
     engines: {
       sectionTitle: "4 محركات نمو ذكية تعمل في الخلفية لمضاعفة مبيعاتك",
@@ -1144,6 +1178,23 @@ export const translations: Record<Locale, TranslationDictionary> = {
       notificationPlaceholder: "Écrivez votre message librement ou choisissez un modèle...",
       templateSavedSuccess: "Modèle enregistré avec succès",
       templateDeletedSuccess: "Modèle supprimé",
+      allBranches: "Toutes les succursales (Total)",
+      branch: "Succursale",
+      selectBranch: "Sélectionner la succursale",
+      addBranch: "Ajouter une succursale",
+      editBranch: "Modifier la succursale",
+      deleteBranch: "Supprimer la succursale",
+      manageBranches: "Gestion des succursales et adresses",
+      branchName: "Nom de la succursale",
+      mainBranch: "Succursale principale",
+      setAsMainBranch: "Définir comme principale",
+      branchLocationSaved: "Coordonnées de la succursale enregistrées",
+      branchDeleted: "Succursale supprimée",
+      branchStatsComparison: "Comparatif des performances par succursale",
+      branchActivityBreakdown: "Répartition des visites par succursale",
+      branchVisitsLabel: "Visites de la succursale",
+      currentDeviceBranch: "Succursale active sur cet appareil",
+      changeDeviceBranch: "Changer la succursale de cet appareil",
     },
     engines: {
       sectionTitle: "4 moteurs de croissance automatisés pour décupler vos ventes",
@@ -1694,6 +1745,23 @@ export const translations: Record<Locale, TranslationDictionary> = {
       notificationPlaceholder: "Escribe tu mensaje libremente o elige una plantilla...",
       templateSavedSuccess: "Plantilla guardada con éxito",
       templateDeletedSuccess: "Plantilla eliminada",
+      allBranches: "Todas las sucursales (Total)",
+      branch: "Sucursal",
+      selectBranch: "Seleccionar sucursal",
+      addBranch: "Añadir sucursal",
+      editBranch: "Modificar sucursal",
+      deleteBranch: "Eliminar sucursal",
+      manageBranches: "Gestión de sucursales y ubicaciones",
+      branchName: "Nombre de la sucursal",
+      mainBranch: "Sucursal principal",
+      setAsMainBranch: "Marcar como principal",
+      branchLocationSaved: "Coordenadas de la sucursal guardadas",
+      branchDeleted: "Sucursal eliminada",
+      branchStatsComparison: "Comparativa de rendimiento por sucursal",
+      branchActivityBreakdown: "Distribución de visitas por sucursal",
+      branchVisitsLabel: "Visitas de la sucursal",
+      currentDeviceBranch: "Sucursal activa en este dispositivo",
+      changeDeviceBranch: "Cambiar sucursal de este dispositivo",
     },
     engines: {
       sectionTitle: "4 motores de crecimiento automatizados para disparar tus ventas",

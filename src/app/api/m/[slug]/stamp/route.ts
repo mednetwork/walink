@@ -17,6 +17,7 @@ export async function POST(
       billAmount,
       redeemAmount,
       staffName = "المدير",
+      branchName,
       overrideCooldown = false,
     } = body;
 
@@ -37,6 +38,7 @@ export async function POST(
         latitude: true,
         longitude: true,
         radarZones: true,
+        branches: true,
         googleMapsUrl: true,
         menuUrl: true,
         instagramUrl: true,
@@ -55,6 +57,27 @@ export async function POST(
         { error: "المتجر غير موجود أو غير نشط حالياً" },
         { status: 404 }
       );
+    }
+
+    // Resolve Branch-Specific Google Maps URL for Reviews (Refinement 2)
+    let branchReviewUrl = merchant.googleMapsUrl || "https://maps.google.com";
+    const resolvedBranchName = typeof branchName === "string" && branchName.trim() ? branchName.trim() : null;
+
+    if (resolvedBranchName && merchant.branches) {
+      try {
+        const parsedBranches = JSON.parse(merchant.branches);
+        if (Array.isArray(parsedBranches)) {
+          const foundBranch = parsedBranches.find(
+            (b: { name?: string; id?: string; googleMapsUrl?: string }) =>
+              b.name === resolvedBranchName || b.id === resolvedBranchName
+          );
+          if (foundBranch && foundBranch.googleMapsUrl && foundBranch.googleMapsUrl.trim()) {
+            branchReviewUrl = foundBranch.googleMapsUrl.trim();
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to parse merchant branches for review URL:", err);
+      }
     }
 
     // Resolve Customer
@@ -226,6 +249,7 @@ export async function POST(
             billAmount: bill,
             cashbackDelta: earned,
             staffName: staffName || "المدير",
+            branchName: resolvedBranchName,
             note: isVipCustomer
               ? `كاش باك VIP الذهبي ${effectiveCashbackRate}% على فاتورة ${bill} ${currency}`
               : `كاش باك ${merchant.cashbackRate}% على فاتورة ${bill} ${currency}`,
@@ -322,6 +346,7 @@ export async function POST(
             type: "CASHBACK_REDEEMED",
             cashbackDelta: -toRedeem,
             staffName: staffName || "المدير",
+            branchName: resolvedBranchName,
             note: `خصم ${toRedeem} ${currency} من رصيد الكاش باك`,
             createdAt: now,
           },
@@ -346,7 +371,7 @@ export async function POST(
             type: "REVIEW",
             title: `كيف كانت تجربتك في ${merchant.name}؟ ⭐`,
             body: "شكراً لزيارتك! شاركنا تقييمك بـ 5 نجوم على خرائط Google وساعد الآخرين على اكتشافنا.",
-            actionUrl: merchant.googleMapsUrl || "https://maps.google.com",
+            actionUrl: branchReviewUrl,
             createdAt: new Date(now.getTime() + 1000),
           },
         });
@@ -391,6 +416,7 @@ export async function POST(
             type: "REWARD_REDEEMED",
             stampsDelta: -merchant.stampsRequired,
             staffName: staffName || "المدير",
+            branchName: resolvedBranchName,
             note: `تسليم المكافأة: ${merchant.rewardName} 🎁`,
             createdAt: now,
           },
@@ -415,7 +441,7 @@ export async function POST(
             type: "REVIEW",
             title: `كيف كانت تجربتك في ${merchant.name}؟ ⭐`,
             body: "شكراً لزيارتك! شاركنا تقييمك بـ 5 نجوم على خرائط Google وساعد الآخرين على اكتشافنا.",
-            actionUrl: merchant.googleMapsUrl || "https://maps.google.com",
+            actionUrl: branchReviewUrl,
             createdAt: new Date(now.getTime() + 1000),
           },
         });
@@ -461,6 +487,7 @@ export async function POST(
           type: "STAMP_ADDED",
           stampsDelta: 1,
           staffName: staffName || "المدير",
+          branchName: resolvedBranchName,
           note: "ختم زيارة جديد ☕️",
           createdAt: now,
         },
@@ -500,7 +527,7 @@ export async function POST(
           type: "REVIEW",
           title: `هل أعجبتك الخدمة في ${merchant.name}؟ ⭐`,
           body: "شاركنا تقييمك بـ 5 نجوم على Google Maps وساعد الآخرين على اكتشافنا!",
-          actionUrl: merchant.googleMapsUrl || "https://maps.google.com",
+          actionUrl: branchReviewUrl,
           createdAt: new Date(now.getTime() + 1000),
         },
       });

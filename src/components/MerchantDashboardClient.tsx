@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -41,6 +41,7 @@ import {
   Trash2,
   Edit3,
   BookmarkPlus,
+  Building2,
 } from "lucide-react";
 import MerchantScannerModal, { CustomerSummary } from "@/components/MerchantScannerModal";
 import StandPreviewModal from "@/components/StandPreviewModal";
@@ -54,6 +55,18 @@ export interface PromoTemplateItem {
   id: string;
   label: string;
   text: string;
+}
+
+export interface BranchItem {
+  id: string;
+  name: string;
+  city: string;
+  latitude?: number;
+  longitude?: number;
+  googleMapsUrl?: string;
+  radarMessage?: string;
+  phone?: string;
+  isMain?: boolean;
 }
 
 interface CustomerData {
@@ -78,6 +91,7 @@ interface TransactionData {
   stampsDelta: number;
   billAmount?: number | null;
   cashbackDelta?: number | null;
+  branchName?: string | null;
   note: string | null;
   createdAt: string | Date;
   customer: {
@@ -123,7 +137,10 @@ interface MerchantDashboardClientProps {
     longitude?: number;
     googleMapsUrl?: string;
     radarMessage?: string;
+    phone?: string;
     promoTemplates?: string;
+    branches?: string;
+    staffMembers?: string;
     autoWinback: boolean;
     autoReview: boolean;
     autoRadar: boolean;
@@ -354,6 +371,237 @@ export default function MerchantDashboardClient({
           : `توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية`,
     },
   ];
+
+  // Multi-Branch Management (MULTI Plan Exclusive)
+  const isMultiBranch = merchant.plan === "MULTI";
+
+  const [branches, setBranches] = useState<BranchItem[]>(() => {
+    if (merchant.branches) {
+      try {
+        const parsed = JSON.parse(merchant.branches);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (err) {
+        console.warn("Failed to parse initial branches:", err);
+      }
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`walink_branches_${merchant.slug}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (err) {
+        console.warn("Failed to load branches from localStorage:", err);
+      }
+    }
+    if (merchant.plan === "MULTI") {
+      return [
+        {
+          id: "br_main",
+          name: `الفرع الرئيسي (${merchant.city || "الدار البيضاء"})`,
+          city: merchant.city || "الدار البيضاء",
+          latitude: merchant.latitude ?? 33.5731,
+          longitude: merchant.longitude ?? -7.5898,
+          googleMapsUrl: merchant.googleMapsUrl || "",
+          radarMessage: merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.",
+          isMain: true,
+        },
+      ];
+    }
+    return [];
+  });
+
+  const [selectedBranchId, setSelectedBranchId] = useState<string>("ALL");
+
+  const [deviceBranchId, setDeviceBranchId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(`walink_device_branch_${merchant.slug}`);
+      if (stored) return stored;
+    }
+    return "br_main";
+  });
+
+  // Branch Modal State
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
+  const [branchNameInput, setBranchNameInput] = useState("");
+  const [branchCityInput, setBranchCityInput] = useState(merchant.city || "الدار البيضاء");
+  const [branchLatInput, setBranchLatInput] = useState<string | number>(merchant.latitude ?? 33.5731);
+  const [branchLngInput, setBranchLngInput] = useState<string | number>(merchant.longitude ?? -7.5898);
+  const [branchGmapsInput, setBranchGmapsInput] = useState("");
+  const [branchRadarMsgInput, setBranchRadarMsgInput] = useState(merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.");
+  const [branchPhoneInput, setBranchPhoneInput] = useState(merchant.phone || "");
+  const [branchIsMainInput, setBranchIsMainInput] = useState(false);
+  const [isSavingBranch, setIsSavingBranch] = useState(false);
+  const [isDetectingBranchGps, setIsDetectingBranchGps] = useState(false);
+  const [branchGpsStatus, setBranchGpsStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+  const syncBranches = async (newBranches: BranchItem[]) => {
+    setBranches(newBranches);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(
+          `walink_branches_${merchant.slug}`,
+          JSON.stringify(newBranches)
+        );
+      } catch (err) {
+        console.warn("Failed to save branches to localStorage:", err);
+      }
+    }
+    try {
+      await fetch(`/api/m/${merchant.slug}/settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(6000),
+        body: JSON.stringify({
+          branches: JSON.stringify(newBranches),
+        }),
+      });
+    } catch (err) {
+      console.warn("Could not sync branches to server:", err);
+    }
+  };
+
+  const handleOpenAddBranch = () => {
+    setEditingBranchId(null);
+    setBranchNameInput("");
+    setBranchCityInput(merchant.city || "الدار البيضاء");
+    setBranchLatInput(merchant.latitude ?? 33.5731);
+    setBranchLngInput(merchant.longitude ?? -7.5898);
+    setBranchGmapsInput("");
+    setBranchRadarMsgInput("أنت بالقرب من فرعنا! تفضل بزيارتنا وبطاقتك جاهزة.");
+    setBranchPhoneInput("");
+    setBranchIsMainInput(branches.length === 0);
+    setBranchGpsStatus(null);
+    setIsBranchModalOpen(true);
+  };
+
+  const handleOpenEditBranch = (b: BranchItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingBranchId(b.id);
+    setBranchNameInput(b.name);
+    setBranchCityInput(b.city);
+    setBranchLatInput(b.latitude ?? 33.5731);
+    setBranchLngInput(b.longitude ?? -7.5898);
+    setBranchGmapsInput(b.googleMapsUrl || "");
+    setBranchRadarMsgInput(b.radarMessage || "أنت بالقرب من فرعنا! تفضل بزيارتنا وبطاقتك جاهزة.");
+    setBranchPhoneInput(b.phone || "");
+    setBranchIsMainInput(Boolean(b.isMain));
+    setBranchGpsStatus(null);
+    setIsBranchModalOpen(true);
+  };
+
+  const handleDeleteBranch = async (bId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (branches.length <= 1) {
+      alert("يجب أن يحتوي المتجر على فرع واحد على الأقل.");
+      return;
+    }
+    const newBranches = branches.filter((b) => b.id !== bId);
+    if (newBranches.length > 0 && !newBranches.some((b) => b.isMain)) {
+      newBranches[0].isMain = true;
+    }
+    if (selectedBranchId === bId) {
+      setSelectedBranchId("ALL");
+    }
+    await syncBranches(newBranches);
+  };
+
+  const handleSaveBranch = async () => {
+    const name = branchNameInput.trim();
+    if (!name) return;
+    setIsSavingBranch(true);
+    try {
+      let updated: BranchItem[];
+      const branchPayload: BranchItem = {
+        id: editingBranchId || `br_${Date.now()}`,
+        name,
+        city: branchCityInput.trim() || merchant.city || "الدار البيضاء",
+        latitude: Number(branchLatInput) || 33.5731,
+        longitude: Number(branchLngInput) || -7.5898,
+        googleMapsUrl: branchGmapsInput.trim(),
+        radarMessage: branchRadarMsgInput.trim(),
+        phone: branchPhoneInput.trim(),
+        isMain: branchIsMainInput,
+      };
+
+      if (editingBranchId) {
+        updated = branches.map((b) => {
+          if (b.id === editingBranchId) return branchPayload;
+          if (branchIsMainInput) return { ...b, isMain: false };
+          return b;
+        });
+      } else {
+        let list = branches;
+        if (branchIsMainInput) {
+          list = list.map((b) => ({ ...b, isMain: false }));
+        }
+        updated = [...list, branchPayload];
+      }
+      await syncBranches(updated);
+      setIsBranchModalOpen(false);
+      setEditingBranchId(null);
+    } finally {
+      setIsSavingBranch(false);
+    }
+  };
+
+  const handleDetectBranchGps = () => {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
+      setBranchGpsStatus({ type: "error", msg: "المتصفح لا يدعم تحديد الموقع GPS." });
+      return;
+    }
+    setIsDetectingBranchGps(true);
+    setBranchGpsStatus(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = Number(position.coords.latitude.toFixed(6));
+        const lng = Number(position.coords.longitude.toFixed(6));
+        setBranchLatInput(lat);
+        setBranchLngInput(lng);
+        setBranchGmapsInput(`https://www.google.com/maps?q=${lat},${lng}`);
+        setIsDetectingBranchGps(false);
+        setBranchGpsStatus({ type: "success", msg: "تم تحديد موقع الفرع بنجاح!" });
+      },
+      (error) => {
+        console.warn("GPS detection error:", error);
+        setIsDetectingBranchGps(false);
+        setBranchGpsStatus({ type: "error", msg: "تعذر التقاط إحداثيات GPS. تأكد من تفعيل إذن الموقع." });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const handleBranchGoogleMapsUrlChange = (url: string) => {
+    setBranchGmapsInput(url);
+    const coords = extractCoordinatesFromGoogleMapsUrl(url);
+    if (coords) {
+      setBranchLatInput(coords.lat);
+      setBranchLngInput(coords.lng);
+      setBranchGpsStatus({
+        type: "success",
+        msg: `تم استخراج الإحداثيات تلقائياً (${coords.lat}, ${coords.lng})`,
+      });
+    }
+  };
+
+  const activeBranch = branches.find((b) => b.id === deviceBranchId) || branches.find((b) => b.isMain) || branches[0];
+  const activeBranchName = isMultiBranch && activeBranch ? activeBranch.name : undefined;
+
+  const selectedBranch = selectedBranchId === "ALL" ? null : branches.find((b) => b.id === selectedBranchId);
+
+  // Filter transactions by branch if selected
+  const displayedTransactions = useMemo<TransactionData[]>(() => {
+    if (!isMultiBranch || !selectedBranch) return transactions;
+    return transactions.filter((t: TransactionData) => t.branchName === selectedBranch.name);
+  }, [transactions, selectedBranch, isMultiBranch]);
+
+  // Branch-specific statistics
+  const branchVisitsCount = useMemo<number>(() => {
+    if (!isMultiBranch || !selectedBranch) return metrics.totalVisits;
+    return displayedTransactions.filter((t: TransactionData) => t.type === "STAMP_ADDED" || t.type === "CASHBACK_EARNED").length;
+  }, [displayedTransactions, selectedBranch, metrics.totalVisits, isMultiBranch]);
 
   // Tab 4 (Settings) States
   const [merchantLoyaltyMode, setMerchantLoyaltyMode] = useState(merchant.loyaltyMode || "BOTH");
@@ -862,13 +1110,76 @@ export default function MerchantDashboardClient({
         {/* Tab 1: الرئيسية (Home) */}
         {activeTab === "home" && (
           <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
+            {/* Multi-Branch Selector Header (MULTI Plan Exclusive) */}
+            {isMultiBranch && branches.length > 0 && (
+              <div className="space-y-2 p-3 bg-white rounded-2xl border border-[#E9EDEF] shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-[#008069]" />
+                    <span className="font-bold text-xs text-[#111B21]">
+                      {t.demo.branch}:
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#008069]/10 text-[#008069] font-bold border border-[#008069]/20">
+                      MULTI ({branches.length} {locale === "fr" ? "succursales" : locale === "es" ? "sucursales" : "فروع"})
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("settings")}
+                    className="text-[11px] text-[#008069] hover:underline font-bold flex items-center gap-1"
+                  >
+                    <span>{t.demo.manageBranches}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Branches Horizontal Pill Switcher */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBranchId("ALL")}
+                    className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-bold flex items-center gap-1.5 ${
+                      selectedBranchId === "ALL"
+                        ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                        : "bg-[#F0F2F5] border-[#D1D7DB] text-[#54656F] hover:bg-[#E9EDEF]"
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>{t.demo.allBranches}</span>
+                  </button>
+
+                  {branches.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => setSelectedBranchId(b.id)}
+                      className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-semibold flex items-center gap-1.5 ${
+                        selectedBranchId === b.id
+                          ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                          : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                      }`}
+                    >
+                      <span>📍 {b.name}</span>
+                      {b.isMain && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-400 text-amber-950 font-bold">
+                          {t.demo.mainBranch}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* 2x2 KPI Grid */}
             <div className="grid grid-cols-2 gap-2.5">
               <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm">
-                <span className="text-[11px] text-[#54656F] block">زيارات</span>
+                <span className="text-[11px] text-[#54656F] block">
+                  {selectedBranch ? `${t.demo.branchVisitsLabel} (${selectedBranch.name})` : "زيارات (إجمالي)"}
+                </span>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold font-mono text-[#111B21]">
-                    {metrics.totalVisits}
+                    {selectedBranch ? branchVisitsCount : metrics.totalVisits}
                   </span>
                   <span className="text-[10px] text-[#008069] font-bold font-mono">
                     +18%
@@ -929,6 +1240,53 @@ export default function MerchantDashboardClient({
               </div>
             )}
 
+            {/* Branch Performance Comparison Card (MULTI Plan Global View) */}
+            {isMultiBranch && selectedBranchId === "ALL" && branches.length > 1 && (
+              <div className="bg-white p-4 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-[#111B21] flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-[#008069]" />
+                    <span>{t.demo.branchStatsComparison}</span>
+                  </span>
+                  <span className="text-[10px] text-[#54656F]">
+                    {branches.length} {t.demo.branch}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {branches.map((b) => {
+                    const branchTxs = transactions.filter((t) => t.branchName === b.name);
+                    const bVisits = branchTxs.filter((t) => t.type === "STAMP_ADDED" || t.type === "CASHBACK_EARNED").length;
+                    const pct = metrics.totalVisits > 0 ? Math.min(100, Math.round((bVisits / metrics.totalVisits) * 100)) : 0;
+                    return (
+                      <div key={b.id} className="p-2.5 rounded-xl bg-[#F0F2F5] space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-[#111B21]">{b.name}</span>
+                            <span className="text-[10px] text-[#54656F]">({b.city})</span>
+                            {b.isMain && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-400 text-amber-950 font-bold">
+                                {t.demo.mainBranch}
+                              </span>
+                            )}
+                          </div>
+                          <span className="font-mono font-bold text-[#008069]">
+                            {bVisits} زيارة ({pct}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-[#D1D7DB] h-1.5 rounded-full overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-[#00A884] to-[#008069] h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.max(8, pct)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Weekly Visits Dynamic Bar Chart */}
             <div className="bg-white p-4 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-2.5">
               <div className="flex items-center justify-between text-xs">
@@ -966,34 +1324,54 @@ export default function MerchantDashboardClient({
 
             {/* Live Activity Feed */}
             <div className="bg-white p-4 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-2.5">
-              <span className="font-bold text-xs text-[#111B21] block">آخر الحركات</span>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-[#111B21]">آخر الحركات</span>
+                {selectedBranch && (
+                  <span className="text-[10px] text-[#008069] font-bold">
+                    📍 {selectedBranch.name}
+                  </span>
+                )}
+              </div>
               <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
-                {transactions.slice(0, 6).map((tx) => (
-                  <div
-                    key={tx.id}
-                    className="p-2.5 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-center justify-between text-xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-[#008069]/10 text-[#008069] flex items-center justify-center font-bold text-[11px]">
-                        {tx.customer.name.slice(0, 1)}
-                      </div>
-                      <div>
-                        <span className="font-bold text-[#111B21] block">
-                          {tx.customer.name}
-                        </span>
-                        <span className="text-[10px] text-[#54656F] font-mono">
-                          {formatTimeAgoArabic(tx.createdAt)}
-                        </span>
-                      </div>
-                    </div>
-                    <span
-                      className={`text-[11px] font-bold font-mono ${tx.stampsDelta > 0 ? "text-[#008069]" : "text-amber-600"
-                        }`}
+                {displayedTransactions.length === 0 ? (
+                  <p className="text-center py-4 text-xs text-[#54656F]">
+                    لا توجد معاملات مسجلة في هذا الفرع بعد.
+                  </p>
+                ) : (
+                  displayedTransactions.slice(0, 6).map((tx: TransactionData) => (
+                    <div
+                      key={tx.id}
+                      className="p-2.5 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-center justify-between text-xs"
                     >
-                      {tx.note || (tx.stampsDelta > 0 ? "+1 طابع" : "استلام مكافأة")}
-                    </span>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-[#008069]/10 text-[#008069] flex items-center justify-center font-bold text-[11px]">
+                          {tx.customer.name.slice(0, 1)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-[#111B21]">
+                              {tx.customer.name}
+                            </span>
+                            {tx.branchName && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-white border border-[#D1D7DB] text-[#54656F]">
+                                📍 {tx.branchName}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-[#54656F] font-mono block">
+                            {formatTimeAgoArabic(tx.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        className={`text-[11px] font-bold font-mono ${tx.stampsDelta > 0 ? "text-[#008069]" : "text-amber-600"
+                          }`}
+                      >
+                        {tx.note || (tx.stampsDelta > 0 ? "+1 طابع" : "استلام مكافأة")}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -1474,180 +1852,315 @@ export default function MerchantDashboardClient({
               </div>
             </div>
 
-            {/* Store Location & GPS Radar Card */}
-            <div className="p-3.5 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
-                <span className="font-bold text-xs text-[#111B21] flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-rose-500" />
-                  <span>{t.demo.storeLocation}</span>
-                </span>
-                {Number(merchantLatitude) && Number(merchantLongitude) ? (
-                  <a
-                    href={`https://www.google.com/maps?q=${merchantLatitude},${merchantLongitude}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] text-[#008069] hover:underline flex items-center gap-1 font-semibold"
+            {/* Store Location & Multi-Branch Management Card */}
+            {isMultiBranch ? (
+              <div className="p-3.5 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm space-y-3.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
+                  <span className="font-bold text-xs text-[#111B21] flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-[#008069]" />
+                    <span>{t.demo.manageBranches}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleOpenAddBranch}
+                    className="px-2.5 py-1.5 rounded-xl bg-[#E8F5E9] hover:bg-[#C8E6C9] text-[#008069] text-[11px] font-bold flex items-center gap-1 transition"
                   >
-                    <span>{t.demo.mapPreview}</span>
-                    <ExternalLink className="w-3 h-3 opacity-80" />
-                  </a>
-                ) : null}
-              </div>
-
-              <p className="text-[11px] text-[#54656F] leading-relaxed">
-                {locale === "fr"
-                  ? "Coordonnées GPS utilisées pour le radar de proximité 100m et la géolocalisation sur Apple et Google Wallet."
-                  : locale === "es"
-                  ? "Coordenadas GPS utilizadas para el radar de proximidad de 100m y la ubicación en Apple y Google Wallet."
-                  : "إحداثيات GPS تُستخدم لتشغيل رادار الـ 100 متر على بطاقات Apple و Google Wallet ومساعدة الزبائن في العثور عليك."}
-              </p>
-
-              {/* Google Maps Link Input with Smart Coordinate Parser */}
-              <div className="space-y-1">
-                <label htmlFor="gmaps-url-input" className="text-[10px] text-[#54656F] font-semibold block">
-                  {t.demo.googleMapsUrl}:
-                </label>
-                <div className="relative">
-                  <input
-                    id="gmaps-url-input"
-                    type="url"
-                    value={merchantGoogleMapsUrl}
-                    onChange={(e) => handleGoogleMapsUrlChange(e.target.value)}
-                    placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
-                    className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21] placeholder-[#8696A0]"
-                    dir="ltr"
-                  />
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{t.demo.addBranch}</span>
+                  </button>
                 </div>
-                <span className="text-[9px] text-[#8696A0] block">
-                  {locale === "fr"
-                    ? "💡 Collez un lien Google Maps et les coordonnées GPS seront extraites automatiquement."
+
+                {/* Current Cashier Device Branch Selector */}
+                <div className="p-2.5 rounded-xl bg-[#F0F2F5] border border-[#D1D7DB] space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="device-branch-select" className="text-[10px] text-[#54656F] font-bold flex items-center gap-1">
+                      <Smartphone className="w-3.5 h-3.5 text-[#008069]" />
+                      <span>{t.demo.currentDeviceBranch}:</span>
+                    </label>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                      {activeBranchName || "نشط"}
+                    </span>
+                  </div>
+                  <select
+                    id="device-branch-select"
+                    value={deviceBranchId}
+                    onChange={(e) => {
+                      const newId = e.target.value;
+                      setDeviceBranchId(newId);
+                      if (typeof window !== "undefined") {
+                        try {
+                          localStorage.setItem(`walink_device_branch_${merchant.slug}`, newId);
+                        } catch (err) {
+                          console.warn("Failed to save deviceBranch to localStorage:", err);
+                        }
+                      }
+                    }}
+                    className="w-full py-1.5 px-2.5 text-xs rounded-lg border border-[#D1D7DB] bg-white text-[#111B21] font-semibold focus:outline-none focus:ring-2 focus:ring-[#008069]"
+                  >
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} ({b.city}) {b.isMain ? "⭐" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[9px] text-[#54656F] leading-tight">
+                    {locale === "fr"
+                      ? "Chaque scan effectué sur cet appareil sera enregistré sous ce point de vente et dirigera le client vers ses avis Google."
+                      : locale === "es"
+                      ? "Cada escaneo en este dispositivo se registrará para esta sucursal y dirigirá las reseñas de Google a ella."
+                      : "كل عملية مسح وطابع من هذا الجهاز ستسجل تلقائياً باسم هذا الفرع وتوجه تقييم Google إليه."}
+                  </p>
+                </div>
+
+                {/* Branches List */}
+                <div className="space-y-2">
+                  <span className="text-[10px] text-[#54656F] font-bold uppercase block">
+                    {locale === "fr" ? "Liste des points de vente" : locale === "es" ? "Lista de sucursales" : "قائمة الفروع المسجلة:"} ({branches.length})
+                  </span>
+                  {branches.map((b) => (
+                    <div
+                      key={b.id}
+                      className="p-2.5 rounded-xl border border-[#E9EDEF] bg-[#F8F9FA] hover:bg-white transition space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs text-[#111B21]">{b.name}</span>
+                          {b.isMain && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold flex items-center gap-0.5">
+                              ⭐ {t.demo.mainBranch}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenEditBranch(b, e)}
+                            className="p-1 rounded-lg text-[#54656F] hover:text-[#008069] hover:bg-white transition"
+                            title={t.demo.editBranch}
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          {branches.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteBranch(b.id, e)}
+                              className="p-1 rounded-lg text-[#54656F] hover:text-rose-600 hover:bg-white transition"
+                              title={t.demo.deleteBranch}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-[#54656F]">
+                        <span>📍 {b.city} • <span className="font-mono">{b.latitude}, {b.longitude}</span></span>
+                        {b.latitude && b.longitude ? (
+                          <a
+                            href={b.googleMapsUrl || `https://www.google.com/maps?q=${b.latitude},${b.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#008069] hover:underline flex items-center gap-0.5 font-semibold"
+                          >
+                            <span>{t.demo.mapPreview}</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        ) : null}
+                      </div>
+
+                      {b.radarMessage && (
+                        <p className="text-[9px] text-[#8696A0] bg-white p-1.5 rounded-lg border border-[#E9EDEF] italic line-clamp-1">
+                          🔔 &quot;{b.radarMessage}&quot;
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-800 leading-relaxed">
+                  💡 {locale === "fr"
+                    ? "Toutes ces succursales sont synchronisées automatiquement dans le radar Apple & Google Wallet (jusqu'à 10 points de vente). La carte s'affiche sur l'écran verrouillé du client dès qu'il est à 100m de n'importe quel point !"
                     : locale === "es"
-                    ? "💡 Pegue un enlace de Google Maps y las coordenadas GPS se extraerán automáticamente."
-                    : "💡 الصق رابط موقعك من Google Maps وسيتم استخراج الإحداثيات تلقائياً حتى لو كنت في المنزل."}
-                </span>
+                    ? "Todas estas sucursales se sincronizan automáticamente en el radar de Apple y Google Wallet (hasta 10). La tarjeta aparece en la pantalla de bloqueo a menos de 100m de cualquier sucursal."
+                    : "جميع هذه الفروع مسجلة تلقائياً في رادار بطاقة المحفظة (Apple & Google Wallet) حتى 10 فروع، وتظهر البطاقة على شاشة قفل الزبون فور اقترابه من أي فرع بـ 100 متر!"}
+                </div>
               </div>
+            ) : (
+              /* Store Location & GPS Radar Card */
+              <div className="p-3.5 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
+                  <span className="font-bold text-xs text-[#111B21] flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-rose-500" />
+                    <span>{t.demo.storeLocation}</span>
+                  </span>
+                  {Number(merchantLatitude) && Number(merchantLongitude) ? (
+                    <a
+                      href={`https://www.google.com/maps?q=${merchantLatitude},${merchantLongitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-[#008069] hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <span>{t.demo.mapPreview}</span>
+                      <ExternalLink className="w-3 h-3 opacity-80" />
+                    </a>
+                  ) : null}
+                </div>
 
-              {/* Coordinates Inputs: Latitude & Longitude */}
-              <div className="grid grid-cols-2 gap-2">
+                <p className="text-[11px] text-[#54656F] leading-relaxed">
+                  {locale === "fr"
+                    ? "Coordonnées GPS utilisées pour le radar de proximité 100m et la géolocalisation sur Apple et Google Wallet."
+                    : locale === "es"
+                    ? "Coordenadas GPS utilizadas para el radar de proximidad de 100m y la ubicación en Apple y Google Wallet."
+                    : "إحداثيات GPS تُستخدم لتشغيل رادار الـ 100 متر على بطاقات Apple و Google Wallet ومساعدة الزبائن في العثور عليك."}
+                </p>
+
+                {/* Google Maps Link Input with Smart Coordinate Parser */}
                 <div className="space-y-1">
-                  <label htmlFor="lat-input" className="text-[10px] text-[#54656F] font-semibold block">
-                    {locale === "fr" ? "Latitude" : locale === "es" ? "Latitud" : "خط العرض (Latitude)"}
+                  <label htmlFor="gmaps-url-input" className="text-[10px] text-[#54656F] font-semibold block">
+                    {t.demo.googleMapsUrl}:
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="gmaps-url-input"
+                      type="url"
+                      value={merchantGoogleMapsUrl}
+                      onChange={(e) => handleGoogleMapsUrlChange(e.target.value)}
+                      placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
+                      className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21] placeholder-[#8696A0]"
+                      dir="ltr"
+                    />
+                  </div>
+                  <span className="text-[9px] text-[#8696A0] block">
+                    {locale === "fr"
+                      ? "💡 Collez un lien Google Maps et les coordonnées GPS seront extraites automatiquement."
+                      : locale === "es"
+                      ? "💡 Pegue un enlace de Google Maps y las coordenadas GPS se extraerán automáticamente."
+                      : "💡 الصق رابط موقعك من Google Maps وسيتم استخراج الإحداثيات تلقائياً حتى لو كنت في المنزل."}
+                  </span>
+                </div>
+
+                {/* Coordinates Inputs: Latitude & Longitude */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label htmlFor="lat-input" className="text-[10px] text-[#54656F] font-semibold block">
+                      {locale === "fr" ? "Latitude" : locale === "es" ? "Latitud" : "خط العرض (Latitude)"}
+                    </label>
+                    <input
+                      id="lat-input"
+                      type="number"
+                      step="any"
+                      value={merchantLatitude}
+                      onChange={(e) => setMerchantLatitude(e.target.value)}
+                      placeholder="33.5731"
+                      className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="lng-input" className="text-[10px] text-[#54656F] font-semibold block">
+                      {locale === "fr" ? "Longitude" : locale === "es" ? "Longitud" : "خط الطول (Longitude)"}
+                    </label>
+                    <input
+                      id="lng-input"
+                      type="number"
+                      step="any"
+                      value={merchantLongitude}
+                      onChange={(e) => setMerchantLongitude(e.target.value)}
+                      placeholder="-7.5898"
+                      className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+
+                {/* GPS Auto-detect Button */}
+                <div>
+                  <button
+                    type="button"
+                    disabled={isDetectingGps}
+                    onClick={handleDetectGps}
+                    className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-xs font-bold text-[#111B21] flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                  >
+                    {isDetectingGps ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#008069]" />
+                        <span>
+                          {locale === "fr"
+                            ? "Recherche de la position GPS..."
+                            : locale === "es"
+                            ? "Buscando ubicación GPS..."
+                            : "جاري التقاط إحداثيات GPS الدقيقة..."}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Navigation className="w-3.5 h-3.5 text-[#008069]" />
+                        <span>{t.demo.detectGps}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* GPS Status Message Toast */}
+                {gpsStatus && (
+                  <div
+                    className={`p-2 rounded-xl text-[11px] font-semibold ${
+                      gpsStatus.type === "success"
+                        ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                        : "bg-red-50 border border-red-200 text-red-700"
+                    }`}
+                  >
+                    {gpsStatus.msg}
+                  </div>
+                )}
+
+                {/* Radar Lock Screen Message */}
+                <div className="space-y-1 pt-1.5 border-t border-[#E9EDEF]">
+                  <label htmlFor="radar-msg-input" className="text-[10px] text-[#54656F] font-semibold block">
+                    {t.demo.radarMessage}:
                   </label>
                   <input
-                    id="lat-input"
-                    type="number"
-                    step="any"
-                    value={merchantLatitude}
-                    onChange={(e) => setMerchantLatitude(e.target.value)}
-                    placeholder="33.5731"
-                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
-                    dir="ltr"
+                    id="radar-msg-input"
+                    type="text"
+                    value={merchantRadarMessage}
+                    onChange={(e) => setMerchantRadarMessage(e.target.value)}
+                    placeholder="أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة."
+                    className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21]"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label htmlFor="lng-input" className="text-[10px] text-[#54656F] font-semibold block">
-                    {locale === "fr" ? "Longitude" : locale === "es" ? "Longitud" : "خط الطول (Longitude)"}
-                  </label>
-                  <input
-                    id="lng-input"
-                    type="number"
-                    step="any"
-                    value={merchantLongitude}
-                    onChange={(e) => setMerchantLongitude(e.target.value)}
-                    placeholder="-7.5898"
-                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
-                    dir="ltr"
-                  />
+
+                {/* Save Location Button */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    disabled={savingSettings}
+                    onClick={handleSaveSettings}
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${
+                      hasUnsavedChanges
+                        ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
+                        : "bg-[#008069] text-white hover:bg-[#00705c]"
+                    } disabled:opacity-50`}
+                  >
+                    {savingSettings ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>{t.demo.saving}</span>
+                      </>
+                    ) : saveSuccessMsg ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-white" />
+                        <span>{saveSuccessMsg}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-3.5 h-3.5" />
+                        <span>{t.demo.saveChanges}</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-
-              {/* GPS Auto-detect Button */}
-              <div>
-                <button
-                  type="button"
-                  disabled={isDetectingGps}
-                  onClick={handleDetectGps}
-                  className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-xs font-bold text-[#111B21] flex items-center justify-center gap-1.5 transition disabled:opacity-50"
-                >
-                  {isDetectingGps ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#008069]" />
-                      <span>
-                        {locale === "fr"
-                          ? "Recherche de la position GPS..."
-                          : locale === "es"
-                          ? "Buscando ubicación GPS..."
-                          : "جاري التقاط إحداثيات GPS الدقيقة..."}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Navigation className="w-3.5 h-3.5 text-[#008069]" />
-                      <span>{t.demo.detectGps}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* GPS Status Message Toast */}
-              {gpsStatus && (
-                <div
-                  className={`p-2 rounded-xl text-[11px] font-semibold ${
-                    gpsStatus.type === "success"
-                      ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
-                      : "bg-red-50 border border-red-200 text-red-700"
-                  }`}
-                >
-                  {gpsStatus.msg}
-                </div>
-              )}
-
-              {/* Radar Lock Screen Message */}
-              <div className="space-y-1 pt-1.5 border-t border-[#E9EDEF]">
-                <label htmlFor="radar-msg-input" className="text-[10px] text-[#54656F] font-semibold block">
-                  {t.demo.radarMessage}:
-                </label>
-                <input
-                  id="radar-msg-input"
-                  type="text"
-                  value={merchantRadarMessage}
-                  onChange={(e) => setMerchantRadarMessage(e.target.value)}
-                  placeholder="أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة."
-                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21]"
-                />
-              </div>
-
-              {/* Save Location Button */}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  disabled={savingSettings}
-                  onClick={handleSaveSettings}
-                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${
-                    hasUnsavedChanges
-                      ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
-                      : "bg-[#008069] text-white hover:bg-[#00705c]"
-                  } disabled:opacity-50`}
-                >
-                  {savingSettings ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>{t.demo.saving}</span>
-                    </>
-                  ) : saveSuccessMsg ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-white" />
-                      <span>{saveSuccessMsg}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-3.5 h-3.5" />
-                      <span>{t.demo.saveChanges}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+            )}
 
             {/* Smart Automations Toggles Card */}
             <div className="space-y-2.5">
@@ -1823,6 +2336,7 @@ export default function MerchantDashboardClient({
         customers={customers}
         onActionComplete={handleActionComplete}
         locale={locale}
+        branchName={isMultiBranch ? activeBranchName : undefined}
       />
 
       <StandPreviewModal
@@ -1975,6 +2489,227 @@ export default function MerchantDashboardClient({
               <button
                 type="button"
                 onClick={() => setIsTemplateModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#54656F] font-bold text-xs transition"
+              >
+                {locale === "fr" ? "Annuler" : locale === "es" ? "Cancelar" : "إلغاء"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Branch Modal */}
+      {isBranchModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div
+            className="w-full max-w-sm bg-white rounded-3xl p-5 border border-[#E9EDEF] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            dir={isRTL ? "rtl" : "ltr"}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
+              <h3 className="text-sm font-bold text-[#111B21] flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#008069]" />
+                <span>
+                  {editingBranchId ? t.demo.editBranch : t.demo.addBranch}
+                </span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsBranchModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#54656F] flex items-center justify-center text-xs transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {/* Branch Name */}
+              <div className="space-y-1">
+                <label htmlFor="branch-name-input" className="text-[10px] text-[#54656F] font-semibold block">
+                  {t.demo.branchName} *:
+                </label>
+                <input
+                  id="branch-name-input"
+                  type="text"
+                  value={branchNameInput}
+                  onChange={(e) => setBranchNameInput(e.target.value)}
+                  placeholder="مثال: فرع المعاريف"
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21]"
+                />
+              </div>
+
+              {/* City */}
+              <div className="space-y-1">
+                <label htmlFor="branch-city-input" className="text-[10px] text-[#54656F] font-semibold block">
+                  {locale === "fr" ? "Ville" : locale === "es" ? "Ciudad" : "المدينة"}:
+                </label>
+                <input
+                  id="branch-city-input"
+                  type="text"
+                  value={branchCityInput}
+                  onChange={(e) => setBranchCityInput(e.target.value)}
+                  placeholder="مثال: الدار البيضاء"
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21]"
+                />
+              </div>
+
+              {/* Google Maps URL */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="branch-gmaps-input" className="text-[10px] text-[#54656F] font-semibold block">
+                    {t.demo.googleMapsUrl}:
+                  </label>
+                  {Number(branchLatInput) && Number(branchLngInput) ? (
+                    <a
+                      href={`https://www.google.com/maps?q=${branchLatInput},${branchLngInput}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-[#008069] hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <span>{t.demo.mapPreview}</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  ) : null}
+                </div>
+                <input
+                  id="branch-gmaps-input"
+                  type="url"
+                  value={branchGmapsInput}
+                  onChange={(e) => handleBranchGoogleMapsUrlChange(e.target.value)}
+                  placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21] placeholder-[#8696A0]"
+                  dir="ltr"
+                />
+                <span className="text-[9px] text-[#8696A0] block">
+                  💡 {locale === "fr"
+                    ? "Collez le lien Google Maps du point de vente pour extraire les coordonnées GPS automatiquement."
+                    : locale === "es"
+                    ? "Pegue el enlace de Google Maps de la sucursal para extraer las coordenadas automáticamente."
+                    : "الصق رابط Google Maps الخاص بالفرع وسيتم استخراج الإحداثيات تلقائياً."}
+                </span>
+              </div>
+
+              {/* Coordinates */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label htmlFor="branch-lat-input" className="text-[10px] text-[#54656F] font-semibold block">
+                    {locale === "fr" ? "Latitude" : locale === "es" ? "Latitud" : "خط العرض"}
+                  </label>
+                  <input
+                    id="branch-lat-input"
+                    type="number"
+                    step="any"
+                    value={branchLatInput}
+                    onChange={(e) => setBranchLatInput(e.target.value)}
+                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
+                    dir="ltr"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="branch-lng-input" className="text-[10px] text-[#54656F] font-semibold block">
+                    {locale === "fr" ? "Longitude" : locale === "es" ? "Longitud" : "خط الطول"}
+                  </label>
+                  <input
+                    id="branch-lng-input"
+                    type="number"
+                    step="any"
+                    value={branchLngInput}
+                    onChange={(e) => setBranchLngInput(e.target.value)}
+                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+
+              {/* GPS Auto-detect Button */}
+              <div>
+                <button
+                  type="button"
+                  disabled={isDetectingBranchGps}
+                  onClick={handleDetectBranchGps}
+                  className="w-full py-2 px-3 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] border border-[#D1D7DB] text-xs font-bold text-[#111B21] flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                >
+                  {isDetectingBranchGps ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#008069]" />
+                      <span>جاري التقاط إحداثيات الفرع...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="w-3.5 h-3.5 text-[#008069]" />
+                      <span>{t.demo.detectGps}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* GPS Status Message Toast */}
+              {branchGpsStatus && (
+                <div
+                  className={`p-2 rounded-xl text-[11px] font-semibold ${
+                    branchGpsStatus.type === "success"
+                      ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                      : "bg-red-50 border border-red-200 text-red-700"
+                  }`}
+                >
+                  {branchGpsStatus.msg}
+                </div>
+              )}
+
+              {/* Radar Lock Screen Message */}
+              <div className="space-y-1">
+                <label htmlFor="branch-radar-msg-input" className="text-[10px] text-[#54656F] font-semibold block">
+                  {t.demo.radarMessage}:
+                </label>
+                <input
+                  id="branch-radar-msg-input"
+                  type="text"
+                  value={branchRadarMsgInput}
+                  onChange={(e) => setBranchRadarMsgInput(e.target.value)}
+                  placeholder="أنت بالقرب من فرعنا! تفضل بزيارتنا وبطاقتك جاهزة."
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#111B21]"
+                />
+              </div>
+
+              {/* Main Branch Checkbox */}
+              <label className="flex items-center gap-2 cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  checked={branchIsMainInput}
+                  onChange={(e) => setBranchIsMainInput(e.target.checked)}
+                  className="w-4 h-4 text-[#008069] rounded focus:ring-[#008069]"
+                />
+                <span className="text-xs text-[#111B21] font-medium">
+                  {t.demo.setAsMainBranch}
+                </span>
+              </label>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                disabled={isSavingBranch || !branchNameInput.trim()}
+                onClick={handleSaveBranch}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#008069]/20 transition disabled:opacity-50"
+              >
+                {isSavingBranch ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Save className="w-3.5 h-3.5" />
+                )}
+                <span>
+                  {editingBranchId
+                    ? locale === "fr"
+                      ? "Enregistrer les modifications"
+                      : locale === "es"
+                      ? "Guardar cambios"
+                      : "حفظ التعديلات"
+                    : t.demo.addBranch}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsBranchModalOpen(false)}
                 className="px-4 py-2.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#54656F] font-bold text-xs transition"
               >
                 {locale === "fr" ? "Annuler" : locale === "es" ? "Cancelar" : "إلغاء"}
