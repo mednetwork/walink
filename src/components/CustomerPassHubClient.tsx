@@ -1797,6 +1797,7 @@ export default function CustomerPassHubClient({
                 <input
                   type="password"
                   inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={4}
                   value={oldPinInput}
                   onChange={(e) => setOldPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
@@ -1814,6 +1815,7 @@ export default function CustomerPassHubClient({
                 <input
                   type="password"
                   inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={4}
                   required
                   value={newPinInput}
@@ -1832,6 +1834,7 @@ export default function CustomerPassHubClient({
                 <input
                   type="password"
                   inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={4}
                   required
                   value={confirmPinInput}

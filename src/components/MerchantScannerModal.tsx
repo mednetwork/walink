@@ -515,6 +515,7 @@ export default function MerchantScannerModal({
               <div className="relative">
                 <input
                   type="text"
+                  inputMode="tel"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t.merchant.searchPlaceholder}

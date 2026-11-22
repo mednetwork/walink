@@ -2221,6 +2221,7 @@ export default function MerchantDashboardClient({
                       id="lat-input"
                       type="number"
                       step="any"
+                      inputMode="decimal"
                       value={merchantLatitude}
                       onChange={(e) => setMerchantLatitude(e.target.value)}
                       placeholder="33.5731"
@@ -2236,6 +2237,7 @@ export default function MerchantDashboardClient({
                       id="lng-input"
                       type="number"
                       step="any"
+                      inputMode="decimal"
                       value={merchantLongitude}
                       onChange={(e) => setMerchantLongitude(e.target.value)}
                       placeholder="-7.5898"
@@ -2770,6 +2772,7 @@ export default function MerchantDashboardClient({
                     id="branch-lat-input"
                     type="number"
                     step="any"
+                    inputMode="decimal"
                     value={branchLatInput}
                     onChange={(e) => setBranchLatInput(e.target.value)}
                     className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
@@ -2784,6 +2787,7 @@ export default function MerchantDashboardClient({
                     id="branch-lng-input"
                     type="number"
                     step="any"
+                    inputMode="decimal"
                     value={branchLngInput}
                     onChange={(e) => setBranchLngInput(e.target.value)}
                     className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#D1D7DB] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#111B21]"
@@ -2982,6 +2986,7 @@ export default function MerchantDashboardClient({
               <input
                 type="text"
                 inputMode="numeric"
+                pattern="[0-9]*"
                 maxLength={4}
                 value={pinResetModal.newPin}
                 onChange={(e) =>
