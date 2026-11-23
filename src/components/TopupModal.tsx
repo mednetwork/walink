@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { X, Coins, Check, Zap, ArrowLeft } from "lucide-react";
-import { TOPUP_PACKAGES } from "@/lib/constants";
+import { TOPUP_PACKAGES, CREDIT_PRICE_MAD } from "@/lib/constants";
 
 interface TopupModalProps {
   isOpen: boolean;
@@ -21,7 +21,7 @@ export default function TopupModal({
   merchant,
   onSuccess,
 }: TopupModalProps) {
-  const [selectedAmount, setSelectedAmount] = useState<number>(1200);
+  const [selectedAmount, setSelectedAmount] = useState<number>(1000);
   const [customAmount, setCustomAmount] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,12 +84,28 @@ export default function TopupModal({
           </button>
         </div>
 
-        {/* Current Balance */}
-        <div className="my-4 p-4 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-center justify-between">
-          <span className="text-xs text-[#54656F] font-semibold">الرصيد الحالي للمحل:</span>
-          <span className="text-base font-bold text-amber-700 font-mono">
-            {merchant.credits.toLocaleString()} كريدي
+        {/* Unified Rate Badge */}
+        <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-1.5 font-bold text-amber-800">
+            <Zap className="w-4 h-4 text-amber-600 fill-amber-600" />
+            <span>سعر موحد:</span>
+          </div>
+          <span className="font-mono font-bold text-[11px] bg-amber-500 text-slate-950 px-2 py-0.5 rounded-lg shadow-sm">
+            1 كريدي = 0.10 درهم (10 = 1 DH)
           </span>
+        </div>
+
+        {/* Current Balance */}
+        <div className="my-3 p-4 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-center justify-between">
+          <span className="text-xs text-[#54656F] font-semibold">الرصيد الحالي للمحل:</span>
+          <div className="text-right">
+            <span className="text-base font-bold text-amber-700 font-mono block">
+              {merchant.credits.toLocaleString()} كريدي
+            </span>
+            <span className="text-[10px] text-[#54656F] font-mono font-semibold">
+              ≈ {(merchant.credits * CREDIT_PRICE_MAD).toFixed(1)} DH
+            </span>
+          </div>
         </div>
 
         {/* Package Options */}
@@ -127,7 +143,7 @@ export default function TopupModal({
                   <div>
                     <span className="font-bold text-sm block text-[#111B21]">{pkg.label}</span>
                     <span className="text-[11px] text-[#54656F]">
-                      تكفي لـ {pkg.credits} إشعار ورادار
+                      {pkg.credits.toLocaleString()} عملية أو إشعار
                     </span>
                   </div>
                 </div>
@@ -149,7 +165,7 @@ export default function TopupModal({
           {/* Custom amount */}
           <div className="pt-2">
             <label className="text-xs text-[#54656F] mb-1 block font-semibold">
-              أو حدد رصيد مخصص:
+              أو حدد رصيد مخصص (1 كريدي = 0.1 درهم):
             </label>
             <div className="relative">
               <input
@@ -167,6 +183,14 @@ export default function TopupModal({
                 كريدي
               </span>
             </div>
+            {finalAmount > 0 && (
+              <div className="mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs flex items-center justify-between text-amber-950 font-semibold animate-in fade-in">
+                <span>المبلغ المستحق:</span>
+                <span className="font-mono font-bold text-amber-800 text-sm">
+                  {(finalAmount * CREDIT_PRICE_MAD).toFixed(1)} درهم
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -189,7 +213,10 @@ export default function TopupModal({
             ) : (
               <>
                 <Zap className="w-4 h-4" />
-                <span>تأكيد شحن +{finalAmount.toLocaleString()} كريدي</span>
+                <span>
+                  تأكيد شحن +{finalAmount.toLocaleString()} كريدي (
+                  {(finalAmount * CREDIT_PRICE_MAD).toFixed(1)} درهم)
+                </span>
               </>
             )}
           </button>

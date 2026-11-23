@@ -117,9 +117,12 @@ export const PLANS_INFO = {
   },
 };
 
+export const CREDIT_PRICE_MAD = 0.1; // 1 Credit = 0.10 DH (10 Credits = 1 DH)
+
 export const TOPUP_PACKAGES = [
-  { credits: 500, price: 100, label: "+500 كريدي", popular: false },
-  { credits: 1200, price: 200, label: "+1,200 كريدي", popular: true },
-  { credits: 3000, price: 400, label: "+3,000 كريدي", popular: false },
+  { credits: 500, price: 50, label: "+500 كريدي", popular: false },
+  { credits: 1000, price: 100, label: "+1,000 كريدي", popular: true },
+  { credits: 2500, price: 250, label: "+2,500 كريدي", popular: false },
+  { credits: 5000, price: 500, label: "+5,000 كريدي", popular: false },
 ];
 

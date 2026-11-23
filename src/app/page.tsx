@@ -3255,15 +3255,15 @@ export default function LandingPage() {
               <div className="topups">
                 <div>
                   <b className="lat">500</b>
+                  <small>50 DH</small>
+                </div>
+                <div>
+                  <b className="lat">1,000</b>
                   <small>100 DH</small>
                 </div>
                 <div>
-                  <b className="lat">1,200</b>
-                  <small>200 DH</small>
-                </div>
-                <div>
-                  <b className="lat">3,000</b>
-                  <small>400 DH</small>
+                  <b className="lat">2,500</b>
+                  <small>250 DH</small>
                 </div>
               </div>
             </div>

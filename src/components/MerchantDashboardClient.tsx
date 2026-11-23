@@ -2788,6 +2788,7 @@ export default function MerchantDashboardClient({
         onClose={() => setIsCreditsOpen(false)}
         credits={merchant.credits}
         merchantName={merchant.name}
+        locale={locale}
       />
 
       <LockScreenPeekModal
