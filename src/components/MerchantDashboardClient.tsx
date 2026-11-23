@@ -1022,11 +1022,16 @@ export default function MerchantDashboardClient({
     }
   };
 
-  const handleActionComplete = useCallback((updatedCustomer: CustomerSummary, msg: string) => {
+  const handleActionComplete = useCallback((updatedCustomer: CustomerSummary, msg: string, remainingCredits?: number) => {
     // Clear any existing toast timeout before starting a new debounced one
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current);
       toastTimeoutRef.current = null;
+    }
+
+    // Sync live credits count immediately when returned from transaction
+    if (typeof remainingCredits === "number") {
+      setMerchant((prev) => ({ ...prev, credits: remainingCredits }));
     }
 
     // Trigger light haptic feedback on mobile if supported
@@ -1381,7 +1386,20 @@ export default function MerchantDashboardClient({
             <button
               type="button"
               onClick={() => setIsCreditsOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-amber-300 font-mono text-xs font-bold transition shadow-sm"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-mono text-xs font-bold transition shadow-sm ${
+                merchant.credits <= 20
+                  ? "bg-amber-500/25 border border-amber-400 text-amber-200 ring-2 ring-amber-400/50 animate-pulse"
+                  : "bg-white/15 hover:bg-white/25 border border-white/20 text-amber-300"
+              }`}
+              title={
+                merchant.credits <= 20
+                  ? locale === "ar"
+                    ? "رصيد النقاط منخفض! اضغط للشحن"
+                    : locale === "fr"
+                    ? "Crédits faibles ! Cliquez pour recharger"
+                    : "¡Créditos bajos! Haga clic para recargar"
+                  : undefined
+              }
             >
               <Coins className="w-3.5 h-3.5" />
               <span>{merchant.credits}</span>
@@ -2754,6 +2772,7 @@ export default function MerchantDashboardClient({
         minCashbackRedeem={merchant.minCashbackRedeem}
         customers={customers}
         onActionComplete={handleActionComplete}
+        onOpenCredits={() => setIsCreditsOpen(true)}
         locale={locale}
         branchName={isMultiBranch ? activeBranchName : undefined}
       />

@@ -54,6 +54,7 @@ export async function POST(
         cooldownMinutes: true,
         vipVisitsThreshold: true,
         vipCashbackBonus: true,
+        credits: true,
       },
     });
 
@@ -245,6 +246,29 @@ export async function POST(
       });
     }
 
+    // Protection: Verify merchant has at least 1 credit for transaction actions
+    const isCreditDeductibleAction =
+      action === "STAMP" ||
+      action === "REDEEM" ||
+      action === "CASHBACK_EARN" ||
+      action === "CASHBACK_REDEEM";
+
+    if (isCreditDeductibleAction && (merchant.credits ?? 0) < 1) {
+      return NextResponse.json(
+        {
+          error:
+            lang === "fr"
+              ? "Solde de crédits épuisé (0 crédit). Veuillez recharger vos crédits pour continuer."
+              : lang === "es"
+              ? "Saldo de créditos agotado (0 créditos). Por favor recargue créditos para continuar."
+              : "رصيد نقاط المتجر غير كافٍ (0 نقطة). يرجى شحن الرصيد للاستمرار في مسح البطاقات.",
+          creditsExhausted: true,
+          currentCredits: merchant.credits ?? 0,
+        },
+        { status: 402 }
+      );
+    }
+
     // Action 2: CASHBACK_EARN (Add cashback from purchase bill)
     if (action === "CASHBACK_EARN") {
       const bill = Number(billAmount || 0);
@@ -258,7 +282,7 @@ export async function POST(
       const earned = Number(((bill * effectiveCashbackRate) / 100).toFixed(2));
       const newBalance = Number(((customer.cashbackBalance || 0) + earned).toFixed(2));
 
-      const [updatedCustomer, transaction, notification] = await prisma.$transaction([
+      const [updatedCustomer, transaction, notification, updatedMerchant] = await prisma.$transaction([
         prisma.customer.update({
           where: { id: customer.id },
           data: {
@@ -294,6 +318,11 @@ export async function POST(
             body: `💰 تمت إضافة +${earned} ${currency} كاش باك إلى بطاقتك! رصيدك المتاح: ${newBalance} ${currency}.`,
             createdAt: now,
           },
+        }),
+        prisma.merchant.update({
+          where: { id: merchant.id },
+          data: { credits: { decrement: 1 } },
+          select: { credits: true },
         }),
       ]);
 
@@ -334,6 +363,7 @@ export async function POST(
         customer: updatedCustomer,
         transaction,
         notification,
+        remainingCredits: updatedMerchant.credits,
       });
     }
 
@@ -366,7 +396,7 @@ export async function POST(
 
       const remainingBal = Number((currentBal - toRedeem).toFixed(2));
 
-      const [updatedCustomer, transaction, notification] = await prisma.$transaction([
+      const [updatedCustomer, transaction, notification, updatedMerchant] = await prisma.$transaction([
         prisma.customer.update({
           where: { id: customer.id },
           data: {
@@ -396,6 +426,11 @@ export async function POST(
             body: `🎉 تم استخدام ${toRedeem} ${currency} من رصيدك. رصيدك المتبقي: ${remainingBal} ${currency}.`,
             createdAt: now,
           },
+        }),
+        prisma.merchant.update({
+          where: { id: merchant.id },
+          data: { credits: { decrement: 1 } },
+          select: { credits: true },
         }),
       ]);
 
@@ -436,6 +471,7 @@ export async function POST(
         customer: updatedCustomer,
         transaction,
         notification,
+        remainingCredits: updatedMerchant.credits,
       });
     }
 
@@ -443,7 +479,7 @@ export async function POST(
     if (action === "REDEEM") {
       const newStamps = Math.max(0, customer.stamps - merchant.stampsRequired);
 
-      const [updatedCustomer, transaction, notification] = await prisma.$transaction([
+      const [updatedCustomer, transaction, notification, updatedMerchant] = await prisma.$transaction([
         prisma.customer.update({
           where: { id: customer.id },
           data: {
@@ -473,6 +509,11 @@ export async function POST(
             body: `🎉 مبروك! مكافأة ${merchant.rewardName} جاهزة لاستلامها.`,
             createdAt: now,
           },
+        }),
+        prisma.merchant.update({
+          where: { id: merchant.id },
+          data: { credits: { decrement: 1 } },
+          select: { credits: true },
         }),
       ]);
 
@@ -513,6 +554,7 @@ export async function POST(
         customer: updatedCustomer,
         transaction,
         notification,
+        remainingCredits: updatedMerchant.credits,
       });
     }
 
@@ -521,7 +563,7 @@ export async function POST(
     const isRewardUnlocked = nextStamps >= merchant.stampsRequired;
     const stampsLeft = Math.max(0, merchant.stampsRequired - nextStamps);
 
-    const [updatedCustomer, transaction, notification] = await prisma.$transaction([
+    const [updatedCustomer, transaction, notification, updatedMerchant] = await prisma.$transaction([
       prisma.customer.update({
         where: { id: customer.id },
         data: {
@@ -554,6 +596,11 @@ export async function POST(
             : `تمت إضافة ختم جديد! متبقي لديك ${stampsLeft} أختام للحصول على ${merchant.rewardName}.`,
           createdAt: now,
         },
+      }),
+      prisma.merchant.update({
+        where: { id: merchant.id },
+        data: { credits: { decrement: 1 } },
+        select: { credits: true },
       }),
     ]);
 
@@ -615,6 +662,7 @@ export async function POST(
       customer: updatedCustomer,
       transaction,
       notification,
+      remainingCredits: updatedMerchant.credits,
     });
   } catch (error: unknown) {
     console.error("Error processing stamp/cashback action:", error);
