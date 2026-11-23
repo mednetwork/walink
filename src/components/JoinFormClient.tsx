@@ -246,6 +246,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           name: name.trim(),
           phone: phone.trim(),
           loyaltyType: selectedLoyaltyType,
+          ref: refCode || undefined,
           refCode: refCode || undefined,
           securityPin: customPin.trim() || undefined,
         }),

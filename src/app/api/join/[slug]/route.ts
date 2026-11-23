@@ -22,7 +22,10 @@ export async function POST(
   try {
     const { slug } = params;
     const body = await req.json();
-    const { name, phone, loyaltyType: requestedLoyaltyType, ref, securityPin } = body;
+    const urlRef = req.nextUrl?.searchParams?.get("ref") || null;
+    const rawRef = body.ref || body.refCode || urlRef;
+    const ref = typeof rawRef === "string" ? rawRef.trim() : null;
+    const { name, phone, loyaltyType: requestedLoyaltyType, securityPin } = body;
 
     if (!phone || typeof phone !== "string") {
       return NextResponse.json(
