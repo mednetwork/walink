@@ -712,7 +712,6 @@ export default function CustomerPassHubClient({
 
   const prevCampaignIdRef = useRef<string | null>(getInitialCampaignId());
   const lastKnownNotificationIdRef = useRef<string | null>(getInitialNotificationId());
-  const hasShownWelcomeRef = useRef<boolean>(false);
 
   // Register PWA Service Worker on mount
   useEffect(() => {
@@ -884,69 +883,6 @@ export default function CustomerPassHubClient({
     handleEnablePush,
     isInstalled,
     showBanner,
-    t,
-  ]);
-
-  // Initial welcome notification on landing (Guaranteed Exactly Once)
-  useEffect(() => {
-    if (hasShownWelcomeRef.current) return;
-    const storageKey = `walink_welcome_${initialCustomer.passSerial}`;
-    if (typeof window !== "undefined") {
-      try {
-        if (localStorage.getItem(storageKey)) {
-          hasShownWelcomeRef.current = true;
-          return;
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    hasShownWelcomeRef.current = true;
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, "1");
-      } catch {
-        // ignore
-      }
-    }
-
-    const timer = setTimeout(() => {
-      const cur = customerRef.current;
-      showBanner({
-        id: "welcome-stamp",
-        title: isCashback
-          ? t.pass.welcomeCashbackTitle.replace(MERCHANT_PLACEHOLDER, merchant.name)
-          : t.pass.welcomeStampsTitle.replace(MERCHANT_PLACEHOLDER, merchant.name),
-        message: isCashback
-          ? t.pass.welcomeCashbackBody
-            .replace("{rate}", String(cashbackRate))
-            .replace("{balance}", Number(cur.cashbackBalance || 0).toFixed(2))
-            .replace("{currency}", currency)
-          : t.pass.welcomeStampsBody,
-        time: t.pass.timeNow,
-        icon: isCashback ? "cashback" : "gift",
-        meta: {
-          kind: "welcome",
-          params: {
-            isCashback,
-            rate: cashbackRate,
-            balance: Number(cur.cashbackBalance || 0).toFixed(2),
-            currency,
-            merchantName: merchant.name,
-          },
-        },
-      });
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [
-    initialCustomer.passSerial,
-    merchant.name,
-    showBanner,
-    isCashback,
-    cashbackRate,
-    currency,
     t,
   ]);
 
