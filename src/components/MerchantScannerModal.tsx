@@ -128,7 +128,35 @@ export default function MerchantScannerModal({
   const scanLockRef = useRef<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Stop Camera & Release Hardware Cleanly
+  const stopCamera = useCallback(() => {
+    if (scanTimerRef.current) {
+      clearInterval(scanTimerRef.current as NodeJS.Timeout);
+      scanTimerRef.current = null;
+    }
+    if (streamRef.current) {
+      try {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      } catch (err) {
+        console.warn("Could not stop stream tracks:", err);
+      }
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraState("idle");
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    stopCamera();
+    setSelectedCustomer(null);
+    setMessage(null);
+    onClose();
+  }, [stopCamera, onClose]);
+
   const handleSelectCustomer = useCallback((c: CustomerSummary) => {
+    stopCamera();
     setSelectedCustomer(c);
     setMessage(null);
     setRedeemAmount(
@@ -136,7 +164,7 @@ export default function MerchantScannerModal({
         ? String(c.cashbackBalance)
         : ""
     );
-  }, []);
+  }, [stopCamera]);
 
   // Unified API Action Executor with Anti-Fraud Cooldown Interception & Staff Attribution
   const executeStampRequest = useCallback(
@@ -177,8 +205,15 @@ export default function MerchantScannerModal({
           throw new Error(data.error || "فشل تنفيذ العملية");
         }
 
-        setSelectedCustomer(data.customer);
-        setMessage({ text: data.message, type: "success" });
+        if (payload.action === "SWITCH_TYPE") {
+          setSelectedCustomer(data.customer);
+          setMessage({ text: data.message, type: "success" });
+        } else {
+          // Action succeeded (STAMP, REDEEM, CASHBACK_EARN, CASHBACK_REDEEM)
+          // Close modal immediately and notify parent dashboard
+          setSelectedCustomer(null);
+          handleModalClose();
+        }
 
         if (
           payload.action === "REDEEM" ||
@@ -198,33 +233,8 @@ export default function MerchantScannerModal({
         setLoading(false);
       }
     },
-    [slug, locale, staffName, branchName, onActionComplete]
+    [slug, locale, staffName, branchName, onActionComplete, handleModalClose]
   );
-
-  // Stop Camera & Release Hardware Cleanly
-  const stopCamera = useCallback(() => {
-    if (scanTimerRef.current) {
-      clearInterval(scanTimerRef.current as NodeJS.Timeout);
-      scanTimerRef.current = null;
-    }
-    if (streamRef.current) {
-      try {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      } catch (err) {
-        console.warn("Could not stop stream tracks:", err);
-      }
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setCameraState("idle");
-  }, []);
-
-  const handleModalClose = useCallback(() => {
-    stopCamera();
-    onClose();
-  }, [stopCamera, onClose]);
 
   // Process decoded QR text
   const handleScannedCode = useCallback(
@@ -444,6 +454,14 @@ export default function MerchantScannerModal({
     }, 100);
   }, [scanFrame, stopCamera, locale]);
 
+  // Reset Customer & Return to Square Scanner View
+  const handleResetCustomer = useCallback(() => {
+    setSelectedCustomer(null);
+    setMessage(null);
+    setActiveTab("camera");
+    startCamera();
+  }, [startCamera]);
+
   // Native Camera Photo Snapshot Fallback (capture="environment")
   const handleNativeImageCapture = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -650,15 +668,31 @@ export default function MerchantScannerModal({
         <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
           <div className="flex items-center gap-2">
             <span className="p-2 rounded-xl bg-[#008069]/10 text-[#008069] border border-[#008069]/20 shadow-sm">
-              <Camera className="w-5 h-5" />
+              {selectedCustomer ? <Users className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
             </span>
             <div>
               <h3 className="font-bold text-base text-[#111B21]">
-                {t.merchant.scannerBtn}
+                {selectedCustomer
+                  ? locale === "ar"
+                    ? "بطاقة العميل"
+                    : locale === "fr"
+                    ? "Fiche Client"
+                    : "Ficha de Cliente"
+                  : t.merchant.scannerBtn}
               </h3>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-[11px] text-[#54656F]">
-                  امسح الرمز أو اختر عميلاً بالرقم
+                  {selectedCustomer
+                    ? locale === "ar"
+                      ? "إضافة طابع أو إدارة الكاش باك"
+                      : locale === "fr"
+                      ? "Ajouter un tampon ou gérer le cashback"
+                      : "Añadir sello o gestionar cashback"
+                    : locale === "ar"
+                    ? "امسح الرمز أو اختر عميلاً بالرقم"
+                    : locale === "fr"
+                    ? "Scannez le code ou recherchez par numéro"
+                    : "Escanee el código o busque por número"}
                 </p>
                 {branchName && (
                   <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#008069]/10 text-[#008069] font-bold border border-[#008069]/20">
@@ -668,17 +702,43 @@ export default function MerchantScannerModal({
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleModalClose}
-            className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F]"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            {selectedCustomer && (
+              <button
+                type="button"
+                onClick={handleResetCustomer}
+                className="py-1.5 px-3 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 text-[#008069] font-bold text-xs flex items-center gap-1.5 transition border border-[#008069]/20 shadow-sm cursor-pointer"
+                title={
+                  locale === "ar"
+                    ? "مسح عميل آخر"
+                    : locale === "fr"
+                    ? "Scanner un autre client"
+                    : "Escanear otro cliente"
+                }
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>
+                  {locale === "ar"
+                    ? "مسح آخر 🔄"
+                    : locale === "fr"
+                    ? "Scanner un autre 🔄"
+                    : "Escanear otro 🔄"}
+                </span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleModalClose}
+              aria-label={locale === "ar" ? "إغلاق" : locale === "fr" ? "Fermer" : "Cerrar"}
+              className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F] cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#F0F2F5] rounded-2xl border border-[#E9EDEF] text-xs">
+        {/* Tab Switcher (Hidden when selectedCustomer is active to guarantee Zero-Scroll) */}
+        <div className={`grid grid-cols-3 gap-1.5 p-1 bg-[#F0F2F5] rounded-2xl border border-[#E9EDEF] text-xs ${selectedCustomer ? "hidden" : ""}`}>
           <button
             type="button"
             onClick={() => {
@@ -728,7 +788,7 @@ export default function MerchantScannerModal({
 
         {/* Anti-Fraud Cooldown Warning Banner */}
         {cooldownWarning && (
-          <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs space-y-2 animate-in fade-in">
+          <div className={`p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs space-y-2 animate-in fade-in ${selectedCustomer ? "hidden" : ""}`}>
             <div className="flex items-center gap-2 font-bold text-amber-800">
               <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
               <span>{cooldownWarning.message}</span>
@@ -743,10 +803,10 @@ export default function MerchantScannerModal({
           </div>
         )}
 
-        {/* Camera View Mode */}
+        {/* Camera View Mode (Hidden via CSS when selectedCustomer is active, preserving videoRef.current in DOM) */}
         {activeTab === "camera" && (
-          <div className="space-y-3">
-            <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center">
+          <div className={`space-y-3 ${selectedCustomer ? "hidden" : ""}`}>
+            <div className="relative aspect-square w-full max-w-[340px] mx-auto rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center shadow-inner">
               {/* Native Video Element (Always mounted in DOM to prevent iOS WebKit unmount race conditions) */}
               <video
                 ref={videoRef}
@@ -949,49 +1009,12 @@ export default function MerchantScannerModal({
                 </button>
               )}
             </div>
-
-            {/* Quick Fast-Picker from seeded customers */}
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-semibold text-[#54656F] block">
-                اختر عميلاً سريعاً للتجربة الفورية:
-              </span>
-              <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto">
-                {customers.slice(0, 6).map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => handleSelectCustomer(c)}
-                    className={`p-2 rounded-xl border text-start text-xs transition flex items-center justify-between ${
-                      selectedCustomer?.id === c.id
-                        ? "bg-[#008069]/10 border-[#008069] text-[#111B21] font-semibold"
-                        : "bg-[#F0F2F5] border-[#E9EDEF] hover:bg-[#E9EDEF] text-[#111B21]"
-                    }`}
-                  >
-                    <div className="truncate">
-                      <span className="font-bold block truncate">{c.name}</span>
-                      <span className="text-[10px] text-[#54656F] font-mono">
-                        #{c.memberCode}
-                      </span>
-                    </div>
-                    {c.loyaltyType === "CASHBACK" ? (
-                      <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200">
-                        كاش باك
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-[#008069] bg-[#008069]/10 px-1.5 py-0.5 rounded border border-[#008069]/20">
-                        {c.stamps}/{stampsRequired}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
-        {/* Manual Search Mode */}
+        {/* Manual Search Mode (Hidden when selectedCustomer is active to guarantee Zero-Scroll) */}
         {activeTab === "manual" && (
-          <form onSubmit={handleSearchSubmit} className="space-y-3">
+          <form onSubmit={handleSearchSubmit} className={`space-y-3 ${selectedCustomer ? "hidden" : ""}`}>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[#111B21] block">
                 {t.merchant.manualLookup}
@@ -1008,7 +1031,7 @@ export default function MerchantScannerModal({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="absolute left-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-gradient-to-r from-[#00A884] to-[#008069] text-white font-bold text-xs flex items-center gap-1 hover:from-[#008069] disabled:opacity-50 shadow-sm"
+                  className="absolute left-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-gradient-to-r from-[#00A884] to-[#008069] text-white font-bold text-xs flex items-center gap-1 hover:from-[#008069] disabled:opacity-50 shadow-sm cursor-pointer"
                 >
                   <Search className="w-3.5 h-3.5" />
                   <span>بحث وختم</span>
@@ -1036,9 +1059,9 @@ export default function MerchantScannerModal({
           </div>
         )}
 
-        {/* Selected Customer Card & Dual POS Controls */}
+        {/* Selected Customer Card & Dual POS Controls (Single Focus View: Centered, Zero Scroll) */}
         {selectedCustomer && (
-          <div className="p-4 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-3.5">
+          <div className="p-4 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-3.5 animate-in fade-in duration-200">
             <div className="flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
               <div>
                 <div className="flex items-center gap-2">
@@ -1062,18 +1085,41 @@ export default function MerchantScannerModal({
                 </span>
               </div>
 
-              {loyaltyMode === "BOTH" && (
+              <div className="flex items-center gap-1.5">
+                {loyaltyMode === "BOTH" && (
+                  <button
+                    type="button"
+                    onClick={handleSwitchType}
+                    disabled={loading}
+                    className="px-2 py-1 rounded-lg bg-white border border-[#D1D7DB] text-[10px] font-semibold text-[#111B21] flex items-center gap-1 transition shadow-sm hover:bg-[#F0F2F5] cursor-pointer"
+                    title="تحويل نظام العميل"
+                  >
+                    <ArrowRightLeft className="w-3 h-3 text-[#008069]" />
+                    <span>{locale === "ar" ? "تبديل" : locale === "fr" ? "Changer" : "Cambiar"}</span>
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={handleSwitchType}
-                  disabled={loading}
-                  className="px-2 py-1 rounded-lg bg-white border border-[#D1D7DB] text-[10px] font-semibold text-[#111B21] flex items-center gap-1 transition shadow-sm hover:bg-[#F0F2F5]"
-                  title="تحويل نظام العميل"
+                  onClick={handleResetCustomer}
+                  className="px-2 py-1 rounded-lg bg-white border border-[#D1D7DB] text-[10px] font-semibold text-[#54656F] hover:text-[#008069] flex items-center gap-1 transition shadow-sm hover:bg-[#F0F2F5] cursor-pointer"
+                  title={
+                    locale === "ar"
+                      ? "مسح عميل آخر"
+                      : locale === "fr"
+                      ? "Scanner un autre client"
+                      : "Escanear otro cliente"
+                  }
                 >
-                  <ArrowRightLeft className="w-3 h-3 text-[#008069]" />
-                  <span>تبديل</span>
+                  <RefreshCw className="w-3 h-3" />
+                  <span>
+                    {locale === "ar"
+                      ? "مسح آخر 🔄"
+                      : locale === "fr"
+                      ? "Scanner autre 🔄"
+                      : "Otro cliente 🔄"}
+                  </span>
                 </button>
-              )}
+              </div>
             </div>
 
             {/* IF CUSTOMER HAS STAMPS */}

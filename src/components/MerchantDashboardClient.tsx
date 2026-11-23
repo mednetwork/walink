@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { getAdminUrl, getPassUrl } from "@/lib/urls";
 import {
@@ -214,6 +214,23 @@ export default function MerchantDashboardClient({
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isStandOpen, setIsStandOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
+
+  // Floating Cashier Action Success Toast State & Debounced Timer Ref
+  const [actionSuccessToast, setActionSuccessToast] = useState<{
+    message: string;
+    customerName: string;
+    memberCode: string;
+  } | null>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+        toastTimeoutRef.current = null;
+      }
+    };
+  }, []);
   const [peekNotification, setPeekNotification] = useState<{ isOpen: boolean; message: string; title: string; shopName?: string }>({
     isOpen: false,
     message: "",
@@ -1006,6 +1023,34 @@ export default function MerchantDashboardClient({
   };
 
   const handleActionComplete = useCallback((updatedCustomer: CustomerSummary, msg: string) => {
+    // Clear any existing toast timeout before starting a new debounced one
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+      toastTimeoutRef.current = null;
+    }
+
+    // Trigger light haptic feedback on mobile if supported
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      try {
+        navigator.vibrate([30, 50, 30]);
+      } catch {
+        // ignore
+      }
+    }
+
+    // Set trilingual floating toast banner
+    setActionSuccessToast({
+      message: msg,
+      customerName: updatedCustomer.name,
+      memberCode: updatedCustomer.memberCode,
+    });
+
+    // 4.5s debounce timeout
+    toastTimeoutRef.current = setTimeout(() => {
+      setActionSuccessToast(null);
+      toastTimeoutRef.current = null;
+    }, 4500);
+
     setCustomers((prev) =>
       prev.map((c) =>
         c.id === updatedCustomer.id
@@ -1254,6 +1299,54 @@ export default function MerchantDashboardClient({
 
   return (
     <div className={`min-h-screen bg-[#F0F2F5] flex justify-center text-[#111B21] selection:bg-[#008069] selection:text-white font-arabic ${isFrameMode ? "py-8" : ""}`}>
+      {/* Floating Cashier Action Success Toast Banner (Trilingual: AR, FR, ES) */}
+      {actionSuccessToast && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed top-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:left-auto sm:max-w-md z-50 animate-in slide-in-from-top-3 fade-in duration-300"
+        >
+          <div className="bg-gradient-to-r from-[#008069] to-[#00A884] text-white p-3.5 rounded-2xl shadow-xl shadow-[#008069]/30 border border-white/20 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="p-2 rounded-xl bg-white/20 text-white shrink-0 shadow-sm">
+                <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-bold text-xs">
+                    {locale === "ar"
+                      ? "تمت العملية بنجاح! ⭐"
+                      : locale === "fr"
+                      ? "Opération réussie ! ⭐"
+                      : "¡Operación completada! ⭐"}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-mono font-bold">
+                    #{actionSuccessToast.memberCode}
+                  </span>
+                </div>
+                <p className="text-[11px] text-white/95 truncate font-medium mt-0.5">
+                  {actionSuccessToast.message}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (toastTimeoutRef.current) {
+                  clearTimeout(toastTimeoutRef.current);
+                  toastTimeoutRef.current = null;
+                }
+                setActionSuccessToast(null);
+              }}
+              aria-label={locale === "ar" ? "إغلاق الإشعار" : locale === "fr" ? "Fermer l'alerte" : "Cerrar aviso"}
+              className="p-1 rounded-lg hover:bg-white/20 text-white/80 hover:text-white transition shrink-0 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </aside>
+      )}
+
       {/* Centered Mobile Container */}
       <div
         className={`w-full max-w-[440px] flex flex-col justify-between bg-[#F0F2F5] text-[#111B21] relative ${isFrameMode
