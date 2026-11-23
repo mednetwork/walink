@@ -61,6 +61,7 @@ interface CustomerData {
   securityPin?: string;
   failedPinAttempts?: number;
   pinLockedUntil?: string | null;
+  createdAt?: string | Date;
 }
 
 interface MerchantData {
@@ -425,6 +426,11 @@ export default function CustomerPassHubClient({
   initialNotifications = [],
 }: CustomerPassHubClientProps) {
   const [customer, setCustomer] = useState<CustomerData>(initialCustomer);
+  const customerRef = useRef<CustomerData>(initialCustomer);
+
+  useEffect(() => {
+    customerRef.current = customer;
+  }, [customer]);
   const [merchant] = useState<MerchantData>(initialMerchant);
   const [transactions, setTransactions] =
     useState<TransactionData[]>(initialTransactions);
@@ -675,13 +681,38 @@ export default function CustomerPassHubClient({
     }
   }, [customer.passSerial]);
 
-  const prevStampsRef = useRef<number>(customer.stamps);
-  const prevRewardsRef = useRef<number>(customer.rewardsRedeemed);
-  const prevCashbackRef = useRef<number>(customer.cashbackBalance || 0);
-  const prevCampaignIdRef = useRef<string | null>(initialCampaign?.id || null);
-  const lastKnownNotificationIdRef = useRef<string | null>(
-    initialNotifications.length > 0 ? initialNotifications[0].id : null
-  );
+  const prevStampsRef = useRef<number>(initialCustomer.stamps);
+  const prevRewardsRef = useRef<number>(initialCustomer.rewardsRedeemed);
+  const prevCashbackRef = useRef<number>(initialCustomer.cashbackBalance || 0);
+
+  // Storage-backed Campaign & Notification pointers (prevents duplicate alerts on PWA reload)
+  const getInitialCampaignId = (): string | null => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(`walink_campaign_${initialCustomer.passSerial}`);
+        if (saved) return saved;
+      } catch {
+        // ignore
+      }
+    }
+    return initialCampaign?.id || null;
+  };
+
+  const getInitialNotificationId = (): string | null => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(`walink_notif_${initialCustomer.passSerial}`);
+        if (saved) return saved;
+      } catch {
+        // ignore
+      }
+    }
+    return initialNotifications.length > 0 ? initialNotifications[0].id : null;
+  };
+
+  const prevCampaignIdRef = useRef<string | null>(getInitialCampaignId());
+  const lastKnownNotificationIdRef = useRef<string | null>(getInitialNotificationId());
+  const hasShownWelcomeRef = useRef<boolean>(false);
 
   // Register PWA Service Worker on mount
   useEffect(() => {
@@ -697,9 +728,9 @@ export default function CustomerPassHubClient({
     }
   }, []);
 
-  // Trigger floating iOS 18 glass notification banner + Native OS notification sync
+  // Trigger floating iOS 18 glass notification banner + Native OS notification sync (Background only)
   const showBanner = useCallback(
-    (banner: NotificationBanner) => {
+    (banner: NotificationBanner, isExternalRealtimeEvent = false) => {
       setActiveBanner(banner);
       if (banner.icon === "reward" || banner.icon === "cashback") {
         soundEngine.playRewardChime();
@@ -709,8 +740,15 @@ export default function CustomerPassHubClient({
         soundEngine.playStampChime();
       }
 
-      // Forward localized notification to Service Worker for Native OS Lock-Screen Push
+      // Only forward to Service Worker for Native OS Push when:
+      // 1. It is a genuine external real-time event (stamp added by cashier, campaign sent by merchant)
+      // 2. AND the browser document is currently in background/hidden (document.visibilityState === "hidden")
+      // (When user is actively viewing the page, the in-app glass banner on screen is sufficient;
+      // firing OS push while app is open creates duplicate double notifications!)
       if (
+        isExternalRealtimeEvent &&
+        typeof document !== "undefined" &&
+        document.visibilityState === "hidden" &&
         typeof window !== "undefined" &&
         "serviceWorker" in navigator &&
         navigator.serviceWorker.controller
@@ -721,7 +759,7 @@ export default function CustomerPassHubClient({
             locale,
             t,
             merchant,
-            customer
+            customerRef.current
           );
           navigator.serviceWorker.controller.postMessage({
             type: "SHOW_NOTIFICATION",
@@ -740,7 +778,7 @@ export default function CustomerPassHubClient({
         setActiveBanner((current) => (current?.id === banner.id ? null : current));
       }, 6000);
     },
-    [customer, locale, merchant, t]
+    [locale, merchant, t]
   );
 
   // Handle Push Permission (Trilingual with Immediate Status Sync)
@@ -849,9 +887,32 @@ export default function CustomerPassHubClient({
     t,
   ]);
 
-  // Initial welcome notification on landing
+  // Initial welcome notification on landing (Guaranteed Exactly Once)
   useEffect(() => {
+    if (hasShownWelcomeRef.current) return;
+    const storageKey = `walink_welcome_${initialCustomer.passSerial}`;
+    if (typeof window !== "undefined") {
+      try {
+        if (localStorage.getItem(storageKey)) {
+          hasShownWelcomeRef.current = true;
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    hasShownWelcomeRef.current = true;
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, "1");
+      } catch {
+        // ignore
+      }
+    }
+
     const timer = setTimeout(() => {
+      const cur = customerRef.current;
       showBanner({
         id: "welcome-stamp",
         title: isCashback
@@ -860,7 +921,7 @@ export default function CustomerPassHubClient({
         message: isCashback
           ? t.pass.welcomeCashbackBody
             .replace("{rate}", String(cashbackRate))
-            .replace("{balance}", Number(customer.cashbackBalance || 0).toFixed(2))
+            .replace("{balance}", Number(cur.cashbackBalance || 0).toFixed(2))
             .replace("{currency}", currency)
           : t.pass.welcomeStampsBody,
         time: t.pass.timeNow,
@@ -870,7 +931,7 @@ export default function CustomerPassHubClient({
           params: {
             isCashback,
             rate: cashbackRate,
-            balance: Number(customer.cashbackBalance || 0).toFixed(2),
+            balance: Number(cur.cashbackBalance || 0).toFixed(2),
             currency,
             merchantName: merchant.name,
           },
@@ -880,11 +941,11 @@ export default function CustomerPassHubClient({
 
     return () => clearTimeout(timer);
   }, [
+    initialCustomer.passSerial,
     merchant.name,
     showBanner,
     isCashback,
     cashbackRate,
-    customer.cashbackBalance,
     currency,
     t,
   ]);
@@ -898,7 +959,7 @@ export default function CustomerPassHubClient({
       if (document.hidden) return;
 
       try {
-        const res = await fetch(`/api/pass/${customer.passSerial}?lang=${locale}`, {
+        const res = await fetch(`/api/pass/${initialCustomer.passSerial}?lang=${locale}`, {
           signal: controller.signal,
           cache: "no-store",
         });
@@ -931,7 +992,7 @@ export default function CustomerPassHubClient({
                   kind: "reward_unlocked",
                   params: { rewardName: merchant.rewardName },
                 },
-              });
+              }, true);
             } else {
               const stampsLeft = merchant.stampsRequired - newStamps;
               showBanner({
@@ -947,12 +1008,19 @@ export default function CustomerPassHubClient({
                   kind: "stamp_added",
                   params: { stampsLeft },
                 },
-              });
+              }, true);
             }
 
             // Sync notification ID to prevent double firing duplicate DB notification
             if (Array.isArray(data.notifications) && data.notifications.length > 0) {
               lastKnownNotificationIdRef.current = data.notifications[0].id;
+              if (typeof window !== "undefined") {
+                try {
+                  localStorage.setItem(`walink_notif_${initialCustomer.passSerial}`, data.notifications[0].id);
+                } catch {
+                  // ignore
+                }
+              }
             }
           } else {
             prevStampsRef.current = newStamps;
@@ -974,10 +1042,17 @@ export default function CustomerPassHubClient({
                 kind: "reward_redeemed",
                 params: { rewardName: merchant.rewardName },
               },
-            });
+            }, true);
 
             if (Array.isArray(data.notifications) && data.notifications.length > 0) {
               lastKnownNotificationIdRef.current = data.notifications[0].id;
+              if (typeof window !== "undefined") {
+                try {
+                  localStorage.setItem(`walink_notif_${initialCustomer.passSerial}`, data.notifications[0].id);
+                } catch {
+                  // ignore
+                }
+              }
             }
           } else {
             prevRewardsRef.current = newRewards;
@@ -1006,7 +1081,7 @@ export default function CustomerPassHubClient({
                     balance: newCashback.toFixed(2),
                   },
                 },
-              });
+              }, true);
             } else {
               const spent = (oldCashback - newCashback).toFixed(2);
               showBanner({
@@ -1026,12 +1101,19 @@ export default function CustomerPassHubClient({
                     balance: newCashback.toFixed(2),
                   },
                 },
-              });
+              }, true);
             }
             prevCashbackRef.current = newCashback;
 
             if (Array.isArray(data.notifications) && data.notifications.length > 0) {
               lastKnownNotificationIdRef.current = data.notifications[0].id;
+              if (typeof window !== "undefined") {
+                try {
+                  localStorage.setItem(`walink_notif_${initialCustomer.passSerial}`, data.notifications[0].id);
+                } catch {
+                  // ignore
+                }
+              }
             }
           }
 
@@ -1041,6 +1123,13 @@ export default function CustomerPassHubClient({
             data.latestCampaign.id !== prevCampaignIdRef.current
           ) {
             prevCampaignIdRef.current = data.latestCampaign.id;
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem(`walink_campaign_${initialCustomer.passSerial}`, data.latestCampaign.id);
+              } catch {
+                // ignore
+              }
+            }
             showBanner({
               id: `promo-broadcast-${data.latestCampaign.id}`,
               title: `📣 ${data.latestCampaign.title || t.pass.promoBroadcastFallback}`,
@@ -1054,7 +1143,7 @@ export default function CustomerPassHubClient({
                   campaignMessage: data.latestCampaign.message,
                 },
               },
-            });
+            }, true);
           }
 
           // 5. Detect Persisted Queue Notifications
@@ -1065,8 +1154,22 @@ export default function CustomerPassHubClient({
             const latestNotif = data.notifications[0] as NotificationData;
             if (lastKnownNotificationIdRef.current === null) {
               lastKnownNotificationIdRef.current = latestNotif.id;
+              if (typeof window !== "undefined") {
+                try {
+                  localStorage.setItem(`walink_notif_${initialCustomer.passSerial}`, latestNotif.id);
+                } catch {
+                  // ignore
+                }
+              }
             } else if (latestNotif.id !== lastKnownNotificationIdRef.current) {
               lastKnownNotificationIdRef.current = latestNotif.id;
+              if (typeof window !== "undefined") {
+                try {
+                  localStorage.setItem(`walink_notif_${initialCustomer.passSerial}`, latestNotif.id);
+                } catch {
+                  // ignore
+                }
+              }
 
               let bannerIcon: "stamp" | "reward" | "radar" | "gift" | "cashback" =
                 "gift";
@@ -1104,18 +1207,43 @@ export default function CustomerPassHubClient({
                   params: {
                     rewardName: merchant.rewardName,
                     merchantName: merchant.name,
-                    customerName: customer.name,
+                    customerName: initialCustomer.name,
                     campaignTitle: latestNotif.title,
                     campaignMessage: latestNotif.body,
                   },
                 },
-              });
+              }, true);
             }
           }
 
-          setCustomer(data.customer);
-          if (data.transactions) setTransactions(data.transactions);
-          if (data.latestCampaign) setLatestCampaign(data.latestCampaign);
+          // Smart Customer State Diffing (Prevent Redundant Re-renders & Infinite Effect Loops)
+          const prevCust = customerRef.current;
+          const hasCustomerChanged =
+            data.customer.stamps !== prevCust.stamps ||
+            Math.abs(Number(data.customer.cashbackBalance || 0) - Number(prevCust.cashbackBalance || 0)) >= 0.01 ||
+            data.customer.rewardsRedeemed !== prevCust.rewardsRedeemed ||
+            data.customer.loyaltyType !== prevCust.loyaltyType ||
+            data.customer.totalVisits !== prevCust.totalVisits ||
+            data.customer.isVip !== prevCust.isVip;
+
+          if (hasCustomerChanged) {
+            customerRef.current = data.customer;
+            setCustomer(data.customer);
+          }
+
+          if (data.transactions && Array.isArray(data.transactions) && data.transactions.length > 0) {
+            const incomingLatestId = data.transactions[0].id;
+            setTransactions((currentTx) => {
+              if (currentTx.length === 0 || currentTx[0].id !== incomingLatestId) {
+                return data.transactions;
+              }
+              return currentTx;
+            });
+          }
+
+          if (data.latestCampaign) {
+            setLatestCampaign((cur) => (cur?.id === data.latestCampaign.id ? cur : data.latestCampaign));
+          }
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== "AbortError") {
@@ -1132,8 +1260,8 @@ export default function CustomerPassHubClient({
       clearInterval(interval);
     };
   }, [
-    customer.passSerial,
-    customer.name,
+    initialCustomer.passSerial,
+    initialCustomer.name,
     merchant.stampsRequired,
     merchant.rewardName,
     merchant.name,

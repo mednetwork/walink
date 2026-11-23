@@ -54,19 +54,22 @@ export async function GET(
       );
     }
 
-    // Fetch latest campaign for this merchant if any
+    // Fetch latest campaign for this merchant created on or after customer joined
     const latestCampaign = await prisma.campaign.findFirst({
-      where: { merchantId: customer.merchantId },
+      where: {
+        merchantId: customer.merchantId,
+        createdAt: { gte: customer.createdAt },
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    // Fetch latest notifications for this customer or merchant broadcast
+    // Fetch latest notifications for this customer or merchant broadcast created on or after customer joined
     const notifications = await prisma.notification.findMany({
       where: {
         merchantId: customer.merchantId,
         OR: [
           { customerId: customer.id },
-          { customerId: null },
+          { customerId: null, createdAt: { gte: customer.createdAt } },
         ],
       },
       orderBy: { createdAt: "desc" },

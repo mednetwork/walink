@@ -79,6 +79,8 @@ self.addEventListener("message", (event) => {
       badge: "/favicon.ico",
       dir: dir || (lang === "ar" ? "rtl" : "ltr"),
       lang: lang || "ar",
+      tag: "walink-pass-alert",
+      renotify: false,
       data: { url: url || "/" },
     };
 
