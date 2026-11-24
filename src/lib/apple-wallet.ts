@@ -24,6 +24,9 @@ export interface CustomerPassData {
   stamps: number;
   loyaltyType?: string | null;
   cashbackBalance?: number | null;
+  totalCashbackEarned?: number | null;
+  totalVisits?: number | null;
+  rewardsRedeemed?: number | null;
   isVip?: boolean | null;
   applePushToken?: string | null;
   updatedAt?: Date | string | null;
@@ -31,6 +34,7 @@ export interface CustomerPassData {
 
 export interface MerchantPassData {
   id: string;
+  slug: string;
   name: string;
   city?: string | null;
   phone?: string | null;
@@ -39,11 +43,13 @@ export interface MerchantPassData {
   rewardName: string;
   loyaltyMode?: string | null;
   cashbackRate?: number | null;
+  vipCashbackBonus?: number | null;
   currency?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   radarMessage?: string | null;
   radarZones?: string | null;
+  googleMapsUrl?: string | null;
   menuUrl?: string | null;
   instagramUrl?: string | null;
   termsText?: string | null;
@@ -191,9 +197,6 @@ function getPassAssets(): Record<string, Buffer> {
     "logo.png",
     "logo@2x.png",
     "logo@3x.png",
-    "strip.png",
-    "strip@2x.png",
-    "strip@3x.png",
   ];
 
   const loaded: Record<string, Buffer> = {};
@@ -255,6 +258,20 @@ export async function generateApplePass(
   const currency = merchant.currency || "DH";
   const bgColor = hexToRgb(merchant.primaryColor || "#5b3519");
 
+  // Visual Stamp Progress & Status Calculations
+  const stampsRequired = Math.max(1, merchant.stampsRequired || 5);
+  const currentStamps = customer.stamps || 0;
+  const isStampsFull = !isCashback && currentStamps >= stampsRequired;
+  const stampsRemaining = Math.max(0, stampsRequired - currentStamps);
+
+  let stampsProgressDisplay = `${currentStamps} / ${stampsRequired}`;
+  if (stampsRequired <= 10) {
+    const earnedCount = Math.min(currentStamps, stampsRequired);
+    const remainingCount = Math.max(0, stampsRequired - earnedCount);
+    const dots = "●".repeat(earnedCount) + "○".repeat(remainingCount);
+    stampsProgressDisplay = `${dots} (${currentStamps}/${stampsRequired})`;
+  }
+
   // Localized PassKit Field Strings
   const passStrings = {
     description:
@@ -265,16 +282,18 @@ export async function generateApplePass(
         : `Tarjeta de fidelidad - ${merchant.name}`,
     headerLabel: isCashback
       ? locale === "ar"
-        ? "نسبة الاسترداد"
-        : "CASHBACK"
+        ? "الرصيد"
+        : locale === "fr"
+        ? "SOLDE"
+        : "SALDO"
       : locale === "ar"
       ? "الأختام"
       : locale === "fr"
       ? "TAMPONS"
       : "SELLOS",
     headerValue: isCashback
-      ? `${merchant.cashbackRate || 10}%`
-      : `${customer.stamps} / ${merchant.stampsRequired}`,
+      ? `${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
+      : `${currentStamps} / ${stampsRequired}`,
     primaryLabel: isCashback
       ? locale === "ar"
         ? "الرصيد المتاح"
@@ -284,10 +303,12 @@ export async function generateApplePass(
       : locale === "ar"
       ? "المكافأة القادمة"
       : locale === "fr"
-      ? "RÉCOMPENSE"
-      : "RECOMPENSA",
+      ? "PROCHAINE RÉCOMPENSE"
+      : "PRÓXIMA RECOMPENSA",
     primaryValue: isCashback
       ? `${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
+      : isStampsFull
+      ? `🎉 ${merchant.rewardName} ${locale === "ar" ? "(جاهزة للاستلام!)" : locale === "fr" ? "(Prête !)" : "(¡Lista!)"}`
       : merchant.rewardName,
     changeMsg: isCashback
       ? locale === "ar"
@@ -296,45 +317,124 @@ export async function generateApplePass(
         ? "Solde fidélité mis à jour : %@"
         : "Saldo actualizado: %@"
       : locale === "ar"
-      ? "تمت إضافة ختم جديد! مجموع أختامك: %@"
+      ? "المكافأة: %@"
       : locale === "fr"
-      ? "Nouveau tampon ajouté ! Total : %@"
-      : "¡Nuevo sello añadido! Total: %@",
+      ? "Récompense : %@"
+      : "Recompensa: %@",
     holderLabel:
       locale === "ar"
         ? "حامل البطاقة"
         : locale === "fr"
-        ? "Titulaire"
-        : "Titular",
+        ? "TITULAIRE"
+        : "TITULAR",
+    progressLabel:
+      locale === "ar"
+        ? "التقدم"
+        : locale === "fr"
+        ? "PROGRESSION"
+        : "PROGRESO",
+    statusLabel:
+      locale === "ar"
+        ? "الحالة"
+        : locale === "fr"
+        ? "STATUT"
+        : "ESTADO",
+    statusValue: isCashback
+      ? customer.isVip
+        ? "👑 VIP GOLD"
+        : locale === "ar"
+        ? "نشط"
+        : locale === "fr"
+        ? "Actif"
+        : "Activo"
+      : isStampsFull
+      ? locale === "ar"
+        ? "🎁 جاهزة للاستلام!"
+        : locale === "fr"
+        ? "🎁 Récompense prête !"
+        : "🎁 ¡Recompensa lista!"
+      : locale === "ar"
+      ? `باقي ${stampsRemaining} أختام`
+      : locale === "fr"
+      ? `Reste ${stampsRemaining} tampons`
+      : `Quedan ${stampsRemaining} sellos`,
+    cashbackRateLabel:
+      locale === "ar"
+        ? "نسبة الكاش باك"
+        : locale === "fr"
+        ? "TAUX CASHBACK"
+        : "TASA CASHBACK",
+    totalSavedLabel:
+      locale === "ar"
+        ? "إجمالي التوفير"
+        : locale === "fr"
+        ? "TOTAL ÉCONOMISÉ"
+        : "TOTAL AHORRADO",
     memberLabel:
       locale === "ar"
         ? "رقم العضوية"
         : locale === "fr"
-        ? "N° Membre"
-        : "N° Socio",
-    aboutLabel:
+        ? "N° MEMBRE"
+        : "N° SOCIO",
+    tierLabel:
       locale === "ar"
-        ? "عن المتجر"
+        ? "الفئة"
         : locale === "fr"
-        ? "À propos"
-        : "Acerca del comercio",
+        ? "NIVEAU"
+        : "NIVEL",
+    tierValue: customer.isVip
+      ? "👑 VIP GOLD"
+      : locale === "ar"
+      ? "عضو قياسي"
+      : locale === "fr"
+      ? "Membre Standard"
+      : "Miembro Estándar",
+    visitsLabel:
+      locale === "ar"
+        ? "الزيارات"
+        : locale === "fr"
+        ? "VISITES"
+        : "VISITAS",
+    offerLabel:
+      locale === "ar"
+        ? "تفاصيل العرض والمكافأة"
+        : locale === "fr"
+        ? "Détails de l'offre"
+        : "Detalles de la oferta",
+    offerValue: isCashback
+      ? locale === "ar"
+        ? `استرجع ${merchant.cashbackRate || 10}% من قيمة كل فاتورة كرصيد متاح للاستخدام في مشترياتك القادمة.`
+        : locale === "fr"
+        ? `Recevez ${merchant.cashbackRate || 10}% du montant de chaque achat en solde fidélité pour vos prochaines visites.`
+        : `Recibe el ${merchant.cashbackRate || 10}% de cada compra en saldo para tus próximas visitas.`
+      : locale === "ar"
+      ? `اجمع ${stampsRequired} أختام واحصل فوراً على ${merchant.rewardName}. كل زيارة أو طلب يمنحك ختماً إضافياً.`
+      : locale === "fr"
+      ? `Cumulez ${stampsRequired} tampons pour obtenir immédiatement ${merchant.rewardName}.`
+      : `Acumula ${stampsRequired} sellos para obtener ${merchant.rewardName}.`,
+    storeLocationLabel:
+      locale === "ar"
+        ? "المتجر والفرع"
+        : locale === "fr"
+        ? "Établissement & Ville"
+        : "Establecimiento y Ciudad",
+    referralLabel:
+      locale === "ar"
+        ? "ادعُ أصدقاءك واكسب"
+        : locale === "fr"
+        ? "Invitez vos proches"
+        : "Invita a tus amigos",
     termsLabel:
       locale === "ar"
         ? "الشروط والأحكام"
         : locale === "fr"
-        ? "Conditions"
+        ? "Conditions générales"
         : "Condiciones",
-    termsValue: isCashback
-      ? locale === "ar"
-        ? `استرجع ${merchant.cashbackRate || 10}% من قيمة كل فاتورة كرصيد متاح للاستخدام في مشترياتك القادمة.`
-        : locale === "fr"
-        ? `Récupérez ${merchant.cashbackRate || 10}% du montant de chaque achat en solde fidélité déductible.`
-        : `Recupera el ${merchant.cashbackRate || 10}% de cada compra en saldo para tus próximas visitas.`
-      : locale === "ar"
-      ? `اجمع ${merchant.stampsRequired} أختام واستفد فورياً من ${merchant.rewardName}. صالحة بدون تاريخ انتهاء.`
-      : locale === "fr"
-      ? `Cumulez ${merchant.stampsRequired} tampons et profitez de ${merchant.rewardName} offert.`
-      : `Acumula ${merchant.stampsRequired} sellos y disfruta de ${merchant.rewardName} gratis.`,
+    termsValue:
+      merchant.termsText ||
+      (locale === "ar"
+        ? "البطاقة شخصية وغير قابلة للتحويل. المكافآت والأرصدة غير قابلة للاستبدال نقداً. تطبق شروط المتجر."
+        : "La carte de fidélité est strictement personnelle. Les récompenses et soldes ne sont pas échangeables contre des espèces. Valable dans tous les points de vente participants."),
   };
 
   // Build Geofencing Locations (up to 10 zones)
@@ -403,13 +503,16 @@ export async function generateApplePass(
       logoText: merchant.name,
       foregroundColor: "rgb(255, 255, 255)",
       backgroundColor: bgColor,
-      labelColor: isCashback ? "rgb(251, 191, 36)" : "rgb(52, 211, 153)",
+      labelColor:
+        isCashback || customer.isVip
+          ? "rgb(253, 230, 138)"
+          : "rgb(209, 250, 229)",
     }
   );
 
   pass.type = ["store", "Card"].join("") as "storeCard";
 
-  // Header Fields
+  // 1. Header Fields (Top Right Corner)
   pass.headerFields.push({
     key: "program_header",
     label: passStrings.headerLabel,
@@ -417,51 +520,131 @@ export async function generateApplePass(
     textAlignment: "PKTextAlignmentRight",
   });
 
-  // Primary Fields (Reward or Cashback Balance with Native iOS Lock-Screen changeMessage!)
+  // 2. Primary Fields (Giant Center Text on Card Background with Lock-Screen Alert!)
   pass.primaryFields.push({
-    key: "main_field",
+    key: isCashback ? "cashback_balance" : "reward_name",
     label: passStrings.primaryLabel,
     value: passStrings.primaryValue,
     changeMessage: passStrings.changeMsg,
   });
 
-  // Secondary Fields
-  pass.secondaryFields.push({
-    key: "customer_name",
-    label: passStrings.holderLabel,
-    value: customer.name,
-  });
+  // 3. Secondary Fields (3 Clean High-Contrast Columns Guaranteed Visible Above Barcode)
+  if (isCashback) {
+    const effectiveRate = customer.isVip
+      ? (merchant.cashbackRate || 10) + (merchant.vipCashbackBonus || 0)
+      : merchant.cashbackRate || 10;
+    const totalSaved = Number(
+      customer.totalCashbackEarned || customer.cashbackBalance || 0
+    ).toFixed(2);
 
-  pass.secondaryFields.push({
+    pass.secondaryFields.push({
+      key: "customer_name",
+      label: passStrings.holderLabel,
+      value: customer.name,
+      textAlignment: "PKTextAlignmentLeft",
+    });
+
+    pass.secondaryFields.push({
+      key: "cashback_rate",
+      label: passStrings.cashbackRateLabel,
+      value: `${effectiveRate}%${customer.isVip ? " 👑" : ""}`,
+      textAlignment: "PKTextAlignmentCenter",
+    });
+
+    pass.secondaryFields.push({
+      key: "total_saved",
+      label: passStrings.totalSavedLabel,
+      value: `${totalSaved} ${currency}`,
+      textAlignment: "PKTextAlignmentRight",
+    });
+  } else {
+    pass.secondaryFields.push({
+      key: "customer_name",
+      label: passStrings.holderLabel,
+      value: customer.name,
+      textAlignment: "PKTextAlignmentLeft",
+    });
+
+    pass.secondaryFields.push({
+      key: "stamps_progress",
+      label: passStrings.progressLabel,
+      value: stampsProgressDisplay,
+      textAlignment: "PKTextAlignmentCenter",
+    });
+
+    pass.secondaryFields.push({
+      key: "loyalty_status",
+      label: passStrings.statusLabel,
+      value: passStrings.statusValue,
+      textAlignment: "PKTextAlignmentRight",
+      changeMessage:
+        locale === "ar"
+          ? "حالة البطاقة: %@"
+          : locale === "fr"
+          ? "Statut : %@"
+          : "Estado: %@",
+    });
+  }
+
+  // 4. Auxiliary Fields (Extra Membership Details)
+  pass.auxiliaryFields.push({
     key: "member_code",
     label: passStrings.memberLabel,
     value: `#${customer.memberCode}`,
+    textAlignment: "PKTextAlignmentLeft",
+  });
+
+  pass.auxiliaryFields.push({
+    key: "membership_tier",
+    label: passStrings.tierLabel,
+    value: passStrings.tierValue,
+    textAlignment: "PKTextAlignmentCenter",
+  });
+
+  pass.auxiliaryFields.push({
+    key: "total_visits",
+    label: passStrings.visitsLabel,
+    value: `${customer.totalVisits || currentStamps || 1}`,
     textAlignment: "PKTextAlignmentRight",
   });
 
-  if (customer.isVip) {
-    pass.secondaryFields.push({
-      key: "vip_tier",
-      label: "TIER",
-      value: "👑 VIP GOLD",
-      textAlignment: "PKTextAlignmentCenter",
-    });
-  }
-
-  // Back Fields
+  // 5. Back Fields (Rich Back-of-Pass Details)
   pass.backFields.push({
-    key: "shop_info",
-    label: passStrings.aboutLabel,
-    value: `${merchant.name} - ${merchant.city || "المغرب"}`,
+    key: "offer_details",
+    label: passStrings.offerLabel,
+    value: passStrings.offerValue,
+  });
+
+  pass.backFields.push({
+    key: "store_location",
+    label: passStrings.storeLocationLabel,
+    value: `${merchant.name} - ${merchant.city || (locale === "ar" ? "المغرب" : "Maroc")}`,
   });
 
   if (merchant.phone) {
+    const cleanPhone = merchant.phone.replace(/\D/g, "");
     pass.backFields.push({
       key: "whatsapp_contact",
       label: "WhatsApp",
-      value: `https://wa.me/${merchant.phone.replace(/\D/g, "")}`,
+      value: `https://wa.me/${cleanPhone}`,
     });
   }
+
+  if (merchant.googleMapsUrl || (merchant.latitude && merchant.longitude)) {
+    pass.backFields.push({
+      key: "google_maps",
+      label: "Google Maps",
+      value:
+        merchant.googleMapsUrl ||
+        `https://maps.google.com/?q=${merchant.latitude},${merchant.longitude}`,
+    });
+  }
+
+  pass.backFields.push({
+    key: "referral_link",
+    label: passStrings.referralLabel,
+    value: `https://wjoin.walink.ma/join/${merchant.slug}?ref=${customer.memberCode}`,
+  });
 
   if (merchant.menuUrl) {
     pass.backFields.push({
@@ -482,13 +665,13 @@ export async function generateApplePass(
   pass.backFields.push({
     key: "terms",
     label: passStrings.termsLabel,
-    value: merchant.termsText || passStrings.termsValue,
+    value: passStrings.termsValue,
   });
 
   pass.backFields.push({
     key: "support",
     label: "Walink",
-    value: "walink.ma - Smart Digital Loyalty Cards",
+    value: "walink.ma - البطاقة الرقمية الذكية",
   });
 
   // Geofencing Radar Locations
