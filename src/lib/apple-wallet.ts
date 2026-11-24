@@ -78,14 +78,18 @@ export function getAppleWalletConfig(): AppleWalletConfig {
     let combined = "";
     let i = 1;
     while (process.env[`${baseKey}_${i}`]) {
-      const chunk = process.env[`${baseKey}_${i}`];
-      if (chunk) {
-        combined += chunk.trim();
+      let chunk = (process.env[`${baseKey}_${i}`] || "").trim();
+      if (
+        (chunk.startsWith('"') && chunk.endsWith('"')) ||
+        (chunk.startsWith("'") && chunk.endsWith("'"))
+      ) {
+        chunk = chunk.slice(1, -1);
       }
+      combined += chunk.trim();
       i++;
     }
     if (combined) {
-      return combined.replace(/\s+/g, "");
+      return combined.replace(/[^A-Za-z0-9+/=]/g, "");
     }
     let direct = (process.env[baseKey] || "").trim();
     if (
@@ -94,7 +98,7 @@ export function getAppleWalletConfig(): AppleWalletConfig {
     ) {
       direct = direct.slice(1, -1);
     }
-    return direct.replace(/\s+/g, "");
+    return direct.replace(/[^A-Za-z0-9+/=]/g, "");
   };
 
   // Helper to read buffer from base64 env (chunked or direct) or file fallback
