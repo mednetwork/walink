@@ -17,7 +17,6 @@ export async function POST(
     const { serialNumber } = params;
     const authHeader = req.headers.get("authorization");
 
-    // Optional PassKit token check: ApplePass <token>
     const customer = await prisma.customer.findUnique({
       where: { passSerial: serialNumber },
     });
@@ -26,8 +25,12 @@ export async function POST(
       return NextResponse.json({ error: "Pass not found" }, { status: 404 });
     }
 
-    if (authHeader && !authHeader.includes(customer.passSerial)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const expectedAuthToken = (customer.passSerial + "walink2026").padEnd(20, "0");
+    if (authHeader) {
+      const token = authHeader.replace("ApplePass ", "").trim();
+      if (token !== expectedAuthToken && !token.includes(customer.passSerial)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     const body = await req.json().catch(() => ({}));
@@ -67,6 +70,7 @@ export async function DELETE(
 ) {
   try {
     const { serialNumber } = params;
+    const authHeader = req.headers.get("authorization");
 
     const customer = await prisma.customer.findUnique({
       where: { passSerial: serialNumber },
@@ -74,6 +78,14 @@ export async function DELETE(
 
     if (!customer) {
       return NextResponse.json({ error: "Pass not found" }, { status: 404 });
+    }
+
+    const expectedAuthToken = (customer.passSerial + "walink2026").padEnd(20, "0");
+    if (authHeader) {
+      const token = authHeader.replace("ApplePass ", "").trim();
+      if (token !== expectedAuthToken && !token.includes(customer.passSerial)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     await prisma.customer.update({
@@ -89,4 +101,3 @@ export async function DELETE(
     return NextResponse.json({ error: "Unregistration failed" }, { status: 500 });
   }
 }
-

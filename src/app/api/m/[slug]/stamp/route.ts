@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { normalizeMoroccanPhone } from "@/lib/utils";
 import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
+import { sendApplePassUpdate } from "@/lib/apple-wallet";
 import { getLocalizedRewardName } from "@/lib/i18n/rewards";
 import { Locale } from "@/lib/i18n/translations";
 
@@ -339,13 +340,19 @@ export async function POST(
         });
       }
 
-      // Asynchronously push update to Google Wallet
+      // Asynchronously push update to Google Wallet & Apple Wallet
       pushGoogleWalletUpdate(
         updatedCustomer,
         merchant,
         merchant.name,
         notification.body
       ).catch((err) => console.warn("[GoogleWallet] push error:", err));
+
+      if (updatedCustomer.applePushToken) {
+        sendApplePassUpdate(updatedCustomer.applePushToken).catch((err) =>
+          console.warn("[AppleWallet] push error:", err)
+        );
+      }
 
       const earnMsg =
         lang === "fr"
@@ -448,13 +455,19 @@ export async function POST(
         });
       }
 
-      // Asynchronously push update to Google Wallet
+      // Asynchronously push update to Google Wallet & Apple Wallet
       pushGoogleWalletUpdate(
         updatedCustomer,
         merchant,
         merchant.name,
         notification.body
       ).catch((err) => console.warn("[GoogleWallet] push error:", err));
+
+      if (updatedCustomer.applePushToken) {
+        sendApplePassUpdate(updatedCustomer.applePushToken).catch((err) =>
+          console.warn("[AppleWallet] push error:", err)
+        );
+      }
 
       const redeemCashbackMsg =
         lang === "fr"
@@ -531,13 +544,19 @@ export async function POST(
         });
       }
 
-      // Asynchronously push update to Google Wallet
+      // Asynchronously push update to Google Wallet & Apple Wallet
       pushGoogleWalletUpdate(
         updatedCustomer,
         merchant,
         merchant.name,
         notification.body
       ).catch((err) => console.warn("[GoogleWallet] push error:", err));
+
+      if (updatedCustomer.applePushToken) {
+        sendApplePassUpdate(updatedCustomer.applePushToken).catch((err) =>
+          console.warn("[AppleWallet] push error:", err)
+        );
+      }
 
       const localizedReward = getLocalizedRewardName(merchant.rewardName, lang);
       const redeemStampMsg =
@@ -631,13 +650,19 @@ export async function POST(
       });
     }
 
-    // Asynchronously push update to Google Wallet
+    // Asynchronously push update to Google Wallet & Apple Wallet
     pushGoogleWalletUpdate(
       updatedCustomer,
       merchant,
       merchant.name,
       notification.body
     ).catch((err) => console.warn("[GoogleWallet] push error:", err));
+
+    if (updatedCustomer.applePushToken) {
+      sendApplePassUpdate(updatedCustomer.applePushToken).catch((err) =>
+        console.warn("[AppleWallet] push error:", err)
+      );
+    }
 
     const localizedStampReward = getLocalizedRewardName(merchant.rewardName, lang);
     let stampMsg = isRewardUnlocked

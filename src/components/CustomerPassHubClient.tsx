@@ -489,6 +489,7 @@ export default function CustomerPassHubClient({
   const [activeBanner, setActiveBanner] = useState<NotificationBanner | null>(null);
 
   // Modals & Sheets
+  const [isAppleWalletLoading, setIsAppleWalletLoading] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [pkpassJson, setPkpassJson] = useState<Record<string, unknown> | null>(null);
   const [showJsonInspector, setShowJsonInspector] = useState(false);
@@ -1208,23 +1209,13 @@ export default function CustomerPassHubClient({
     t,
   ]);
 
-  // Fetch PassKit Apple Wallet JSON
-  const handleOpenWalletModal = async () => {
-    setIsWalletModalOpen(true);
-    if (!pkpassJson) {
-      try {
-        const res = await fetch(
-          `/api/pass/${customer.passSerial}/pkpass?lang=${locale}`,
-          {
-            signal: AbortSignal.timeout(8000),
-          }
-        );
-        const data = await res.json();
-        setPkpassJson(data.passJson);
-      } catch (err) {
-        console.error("Error fetching pkpass spec:", err);
-      }
-    }
+  // Handle Add to Apple Wallet (.pkpass)
+  const handleOpenWalletModal = () => {
+    setIsAppleWalletLoading(true);
+    // Direct navigation to signed .pkpass binary endpoint:
+    // On iOS Safari, this triggers Apple Wallet's native "Add" sheet in 1 tap!
+    window.location.href = `/api/pass/${customer.passSerial}/pkpass?lang=${locale}`;
+    setTimeout(() => setIsAppleWalletLoading(false), 2000);
   };
 
   // Handle Add to Google Wallet
@@ -1540,11 +1531,16 @@ export default function CustomerPassHubClient({
           {/* Apple Wallet Official Full-Width Button */}
           <button
             type="button"
+            disabled={isAppleWalletLoading}
             onClick={handleOpenWalletModal}
-            className="w-full h-[58px] rounded-2xl bg-black hover:bg-neutral-900 text-white flex items-center justify-center gap-3.5 border border-white/20 shadow-md transition-all active:scale-[0.98]"
+            className="w-full h-[58px] rounded-2xl bg-black hover:bg-neutral-900 text-white flex items-center justify-center gap-3.5 border border-white/20 shadow-md transition-all active:scale-[0.98] disabled:opacity-60"
             dir="ltr"
           >
-            <OfficialAppleWalletIcon className="w-10 h-8 flex-shrink-0" />
+            {isAppleWalletLoading ? (
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              <OfficialAppleWalletIcon className="w-10 h-8 flex-shrink-0" />
+            )}
             <div className="flex flex-col text-left leading-tight text-white select-none">
               <span className="text-[11px] font-normal tracking-tight text-neutral-300">
                 {locale === "ar" ? "إضافة إلى" : locale === "fr" ? "Ajouter à" : locale === "es" ? "Añadir a" : "Add to"}

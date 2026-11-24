@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
+import { sendApplePassUpdate } from "@/lib/apple-wallet";
 
 export async function POST(
   req: NextRequest,
@@ -116,6 +117,11 @@ export async function POST(
         title ? title.trim() : merchant.name,
         message.trim()
       ).catch(() => {});
+
+      // Push real-time silent pass update to Apple Wallet
+      if (c.applePushToken) {
+        sendApplePassUpdate(c.applePushToken).catch(() => {});
+      }
     }
 
     return NextResponse.json({

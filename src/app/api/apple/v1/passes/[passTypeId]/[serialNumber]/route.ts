@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { generateApplePass } from "@/lib/apple-wallet";
 
 export async function GET(
   req: NextRequest,
@@ -14,15 +15,13 @@ export async function GET(
 ) {
   try {
     const { serialNumber } = params;
+    const authHeader = req.headers.get("authorization");
+    const ifModifiedSince = req.headers.get("if-modified-since");
 
     const customer = await prisma.customer.findUnique({
       where: { passSerial: serialNumber },
       include: {
         merchant: true,
-        notifications: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
       },
     });
 
@@ -30,90 +29,43 @@ export async function GET(
       return NextResponse.json({ error: "Pass not found" }, { status: 404 });
     }
 
+    // Verify ApplePass authorization token
+    // Token is (customer.passSerial + "walink2026").padEnd(20, "0")
+    const expectedAuthToken = (customer.passSerial + "walink2026").padEnd(20, "0");
+    if (authHeader) {
+      const token = authHeader.replace("ApplePass ", "").trim();
+      if (token !== expectedAuthToken && !token.includes(customer.passSerial)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
+    // Check If-Modified-Since header per Apple PassKit Web Service specification
+    if (ifModifiedSince) {
+      const clientModifiedTime = new Date(ifModifiedSince).getTime();
+      const lastModifiedTime = new Date(customer.updatedAt).getTime();
+      if (!isNaN(clientModifiedTime) && lastModifiedTime <= clientModifiedTime) {
+        return new NextResponse(null, { status: 304 });
+      }
+    }
+
     const { merchant } = customer;
-    const latestNotif = customer.notifications[0]?.body || "";
 
-    const passPayload = {
-      formatVersion: 1,
-      passTypeIdentifier: params.passTypeId || "pass.ma.walink.loyalty",
-      serialNumber: customer.passSerial,
-      teamIdentifier: process.env.APPLE_TEAM_ID || "WALINKMA01",
-      organizationName: merchant.name,
-      description: `كارط الوفاء - ${merchant.name}`,
-      logoText: merchant.name,
-      foregroundColor: "rgb(255, 255, 255)",
-      backgroundColor: "rgb(17, 24, 39)",
-      labelColor: "rgb(251, 191, 36)",
-      locations:
-        merchant.latitude && merchant.longitude
-          ? [
-              {
-                latitude: merchant.latitude,
-                longitude: merchant.longitude,
-                relevantText: merchant.radarMessage,
-                maxDistance: 100,
-              },
-            ]
-          : [],
-      barcodes: [
-        {
-          format: "PKBarcodeFormatQR",
-          message: `WALINK:${customer.passSerial}`,
-          messageEncoding: "iso-8859-1",
-          altText: `WALINK #${customer.memberCode}`,
-        },
-      ],
-      storeCard: {
-        headerFields: [
-          {
-            key: "stamps_count",
-            label: "الطوابع",
-            value: `${customer.stamps} / ${merchant.stampsRequired}`,
-            changeMessage: "تزاد ليك طابع! مجموع طوابعك: %@",
-          },
-        ],
-        primaryFields: [
-          {
-            key: "reward_name",
-            label: "المكافأة القادمة",
-            value: merchant.rewardName,
-          },
-        ],
-        secondaryFields: [
-          {
-            key: "customer_name",
-            label: "حامل البطاقة",
-            value: customer.name,
-          },
-          {
-            key: "member_code",
-            label: "رقم العضوية",
-            value: `#${customer.memberCode}`,
-          },
-        ],
-        backFields: [
-          {
-            key: "last_notice",
-            label: "آخر إشعار",
-            value: latestNotif || "مرحباً بك في برنامج الوفاء!",
-          },
-          {
-            key: "support",
-            label: "منصة والينك",
-            value: "walink.ma - بطاقات الوفاء الذكية بالمغرب",
-          },
-        ],
-      },
-    };
+    // Generate signed .pkpass binary buffer
+    const pkpassBuffer = await generateApplePass(customer, merchant, "ar");
 
-    return NextResponse.json(passPayload, {
+    return new NextResponse(new Uint8Array(pkpassBuffer), {
+      status: 200,
       headers: {
+        "Content-Type": "application/vnd.apple.pkpass",
         "Last-Modified": customer.updatedAt.toUTCString(),
+        "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });
   } catch (error: unknown) {
     console.error("Apple Wallet pass fetch error:", error);
-    return NextResponse.json({ error: "Failed to generate pass" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to generate signed pass" },
+      { status: 500 }
+    );
   }
 }
-

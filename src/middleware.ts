@@ -38,6 +38,15 @@ export async function middleware(req: NextRequest) {
     !host.includes(".");
 
   // -------------------------------------------------------------
+  // 0. UNIVERSAL APPLE PASSKIT WEB SERVICE & PASS DOWNLOAD BYPASS
+  // Required so iPhones calling webServiceURL (/api/apple/v1/...) or /api/pass/.../pkpass
+  // on ANY domain (walink.ma, wclient.walink.ma, etc.) never hit domain-isolation Stealth 404!
+  // -------------------------------------------------------------
+  if (pathname.startsWith("/api/apple/") || pathname.startsWith("/api/pass/")) {
+    return NextResponse.next();
+  }
+
+  // -------------------------------------------------------------
   // 1. LOCAL DEVELOPMENT / TEST ENVIRONMENT
   // -------------------------------------------------------------
   if (isLocalhost) {
