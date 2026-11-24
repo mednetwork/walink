@@ -66,15 +66,40 @@ export function getAppleWalletConfig(): AppleWalletConfig {
 
   const cwd = process.cwd();
 
-  // Helper to read buffer from file or base64 env
+  // Helper to extract environment variable values that might be split across multiple chunks (e.g. <= 1000 chars)
+  const getChunkedOrDirectEnv = (baseKey: string): string => {
+    let combined = "";
+    let i = 1;
+    while (process.env[`${baseKey}_${i}`]) {
+      const chunk = process.env[`${baseKey}_${i}`];
+      if (chunk) {
+        combined += chunk.trim();
+      }
+      i++;
+    }
+    if (combined) {
+      return combined;
+    }
+    let direct = (process.env[baseKey] || "").trim();
+    if (
+      (direct.startsWith('"') && direct.endsWith('"')) ||
+      (direct.startsWith("'") && direct.endsWith("'"))
+    ) {
+      direct = direct.slice(1, -1);
+    }
+    return direct.trim();
+  };
+
+  // Helper to read buffer from base64 env (chunked or direct) or file fallback
   const loadBuffer = (
     filePathEnv: string | undefined,
-    base64Env: string | undefined,
+    base64EnvKey: string,
     defaultRelPath: string
   ): Buffer | null => {
-    if (base64Env && base64Env.trim()) {
+    const b64 = getChunkedOrDirectEnv(base64EnvKey);
+    if (b64) {
       try {
-        return Buffer.from(base64Env.trim(), "base64");
+        return Buffer.from(b64, "base64");
       } catch {
         // Fallback
       }
@@ -92,32 +117,27 @@ export function getAppleWalletConfig(): AppleWalletConfig {
 
   const signerCert = loadBuffer(
     process.env.APPLE_PASS_CERT_PATH,
-    process.env.APPLE_SIGNER_CERT_BASE64,
+    "APPLE_SIGNER_CERT_BASE64",
     "certificates/apple/pass.pem"
   );
 
   const signerKey = loadBuffer(
     process.env.APPLE_PASS_KEY_PATH,
-    process.env.APPLE_SIGNER_KEY_BASE64,
+    "APPLE_SIGNER_KEY_BASE64",
     "certificates/apple/walink_pass.key"
   );
 
   const wwdrCert = loadBuffer(
     process.env.APPLE_WWDR_CERT_PATH,
-    process.env.APPLE_WWDR_CERT_BASE64,
+    "APPLE_WWDR_CERT_BASE64",
     "certificates/apple/AppleWWDRCAG4.pem"
   );
 
   let authKeyP8: string | null = null;
-  if (
-    process.env.APPLE_AUTH_KEY_P8_BASE64 &&
-    process.env.APPLE_AUTH_KEY_P8_BASE64.trim()
-  ) {
+  const authKeyB64 = getChunkedOrDirectEnv("APPLE_AUTH_KEY_P8_BASE64");
+  if (authKeyB64) {
     try {
-      authKeyP8 = Buffer.from(
-        process.env.APPLE_AUTH_KEY_P8_BASE64.trim(),
-        "base64"
-      ).toString("utf8");
+      authKeyP8 = Buffer.from(authKeyB64, "base64").toString("utf8");
     } catch {
       authKeyP8 = null;
     }
