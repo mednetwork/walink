@@ -45,9 +45,17 @@ export interface TranslationDictionary {
     resetDemo: string;
     ownerHome: string;
     ownerClients: string;
+    ownerAnalytics: string;
     ownerPromos: string;
     ownerAuto: string;
     ownerSettings: string;
+    monthlyReports: string;
+    allBranchesCombined: string;
+    branchBreakdown: string;
+    growthVsPrevMonth: string;
+    newCustomersLabel: string;
+    rewardsDeliveredLabel: string;
+    salesVolumeLabel: string;
     saveChanges: string;
     saving: string;
     savedSuccess: string;
@@ -602,9 +610,17 @@ export const translations: Record<Locale, TranslationDictionary> = {
       resetDemo: "إعادة ضبط الديمو",
       ownerHome: "الرئيسية",
       ownerClients: "العملاء",
+      ownerAnalytics: "التقارير",
       ownerPromos: "العروض",
       ownerAuto: "التلقائي",
       ownerSettings: "الإعدادات",
+      monthlyReports: "التقارير والأشهر الفائتة",
+      allBranchesCombined: "جميع الفروع (مجموعين)",
+      branchBreakdown: "توزيع الأداء حسب الفروع",
+      growthVsPrevMonth: "مقارنة بالشهر السابق",
+      newCustomersLabel: "زبائن جدد",
+      rewardsDeliveredLabel: "هدايا ممنوحة",
+      salesVolumeLabel: "حجم المبيعات",
       saveChanges: "حفظ التغييرات",
       saving: "جاري الحفظ...",
       savedSuccess: "تم الحفظ بنجاح",
@@ -1199,9 +1215,17 @@ export const translations: Record<Locale, TranslationDictionary> = {
       resetDemo: "Réinitialiser",
       ownerHome: "Accueil",
       ownerClients: "Clients",
+      ownerAnalytics: "Rapports",
       ownerPromos: "Promos",
       ownerAuto: "Automatisations",
       ownerSettings: "Paramètres",
+      monthlyReports: "Rapports & mois précédents",
+      allBranchesCombined: "Toutes les succursales (combinées)",
+      branchBreakdown: "Répartition par succursale",
+      growthVsPrevMonth: "vs mois précédent",
+      newCustomersLabel: "Nouveaux clients",
+      rewardsDeliveredLabel: "Cadeaux remis",
+      salesVolumeLabel: "Volume des ventes",
       saveChanges: "Enregistrer les modifications",
       saving: "Enregistrement...",
       savedSuccess: "Enregistré avec succès",
@@ -1796,9 +1820,17 @@ export const translations: Record<Locale, TranslationDictionary> = {
       resetDemo: "Reiniciar demo",
       ownerHome: "Inicio",
       ownerClients: "Clientes",
+      ownerAnalytics: "Informes",
       ownerPromos: "Promos",
       ownerAuto: "Automático",
       ownerSettings: "Ajustes",
+      monthlyReports: "Informes y meses anteriores",
+      allBranchesCombined: "Todas las sucursales (combinadas)",
+      branchBreakdown: "Distribución por sucursal",
+      growthVsPrevMonth: "vs mes anterior",
+      newCustomersLabel: "Nuevos clientes",
+      rewardsDeliveredLabel: "Premios entregados",
+      salesVolumeLabel: "Volumen de ventas",
       saveChanges: "Guardar cambios",
       saving: "Guardando...",
       savedSuccess: "Guardado con éxito",

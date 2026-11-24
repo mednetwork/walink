@@ -48,8 +48,32 @@ import {
   Download,
   Share2,
   Stamp,
+  BarChart3,
 } from "lucide-react";
 import { soundEngine } from "@/lib/sound";
+import type { MonthlyAnalyticsResponse } from "@/app/api/m/[slug]/analytics/monthly/route";
+
+function formatMonthTitle(monthKey: string, loc: string): string {
+  if (!monthKey || !monthKey.includes("-")) return monthKey;
+  const [yearStr, monthStr] = monthKey.split("-");
+  const m = parseInt(monthStr, 10);
+  const arMonths = [
+    "يناير", "فبراير", "مارس", "أبريل", "ماي", "يونيو",
+    "يوليوز", "غشت", "شتنبر", "أكتوبر", "نونبر", "دجنبر"
+  ];
+  const frMonths = [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+  ];
+  const esMonths = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  const idx = m - 1;
+  if (loc === "fr") return `${frMonths[idx] || monthStr} ${yearStr}`;
+  if (loc === "es") return `${esMonths[idx] || monthStr} ${yearStr}`;
+  return `${arMonths[idx] || monthStr} ${yearStr}`;
+}
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -200,7 +224,14 @@ export default function MerchantDashboardClient({
   const [pinError, setPinError] = useState(false);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<"home" | "customers" | "promo" | "settings">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "customers" | "analytics" | "promo" | "settings">("home");
+
+  // Monthly Analytics State (Phase 54)
+  const [monthlyAnalytics, setMonthlyAnalytics] = useState<MonthlyAnalyticsResponse | null>(null);
+  const [selectedMonthKey, setSelectedMonthKey] = useState<string>("");
+  const [analyticsBranchFilter, setAnalyticsBranchFilter] = useState<string>("ALL");
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
   // Phone Bezel Frame Mode
   const [isFrameMode, setIsFrameMode] = useState(false);
@@ -1029,6 +1060,40 @@ export default function MerchantDashboardClient({
     }
   };
 
+  // Monthly Analytics Data Fetcher (Phase 54)
+  const fetchMonthlyAnalytics = useCallback(async (forceRefresh = false) => {
+    setIsLoadingAnalytics(true);
+    setAnalyticsError(null);
+    try {
+      const res = await fetch(`/api/m/${merchant.slug}/analytics/monthly?t=${Date.now()}`);
+      if (!res.ok) throw new Error("Failed to load analytics");
+      const data: MonthlyAnalyticsResponse = await res.json();
+      setMonthlyAnalytics(data);
+      if (data.months && data.months.length > 0) {
+        setSelectedMonthKey((prev) =>
+          prev && data.months.some((m) => m.monthKey === prev) ? prev : data.months[0].monthKey
+        );
+      }
+    } catch (err: unknown) {
+      console.error("Failed to fetch monthly analytics:", err);
+      setAnalyticsError(
+        locale === "fr"
+          ? "Erreur lors du chargement des données"
+          : locale === "es"
+          ? "Error al cargar los datos"
+          : "تعذر تحميل التحليلات الشهرية"
+      );
+    } finally {
+      setIsLoadingAnalytics(false);
+    }
+  }, [merchant.slug, locale]);
+
+  useEffect(() => {
+    if (activeTab === "analytics" && !monthlyAnalytics && !isLoadingAnalytics) {
+      fetchMonthlyAnalytics(false);
+    }
+  }, [activeTab, monthlyAnalytics, isLoadingAnalytics, fetchMonthlyAnalytics]);
+
   const handleActionComplete = useCallback((updatedCustomer: CustomerSummary, msg: string, remainingCredits?: number) => {
     // Clear any existing toast timeout before starting a new debounced one
     if (toastTimeoutRef.current) {
@@ -1100,7 +1165,10 @@ export default function MerchantDashboardClient({
       },
     };
     setTransactions((prev) => [newTx, ...prev.slice(0, 14)]);
-  }, []);
+
+    // Invalidate/refresh monthly analytics in background on new cashier action (Phase 54 Refinement 2)
+    fetchMonthlyAnalytics(true);
+  }, [fetchMonthlyAnalytics]);
 
   // Direct 1-Click Customer Loyalty Actions (Phase 53)
   const handleDirectStamp = async (c: CustomerData) => {
@@ -2059,6 +2127,368 @@ export default function MerchantDashboardClient({
           </div>
         )}
 
+        {/* Tab: التقارير الشهرية (Monthly Multi-Branch Analytics) */}
+        {activeTab === "analytics" && (
+          <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
+            {/* Header with Title and Refresh Button */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#008069]/10 text-[#008069] flex items-center justify-center font-bold">
+                  <BarChart3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-xs font-bold text-[#111B21]">
+                    {t.demo.monthlyReports}
+                  </h2>
+                  <p className="text-[10px] text-[#54656F]">
+                    {locale === "fr"
+                      ? "Performances & historique mensuel"
+                      : locale === "es"
+                      ? "Rendimiento e historial mensual"
+                      : "تحليلات وأداء الأشهر الفائتة"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => fetchMonthlyAnalytics(true)}
+                disabled={isLoadingAnalytics}
+                className="px-2.5 py-1 rounded-xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#54656F] text-[11px] font-semibold flex items-center gap-1 transition disabled:opacity-50 cursor-pointer shadow-sm active:scale-95"
+                title={locale === "fr" ? "Actualiser" : locale === "es" ? "Actualizar" : "تحديث البيانات"}
+              >
+                <Loader2 className={`w-3.5 h-3.5 ${isLoadingAnalytics ? "animate-spin text-[#008069]" : ""}`} />
+                <span>{locale === "fr" ? "Actualiser" : locale === "es" ? "Actualizar" : "تحديث"}</span>
+              </button>
+            </div>
+
+            {/* Skeleton Loading State */}
+            {isLoadingAnalytics && !monthlyAnalytics && (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-10 bg-white rounded-2xl border border-[#E9EDEF]" />
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="h-24 bg-white rounded-2xl border border-[#E9EDEF]" />
+                  <div className="h-24 bg-white rounded-2xl border border-[#E9EDEF]" />
+                  <div className="h-24 bg-white rounded-2xl border border-[#E9EDEF]" />
+                  <div className="h-24 bg-white rounded-2xl border border-[#E9EDEF]" />
+                </div>
+                <div className="h-36 bg-white rounded-2xl border border-[#E9EDEF]" />
+              </div>
+            )}
+
+            {/* Error State */}
+            {!isLoadingAnalytics && analyticsError && (
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-center space-y-2">
+                <p className="text-xs font-bold text-red-700">{analyticsError}</p>
+                <button
+                  type="button"
+                  onClick={() => fetchMonthlyAnalytics(true)}
+                  className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-sm cursor-pointer"
+                >
+                  {locale === "fr" ? "Réessayer" : locale === "es" ? "Reintentar" : "إعادة المحاولة"}
+                </button>
+              </div>
+            )}
+
+            {/* Populated Analytics View */}
+            {monthlyAnalytics && (
+              <div className="space-y-3.5">
+                {/* 1. Month Selector Pills (Horizontal Scroll) */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                  {monthlyAnalytics.months.map((m) => {
+                    const isSelected = m.monthKey === selectedMonthKey;
+                    return (
+                      <button
+                        key={m.monthKey}
+                        type="button"
+                        onClick={() => setSelectedMonthKey(m.monthKey)}
+                        className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                          isSelected
+                            ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                            : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                        }`}
+                      >
+                        <span>{formatMonthTitle(m.monthKey, locale)}</span>
+                        {m.isCurrentMonth && (
+                          <span
+                            className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                              isSelected
+                                ? "bg-white/20 text-white"
+                                : "bg-emerald-100 text-emerald-800"
+                            }`}
+                          >
+                            {locale === "fr" ? "En cours" : locale === "es" ? "Actual" : "الحالي"}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* 2. Branch Filter Tabs (For Multi-Branch Merchants) */}
+                {monthlyAnalytics.isMultiBranch && monthlyAnalytics.branches.length > 1 && (
+                  <div className="space-y-1.5 p-2.5 bg-white rounded-2xl border border-[#E9EDEF] shadow-sm">
+                    <div className="flex items-center gap-1 text-[11px] font-bold text-[#111B21]">
+                      <Building2 className="w-3.5 h-3.5 text-[#008069]" />
+                      <span>{locale === "fr" ? "Filtrer par succursale :" : locale === "es" ? "Filtrar por sucursal:" : "تصفية حسب الفرع:"}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setAnalyticsBranchFilter("ALL")}
+                        className={`px-2.5 py-1 rounded-xl border whitespace-nowrap transition text-[11px] font-bold flex items-center gap-1 cursor-pointer ${
+                          analyticsBranchFilter === "ALL"
+                            ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                            : "bg-[#F0F2F5] border-[#D1D7DB] text-[#54656F] hover:bg-[#E9EDEF]"
+                        }`}
+                      >
+                        <Globe className="w-3 h-3" />
+                        <span>{t.demo.allBranchesCombined}</span>
+                      </button>
+
+                      {monthlyAnalytics.branches.map((b) => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => setAnalyticsBranchFilter(b.name)}
+                          className={`px-2.5 py-1 rounded-xl border whitespace-nowrap transition text-[11px] font-semibold flex items-center gap-1 cursor-pointer ${
+                            analyticsBranchFilter === b.name
+                              ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                              : "bg-white border-[#D1D7DB] text-[#54656F] hover:bg-[#F0F2F5]"
+                          }`}
+                        >
+                          <span>📍 {b.name}</span>
+                          {b.isMain && (
+                            <span className="text-[8px] px-1 py-0.2 rounded bg-amber-400 text-amber-950 font-bold">
+                              {t.demo.mainBranch}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Selected Month KPIs */}
+                {(() => {
+                  const selectedMonth =
+                    monthlyAnalytics.months.find((m) => m.monthKey === selectedMonthKey) ||
+                    monthlyAnalytics.months[0];
+
+                  if (!selectedMonth) {
+                    return (
+                      <p className="text-center text-xs text-[#54656F] py-8">
+                        {locale === "fr" ? "Aucune donnée disponible" : "لا توجد بيانات متاحة لهذا الشهر"}
+                      </p>
+                    );
+                  }
+
+                  // Determine effective stats based on branch filter
+                  const isAllBranches = analyticsBranchFilter === "ALL";
+                  const targetBranchStat = !isAllBranches
+                    ? selectedMonth.branches.find((b) => b.branchName === analyticsBranchFilter)
+                    : null;
+
+                  const displayVisits = isAllBranches
+                    ? selectedMonth.combined.totalVisits
+                    : targetBranchStat?.visits || 0;
+
+                  const displayRewards = isAllBranches
+                    ? selectedMonth.combined.rewardsRedeemed
+                    : targetBranchStat?.rewardsRedeemed || 0;
+
+                  const displayNewCust = isAllBranches
+                    ? selectedMonth.combined.newCustomers
+                    : "—";
+
+                  const displaySales = isAllBranches
+                    ? selectedMonth.combined.totalBillAmount
+                    : targetBranchStat?.billAmount || 0;
+
+                  const growth = isAllBranches ? selectedMonth.combined.growthVsPrevMonth : null;
+
+                  return (
+                    <div className="space-y-3.5">
+                      {/* Active Filter Title Banner */}
+                      <div className="p-3 rounded-2xl bg-gradient-to-r from-[#008069]/10 via-[#00A884]/10 to-transparent border border-[#008069]/20 flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#111B21] block">
+                            📅 {formatMonthTitle(selectedMonth.monthKey, locale)}
+                          </span>
+                          <span className="text-[10px] text-[#54656F]">
+                            {isAllBranches
+                              ? t.demo.allBranchesCombined
+                              : `فرع: ${analyticsBranchFilter}`}
+                          </span>
+                        </div>
+                        {selectedMonth.isCurrentMonth ? (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                            {locale === "fr" ? "Mois en cours" : locale === "es" ? "Mes en curso" : "الشهر الجاري"}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold border border-slate-200">
+                            {locale === "fr" ? "Mois clôturé" : locale === "es" ? "Mes cerrado" : "شهر منتهي"}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 2x2 KPI Cards */}
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {/* 1. Visits & Growth */}
+                        <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-1">
+                          <span className="text-[11px] text-[#54656F] block">
+                            {t.demo.kpiTotalVisits}
+                          </span>
+                          <div className="flex items-baseline gap-1.5 flex-wrap">
+                            <span className="text-2xl font-bold font-mono text-[#111B21]">
+                              {displayVisits}
+                            </span>
+                            {growth !== null && (
+                              <span
+                                className={`text-[10px] font-bold font-mono flex items-center ${
+                                  growth >= 0 ? "text-[#008069]" : "text-red-500"
+                                }`}
+                              >
+                                {growth >= 0 ? `+${growth}%` : `${growth}%`}
+                              </span>
+                            )}
+                          </div>
+                          {growth !== null && (
+                            <span className="text-[9px] text-[#54656F] block">
+                              {t.demo.growthVsPrevMonth}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* 2. New Customers */}
+                        <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-1">
+                          <span className="text-[11px] text-[#54656F] block">
+                            {t.demo.newCustomersLabel}
+                          </span>
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold font-mono text-[#111B21]">
+                              {displayNewCust}
+                            </span>
+                            <span className="text-[10px] text-[#008069] font-bold">
+                              {locale === "fr" ? "clients" : "زبون"}
+                            </span>
+                          </div>
+                          <span className="text-[9px] text-[#54656F] block">
+                            {locale === "fr" ? "Inscrits ce mois" : "انضموا هذا الشهر"}
+                          </span>
+                        </div>
+
+                        {/* 3. Rewards Delivered */}
+                        <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-1">
+                          <span className="text-[11px] text-[#54656F] block">
+                            {t.demo.rewardsDeliveredLabel}
+                          </span>
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold font-mono text-amber-600">
+                              {displayRewards}
+                            </span>
+                            <span className="text-[10px] text-amber-600 font-bold">
+                              🎁 {locale === "fr" ? "cadeaux" : "مكافأة"}
+                            </span>
+                          </div>
+                          <span className="text-[9px] text-[#54656F] block">
+                            {locale === "fr" ? "Récompenses utilisées" : "تم استلامها"}
+                          </span>
+                        </div>
+
+                        {/* 4. Sales / Cashback Activity */}
+                        <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-1">
+                          <span className="text-[11px] text-[#54656F] block">
+                            {merchant.loyaltyMode === "CASHBACK"
+                              ? (locale === "fr" ? "Cashback distribué" : "كاش باك ممنوح")
+                              : t.demo.salesVolumeLabel}
+                          </span>
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold font-mono text-emerald-600">
+                              {merchant.loyaltyMode === "CASHBACK"
+                                ? isAllBranches
+                                  ? selectedMonth.combined.cashbackDistributed
+                                  : targetBranchStat?.cashbackDistributed || 0
+                                : displaySales}
+                            </span>
+                            <span className="text-[10px] text-emerald-700 font-bold font-mono">
+                              {merchant.currency || "DH"}
+                            </span>
+                          </div>
+                          <span className="text-[9px] text-[#54656F] block">
+                            {locale === "fr" ? "Activité enregistrée" : "النشاط المسجل"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 4. Branch Performance Breakdown Card (Only shown when "ALL" branches is selected in Multi-Branch mode) */}
+                      {monthlyAnalytics.isMultiBranch && isAllBranches && selectedMonth.branches.length > 1 && (
+                        <div className="bg-white p-4 rounded-2xl border border-[#E9EDEF] shadow-sm space-y-3">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-[#111B21] flex items-center gap-1.5">
+                              <Building2 className="w-4 h-4 text-[#008069]" />
+                              <span>{t.demo.branchBreakdown}</span>
+                            </span>
+                            <span className="text-[10px] text-[#54656F]">
+                              {selectedMonth.branches.length} {t.demo.branch}
+                            </span>
+                          </div>
+
+                          <div className="space-y-2.5">
+                            {selectedMonth.branches.map((b) => (
+                              <div
+                                key={b.branchName}
+                                className="p-3 rounded-xl bg-[#F0F2F5] space-y-2 border border-[#E9EDEF]"
+                              >
+                                <div className="flex items-center justify-between text-xs">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-[#111B21]">📍 {b.branchName}</span>
+                                    {b.city && (
+                                      <span className="text-[10px] text-[#54656F]">({b.city})</span>
+                                    )}
+                                    {b.isMain && (
+                                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-400 text-amber-950 font-bold">
+                                        {t.demo.mainBranch}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="font-mono font-bold text-[#008069]">
+                                    {b.visits} {locale === "fr" ? "visites" : "زيارة"} ({b.visitsShare}%)
+                                  </span>
+                                </div>
+
+                                {/* Progress Bar showing branch share of total visits */}
+                                <div className="w-full bg-[#D1D7DB] h-2 rounded-full overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-[#00A884] to-[#008069] h-full rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.max(5, b.visitsShare)}%` }}
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-between text-[11px] text-[#54656F] pt-0.5">
+                                  <span>
+                                    🎁 {b.rewardsRedeemed} {locale === "fr" ? "cadeaux" : "مكافأة"}
+                                  </span>
+                                  {b.billAmount > 0 && (
+                                    <span className="font-mono">
+                                      💳 {b.billAmount} {merchant.currency || "DH"}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tab 3: پروموسيون (Broadcast Promotions) */}
         {activeTab === "promo" && (
           <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
@@ -2851,10 +3281,11 @@ export default function MerchantDashboardClient({
         )}
 
         {/* Bottom Navigation Bar */}
-        <nav className="sticky bottom-0 z-30 bg-white border-t border-[#E9EDEF] grid grid-cols-4 p-2 text-center text-xs shadow-lg">
+        <nav className="sticky bottom-0 z-30 bg-white border-t border-[#E9EDEF] grid grid-cols-5 p-1.5 text-center text-xs shadow-lg">
           {[
             { id: "home" as const, label: t.demo.ownerHome, icon: LayoutDashboard },
             { id: "customers" as const, label: t.demo.ownerClients, icon: Users },
+            { id: "analytics" as const, label: t.demo.ownerAnalytics, icon: BarChart3 },
             { id: "promo" as const, label: t.demo.ownerPromos, icon: Megaphone },
             { id: "settings" as const, label: t.demo.ownerSettings, icon: Settings },
           ].map((tab) => {
@@ -2865,8 +3296,9 @@ export default function MerchantDashboardClient({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-2 rounded-xl flex flex-col items-center gap-1 transition ${isActive ? "text-[#008069] font-bold" : "text-[#54656F] hover:text-[#111B21]"
-                  }`}
+                className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
+                  isActive ? "text-[#008069] font-bold" : "text-[#54656F] hover:text-[#111B21]"
+                }`}
               >
                 <div className="relative">
                   <Icon className={`w-4 h-4 ${isActive ? "stroke-[2.5]" : ""}`} />
@@ -2874,7 +3306,9 @@ export default function MerchantDashboardClient({
                     <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
                   )}
                 </div>
-                <span className="text-[10px]">{tab.label}</span>
+                <span className="text-[10px] sm:text-xs font-medium truncate w-full block text-center leading-tight">
+                  {tab.label}
+                </span>
               </button>
             );
           })}
