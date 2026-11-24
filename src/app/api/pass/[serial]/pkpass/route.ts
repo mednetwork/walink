@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { generateApplePass } from "@/lib/apple-wallet";
+import { generateApplePass, getAppleWalletConfig } from "@/lib/apple-wallet";
 
 export async function GET(
   req: NextRequest,
@@ -40,6 +40,7 @@ export async function GET(
     // Diagnostic JSON format for developers or debugging inspectors
     if (format === "json") {
       const isCashback = customer.loyaltyType === "CASHBACK";
+      const config = getAppleWalletConfig();
       return NextResponse.json({
         mode: "smart_apple_pass",
         customerName: customer.name,
@@ -49,11 +50,15 @@ export async function GET(
         memberCode: customer.memberCode,
         passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || "pass.ma.walink.loyalty",
         teamIdentifier: process.env.APPLE_TEAM_ID || "ZNM6JZ2DD4",
-        webServiceURL:
-          process.env.APPLE_WEB_SERVICE_URL ||
-          (process.env.NODE_ENV === "production"
-            ? "https://wclient.walink.ma/api/apple"
-            : "https://walink.ma/api/apple"),
+        webServiceURL: config.webServiceUrl,
+        isConfigured: config.isConfigured,
+        signerCertLen: config.signerCert?.length || 0,
+        signerCertHead: config.signerCert?.toString("utf8").slice(0, 30) || "",
+        signerCertTail: config.signerCert?.toString("utf8").slice(-30) || "",
+        signerKeyLen: config.signerKey?.length || 0,
+        signerKeyHead: config.signerKey?.toString("utf8").slice(0, 30) || "",
+        wwdrCertLen: config.wwdrCert?.length || 0,
+        wwdrCertHead: config.wwdrCert?.toString("utf8").slice(0, 30) || "",
         stamps: customer.stamps,
         stampsRequired: merchant.stampsRequired,
         cashbackBalance: customer.cashbackBalance,
