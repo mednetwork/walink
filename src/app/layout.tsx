@@ -10,7 +10,7 @@ export const viewport: Viewport = {
   minimumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#060B18",
+  themeColor: "#FAF7F2",
 };
 
 export const metadata: Metadata = {
@@ -34,10 +34,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
         />
       </head>
-      <body className="bg-[#F0F2F5] text-[#111B21] min-h-screen selection:bg-[#008069] selection:text-white">
+      <body className="bg-[#FAF7F2] text-[#173E30] min-h-screen selection:bg-[#008069] selection:text-white antialiased">
         <PreventZoomClient />
         <I18nProvider>
           {children}

@@ -59,19 +59,19 @@ export default async function CustomerJoinPage({ params }: JoinPageProps) {
 
   if (!merchant || !merchant.isActive) {
     return (
-      <div className="min-h-screen bg-[#0B0F17] text-white flex items-center justify-center p-4">
-        <div className="w-full max-w-md glass-panel p-8 rounded-3xl text-center space-y-4 border border-white/10">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 mx-auto flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAF7F2] text-[#173E30] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#FFFDF7] p-8 rounded-3xl text-center space-y-4 border border-[#DCE0D4] shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-600 border border-amber-500/20 mx-auto flex items-center justify-center">
             <AlertTriangle className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-bold text-white">المحل غير متاح حالياً</h1>
-          <p className="text-xs text-white/60 leading-relaxed">
+          <h1 className="text-xl font-bold text-[#173E30]">المحل غير متاح حالياً</h1>
+          <p className="text-xs text-[#5F655D] leading-relaxed">
             عذراً، هذا المحل التجاري غير مفعل أو أن الرابط غير صحيح.
           </p>
           <div className="pt-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#008069] hover:bg-[#00705c] text-white font-semibold text-xs transition shadow-sm"
             >
               <ArrowRight className="w-4 h-4" />
               <span>العودة للرئيسية</span>

@@ -303,9 +303,9 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className="w-full max-w-[460px] mx-auto min-h-screen bg-[#F0F2F5] flex flex-col justify-between p-4 sm:p-6 text-[#111B21] selection:bg-[#008069] selection:text-white"
+      className="w-full max-w-[460px] mx-auto min-h-screen bg-[#FAF7F2] flex flex-col justify-between p-4 sm:p-6 text-[#173E30] selection:bg-[#008069] selection:text-white"
     >
-      <div className="bg-[#FFFFFF] rounded-2xl p-5 sm:p-7 border border-[#E9EDEF] shadow-sm space-y-6">
+      <div className="bg-[#FFFDF7] rounded-2xl p-5 sm:p-7 border border-[#DCE0D4] shadow-sm space-y-6">
         {/* Top Header Badge & Language Pill */}
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] border border-[#C8E6C9] text-[#008069] text-xs font-bold">
@@ -314,14 +314,14 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           </div>
 
           {/* Quick Corner Language Selector */}
-          <div className="flex items-center gap-1 bg-[#F0F2F5] border border-[#E9EDEF] rounded-full p-0.5 text-[11px] font-bold">
+          <div className="flex items-center gap-1 bg-[#FAF7F2] border border-[#DCE0D4] rounded-full p-0.5 text-[11px] font-bold">
             <button
               type="button"
               onClick={() => changeLocale("ar")}
               className={`px-2.5 py-0.5 rounded-full transition ${
                 locale === "ar"
                   ? "bg-[#008069] text-white shadow-sm"
-                  : "text-[#54656F] hover:text-[#111B21]"
+                  : "text-[#5F655D] hover:text-[#173E30]"
               }`}
             >
               عربي
@@ -332,7 +332,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               className={`px-2.5 py-0.5 rounded-full transition ${
                 locale === "fr"
                   ? "bg-[#008069] text-white shadow-sm"
-                  : "text-[#54656F] hover:text-[#111B21]"
+                  : "text-[#5F655D] hover:text-[#173E30]"
               }`}
             >
               FR
@@ -343,7 +343,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               className={`px-2.5 py-0.5 rounded-full transition ${
                 locale === "es"
                   ? "bg-[#008069] text-white shadow-sm"
-                  : "text-[#54656F] hover:text-[#111B21]"
+                  : "text-[#5F655D] hover:text-[#173E30]"
               }`}
             >
               ES
@@ -359,7 +359,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         )}
 
         <div className="text-center space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111B21] tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#173E30] tracking-tight leading-tight">
             {locale === "ar" ? (
               <>
                 احصل على بطاقة ولاء <span className="text-[#008069]">{merchant.name}</span> في ثوانٍ
@@ -374,7 +374,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               </>
             )}
           </h1>
-          <p className="text-xs text-[#54656F] max-w-xs mx-auto font-medium">
+          <p className="text-xs text-[#5F655D] max-w-xs mx-auto font-medium">
             {isCashback
               ? t.onboarding.welcomeGiftCashback.replace(
                   "{amount}",
@@ -407,7 +407,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         {/* Dual Loyalty Program Choice (If merchant has BOTH) */}
         {loyaltyMode === "BOTH" && (
           <div className="space-y-2">
-            <span className="text-xs font-bold text-[#111B21] block">
+            <span className="text-xs font-bold text-[#173E30] block">
               {t.onboarding.chooseProgram}
             </span>
             <div className="grid grid-cols-2 gap-2.5">
@@ -417,14 +417,14 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 className={`p-3.5 rounded-2xl text-start transition-all border ${
                   selectedLoyaltyType === "STAMPS"
                     ? "bg-[#E8F5E9] border-[#008069] shadow-sm ring-1 ring-[#008069]"
-                    : "bg-[#FFFFFF] border-[#E9EDEF] hover:bg-[#F7F8FA] text-[#54656F]"
+                    : "bg-[#FFFDF7] border-[#DCE0D4] hover:bg-[#F7F8FA] text-[#5F655D]"
                 }`}
               >
                 <div className="flex items-center gap-1.5 font-bold text-xs text-[#008069] mb-1">
                   <Gift className="w-4 h-4" />
                   <span>{t.onboarding.stampsProgramTitle}</span>
                 </div>
-                <p className="text-[11px] text-[#54656F] leading-snug">
+                <p className="text-[11px] text-[#5F655D] leading-snug">
                   {t.onboarding.stampsProgramDesc
                     .replace("{stamps}", String(merchant.stampsRequired))
                     .replace("{reward}", merchant.rewardName)}
@@ -437,7 +437,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 className={`p-3.5 rounded-2xl text-start transition-all border ${
                   selectedLoyaltyType === "CASHBACK"
                     ? "bg-[#FFFBEB] border-[#D97706] shadow-sm ring-1 ring-[#D97706]"
-                    : "bg-[#FFFFFF] border-[#E9EDEF] hover:bg-[#F7F8FA] text-[#54656F]"
+                    : "bg-[#FFFDF7] border-[#DCE0D4] hover:bg-[#F7F8FA] text-[#5F655D]"
                 }`}
               >
                 <div className="flex items-center gap-1.5 font-bold text-xs text-[#B45309] mb-1">
@@ -449,7 +449,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                     )}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#54656F] leading-snug">
+                <p className="text-[11px] text-[#5F655D] leading-snug">
                   {t.onboarding.cashbackProgramDesc.replace(
                     "{rate}",
                     String(cashbackRate)
@@ -470,7 +470,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#111B21] block">
+            <label className="text-xs font-bold text-[#173E30] block">
               {t.onboarding.nameLabel}
             </label>
             <input
@@ -479,12 +479,12 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t.onboarding.namePlaceholder}
-              className="w-full px-4 py-3 rounded-2xl bg-[#FFFFFF] border-1.5 border-[#D1D7DB] text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-sm font-medium"
+              className="w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-1.5 border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-sm font-medium"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#111B21] block">
+            <label className="text-xs font-bold text-[#173E30] block">
               {t.onboarding.phoneLabel}
             </label>
             <div className="relative">
@@ -497,7 +497,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder={t.onboarding.phonePlaceholder}
-                className="w-full px-4 py-3 rounded-2xl bg-[#FFFFFF] border-1.5 border-[#D1D7DB] text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-sm font-mono font-medium"
+                className="w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-1.5 border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-sm font-mono font-medium"
               />
               <Smartphone className={`w-4 h-4 text-[#8696A0] absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 pointer-events-none`} />
             </div>
@@ -519,10 +519,10 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
             </button>
 
             {showPinInput && (
-              <div className="p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-1.5 animate-in fade-in duration-150">
-                <label className="text-[11px] font-bold text-[#111B21] flex items-center justify-between">
+              <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-1.5 animate-in fade-in duration-150">
+                <label className="text-[11px] font-bold text-[#173E30] flex items-center justify-between">
                   <span>{locale === "ar" ? "رمز أمان البطاقة (4 أرقام):" : locale === "fr" ? "Code PIN de sécurité (4 chiffres):" : "Código PIN de seguridad (4 dígitos):"}</span>
-                  <span className="text-[10px] text-[#54656F] font-normal">{locale === "ar" ? "اختياري" : "Optionnel"}</span>
+                  <span className="text-[10px] text-[#5F655D] font-normal">{locale === "ar" ? "اختياري" : "Optionnel"}</span>
                 </label>
                 <div className="relative">
                   <input
@@ -533,11 +533,11 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                     value={customPin}
                     onChange={(e) => setCustomPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
                     placeholder={locale === "ar" ? "مثال: 1234 (الافتراضي كود العضوية)" : "Ex: 1234"}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#D1D7DB] text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-1 focus:ring-[#008069] text-xs font-mono tracking-widest"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-1 focus:ring-[#008069] text-xs font-mono tracking-widest"
                   />
                   <Lock className={`w-3.5 h-3.5 text-[#8696A0] absolute ${isRTL ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 pointer-events-none`} />
                 </div>
-                <p className="text-[10px] text-[#54656F] leading-snug">
+                <p className="text-[10px] text-[#5F655D] leading-snug">
                   {locale === "ar"
                     ? "يُستخدم هذا الرمز لحماية رصيدك واسترجاع بطاقتك إذا قمت بحذفها أو غيرت هاتفك. في حال عدم إدخاله، سيكون رمزك هو كود عضويتك."
                     : locale === "fr"
@@ -551,7 +551,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-6 rounded-2xl font-bold text-sm bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#009071] hover:to-[#006D59] text-white shadow-md shadow-[#008069]/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3.5 px-6 rounded-full font-bold text-sm bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#009071] hover:to-[#006D59] text-white shadow-md shadow-[#008069]/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -566,7 +566,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
       </div>
 
       {/* Footer Security Badges */}
-      <div className="pt-6 pb-2 text-center space-y-2 text-[11px] text-[#54656F] font-medium">
+      <div className="pt-6 pb-2 text-center space-y-2 text-[11px] text-[#5F655D] font-medium">
         <div className="flex items-center justify-center gap-2">
           <Lock className="w-3.5 h-3.5 text-[#008069]" />
           <span>Apple Wallet & Google Wallet • مشفّرة 100%</span>
@@ -579,23 +579,23 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div
             dir={isRTL ? "rtl" : "ltr"}
-            className="relative w-full max-w-sm bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-6 text-[#111B21] space-y-4"
+            className="relative w-full max-w-sm bg-white border border-[#DCE0D4] rounded-3xl shadow-2xl p-6 text-[#173E30] space-y-4"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-[#E8F5E9] text-[#008069] flex items-center justify-center">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#111B21]">
+                  <h3 className="font-bold text-sm text-[#173E30]">
                     {locale === "ar"
                       ? "استرجاع البطاقة وتأكيد الهوية"
                       : locale === "fr"
                       ? "Récupération sécurisée du pass"
                       : "Recuperación segura de tarjeta"}
                   </h3>
-                  <span className="text-[10px] text-[#54656F] block">
+                  <span className="text-[10px] text-[#5F655D] block">
                     {merchant.name} • Walink Security
                   </span>
                 </div>
@@ -609,7 +609,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                     errorMsg: null,
                   })
                 }
-                className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F]"
+                className="p-1.5 rounded-xl hover:bg-[#FAF7F2] text-[#5F655D]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -651,13 +651,13 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
             ) : (
               <form onSubmit={handleVerifyPin} className="space-y-4">
                 {/* Masked Customer Identity */}
-                <div className="p-3.5 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] space-y-2">
-                  <span className="text-[11px] text-[#54656F] block">
+                <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-2">
+                  <span className="text-[11px] text-[#5F655D] block">
                     {locale === "ar"
                       ? "تم العثور على بطاقة مسجلة بهذا الرقم:"
                       : "Un pass existe déjà pour ce numéro :"}
                   </span>
-                  <div className="flex items-center justify-between text-xs font-bold text-[#111B21]">
+                  <div className="flex items-center justify-between text-xs font-bold text-[#173E30]">
                     <span>
                       {locale === "ar" ? "الاسم:" : "Nom :"} {pinModal.maskedName || "••••"}
                     </span>
@@ -677,7 +677,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
 
                 {/* PIN Input */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#111B21] flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#173E30] flex items-center justify-between">
                     <span>
                       {locale === "ar"
                         ? "أدخل رمز الأمان (PIN من 4 أرقام):"
@@ -701,12 +701,12 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                       setPinCode(e.target.value.replace(/\D/g, "").slice(0, 4))
                     }
                     placeholder="••••"
-                    className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-2xl bg-white border-2 border-[#D1D7DB] focus:border-[#008069] focus:outline-none transition font-bold"
+                    className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-2xl bg-white border-2 border-[#C8D1BE] focus:border-[#008069] focus:outline-none transition font-bold"
                   />
                 </div>
 
                 {/* Helpful Hint */}
-                <p className="text-[11px] text-[#54656F] leading-snug">
+                <p className="text-[11px] text-[#5F655D] leading-snug">
                   {locale === "ar"
                     ? "💡 رمز الأمان الافتراضي هو كود عضويتك المكون من 4 أرقام (#xxxx) الموجود على بطاقتك السابقة أو إشعار المتجر، أو الرمز المخصص الذي اخترته."
                     : "💡 Le code PIN par défaut est votre code membre (#xxxx) à 4 chiffres."}
@@ -723,7 +723,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                         errorMsg: null,
                       })
                     }
-                    className="flex-1 py-3 px-4 rounded-xl border border-[#D1D7DB] text-xs font-bold text-[#54656F] hover:bg-[#F0F2F5] transition"
+                    className="flex-1 py-3 px-4 rounded-xl border border-[#C8D1BE] text-xs font-bold text-[#5F655D] hover:bg-[#FAF7F2] transition"
                   >
                     {locale === "ar" ? "إلغاء" : "Annuler"}
                   </button>

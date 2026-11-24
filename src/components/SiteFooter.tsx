@@ -28,7 +28,7 @@ export default function SiteFooter() {
 
   return (
     <footer
-      className="bg-[#0B0F17] text-white border-t border-white/10 relative z-20"
+      className="bg-[#173E30] text-white border-t border-[#00A884]/20 relative z-20"
       dir={isRTL ? "rtl" : "ltr"}
       aria-label={t.footer.colEssential}
     >
