@@ -22,8 +22,15 @@ export async function GET(
     };
 
     if (passesUpdatedSince) {
-      const sinceDate = new Date(passesUpdatedSince);
-      if (!isNaN(sinceDate.getTime())) {
+      let sinceDate: Date | null = null;
+      if (/^\d+$/.test(passesUpdatedSince)) {
+        const num = Number(passesUpdatedSince);
+        sinceDate = new Date(num > 1e11 ? num : num * 1000);
+      } else {
+        const d = new Date(passesUpdatedSince);
+        if (!isNaN(d.getTime())) sinceDate = d;
+      }
+      if (sinceDate && !isNaN(sinceDate.getTime())) {
         queryWhere.updatedAt = { gt: sinceDate };
       }
     }

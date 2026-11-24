@@ -62,9 +62,10 @@ export async function GET(
       },
     });
   } catch (error: unknown) {
-    console.error("Apple Wallet pass fetch error:", error);
+    const msg = error instanceof Error ? error.message : "Failed to generate signed pass";
+    console.error("Apple Wallet pass fetch error:", msg);
     return NextResponse.json(
-      { error: "Failed to generate signed pass" },
+      { error: msg },
       { status: 500 }
     );
   }

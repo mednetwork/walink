@@ -85,7 +85,7 @@ export function getAppleWalletConfig(): AppleWalletConfig {
       i++;
     }
     if (combined) {
-      return combined;
+      return combined.replace(/\s+/g, "");
     }
     let direct = (process.env[baseKey] || "").trim();
     if (
@@ -94,7 +94,7 @@ export function getAppleWalletConfig(): AppleWalletConfig {
     ) {
       direct = direct.slice(1, -1);
     }
-    return direct.trim();
+    return direct.replace(/\s+/g, "");
   };
 
   // Helper to read buffer from base64 env (chunked or direct) or file fallback
@@ -106,7 +106,10 @@ export function getAppleWalletConfig(): AppleWalletConfig {
     const b64 = getChunkedOrDirectEnv(base64EnvKey);
     if (b64) {
       try {
-        return Buffer.from(b64, "base64");
+        const buf = Buffer.from(b64, "base64");
+        if (buf.length > 500) {
+          return buf;
+        }
       } catch {
         // Fallback
       }
@@ -116,7 +119,7 @@ export function getAppleWalletConfig(): AppleWalletConfig {
       try {
         return fs.readFileSync(resolvedPath);
       } catch {
-        return null;
+        // Fallback
       }
     }
     return null;
@@ -741,14 +744,15 @@ function createApnsToken(
 }
 
 /**
- * Sends a background HTTP/2 APNs push notification to an iPhone device to silently update its Apple Wallet pass
+ * Sends a background HTTP/2 APNs push notification to an iPhone device to silently update its Apple Wallet pass.
+ * Uses mutual TLS (mTLS) with the official Pass Type ID certificate and private key, authenticated directly by Apple APNs.
  */
 export async function sendApplePassUpdate(pushToken: string): Promise<boolean> {
   const config = getAppleWalletConfig();
 
-  if (!config.authKeyP8 || !config.keyId || !config.teamIdentifier) {
+  if (!config.signerCert || !config.signerKey) {
     console.warn(
-      "[AppleWallet APNs] Missing APNs auth key or credentials, skipping push"
+      "[AppleWallet APNs] Missing pass certificate or private key, skipping push"
     );
     return false;
   }
@@ -760,13 +764,16 @@ export async function sendApplePassUpdate(pushToken: string): Promise<boolean> {
 
   return new Promise((resolve) => {
     try {
-      const jwtToken = createApnsToken(
-        config.keyId,
-        config.teamIdentifier,
-        config.authKeyP8!
-      );
-
-      const client = http2.connect("https://api.push.apple.com:443");
+      const { signerCert, signerKey } = config;
+      if (!signerCert || !signerKey) {
+        resolve(false);
+        return;
+      }
+      // Connect to Apple APNs production gateway using mutual TLS (mTLS) with the Pass Type ID certificate
+      const client = http2.connect("https://api.push.apple.com:443", {
+        cert: signerCert,
+        key: signerKey,
+      });
 
       client.on("error", (err) => {
         console.warn("[AppleWallet APNs] Client error:", err.message);
@@ -777,16 +784,14 @@ export async function sendApplePassUpdate(pushToken: string): Promise<boolean> {
       const req = client.request({
         ":method": "POST",
         ":path": `/3/device/${cleanToken}`,
-        authorization: `bearer ${jwtToken}`,
         "apns-topic": config.passTypeIdentifier,
-        "apns-push-type": "background",
-        "apns-priority": "5",
       });
 
       req.on("response", (headers) => {
         const status = Number(headers[":status"]);
         client.close();
         if (status === 200) {
+          console.log(`[AppleWallet APNs] Pass update push delivered successfully (200 OK)`);
           resolve(true);
         } else {
           console.warn(`[AppleWallet APNs] Push failed with status: ${status}`);
