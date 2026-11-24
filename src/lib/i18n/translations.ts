@@ -522,6 +522,7 @@ export interface TranslationDictionary {
       friendsJoined: string;
       referredBanner: string;
       rewardEarned: string;
+      pendingGiftBanner: string;
     };
     backPass: {
       menu: string;
@@ -1119,6 +1120,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
         friendsJoined: "الأصدقاء المسجلون",
         referredBanner: "🎁 تمت دعوتك من طرف صديق! سجل الآن واحصل على هديتك الترحيبية.",
         rewardEarned: "🎉 قام صديقك {name} بالتسجيل عبر رابطك! تمت إضافة مكافأة الإحالة إلى بطاقتك.",
+        pendingGiftBanner: "🎁 للاستفادة من الهدية الأولى المرجو زيارتنا",
       },
       backPass: {
         menu: "📖 القائمة / المنيو الرقمي",
@@ -1715,6 +1717,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
         friendsJoined: "Amis inscrits",
         referredBanner: "🎁 Vous avez été invité par un ami ! Inscrivez-vous et profitez de votre cadeau de bienvenue.",
         rewardEarned: "🎉 Votre ami {name} s'est inscrit grâce à vous ! Votre bonus parrainage a été crédité.",
+        pendingGiftBanner: "🎁 Pour profiter de votre premier cadeau, veuillez nous rendre visite",
       },
       backPass: {
         menu: "📖 Carte & Menu digital",
@@ -2311,6 +2314,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
         friendsJoined: "Amigos inscritos",
         referredBanner: "🎁 ¡Has sido invitado por un amigo! Regístrate y recibe tu regalo de bienvenida.",
         rewardEarned: "🎉 ¡Tu amigo {name} se ha registrado con tu enlace! Se ha añadido la recompensa a tu tarjeta.",
+        pendingGiftBanner: "🎁 Para disfrutar de tu primer regalo, por favor visítanos",
       },
       backPass: {
         menu: "📖 Menú digital",

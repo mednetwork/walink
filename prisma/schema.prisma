@@ -44,6 +44,7 @@ model Merchant {
   plan            String        @default("GROWTH") // STARTER, GROWTH, MULTI
   credits         Int           @default(1000)
   autoWinback     Boolean       @default(true)
+  autoBirthday    Boolean?      @default(false)
   autoReview      Boolean       @default(true)
   autoRadar       Boolean       @default(true)
   autoNearReward  Boolean       @default(false)
@@ -64,6 +65,7 @@ model Customer {
   merchant          Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   name              String
   phone             String
+  birthday          String?
   passSerial        String        @unique @default(cuid())
   memberCode        String        // 4-digit display ID e.g. "4821"
   stamps            Int           @default(0)
@@ -74,6 +76,7 @@ model Customer {
   totalVisits       Int           @default(1)
   rewardsRedeemed   Int           @default(0)
   isVip              Boolean       @default(false)
+  isActivated        Boolean       @default(true)
   referredByCode     String?       // 4-digit memberCode of the customer who referred them
   referralsCount     Int           @default(0)      // How many friends this customer brought in
   lastVisitAt       DateTime      @default(now())

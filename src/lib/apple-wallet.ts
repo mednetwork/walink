@@ -28,6 +28,7 @@ export interface CustomerPassData {
   totalVisits?: number | null;
   rewardsRedeemed?: number | null;
   isVip?: boolean | null;
+  isActivated?: boolean | null;
   applePushToken?: string | null;
   updatedAt?: Date | string | null;
 }
@@ -259,13 +260,17 @@ export async function generateApplePass(
   const bgColor = hexToRgb(merchant.primaryColor || "#5b3519");
 
   // Visual Stamp Progress & Status Calculations
+  const isUnactivated = customer.isActivated === false;
   const stampsRequired = Math.max(1, merchant.stampsRequired || 5);
   const currentStamps = customer.stamps || 0;
-  const isStampsFull = !isCashback && currentStamps >= stampsRequired;
+  const isStampsFull = !isCashback && !isUnactivated && currentStamps >= stampsRequired;
   const stampsRemaining = Math.max(0, stampsRequired - currentStamps);
 
   let stampsProgressDisplay = `${currentStamps} / ${stampsRequired}`;
-  if (stampsRequired <= 10) {
+  if (isUnactivated) {
+    const dots = "○".repeat(Math.min(stampsRequired, 5));
+    stampsProgressDisplay = `${dots} (${currentStamps}/${stampsRequired})`;
+  } else if (stampsRequired <= 10) {
     const earnedCount = Math.min(currentStamps, stampsRequired);
     const remainingCount = Math.max(0, stampsRequired - earnedCount);
     const dots = "●".repeat(earnedCount) + "○".repeat(remainingCount);
@@ -294,7 +299,13 @@ export async function generateApplePass(
     headerValue: isCashback
       ? `${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
       : `${currentStamps} / ${stampsRequired}`,
-    primaryLabel: isCashback
+    primaryLabel: isUnactivated
+      ? locale === "ar"
+        ? "الهدية الأولى"
+        : locale === "fr"
+        ? "PREMIER CADEAU"
+        : "PRIMER REGALO"
+      : isCashback
       ? locale === "ar"
         ? "الرصيد المتاح"
         : locale === "fr"
@@ -305,7 +316,13 @@ export async function generateApplePass(
       : locale === "fr"
       ? "PROCHAINE RÉCOMPENSE"
       : "PRÓXIMA RECOMPENSA",
-    primaryValue: isCashback
+    primaryValue: isUnactivated
+      ? locale === "ar"
+        ? "زرنا لتفعيل هديتك الأولى 🎁"
+        : locale === "fr"
+        ? "Visitez-nous pour l'activer 🎁"
+        : "¡Visítenos para activar! 🎁"
+      : isCashback
       ? `${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
       : isStampsFull
       ? `🎉 ${merchant.rewardName} ${locale === "ar" ? "(جاهزة للاستلام!)" : locale === "fr" ? "(Prête !)" : "(¡Lista!)"}`
@@ -339,7 +356,13 @@ export async function generateApplePass(
         : locale === "fr"
         ? "STATUT"
         : "ESTADO",
-    statusValue: isCashback
+    statusValue: isUnactivated
+      ? locale === "ar"
+        ? "بانتظار زيارتك الأولى"
+        : locale === "fr"
+        ? "En attente de visite"
+        : "Esperando primera visita"
+      : isCashback
       ? customer.isVip
         ? "👑 VIP GOLD"
         : locale === "ar"

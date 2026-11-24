@@ -121,6 +121,7 @@ export interface CustomerPassModel {
   totalSpent?: number | null;
   totalVisits: number;
   isVip: boolean;
+  isActivated?: boolean | null;
   walletType?: string | null;
 }
 
@@ -245,6 +246,7 @@ export function buildLoyaltyObject(
   const currency = merchant.currency || "DH";
 
   const isCashback = customer.loyaltyType === "CASHBACK";
+  const isUnactivated = customer.isActivated === false;
   const effectiveCashbackRate =
     (merchant.cashbackRate || 10) + (customer.isVip ? (merchant.vipCashbackBonus || 5) : 0);
 
@@ -252,7 +254,36 @@ export function buildLoyaltyObject(
   let loyaltyPoints: Record<string, unknown>;
   let secondaryLoyaltyPoints: Record<string, unknown>;
 
-  if (isCashback) {
+  if (isUnactivated) {
+    const pointsLabel =
+      locale === "fr" ? "Premier Cadeau" : locale === "es" ? "Primer Regalo" : "الهدية الأولى";
+    const statusLabel =
+      locale === "fr" ? "Statut" : locale === "es" ? "Estado" : "الحالة";
+
+    loyaltyPoints = {
+      label: pointsLabel,
+      balance: {
+        string:
+          locale === "fr"
+            ? "Visitez-nous 🎁"
+            : locale === "es"
+            ? "Visítanos 🎁"
+            : "زرنا لتفعيل هديتك الأولى 🎁",
+      },
+    };
+
+    secondaryLoyaltyPoints = {
+      label: statusLabel,
+      balance: {
+        string:
+          locale === "fr"
+            ? "En attente de visite"
+            : locale === "es"
+            ? "Esperando primera visita"
+            : "بانتظار زيارتك الأولى",
+      },
+    };
+  } else if (isCashback) {
     const pointsLabel =
       locale === "fr"
         ? "Solde Cashback"

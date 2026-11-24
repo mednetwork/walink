@@ -125,6 +125,8 @@ export default async function CustomerPassPage({ params }: PassPageProps) {
     lastVisitAt: customer.lastVisitAt.toISOString(),
     walletType: customer.walletType,
     pushSubscription: customer.pushSubscription,
+    isActivated: customer.isActivated ?? true,
+    referredByCode: customer.referredByCode,
     securityPin: customer.securityPin || customer.memberCode,
   };
 

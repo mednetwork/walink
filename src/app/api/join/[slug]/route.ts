@@ -248,6 +248,8 @@ export async function POST(
       });
     }
 
+    const isReferred = Boolean(referrerCustomer);
+
     // Determine custom security PIN or default to 4-digit memberCode
     const customPin =
       securityPin &&
@@ -256,7 +258,12 @@ export async function POST(
         ? securityPin.trim()
         : memberCode;
 
-    // Create new customer
+    // Create new customer:
+    // Organic customers receive their welcome gift immediately and are active.
+    // Referred customers start unactivated (0 balance) until their first store visit.
+    const initialStamps = isCashback ? 0 : isReferred ? 0 : 1;
+    const initialCashback = isReferred ? 0 : welcomeBonus;
+
     const newCustomer = await prisma.customer.create({
       data: {
         merchantId: merchant.id,
@@ -266,83 +273,15 @@ export async function POST(
         securityPin: customPin,
         failedPinAttempts: 0,
         loyaltyType: effectiveLoyaltyType,
-        stamps: isCashback ? 0 : 1, // 1 welcome stamp gift for STAMPS
-        cashbackBalance: welcomeBonus,
-        totalCashbackEarned: welcomeBonus,
+        stamps: initialStamps,
+        cashbackBalance: initialCashback,
+        totalCashbackEarned: initialCashback,
         totalVisits: 1,
         referredByCode: referrerCustomer ? referrerCustomer.memberCode : null,
+        isActivated: !isReferred,
         walletType: "WEBPASS",
       },
     });
-
-    // Reward referrer immediately if exists
-    if (referrerCustomer) {
-      const isReferrerCashback = referrerCustomer.loyaltyType === "CASHBACK";
-      const refBonusDH = Number(merchant.referralBonus || 10);
-      const currency = merchant.currency || "DH";
-
-      if (isReferrerCashback) {
-        await prisma.$transaction([
-          prisma.customer.update({
-            where: { id: referrerCustomer.id },
-            data: {
-              cashbackBalance: { increment: refBonusDH },
-              totalCashbackEarned: { increment: refBonusDH },
-              referralsCount: { increment: 1 },
-            },
-          }),
-          prisma.transaction.create({
-            data: {
-              merchantId: merchant.id,
-              customerId: referrerCustomer.id,
-              type: "CASHBACK_EARNED",
-              cashbackDelta: refBonusDH,
-              staffName: "النظام",
-              note: `مكافأة دعوة صديق: ${newCustomer.name} 🎁`,
-            },
-          }),
-          prisma.notification.create({
-            data: {
-              merchantId: merchant.id,
-              customerId: referrerCustomer.id,
-              type: "REWARD",
-              title: merchant.name,
-              body: `🎉 قام صديقك ${newCustomer.name} بالتسجيل عبر رابطك! تمت إضافة مكافأة الإحالة (+${refBonusDH} ${currency}) إلى رصيدك.`,
-            },
-          }),
-        ]);
-      } else {
-        const newStamps = Math.min(merchant.stampsRequired, referrerCustomer.stamps + 1);
-        await prisma.$transaction([
-          prisma.customer.update({
-            where: { id: referrerCustomer.id },
-            data: {
-              stamps: newStamps,
-              referralsCount: { increment: 1 },
-            },
-          }),
-          prisma.transaction.create({
-            data: {
-              merchantId: merchant.id,
-              customerId: referrerCustomer.id,
-              type: "STAMP_ADDED",
-              stampsDelta: 1,
-              staffName: "النظام",
-              note: `مكافأة دعوة صديق: ${newCustomer.name} 🎁`,
-            },
-          }),
-          prisma.notification.create({
-            data: {
-              merchantId: merchant.id,
-              customerId: referrerCustomer.id,
-              type: "STAMP",
-              title: merchant.name,
-              body: `🎉 قام صديقك ${newCustomer.name} بالتسجيل عبر رابطك! تمت إضافة ختم مجاني إلى بطاقتك.`,
-            },
-          }),
-        ]);
-      }
-    }
 
     // Create initial card created transaction
     await prisma.transaction.create({
@@ -350,10 +289,12 @@ export async function POST(
         merchantId: merchant.id,
         customerId: newCustomer.id,
         type: "CARD_CREATED",
-        stampsDelta: isCashback ? 0 : 1,
-        cashbackDelta: isCashback ? welcomeBonus : 0,
+        stampsDelta: initialStamps,
+        cashbackDelta: initialCashback,
         staffName: "النظام",
-        note: isCashback
+        note: isReferred
+          ? "إنشاء بطاقة عبر دعوة صديق (بانتظار التفعيل عند أول زيارة للمتجر) 🎁"
+          : isCashback
           ? `تفعيل بطاقة كاش باك + هدية ترحيبية ${welcomeBonus} ${merchant.currency}`
           : "تفعيل بطاقة الأختام + أول ختم ترحيبي هدية 🎁",
       },
@@ -363,7 +304,10 @@ export async function POST(
       {
         existing: false,
         passSerial: newCustomer.passSerial,
-        message: isCashback
+        isActivated: !isReferred,
+        message: isReferred
+          ? "تم إنشاء بطاقتك بنجاح! تفضل بزيارتنا لتفعيل هديتك الأولى."
+          : isCashback
           ? `تم تفعيل بطاقة الكاش باك بنجاح وحصلت على ${welcomeBonus} ${merchant.currency} كهدية ترحيبية!`
           : "تم تفعيل بطاقتك بنجاح وحصلت على أول ختم هدية!",
       },

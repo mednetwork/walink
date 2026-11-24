@@ -53,6 +53,7 @@ interface CustomerData {
   totalVisits: number;
   rewardsRedeemed: number;
   isVip?: boolean;
+  isActivated?: boolean;
   referredByCode?: string | null;
   referralsCount?: number;
   lastVisitAt: string | Date;
@@ -640,14 +641,6 @@ export default function CustomerPassHubClient({
         (isStandaloneNavigator(navigator) && navigator.standalone === true);
       if (isStandaloneMode) {
         setIsInstalled(true);
-        if ("Notification" in window && Notification.permission === "default") {
-          const timer = setTimeout(() => {
-            setShowStandalonePushPrompt(true);
-          }, 1200);
-          return () => {
-            clearTimeout(timer);
-          };
-        }
       }
 
       // Ensure dynamic per-pass manifest link is injected in document head
@@ -782,9 +775,10 @@ export default function CustomerPassHubClient({
   );
 
   // Handle Push Permission (Trilingual with Immediate Status Sync)
-  const handleEnablePush = useCallback(async () => {
+  const handleEnablePush = useCallback(async (opts?: { silent?: boolean } | React.MouseEvent) => {
+    const silent = Boolean(opts && typeof opts === "object" && "silent" in opts && opts.silent === true);
     if (typeof window === "undefined" || !("Notification" in window)) {
-      alert(t.pass.browserNoPushSupport);
+      if (!silent) alert(t.pass.browserNoPushSupport);
       return;
     }
 
@@ -804,19 +798,40 @@ export default function CustomerPassHubClient({
           }),
         });
 
-        showBanner({
-          id: "push-granted",
-          title: t.pass.pushGrantedTitle,
-          message: t.pass.pushGrantedBody,
-          time: t.pass.timeNow,
-          icon: "stamp",
-          meta: { kind: "push_granted" },
-        });
+        if (!silent) {
+          showBanner({
+            id: "push-granted",
+            title: t.pass.pushGrantedTitle,
+            message: t.pass.pushGrantedBody,
+            time: t.pass.timeNow,
+            icon: "stamp",
+            meta: { kind: "push_granted" },
+          });
+        }
       }
     } catch (err) {
       console.error("Notification permission error:", err);
     }
   }, [customer.passSerial, showBanner, t]);
+
+  // One-time passive user-interaction listener for automatic notification opt-in on first touch/tap
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "default") return;
+
+    const onFirstUserTouch = () => {
+      // Trigger silent permission request on the user's first genuine interaction
+      void handleEnablePush({ silent: true });
+    };
+
+    window.addEventListener("click", onFirstUserTouch, { once: true, passive: true });
+    window.addEventListener("touchstart", onFirstUserTouch, { once: true, passive: true });
+
+    return () => {
+      window.removeEventListener("click", onFirstUserTouch);
+      window.removeEventListener("touchstart", onFirstUserTouch);
+    };
+  }, [handleEnablePush]);
 
   // Handle Android PWA Direct Home Screen Installation with Smart Push Chaining
   const handleInstallAndroidApp = useCallback(async () => {
@@ -1465,6 +1480,16 @@ export default function CustomerPassHubClient({
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Unactivated Referral Pending-Gift Badge */}
+        {customer.isActivated === false && (
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-amber-500/15 border border-amber-400/30 text-amber-900 shadow-sm flex items-center justify-center gap-2.5 text-center">
+            <Gift className="w-5 h-5 flex-shrink-0 text-amber-600 animate-bounce" />
+            <span className="text-xs sm:text-sm font-semibold leading-relaxed text-amber-900">
+              {t.walletEnterprise.referral.pendingGiftBanner}
+            </span>
           </div>
         )}
 

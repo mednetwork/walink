@@ -6,6 +6,142 @@ import { sendApplePassUpdate } from "@/lib/apple-wallet";
 import { getLocalizedRewardName } from "@/lib/i18n/rewards";
 import { Locale } from "@/lib/i18n/translations";
 
+/**
+ * Processes deferred referral reward when a referred customer completes their first store visit.
+ * Rewards the referrer with +1 stamp or referral cashback bonus, and fires instant push notifications
+ * to the referrer's Apple Wallet (APNs HTTP/2) and Google Wallet (REST API).
+ */
+async function processReferralActivationReward(
+  referredCustomer: { id: string; name: string; referredByCode: string | null },
+  merchant: {
+    id: string;
+    name: string;
+    slug: string;
+    stampsRequired: number;
+    referralBonus?: number | null;
+    currency?: string | null;
+    primaryColor?: string | null;
+    rewardName: string;
+    loyaltyMode?: string | null;
+    cashbackRate?: number | null;
+    welcomeCashback?: number | null;
+    vipVisitsThreshold?: number | null;
+    vipCashbackBonus?: number | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  }
+) {
+  if (!referredCustomer.referredByCode) return;
+
+  try {
+    const referrer = await prisma.customer.findFirst({
+      where: {
+        merchantId: merchant.id,
+        memberCode: referredCustomer.referredByCode,
+      },
+    });
+
+    if (!referrer) return;
+
+    const currency = merchant.currency || "DH";
+    const isReferrerCashback = referrer.loyaltyType === "CASHBACK";
+    const refBonusDH = Number(merchant.referralBonus || 10);
+    const now = new Date();
+
+    const referrerNotifTitle = merchant.name;
+    const referrerNotifBody = `🎉 قام صديقك ${referredCustomer.name} بزيارة المتجر وتفعيل بطاقته! تمت إضافة مكافأة الإحالة إلى بطاقتك.`;
+
+    let updatedReferrer;
+
+    if (isReferrerCashback) {
+      const [upd] = await prisma.$transaction([
+        prisma.customer.update({
+          where: { id: referrer.id },
+          data: {
+            cashbackBalance: { increment: refBonusDH },
+            totalCashbackEarned: { increment: refBonusDH },
+            referralsCount: { increment: 1 },
+          },
+        }),
+        prisma.transaction.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: referrer.id,
+            type: "CASHBACK_EARNED",
+            cashbackDelta: refBonusDH,
+            staffName: "النظام",
+            note: `مكافأة زيارة وتفعيل صديقك: ${referredCustomer.name} 🎁`,
+            createdAt: now,
+          },
+        }),
+        prisma.notification.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: referrer.id,
+            type: "REWARD",
+            title: referrerNotifTitle,
+            body: referrerNotifBody,
+            createdAt: now,
+          },
+        }),
+      ]);
+      updatedReferrer = upd;
+    } else {
+      const newStamps = Math.min(merchant.stampsRequired, referrer.stamps + 1);
+      const [upd] = await prisma.$transaction([
+        prisma.customer.update({
+          where: { id: referrer.id },
+          data: {
+            stamps: newStamps,
+            referralsCount: { increment: 1 },
+          },
+        }),
+        prisma.transaction.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: referrer.id,
+            type: "STAMP_ADDED",
+            stampsDelta: 1,
+            staffName: "النظام",
+            note: `مكافأة زيارة وتفعيل صديقك: ${referredCustomer.name} 🎁`,
+            createdAt: now,
+          },
+        }),
+        prisma.notification.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: referrer.id,
+            type: "STAMP",
+            title: referrerNotifTitle,
+            body: referrerNotifBody,
+            createdAt: now,
+          },
+        }),
+      ]);
+      updatedReferrer = upd;
+    }
+
+    // CRITICAL: Database commit is completed above!
+    // Asynchronously push update to referrer's Apple Wallet & Google Wallet
+    if (updatedReferrer.applePushToken) {
+      sendApplePassUpdate(updatedReferrer.applePushToken).catch((err) =>
+        console.warn("[AppleWallet] Push error to referrer:", err)
+      );
+    }
+
+    pushGoogleWalletUpdate(
+      updatedReferrer,
+      merchant,
+      referrerNotifTitle,
+      referrerNotifBody
+    ).catch((err) =>
+      console.warn("[GoogleWallet] Push error to referrer:", err)
+    );
+  } catch (err) {
+    console.error("[Referral] Failed to reward referrer on activation:", err);
+  }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { slug: string } }
@@ -39,6 +175,7 @@ export async function POST(
         loyaltyMode: true,
         cashbackRate: true,
         welcomeCashback: true,
+        referralBonus: true,
         minCashbackRedeem: true,
         currency: true,
         latitude: true,
@@ -280,18 +417,22 @@ export async function POST(
         );
       }
 
+      const isFirstActivation = customer.isActivated === false;
+      const welcomeCashbackBonus = isFirstActivation ? Number(merchant.welcomeCashback || 5) : 0;
       const earned = Number(((bill * effectiveCashbackRate) / 100).toFixed(2));
-      const newBalance = Number(((customer.cashbackBalance || 0) + earned).toFixed(2));
+      const totalCredited = Number((earned + welcomeCashbackBonus).toFixed(2));
+      const newBalance = Number(((customer.cashbackBalance || 0) + totalCredited).toFixed(2));
 
       const [updatedCustomer, transaction, notification, updatedMerchant] = await prisma.$transaction([
         prisma.customer.update({
           where: { id: customer.id },
           data: {
-            cashbackBalance: { increment: earned },
-            totalCashbackEarned: { increment: earned },
+            cashbackBalance: { increment: totalCredited },
+            totalCashbackEarned: { increment: totalCredited },
             totalSpent: { increment: bill },
             totalVisits: { increment: 1 },
             isVip: isVipCustomer,
+            isActivated: true,
             lastVisitAt: now,
           },
         }),
@@ -301,12 +442,14 @@ export async function POST(
             customerId: customer.id,
             type: "CASHBACK_EARNED",
             billAmount: bill,
-            cashbackDelta: earned,
+            cashbackDelta: totalCredited,
             staffName: staffName || "المدير",
             branchName: resolvedBranchName,
-            note: isVipCustomer
-              ? `كاش باك VIP الذهبي ${effectiveCashbackRate}% على فاتورة ${bill} ${currency}`
-              : `كاش باك ${merchant.cashbackRate}% على فاتورة ${bill} ${currency}`,
+            note: isFirstActivation
+              ? `تفعيل البطاقة + هدية ترحيبية ${welcomeCashbackBonus} ${currency} + كاش باك فاتورة ${bill} ${currency} 💰🎁`
+              : (isVipCustomer
+                ? `كاش باك VIP الذهبي ${effectiveCashbackRate}% على فاتورة ${bill} ${currency}`
+                : `كاش باك ${merchant.cashbackRate}% على فاتورة ${bill} ${currency}`),
             createdAt: now,
           },
         }),
@@ -316,7 +459,9 @@ export async function POST(
             customerId: customer.id,
             type: "STAMP",
             title: merchant.name,
-            body: `💰 تمت إضافة +${earned} ${currency} كاش باك إلى بطاقتك! رصيدك المتاح: ${newBalance} ${currency}.`,
+            body: isFirstActivation
+              ? `🎉 أهلاً بك! تم تفعيل بطاقتك وإضافة هديتك الترحيبية (+${welcomeCashbackBonus} ${currency}) + كاش باك المشتريات (+${earned} ${currency})! رصيدك المتاح: ${newBalance} ${currency}.`
+              : `💰 تمت إضافة +${earned} ${currency} كاش باك إلى بطاقتك! رصيدك المتاح: ${newBalance} ${currency}.`,
             createdAt: now,
           },
         }),
@@ -340,6 +485,11 @@ export async function POST(
         });
       }
 
+      // If this was an unactivated referred customer, reward the referrer now!
+      if (isFirstActivation && customer.referredByCode) {
+        await processReferralActivationReward(customer, merchant);
+      }
+
       // Asynchronously push update to Google Wallet & Apple Wallet
       pushGoogleWalletUpdate(
         updatedCustomer,
@@ -354,12 +504,13 @@ export async function POST(
         );
       }
 
-      const earnMsg =
-        lang === "fr"
+      const earnMsg = isFirstActivation
+        ? `🎉 تم تفعيل بطاقة ${customer.name} وإضافة الهدية الترحيبية (+${welcomeCashbackBonus} ${currency}) + الكاش باك بنجاح!`
+        : (lang === "fr"
           ? `+${earned} ${currency} (${effectiveCashbackRate}%) crédités à ${customer.name} avec succès !`
           : lang === "es"
           ? `¡+${earned} ${currency} (${effectiveCashbackRate}%) acreditados a ${customer.name} con éxito!`
-          : `تمت إضافة +${earned} ${currency} (${effectiveCashbackRate}%) لـ ${customer.name} بنجاح!`;
+          : `تمت إضافة +${earned} ${currency} (${effectiveCashbackRate}%) لـ ${customer.name} بنجاح!`);
 
       return NextResponse.json({
         success: true,
@@ -578,7 +729,10 @@ export async function POST(
     }
 
     // Action 5: ADD STAMP (Default)
-    const nextStamps = customer.stamps + 1;
+    const isFirstActivation = customer.isActivated === false;
+    const welcomeStampsBonus = isFirstActivation ? 1 : 0;
+    const totalStampsAdded = 1 + welcomeStampsBonus; // 1 visit stamp + 1 welcome bonus if activating
+    const nextStamps = customer.stamps + totalStampsAdded;
     const isRewardUnlocked = nextStamps >= merchant.stampsRequired;
     const stampsLeft = Math.max(0, merchant.stampsRequired - nextStamps);
 
@@ -586,9 +740,10 @@ export async function POST(
       prisma.customer.update({
         where: { id: customer.id },
         data: {
-          stamps: { increment: 1 },
+          stamps: { increment: totalStampsAdded },
           totalVisits: { increment: 1 },
           isVip: isVipCustomer,
+          isActivated: true,
           lastVisitAt: now,
         },
       }),
@@ -597,10 +752,12 @@ export async function POST(
           merchantId: merchant.id,
           customerId: customer.id,
           type: "STAMP_ADDED",
-          stampsDelta: 1,
+          stampsDelta: totalStampsAdded,
           staffName: staffName || "المدير",
           branchName: resolvedBranchName,
-          note: "ختم زيارة جديد ☕️",
+          note: isFirstActivation
+            ? "تفعيل البطاقة + الهدية الأولى (ختم ترحيبي) + ختم الزيارة ☕️🎁"
+            : "ختم زيارة جديد ☕️",
           createdAt: now,
         },
       }),
@@ -610,9 +767,13 @@ export async function POST(
           customerId: customer.id,
           type: isRewardUnlocked ? "REWARD" : "STAMP",
           title: merchant.name,
-          body: isRewardUnlocked
-            ? `🎉 مبروك! اكتملت أختامك! مكافأة ${merchant.rewardName} جاهزة للاستلام.`
-            : `تمت إضافة ختم جديد! متبقي لديك ${stampsLeft} أختام للحصول على ${merchant.rewardName}.`,
+          body: isFirstActivation
+            ? (isRewardUnlocked
+                ? `🎉 مبروك! تم تفعيل بطاقتك واكتملت أختامك! مكافأة ${merchant.rewardName} جاهزة للاستلام.`
+                : `🎉 أهلاً بك! تم تفعيل بطاقتك وإضافة هديتك الترحيبية + ختم الزيارة (+${totalStampsAdded} أختام)! متبقي لديك ${stampsLeft} أختام للحصول على ${merchant.rewardName}.`)
+            : (isRewardUnlocked
+                ? `🎉 مبروك! اكتملت أختامك! مكافأة ${merchant.rewardName} جاهزة للاستلام.`
+                : `تمت إضافة ختم جديد! متبقي لديك ${stampsLeft} أختام للحصول على ${merchant.rewardName}.`),
           createdAt: now,
         },
       }),
@@ -650,6 +811,11 @@ export async function POST(
       });
     }
 
+    // If this was an unactivated referred customer, reward the referrer now!
+    if (isFirstActivation && customer.referredByCode) {
+      await processReferralActivationReward(customer, merchant);
+    }
+
     // Asynchronously push update to Google Wallet & Apple Wallet
     pushGoogleWalletUpdate(
       updatedCustomer,
@@ -665,18 +831,24 @@ export async function POST(
     }
 
     const localizedStampReward = getLocalizedRewardName(merchant.rewardName, lang);
-    let stampMsg = isRewardUnlocked
-      ? `🎉 ممتاز! ${customer.name} جمع كافة الأختام (${updatedCustomer.stamps}/${merchant.stampsRequired}) والمكافأة جاهزة!`
-      : `تمت إضافة ختم جديد لـ ${customer.name} بنجاح (${updatedCustomer.stamps}/${merchant.stampsRequired}).`;
+    let stampMsg = isFirstActivation
+      ? `🎉 تم تفعيل بطاقة ${customer.name} وإضافة الهدية الترحيبية + ختم الزيارة بنجاح (${updatedCustomer.stamps}/${merchant.stampsRequired})!`
+      : (isRewardUnlocked
+          ? `🎉 ممتاز! ${customer.name} جمع كافة الأختام (${updatedCustomer.stamps}/${merchant.stampsRequired}) والمكافأة جاهزة!`
+          : `تمت إضافة ختم جديد لـ ${customer.name} بنجاح (${updatedCustomer.stamps}/${merchant.stampsRequired}).`);
 
     if (lang === "fr") {
-      stampMsg = isRewardUnlocked
-        ? `🎉 Excellent ! ${customer.name} a complété tous les tampons (${updatedCustomer.stamps}/${merchant.stampsRequired}) et la récompense (${localizedStampReward}) est prête !`
-        : `Nouveau tampon ajouté pour ${customer.name} avec succès (${updatedCustomer.stamps}/${merchant.stampsRequired}).`;
+      stampMsg = isFirstActivation
+        ? `🎉 Carte de ${customer.name} activée avec cadeau de bienvenue + tampon de visite (${updatedCustomer.stamps}/${merchant.stampsRequired}) !`
+        : (isRewardUnlocked
+          ? `🎉 Excellent ! ${customer.name} a complété tous les tampons (${updatedCustomer.stamps}/${merchant.stampsRequired}) et la récompense (${localizedStampReward}) est prête !`
+          : `Nouveau tampon ajouté pour ${customer.name} avec succès (${updatedCustomer.stamps}/${merchant.stampsRequired}).`);
     } else if (lang === "es") {
-      stampMsg = isRewardUnlocked
-        ? `🎉 ¡Excelente! ${customer.name} ha completado todos los sellos (${updatedCustomer.stamps}/${merchant.stampsRequired}) y el premio (${localizedStampReward}) está listo.`
-        : `Nuevo sello añadido para ${customer.name} con éxito (${updatedCustomer.stamps}/${merchant.stampsRequired}).`;
+      stampMsg = isFirstActivation
+        ? `🎉 ¡Tarjeta de ${customer.name} activada con regalo de bienvenida + sello de visita (${updatedCustomer.stamps}/${merchant.stampsRequired})!`
+        : (isRewardUnlocked
+          ? `🎉 ¡Excelente! ${customer.name} ha completado todos los sellos (${updatedCustomer.stamps}/${merchant.stampsRequired}) y el premio (${localizedStampReward}) está listo.`
+          : `Nuevo sello añadido para ${customer.name} con éxito (${updatedCustomer.stamps}/${merchant.stampsRequired}).`);
     }
 
     return NextResponse.json({
