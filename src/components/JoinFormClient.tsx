@@ -308,9 +308,13 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
       <div className="bg-[#FFFDF7] rounded-2xl p-5 sm:p-7 border border-[#DCE0D4] shadow-sm space-y-6">
         {/* Top Header Badge & Language Pill */}
         <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] border border-[#C8E6C9] text-[#008069] text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{merchant.city} • Walink</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#E8F5E9] border border-[#A7F3D0] text-[#008069] text-xs font-bold tracking-tight shadow-xs">
+            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[#00A884] to-[#008069] flex items-center justify-center text-white flex-shrink-0 shadow-xs">
+              <Sparkles className="w-2.5 h-2.5" />
+            </div>
+            <span dir="ltr" className="font-mono text-[13px] font-extrabold text-[#173E30] tracking-tight">
+              walink<span className="text-[#00A884]">.ma</span>
+            </span>
           </div>
 
           {/* Quick Corner Language Selector */}
@@ -374,14 +378,6 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               </>
             )}
           </h1>
-          <p className="text-xs text-[#5F655D] max-w-xs mx-auto font-medium">
-            {isCashback
-              ? t.onboarding.welcomeGiftCashback.replace(
-                  "{amount}",
-                  String(welcomeCashback)
-                ).replace("{currency}", currency)
-              : t.onboarding.welcomeGiftStamps}
-          </p>
         </div>
 
         {/* Live Morphing Wallet Pass Preview */}
@@ -420,15 +416,10 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                     : "bg-[#FFFDF7] border-[#DCE0D4] hover:bg-[#F7F8FA] text-[#5F655D]"
                 }`}
               >
-                <div className="flex items-center gap-1.5 font-bold text-xs text-[#008069] mb-1">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-[#008069]">
                   <Gift className="w-4 h-4" />
                   <span>{t.onboarding.stampsProgramTitle}</span>
                 </div>
-                <p className="text-[11px] text-[#5F655D] leading-snug">
-                  {t.onboarding.stampsProgramDesc
-                    .replace("{stamps}", String(merchant.stampsRequired))
-                    .replace("{reward}", merchant.rewardName)}
-                </p>
               </button>
 
               <button
@@ -440,7 +431,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                     : "bg-[#FFFDF7] border-[#DCE0D4] hover:bg-[#F7F8FA] text-[#5F655D]"
                 }`}
               >
-                <div className="flex items-center gap-1.5 font-bold text-xs text-[#B45309] mb-1">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-[#B45309]">
                   <Coins className="w-4 h-4" />
                   <span>
                     {t.onboarding.cashbackProgramTitle.replace(
@@ -449,12 +440,6 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                     )}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#5F655D] leading-snug">
-                  {t.onboarding.cashbackProgramDesc.replace(
-                    "{rate}",
-                    String(cashbackRate)
-                  )}
-                </p>
               </button>
             </div>
           </div>
@@ -479,7 +464,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t.onboarding.namePlaceholder}
-              className="w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-1.5 border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-sm font-medium"
+              className="w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-2 border-[#DCE0D4] hover:border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-base font-medium"
             />
           </div>
 
@@ -497,7 +482,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder={t.onboarding.phonePlaceholder}
-                className="w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-1.5 border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-sm font-mono font-medium"
+                className="w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-2 border-[#DCE0D4] hover:border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-base font-mono font-medium"
               />
               <Smartphone className={`w-4 h-4 text-[#8696A0] absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 pointer-events-none`} />
             </div>
@@ -533,7 +518,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                     value={customPin}
                     onChange={(e) => setCustomPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
                     placeholder={locale === "ar" ? "مثال: 1234 (الافتراضي كود العضوية)" : "Ex: 1234"}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-1 focus:ring-[#008069] text-xs font-mono tracking-widest"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border-2 border-[#DCE0D4] hover:border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-1 focus:ring-[#008069] text-base font-mono tracking-widest"
                   />
                   <Lock className={`w-3.5 h-3.5 text-[#8696A0] absolute ${isRTL ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 pointer-events-none`} />
                 </div>
@@ -701,7 +686,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                       setPinCode(e.target.value.replace(/\D/g, "").slice(0, 4))
                     }
                     placeholder="••••"
-                    className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-2xl bg-white border-2 border-[#C8D1BE] focus:border-[#008069] focus:outline-none transition font-bold"
+                    className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-2xl bg-white border-2 border-[#DCE0D4] hover:border-[#C8D1BE] focus:border-[#008069] focus:outline-none transition font-bold"
                   />
                 </div>
 
