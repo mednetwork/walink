@@ -1,6 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { I18nProvider } from "@/lib/i18n/context";
+import PreventZoomClient from "@/components/PreventZoomClient";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  minimumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#060B18",
+};
 
 export const metadata: Metadata = {
   title: "Walink (والينك) | بطاقات الوفاء الرقمية للمحلات التجارية بالمغرب",
@@ -27,6 +38,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#F0F2F5] text-[#111B21] min-h-screen selection:bg-[#008069] selection:text-white">
+        <PreventZoomClient />
         <I18nProvider>
           {children}
         </I18nProvider>

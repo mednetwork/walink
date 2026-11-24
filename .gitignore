@@ -16,6 +16,13 @@
 
 # misc
 .DS_Store
+# certificates & keys
+certificates/
+*.p12
+*.key
+*.csr
+*.cer
+*.p8
 *.pem
 
 # debug
