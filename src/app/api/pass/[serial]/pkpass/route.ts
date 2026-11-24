@@ -41,8 +41,19 @@ export async function GET(
     if (format === "json") {
       const isCashback = customer.loyaltyType === "CASHBACK";
       const config = getAppleWalletConfig();
+      let genStatus = "not_tested";
+      let genError: string | null = null;
+      try {
+        const buf = await generateApplePass(customer, merchant, locale);
+        genStatus = `success (${buf.length} bytes)`;
+      } catch (e: unknown) {
+        genStatus = "failed";
+        genError = e instanceof Error ? e.message : String(e);
+      }
       return NextResponse.json({
         mode: "smart_apple_pass",
+        genStatus,
+        genError,
         customerName: customer.name,
         merchantName: merchant.name,
         loyaltyType: customer.loyaltyType,
@@ -57,6 +68,13 @@ export async function GET(
         signerKeyHead: config.signerKey?.toString("utf8").slice(0, 30) || "",
         wwdrCertLen: config.wwdrCert?.length || 0,
         wwdrCertHead: config.wwdrCert?.toString("utf8").slice(0, 30) || "",
+        certChunks: {
+          c1_len: (process.env.APPLE_SIGNER_CERT_BASE64_1 || "").length,
+          c2_len: (process.env.APPLE_SIGNER_CERT_BASE64_2 || "").length,
+          c3_len: (process.env.APPLE_SIGNER_CERT_BASE64_3 || "").length,
+          c4_len: (process.env.APPLE_SIGNER_CERT_BASE64_4 || "").length,
+          c5_len: (process.env.APPLE_SIGNER_CERT_BASE64_5 || "").length,
+        },
         stamps: customer.stamps,
         stampsRequired: merchant.stampsRequired,
         cashbackBalance: customer.cashbackBalance,

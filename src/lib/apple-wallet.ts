@@ -76,9 +76,10 @@ export function getAppleWalletConfig(): AppleWalletConfig {
   // Helper to extract environment variable values that might be split across multiple chunks (e.g. <= 1000 chars)
   const getChunkedOrDirectEnv = (baseKey: string): string => {
     let combined = "";
-    let i = 1;
-    while (process.env[`${baseKey}_${i}`]) {
-      let chunk = (process.env[`${baseKey}_${i}`] || "").trim();
+    for (let i = 1; i <= 10; i++) {
+      const raw = process.env[`${baseKey}_${i}`];
+      if (!raw) continue;
+      let chunk = raw.trim();
       if (
         (chunk.startsWith('"') && chunk.endsWith('"')) ||
         (chunk.startsWith("'") && chunk.endsWith("'"))
@@ -86,7 +87,6 @@ export function getAppleWalletConfig(): AppleWalletConfig {
         chunk = chunk.slice(1, -1);
       }
       combined += chunk.trim();
-      i++;
     }
     if (combined) {
       return combined.replace(/[^A-Za-z0-9+/=]/g, "");
