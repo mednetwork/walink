@@ -418,9 +418,8 @@ export async function POST(
       }
 
       const isFirstActivation = customer.isActivated === false;
-      const welcomeCashbackBonus = isFirstActivation ? Number(merchant.welcomeCashback || 5) : 0;
       const earned = Number(((bill * effectiveCashbackRate) / 100).toFixed(2));
-      const totalCredited = Number((earned + welcomeCashbackBonus).toFixed(2));
+      const totalCredited = earned;
       const newBalance = Number(((customer.cashbackBalance || 0) + totalCredited).toFixed(2));
 
       const [updatedCustomer, transaction, notification, updatedMerchant] = await prisma.$transaction([
@@ -446,7 +445,7 @@ export async function POST(
             staffName: staffName || "المدير",
             branchName: resolvedBranchName,
             note: isFirstActivation
-              ? `تفعيل البطاقة + هدية ترحيبية ${welcomeCashbackBonus} ${currency} + كاش باك فاتورة ${bill} ${currency} 💰🎁`
+              ? `تفعيل البطاقة + كاش باك الفاتورة الأولى ${earned} ${currency} 💰🎁`
               : (isVipCustomer
                 ? `كاش باك VIP الذهبي ${effectiveCashbackRate}% على فاتورة ${bill} ${currency}`
                 : `كاش باك ${merchant.cashbackRate}% على فاتورة ${bill} ${currency}`),
@@ -460,7 +459,7 @@ export async function POST(
             type: "STAMP",
             title: merchant.name,
             body: isFirstActivation
-              ? `🎉 أهلاً بك! تم تفعيل بطاقتك وإضافة هديتك الترحيبية (+${welcomeCashbackBonus} ${currency}) + كاش باك المشتريات (+${earned} ${currency})! رصيدك المتاح: ${newBalance} ${currency}.`
+              ? `🎉 أهلاً بك! تم تفعيل بطاقتك وإضافة كاش باك زيارتك الأولى (+${earned} ${currency})! رصيدك المتاح: ${newBalance} ${currency}.`
               : `💰 تمت إضافة +${earned} ${currency} كاش باك إلى بطاقتك! رصيدك المتاح: ${newBalance} ${currency}.`,
             createdAt: now,
           },
@@ -505,7 +504,11 @@ export async function POST(
       }
 
       const earnMsg = isFirstActivation
-        ? `🎉 تم تفعيل بطاقة ${customer.name} وإضافة الهدية الترحيبية (+${welcomeCashbackBonus} ${currency}) + الكاش باك بنجاح!`
+        ? (lang === "fr"
+          ? `🎉 Carte de ${customer.name} activée avec le cashback de première visite (+${earned} ${currency}) !`
+          : lang === "es"
+          ? `¡🎉 Tarjeta de ${customer.name} activada con el cashback de primera visita (+${earned} ${currency})!`
+          : `🎉 تم تفعيل بطاقة ${customer.name} وإضافة كاش باك زيارتك الأولى (+${earned} ${currency}) بنجاح!`)
         : (lang === "fr"
           ? `+${earned} ${currency} (${effectiveCashbackRate}%) crédités à ${customer.name} avec succès !`
           : lang === "es"
@@ -730,8 +733,7 @@ export async function POST(
 
     // Action 5: ADD STAMP (Default)
     const isFirstActivation = customer.isActivated === false;
-    const welcomeStampsBonus = isFirstActivation ? 1 : 0;
-    const totalStampsAdded = 1 + welcomeStampsBonus; // 1 visit stamp + 1 welcome bonus if activating
+    const totalStampsAdded = 1; // Exactly 1 stamp (activates the card and grants their 1st stamp)
     const nextStamps = customer.stamps + totalStampsAdded;
     const isRewardUnlocked = nextStamps >= merchant.stampsRequired;
     const stampsLeft = Math.max(0, merchant.stampsRequired - nextStamps);
@@ -756,7 +758,7 @@ export async function POST(
           staffName: staffName || "المدير",
           branchName: resolvedBranchName,
           note: isFirstActivation
-            ? "تفعيل البطاقة + الهدية الأولى (ختم ترحيبي) + ختم الزيارة ☕️🎁"
+            ? "تفعيل البطاقة واستلام خِتم الزيارة الأول ☕️🎁"
             : "ختم زيارة جديد ☕️",
           createdAt: now,
         },
@@ -770,7 +772,7 @@ export async function POST(
           body: isFirstActivation
             ? (isRewardUnlocked
                 ? `🎉 مبروك! تم تفعيل بطاقتك واكتملت أختامك! مكافأة ${merchant.rewardName} جاهزة للاستلام.`
-                : `🎉 أهلاً بك! تم تفعيل بطاقتك وإضافة هديتك الترحيبية + ختم الزيارة (+${totalStampsAdded} أختام)! متبقي لديك ${stampsLeft} أختام للحصول على ${merchant.rewardName}.`)
+                : `🎉 أهلاً بك! تم تفعيل بطاقتك وإضافة خِتمك الأول! متبقي لديك ${stampsLeft} أختام للحصول على ${merchant.rewardName}.`)
             : (isRewardUnlocked
                 ? `🎉 مبروك! اكتملت أختامك! مكافأة ${merchant.rewardName} جاهزة للاستلام.`
                 : `تمت إضافة ختم جديد! متبقي لديك ${stampsLeft} أختام للحصول على ${merchant.rewardName}.`),
@@ -832,20 +834,20 @@ export async function POST(
 
     const localizedStampReward = getLocalizedRewardName(merchant.rewardName, lang);
     let stampMsg = isFirstActivation
-      ? `🎉 تم تفعيل بطاقة ${customer.name} وإضافة الهدية الترحيبية + ختم الزيارة بنجاح (${updatedCustomer.stamps}/${merchant.stampsRequired})!`
+      ? `🎉 تم تفعيل بطاقة ${customer.name} وإضافة الختم الأول بنجاح (${updatedCustomer.stamps}/${merchant.stampsRequired})!`
       : (isRewardUnlocked
           ? `🎉 ممتاز! ${customer.name} جمع كافة الأختام (${updatedCustomer.stamps}/${merchant.stampsRequired}) والمكافأة جاهزة!`
           : `تمت إضافة ختم جديد لـ ${customer.name} بنجاح (${updatedCustomer.stamps}/${merchant.stampsRequired}).`);
 
     if (lang === "fr") {
       stampMsg = isFirstActivation
-        ? `🎉 Carte de ${customer.name} activée avec cadeau de bienvenue + tampon de visite (${updatedCustomer.stamps}/${merchant.stampsRequired}) !`
+        ? `🎉 Carte de ${customer.name} activée avec le premier tampon (${updatedCustomer.stamps}/${merchant.stampsRequired}) !`
         : (isRewardUnlocked
           ? `🎉 Excellent ! ${customer.name} a complété tous les tampons (${updatedCustomer.stamps}/${merchant.stampsRequired}) et la récompense (${localizedStampReward}) est prête !`
           : `Nouveau tampon ajouté pour ${customer.name} avec succès (${updatedCustomer.stamps}/${merchant.stampsRequired}).`);
     } else if (lang === "es") {
       stampMsg = isFirstActivation
-        ? `🎉 ¡Tarjeta de ${customer.name} activada con regalo de bienvenida + sello de visita (${updatedCustomer.stamps}/${merchant.stampsRequired})!`
+        ? `🎉 ¡Tarjeta de ${customer.name} activada con el primer sello (${updatedCustomer.stamps}/${merchant.stampsRequired})!`
         : (isRewardUnlocked
           ? `🎉 ¡Excelente! ${customer.name} ha completado todos los sellos (${updatedCustomer.stamps}/${merchant.stampsRequired}) y el premio (${localizedStampReward}) está listo.`
           : `Nuevo sello añadido para ${customer.name} con éxito (${updatedCustomer.stamps}/${merchant.stampsRequired}).`);
