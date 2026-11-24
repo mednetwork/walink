@@ -165,6 +165,7 @@ export async function GET(
         isVip: customer.isVip,
         isActivated: customer.isActivated ?? true,
         referredByCode: customer.referredByCode,
+        referralsCount: customer.referralsCount,
         lastVisitAt: customer.lastVisitAt,
         walletType: customer.walletType,
         pushSubscription: customer.pushSubscription,
