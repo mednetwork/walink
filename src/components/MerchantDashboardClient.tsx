@@ -47,7 +47,9 @@ import {
   ShieldCheck,
   Download,
   Share2,
+  Stamp,
 } from "lucide-react";
+import { soundEngine } from "@/lib/sound";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -214,6 +216,11 @@ export default function MerchantDashboardClient({
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isStandOpen, setIsStandOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
+
+  // Direct Customer Action States (Phase 53)
+  const [stampingCustomerId, setStampingCustomerId] = useState<string | null>(null);
+  const [preselectedCustomer, setPreselectedCustomer] = useState<CustomerData | null>(null);
+  const activeRole: "OWNER" | "STAFF" = "OWNER";
 
   // Floating Cashier Action Success Toast State & Debounced Timer Ref
   const [actionSuccessToast, setActionSuccessToast] = useState<{
@@ -1095,6 +1102,106 @@ export default function MerchantDashboardClient({
     setTransactions((prev) => [newTx, ...prev.slice(0, 14)]);
   }, []);
 
+  // Direct 1-Click Customer Loyalty Actions (Phase 53)
+  const handleDirectStamp = async (c: CustomerData) => {
+    if (stampingCustomerId) return;
+    if (merchant.credits <= 0) {
+      soundEngine.playAlert();
+      setIsCreditsOpen(true);
+      return;
+    }
+
+    setStampingCustomerId(c.id);
+    try {
+      const res = await fetch(`/api/m/${merchant.slug}/stamp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: c.id,
+          identifier: c.passSerial || c.memberCode,
+          action: "STAMP",
+          staffName: locale === "fr" ? "Gérant" : locale === "es" ? "Gerente" : "المدير",
+          branchName: isMultiBranch ? activeBranchName : undefined,
+          overrideCooldown: activeRole === "OWNER",
+          lang: locale,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 402 || data.error === "OUT_OF_CREDITS") {
+        soundEngine.playAlert();
+        setIsCreditsOpen(true);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || (locale === "fr" ? "Échec de l'ajout du tampon" : locale === "es" ? "Error al agregar sello" : "فشل إضافة الختم"));
+      }
+
+      soundEngine.playStampChime();
+      handleActionComplete(data.customer, data.message, data.remainingCredits);
+    } catch (err: unknown) {
+      soundEngine.playAlert();
+      const msg = err instanceof Error ? err.message : (locale === "fr" ? "Erreur lors du traitement" : "خطأ أثناء إضافة الختم");
+      alert(msg);
+    } finally {
+      setStampingCustomerId(null);
+    }
+  };
+
+  const handleDirectRedeem = async (c: CustomerData) => {
+    if (stampingCustomerId) return;
+    if (merchant.credits <= 0) {
+      soundEngine.playAlert();
+      setIsCreditsOpen(true);
+      return;
+    }
+
+    setStampingCustomerId(c.id);
+    try {
+      const res = await fetch(`/api/m/${merchant.slug}/stamp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: c.id,
+          identifier: c.passSerial || c.memberCode,
+          action: "REDEEM",
+          staffName: locale === "fr" ? "Gérant" : locale === "es" ? "Gerente" : "المدير",
+          branchName: isMultiBranch ? activeBranchName : undefined,
+          overrideCooldown: activeRole === "OWNER",
+          lang: locale,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 402 || data.error === "OUT_OF_CREDITS") {
+        soundEngine.playAlert();
+        setIsCreditsOpen(true);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || (locale === "fr" ? "Échec de la remise du cadeau" : locale === "es" ? "Error al canjear regalo" : "فشل تسليم المكافأة"));
+      }
+
+      soundEngine.playRewardChime();
+      handleActionComplete(data.customer, data.message, data.remainingCredits);
+    } catch (err: unknown) {
+      soundEngine.playAlert();
+      const msg = err instanceof Error ? err.message : (locale === "fr" ? "Erreur lors du traitement" : "خطأ أثناء تسليم المكافأة");
+      alert(msg);
+    } finally {
+      setStampingCustomerId(null);
+    }
+  };
+
+  const handleOpenCashbackModal = (c: CustomerData) => {
+    setPreselectedCustomer(c);
+    setIsScannerOpen(true);
+  };
+
   // Handle Switch to Promo Tab from Home Alert
   const handleSwitchToPromoQuiet = () => {
     setActiveTab("promo");
@@ -1899,14 +2006,50 @@ export default function MerchantDashboardClient({
                           )}
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => setIsScannerOpen(true)}
-                          className="px-3 py-1 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 text-[#008069] text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ms-auto"
-                        >
-                          <QrCode className="w-3.5 h-3.5" />
-                          <span>{locale === "ar" ? "مسح الزبون" : "Scanner"}</span>
-                        </button>
+                        {isCashbackCust || merchant.loyaltyMode === "CASHBACK" ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenCashbackModal(c)}
+                            className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 border border-amber-300/60 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ms-auto shadow-sm active:scale-95"
+                          >
+                            <Coins className="w-3.5 h-3.5 text-amber-600" />
+                            <span>{locale === "fr" ? "+ Cashback" : locale === "es" ? "+ Cashback" : "+ كاش باك"}</span>
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-1.5 ms-auto">
+                            {c.stamps >= merchant.stampsRequired && (
+                              <button
+                                type="button"
+                                disabled={stampingCustomerId === c.id}
+                                onClick={() => handleDirectRedeem(c)}
+                                className="px-2.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                                title={locale === "fr" ? "Remettre le cadeau" : locale === "es" ? "Entregar premio" : "تسليم المكافأة"}
+                              >
+                                {stampingCustomerId === c.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Gift className="w-3.5 h-3.5 text-purple-200" />
+                                )}
+                                <span>{locale === "fr" ? "Cadeau 🎁" : locale === "es" ? "Regalo 🎁" : "تسليم 🎁"}</span>
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              disabled={stampingCustomerId === c.id}
+                              onClick={() => handleDirectStamp(c)}
+                              className="px-3 py-1.5 rounded-xl bg-[#008069] hover:bg-[#00705a] text-white text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                              title={locale === "fr" ? "Ajouter un tampon directement" : locale === "es" ? "Agregar sello directamente" : "إضافة ختم مباشرة للزبون"}
+                            >
+                              {stampingCustomerId === c.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Stamp className="w-3.5 h-3.5" />
+                              )}
+                              <span>{locale === "fr" ? "+1 Tampon" : locale === "es" ? "+1 Sello" : "+1 ختم"}</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -2762,7 +2905,11 @@ export default function MerchantDashboardClient({
       {/* Modals */}
       <MerchantScannerModal
         isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
+        onClose={() => {
+          setIsScannerOpen(false);
+          setPreselectedCustomer(null);
+        }}
+        initialCustomer={preselectedCustomer}
         slug={merchant.slug}
         rewardName={merchant.rewardName}
         stampsRequired={merchant.stampsRequired}

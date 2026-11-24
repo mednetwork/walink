@@ -58,6 +58,7 @@ export interface CustomerSummary {
 interface MerchantScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialCustomer?: CustomerSummary | null;
   slug: string;
   rewardName: string;
   stampsRequired: number;
@@ -77,6 +78,7 @@ interface MerchantScannerModalProps {
 export default function MerchantScannerModal({
   isOpen,
   onClose,
+  initialCustomer,
   slug,
   rewardName,
   stampsRequired,
@@ -546,6 +548,23 @@ export default function MerchantScannerModal({
       stopCamera();
     }
   }, [isOpen, activeTab, stopCamera]);
+
+  // Direct Pre-Selected Customer Handler: Open Zero-Scroll POS view directly without starting camera
+  useEffect(() => {
+    if (isOpen && initialCustomer) {
+      stopCamera();
+      setSelectedCustomer(initialCustomer);
+      setMessage(null);
+      setRedeemAmount(
+        initialCustomer.cashbackBalance && initialCustomer.cashbackBalance > 0
+          ? String(initialCustomer.cashbackBalance)
+          : ""
+      );
+    } else if (!isOpen) {
+      setSelectedCustomer(null);
+      setMessage(null);
+    }
+  }, [isOpen, initialCustomer, stopCamera]);
 
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
