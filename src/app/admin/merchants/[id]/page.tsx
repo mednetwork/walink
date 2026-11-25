@@ -39,6 +39,7 @@ export default async function EditMerchantPage({ params }: EditMerchantPageProps
     radarMessage: merchant.radarMessage,
     googleMapsUrl: merchant.googleMapsUrl || "",
     plan: merchant.plan,
+    maxBranches: merchant.maxBranches ?? 1,
     credits: merchant.credits,
     autoWinback: merchant.autoWinback,
     autoReview: merchant.autoReview,

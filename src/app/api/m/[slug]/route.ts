@@ -96,6 +96,8 @@ export async function GET(
         radarMessage: merchant.radarMessage,
         googleMapsUrl: merchant.googleMapsUrl,
         plan: merchant.plan,
+        maxBranches: merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1),
+        branches: merchant.branches || "[]",
         credits: merchant.credits,
         autoWinback: merchant.autoWinback,
         autoReview: merchant.autoReview,

@@ -103,10 +103,21 @@ export async function PATCH(
     }
 
     if (body.branches !== undefined) {
+      // Fetch current merchant to validate quota and verify PIN conflicts
+      const currentMerchant = await prisma.merchant.findUnique({
+        where: { slug },
+        select: { id: true, plan: true, maxBranches: true, pinCode: true },
+      });
+
+      if (!currentMerchant) {
+        return NextResponse.json({ error: "المحل التجاري غير موجود" }, { status: 404 });
+      }
+
       let branchesArray: Array<{
         id: string;
         name: string;
         city?: string;
+        pinCode?: string;
         latitude?: number;
         longitude?: number;
         googleMapsUrl?: string;
@@ -122,6 +133,47 @@ export async function PATCH(
           branchesArray = JSON.parse(body.branches);
         } catch {
           branchesArray = [];
+        }
+      }
+
+      // 1. Strict Quota Enforcement
+      const allowedMaxBranches = currentMerchant.maxBranches ?? (currentMerchant.plan === "MULTI" ? 3 : 1);
+      if (branchesArray.length > allowedMaxBranches) {
+        return NextResponse.json(
+          {
+            error: `لقد تجاوزت الحد الأقصى للفروع المسموح به في باقتك (${allowedMaxBranches}). يرجى التواصل مع الإدارة لترقية باقتك.`,
+            code: "MAX_BRANCHES_EXCEEDED",
+            maxBranches: allowedMaxBranches,
+          },
+          { status: 403 }
+        );
+      }
+
+      // 2. PIN Validation and Collision Check
+      const seenPins = new Set<string>();
+      for (const b of branchesArray) {
+        if (b.pinCode && String(b.pinCode).trim() !== "") {
+          const cleanPin = String(b.pinCode).trim();
+          if (!/^\d{4}$/.test(cleanPin)) {
+            return NextResponse.json(
+              { error: `رمز PIN للفرع (${b.name || "بدون اسم"}) يجب أن يتكون من 4 أرقام حصراً.` },
+              { status: 400 }
+            );
+          }
+          if (cleanPin === currentMerchant.pinCode) {
+            return NextResponse.json(
+              { error: `رمز PIN للفرع (${b.name}) لا يمكن أن يتطابق مع رمز PIN الرئيسي لصاحب المتجر.` },
+              { status: 400 }
+            );
+          }
+          if (seenPins.has(cleanPin)) {
+            return NextResponse.json(
+              { error: `رمز PIN (${cleanPin}) مكرر في أكثر من فرع. يجب أن يكون لكل فرع رمز دخول فريد.` },
+              { status: 400 }
+            );
+          }
+          seenPins.add(cleanPin);
+          b.pinCode = cleanPin;
         }
       }
 

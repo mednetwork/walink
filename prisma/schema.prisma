@@ -42,6 +42,7 @@ model Merchant {
   instagramUrl       String?       @default("https://instagram.com")
   termsText          String        @default("البطاقة صالحة في جميع فروع المتجر. لا يمكن استبدال المكافآت نقداً.") @db.Text
   plan            String        @default("GROWTH") // STARTER, GROWTH, MULTI
+  maxBranches     Int           @default(1)       // Maximum allowed branches controlled by Super Admin
   credits         Int           @default(1000)
   autoWinback     Boolean       @default(true)
   autoBirthday    Boolean?      @default(false)

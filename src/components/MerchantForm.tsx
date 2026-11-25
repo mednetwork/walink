@@ -54,6 +54,7 @@ interface MerchantFormData {
   radarMessage: string;
   googleMapsUrl: string;
   plan: string;
+  maxBranches: number;
   credits: number;
   autoWinback: boolean;
   autoReview: boolean;
@@ -97,6 +98,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
       "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة لجمع الأختام والكاش باك.",
     googleMapsUrl: initialData?.googleMapsUrl || "",
     plan: initialData?.plan || "GROWTH",
+    maxBranches: initialData?.maxBranches ?? (initialData?.plan === "MULTI" ? 3 : 1),
     credits: initialData?.credits ?? 1000,
     autoWinback: initialData?.autoWinback ?? true,
     autoReview: initialData?.autoReview ?? true,
@@ -563,11 +565,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     key={plan.name}
                     type="button"
                     onClick={() =>
-                      setFormData({
-                        ...formData,
+                      setFormData((prev) => ({
+                        ...prev,
                         plan: plan.name,
-                        credits: isEdit ? formData.credits : plan.credits,
-                      })
+                        credits: isEdit ? prev.credits : plan.credits,
+                        maxBranches: plan.name === "MULTI" && (prev.maxBranches ?? 1) <= 1 ? 3 : prev.maxBranches,
+                      }))
                     }
                     className={`p-4 rounded-2xl border text-right transition ${
                       isSelected
@@ -589,23 +592,49 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
               })}
             </div>
 
-            <div className="pt-2">
-              <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
-                رصيد الكريدي الأولي (Initial Credits)
-              </label>
-              <input
-                type="number"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={formData.credits}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    credits: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-                className="w-full sm:w-64 bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-amber-700 font-mono font-bold focus:outline-none focus:border-amber-400 focus:bg-white"
-              />
+            <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
+                  رصيد الكريدي الأولي (Initial Credits)
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={formData.credits}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      credits: parseInt(e.target.value, 10) || 0,
+                    })
+                  }
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-amber-700 font-mono font-bold focus:outline-none focus:border-amber-400 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 flex items-center justify-between">
+                  <span>الحد الأقصى للفروع (maxBranches) *</span>
+                  <span className="text-[10px] text-[#008069] font-bold">كوطا الفروع المسموح بها</span>
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max="50"
+                  value={formData.maxBranches}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      maxBranches: Math.max(1, parseInt(e.target.value, 10) || 1),
+                    })
+                  }
+                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#008069] font-mono font-bold focus:outline-none focus:border-[#008069] focus:bg-white"
+                />
+                <p className="text-[10px] text-[#54656F] mt-1">
+                  العدد الأقصى للفروع التي يمكن لصاحب المتجر إنشاؤها عبر لوحة تحكمه (افتراضي 1، أو 3 لباقة MULTI).
+                </p>
+              </div>
             </div>
           </div>
 

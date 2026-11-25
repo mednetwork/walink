@@ -85,6 +85,7 @@ export async function PATCH(
       "radarMessage",
       "googleMapsUrl",
       "plan",
+      "maxBranches",
       "credits",
       "autoWinback",
       "autoReview",
@@ -108,6 +109,7 @@ export async function PATCH(
         if (
           key === "stampsRequired" ||
           key === "credits" ||
+          key === "maxBranches" ||
           key === "cooldownMinutes" ||
           key === "vipVisitsThreshold" ||
           key === "vipCashbackBonus" ||

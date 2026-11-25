@@ -165,6 +165,7 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     rewardName: merchant.rewardName,
     customerPrefix: merchant.customerPrefix,
     plan: merchant.plan,
+    maxBranches: merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1),
     credits: merchant.credits,
     loyaltyMode: merchant.loyaltyMode,
     cashbackRate: merchant.cashbackRate,
