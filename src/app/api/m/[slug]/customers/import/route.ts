@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getStoreSessionFromCookies } from "@/lib/auth";
 import { normalizeMoroccanPhone, isValidMoroccanPhone } from "@/lib/utils";
 
 interface ImportRow {
@@ -13,7 +14,24 @@ export async function POST(
 ) {
   try {
     const { slug } = params;
+    const session = await getStoreSessionFromCookies(req.cookies, slug);
     const body = await req.json();
+
+    if (
+      !session ||
+      session.role !== "OWNER" ||
+      body.actorRole === "BRANCH_STAFF" ||
+      body.actorRole === "STAFF"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "غير مصرح: استيراد قوائم العملاء محصور بحساب صاحب المشروع فقط.",
+        },
+        { status: 403 }
+      );
+    }
+
     const { rows } = body as { rows: ImportRow[] };
 
     if (!Array.isArray(rows) || rows.length === 0) {

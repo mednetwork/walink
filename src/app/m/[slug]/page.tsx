@@ -1,9 +1,14 @@
 import React from "react";
 import { Metadata, Viewport } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { Store, AlertTriangle, ArrowRight } from "lucide-react";
 import prisma from "@/lib/prisma";
+import { getStoreSessionFromCookies } from "@/lib/auth";
+import {
+  filterBranchesForSession,
+  resolveEffectiveBranches,
+} from "@/lib/branches";
 import MerchantDashboardClient from "@/components/MerchantDashboardClient";
 
 export const viewport: Viewport = {
@@ -124,41 +129,33 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     if (c.totalVisits >= 10) vipCount++;
   }
 
-  // Resolve or initialize default main branch for MULTI plan (Refinement 3)
-  let effectiveBranchesStr = merchant.branches || "[]";
-  if (merchant.plan === "MULTI") {
-    let parsedBranches: unknown[] = [];
-    try {
-      parsedBranches = JSON.parse(effectiveBranchesStr);
-    } catch {
-      parsedBranches = [];
-    }
-    if (!Array.isArray(parsedBranches) || parsedBranches.length === 0) {
-      const defaultMainBranch = [
-        {
-          id: "br_main",
-          name: `الفرع الرئيسي (${merchant.city})`,
-          city: merchant.city,
-          latitude: merchant.latitude ?? 33.5731,
-          longitude: merchant.longitude ?? -7.5898,
-          googleMapsUrl: merchant.googleMapsUrl || "",
-          radarMessage: merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.",
-          phone: merchant.phone || "",
-          isMain: true,
-        },
-      ];
-      effectiveBranchesStr = JSON.stringify(defaultMainBranch);
-    }
-  }
+  // Resolve store session from HttpOnly signed cookie (Zero PIN leakage in SSR)
+  const session = await getStoreSessionFromCookies(cookies(), slug);
+  const effectiveBranches = resolveEffectiveBranches(merchant);
+  const hasBranchPins = effectiveBranches.some((b) =>
+    Boolean(b.pinCode && String(b.pinCode).trim())
+  );
+  const { branches: scopedBranches, matchedBranch } = filterBranchesForSession(
+    effectiveBranches,
+    session
+  );
 
-  // Serialize dates for Client Component
+  const isSessionValid =
+    Boolean(session) &&
+    (session?.role !== "BRANCH_STAFF" || Boolean(matchedBranch));
+
+  const sessionRole =
+    isSessionValid && session ? session.role : ("OWNER" as const);
+
+  // Serialize dates for Client Component (never send raw owner PIN or unauthorized data)
   const serializedMerchant = {
     id: merchant.id,
     name: merchant.name,
     slug: merchant.slug,
     niche: merchant.niche,
     city: merchant.city,
-    pinCode: merchant.pinCode,
+    pinCode: "",
+    hasBranchPins,
     primaryColor: merchant.primaryColor,
     bgGradient: merchant.bgGradient,
     stampsRequired: merchant.stampsRequired,
@@ -176,63 +173,79 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     longitude: merchant.longitude ?? -7.5898,
     googleMapsUrl: merchant.googleMapsUrl || "",
     radarMessage: merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.",
-    promoTemplates: merchant.promoTemplates || "[]",
-    branches: effectiveBranchesStr,
-    staffMembers: merchant.staffMembers || "[]",
+    promoTemplates: isSessionValid ? merchant.promoTemplates || "[]" : "[]",
+    branches: isSessionValid ? JSON.stringify(scopedBranches) : "[]",
+    staffMembers: "[]",
     autoWinback: merchant.autoWinback,
     autoReview: merchant.autoReview,
     autoRadar: merchant.autoRadar,
     autoNearReward: merchant.autoNearReward,
   };
 
-  const serializedCustomers = merchant.customers.map((c) => ({
-    id: c.id,
-    name: c.name,
-    phone: c.phone,
-    memberCode: c.memberCode,
-    passSerial: c.passSerial,
-    loyaltyType: c.loyaltyType === "CASHBACK" ? ("CASHBACK" as const) : ("STAMPS" as const),
-    stamps: c.stamps,
-    cashbackBalance: c.cashbackBalance,
-    totalCashbackEarned: c.totalCashbackEarned,
-    totalSpent: c.totalSpent,
-    totalVisits: c.totalVisits,
-    rewardsRedeemed: c.rewardsRedeemed,
-    securityPin: c.securityPin || c.memberCode,
-    failedPinAttempts: c.failedPinAttempts || 0,
-    pinLockedUntil: c.pinLockedUntil ? c.pinLockedUntil.toISOString() : null,
-    lastVisitAt: c.lastVisitAt.toISOString(),
-  }));
+  const serializedCustomers = isSessionValid
+    ? merchant.customers.map((c) => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        memberCode: c.memberCode,
+        passSerial: c.passSerial,
+        loyaltyType:
+          c.loyaltyType === "CASHBACK"
+            ? ("CASHBACK" as const)
+            : ("STAMPS" as const),
+        stamps: c.stamps,
+        cashbackBalance: c.cashbackBalance,
+        totalCashbackEarned: c.totalCashbackEarned,
+        totalSpent: c.totalSpent,
+        totalVisits: c.totalVisits,
+        rewardsRedeemed: c.rewardsRedeemed,
+        securityPin: c.securityPin || c.memberCode,
+        failedPinAttempts: c.failedPinAttempts || 0,
+        pinLockedUntil: c.pinLockedUntil ? c.pinLockedUntil.toISOString() : null,
+        lastVisitAt: c.lastVisitAt.toISOString(),
+      }))
+    : [];
 
-  const serializedTransactions = merchant.transactions.map((tx) => ({
-    id: tx.id,
-    type: tx.type,
-    stampsDelta: tx.stampsDelta,
-    branchName: tx.branchName || null,
-    note: tx.note,
-    createdAt: tx.createdAt.toISOString(),
-    customer: {
-      id: tx.customer.id,
-      name: tx.customer.name,
-      memberCode: tx.customer.memberCode,
-      phone: tx.customer.phone,
-    },
-  }));
+  const serializedTransactions = isSessionValid
+    ? merchant.transactions.map((tx) => ({
+        id: tx.id,
+        type: tx.type,
+        stampsDelta: tx.stampsDelta,
+        branchName: tx.branchName || null,
+        note: tx.note,
+        createdAt: tx.createdAt.toISOString(),
+        customer: {
+          id: tx.customer.id,
+          name: tx.customer.name,
+          memberCode: tx.customer.memberCode,
+          phone: tx.customer.phone,
+        },
+      }))
+    : [];
 
-  const serializedCampaigns = merchant.campaigns.map((camp) => ({
-    id: camp.id,
-    title: camp.title,
-    message: camp.message,
-    audience: camp.audience,
-    sentCount: camp.sentCount,
-    creditsUsed: camp.creditsUsed,
-    returnedCount: camp.returnedCount,
-    createdAt: camp.createdAt.toISOString(),
-  }));
+  const serializedCampaigns =
+    isSessionValid && session?.role === "OWNER"
+      ? merchant.campaigns.map((camp) => ({
+          id: camp.id,
+          title: camp.title,
+          message: camp.message,
+          audience: camp.audience,
+          sentCount: camp.sentCount,
+          creditsUsed: camp.creditsUsed,
+          returnedCount: camp.returnedCount,
+          createdAt: camp.createdAt.toISOString(),
+        }))
+      : [];
 
   return (
     <MerchantDashboardClient
       initialMerchant={serializedMerchant}
+      initialAuthSession={{
+        authenticated: isSessionValid,
+        role: sessionRole,
+        branch: matchedBranch,
+        staffName: isSessionValid ? session?.staffName || null : null,
+      }}
       initialCustomers={serializedCustomers}
       initialTransactions={serializedTransactions}
       initialCampaigns={serializedCampaigns}

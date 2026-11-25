@@ -439,8 +439,15 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
-                  رمز الدخول السري (PIN Code)
+                <label className="text-xs font-semibold text-[#111B21] mb-1.5 flex items-center justify-between">
+                  <span>
+                    {formData.plan === "MULTI" || (formData.maxBranches ?? 1) > 1
+                      ? "رمز الدخول السري للمدير (Owner Master PIN)"
+                      : "رمز الدخول السري (PIN Code)"}
+                  </span>
+                  {(formData.plan === "MULTI" || (formData.maxBranches ?? 1) > 1) && (
+                    <span className="text-[10px] text-[#008069] font-bold">صلاحية كاملة</span>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -454,6 +461,11 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   placeholder="1234"
                   className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#008069] font-mono font-bold tracking-widest text-center focus:outline-none focus:border-[#008069] focus:bg-white transition"
                 />
+                {(formData.plan === "MULTI" || (formData.maxBranches ?? 1) > 1) && (
+                  <p className="text-[10px] text-[#54656F] mt-1">
+                    كود خاص بصاحب المشروع لإدارة الفروع ونظام الولاء (من 4 إلى 6 أرقام).
+                  </p>
+                )}
               </div>
 
               <div>

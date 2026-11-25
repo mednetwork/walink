@@ -116,7 +116,14 @@ export interface BranchItem {
   isMain?: boolean;
 }
 
-export type MerchantAuthRole = "OWNER" | "BRANCH_STAFF";
+export type MerchantAuthRole = "OWNER" | "BRANCH_STAFF" | "STAFF";
+
+export interface InitialAuthSession {
+  authenticated: boolean;
+  role: MerchantAuthRole;
+  branch: BranchItem | null;
+  staffName?: string | null;
+}
 
 interface CustomerData {
   id: string;
@@ -174,6 +181,7 @@ interface MerchantDashboardClientProps {
     niche: string;
     city: string;
     pinCode: string;
+    hasBranchPins?: boolean;
     primaryColor: string;
     bgGradient: string;
     stampsRequired: number;
@@ -200,6 +208,7 @@ interface MerchantDashboardClientProps {
     autoRadar: boolean;
     autoNearReward: boolean;
   };
+  initialAuthSession?: InitialAuthSession;
   initialCustomers: CustomerData[];
   initialTransactions: TransactionData[];
   initialCampaigns: CampaignData[];
@@ -218,6 +227,7 @@ interface MerchantDashboardClientProps {
 
 export default function MerchantDashboardClient({
   initialMerchant,
+  initialAuthSession,
   initialCustomers,
   initialTransactions,
   initialCampaigns,
@@ -225,33 +235,28 @@ export default function MerchantDashboardClient({
 }: MerchantDashboardClientProps) {
   const { locale, dir, t, isRTL, setLocale } = useI18n();
 
-  // PIN Gate State
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  // PIN Gate State (Server-verified HttpOnly session)
+  const [isUnlocked, setIsUnlocked] = useState(
+    Boolean(initialAuthSession?.authenticated)
+  );
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [pinErrorMsg, setPinErrorMsg] = useState<string | null>(null);
+  const [verifyingPin, setVerifyingPin] = useState(false);
 
-  // Session Role State (Phase 60: OWNER vs BRANCH_STAFF)
-  const [authRole, setAuthRole] = useState<MerchantAuthRole>(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem(`walink_m_role_${initialMerchant.slug}`);
-      if (saved === "BRANCH_STAFF") return "BRANCH_STAFF";
-    }
-    return "OWNER";
-  });
+  // Session Role State (Phase 63: Server-enforced OWNER vs BRANCH_STAFF vs STAFF)
+  const [authRole, setAuthRole] = useState<MerchantAuthRole>(
+    initialAuthSession?.authenticated ? initialAuthSession.role : "OWNER"
+  );
+  const [authBranch, setAuthBranch] = useState<BranchItem | null>(
+    initialAuthSession?.authenticated ? initialAuthSession.branch : null
+  );
+  const [authStaffName, setAuthStaffName] = useState<string | null>(
+    initialAuthSession?.authenticated ? initialAuthSession.staffName || null : null
+  );
 
-  const [authBranch, setAuthBranch] = useState<BranchItem | null>(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem(`walink_m_branch_${initialMerchant.slug}`);
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (err) {
-          console.warn("Failed to parse stored branch:", err);
-        }
-      }
-    }
-    return null;
-  });
+  const isOwner = authRole === "OWNER";
+  const isRestrictedStaff = authRole !== "OWNER";
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<"home" | "customers" | "analytics" | "promo" | "settings">("home");
@@ -259,7 +264,13 @@ export default function MerchantDashboardClient({
   // Monthly Analytics State (Phase 54)
   const [monthlyAnalytics, setMonthlyAnalytics] = useState<MonthlyAnalyticsResponse | null>(null);
   const [selectedMonthKey, setSelectedMonthKey] = useState<string>("");
-  const [analyticsBranchFilter, setAnalyticsBranchFilter] = useState<string>("ALL");
+  const [analyticsBranchFilter, setAnalyticsBranchFilter] = useState<string>(
+    initialAuthSession?.authenticated &&
+      initialAuthSession.role === "BRANCH_STAFF" &&
+      initialAuthSession.branch
+      ? initialAuthSession.branch.name
+      : "ALL"
+  );
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
@@ -327,7 +338,17 @@ export default function MerchantDashboardClient({
   }, []);
 
   // Non-Disruptive 4-Second Live Customer Polling with customersRef Diffing (Phase 58)
+  // Real-Time Customer & Credits Auto-Sync (Polls only when authenticated)
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(`walink_branches_${merchant.slug}`);
+      } catch {
+        // ignore
+      }
+    }
+    if (!isUnlocked) return;
+
     let isMounted = true;
     const controller = new AbortController();
 
@@ -402,7 +423,7 @@ export default function MerchantDashboardClient({
           }
         }
 
-        // Sync metrics & credits
+        // Sync metrics, credits & scoped branches
         if (data.metrics) {
           setMetrics(data.metrics);
         }
@@ -412,6 +433,16 @@ export default function MerchantDashboardClient({
               ? { ...prev, credits: data.merchant.credits }
               : prev
           );
+        }
+        if (data.merchant?.branches) {
+          try {
+            const parsedBranches: unknown = JSON.parse(data.merchant.branches);
+            if (Array.isArray(parsedBranches)) {
+              setBranches(parsedBranches as BranchItem[]);
+            }
+          } catch {
+            // ignore
+          }
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== "AbortError") {
@@ -426,7 +457,7 @@ export default function MerchantDashboardClient({
       controller.abort();
       clearInterval(interval);
     };
-  }, [merchant.slug, locale]);
+  }, [merchant.slug, locale, isUnlocked]);
 
   // Handler for Manual Customer Creation (Phase 58)
   const handleAddCustomerSubmit = async (e: React.FormEvent) => {
@@ -715,6 +746,7 @@ export default function MerchantDashboardClient({
         headers: { "Content-Type": "application/json" },
         signal: AbortSignal.timeout(6000),
         body: JSON.stringify({
+          actorRole: authRole,
           promoTemplates: JSON.stringify(newTemplates),
         }),
       });
@@ -841,37 +873,25 @@ export default function MerchantDashboardClient({
         console.warn("Failed to parse initial branches:", err);
       }
     }
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(`walink_branches_${merchant.slug}`);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch (err) {
-        console.warn("Failed to load branches from localStorage:", err);
-      }
-    }
-    if (merchant.plan === "MULTI" || ((merchant.maxBranches ?? 1) > 1)) {
-      return [
-        {
-          id: "br_main",
-          name: `الفرع الرئيسي (${merchant.city || "الدار البيضاء"})`,
-          city: merchant.city || "الدار البيضاء",
-          latitude: merchant.latitude ?? 33.5731,
-          longitude: merchant.longitude ?? -7.5898,
-          googleMapsUrl: merchant.googleMapsUrl || "",
-          radarMessage: merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.",
-          isMain: true,
-        },
-      ];
-    }
     return [];
   });
 
-  const [selectedBranchId, setSelectedBranchId] = useState<string>("ALL");
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(
+    initialAuthSession?.authenticated &&
+      initialAuthSession.role === "BRANCH_STAFF" &&
+      initialAuthSession.branch
+      ? initialAuthSession.branch.id
+      : "ALL"
+  );
 
   const [deviceBranchId, setDeviceBranchId] = useState<string>(() => {
+    if (
+      initialAuthSession?.authenticated &&
+      initialAuthSession.role === "BRANCH_STAFF" &&
+      initialAuthSession.branch
+    ) {
+      return initialAuthSession.branch.id;
+    }
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(`walink_device_branch_${merchant.slug}`);
       if (stored) return stored;
@@ -896,29 +916,31 @@ export default function MerchantDashboardClient({
   const [isDetectingBranchGps, setIsDetectingBranchGps] = useState(false);
   const [branchGpsStatus, setBranchGpsStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
-  const syncBranches = async (newBranches: BranchItem[]) => {
-    setBranches(newBranches);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(
-          `walink_branches_${merchant.slug}`,
-          JSON.stringify(newBranches)
-        );
-      } catch (err) {
-        console.warn("Failed to save branches to localStorage:", err);
-      }
-    }
+  const syncBranches = async (
+    newBranches: BranchItem[]
+  ): Promise<{ ok: boolean; error?: string }> => {
     try {
-      await fetch(`/api/m/${merchant.slug}/settings`, {
+      const res = await fetch(`/api/m/${merchant.slug}/settings`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         signal: AbortSignal.timeout(6000),
         body: JSON.stringify({
+          actorRole: authRole,
           branches: JSON.stringify(newBranches),
         }),
       });
+      if (!res.ok) {
+        const errData = (await res.json().catch(() => ({}))) as { error?: string };
+        return {
+          ok: false,
+          error: errData.error || "تعذر حفظ بيانات الفروع على الخادم.",
+        };
+      }
+      setBranches(newBranches);
+      return { ok: true };
     } catch (err) {
       console.warn("Could not sync branches to server:", err);
+      return { ok: false, error: "تعذر الاتصال بالخادم لحفظ الفروع." };
     }
   };
 
@@ -999,16 +1021,6 @@ export default function MerchantDashboardClient({
         );
         return;
       }
-      if (cleanPin === merchant.pinCode) {
-        setBranchPinError(
-          locale === "fr"
-            ? `Le code PIN de la succursale ne peut pas être identique au code PIN propriétaire (${merchant.pinCode}).`
-            : locale === "es"
-            ? `El código PIN de la sucursal no puede ser idéntico al PIN del propietario (${merchant.pinCode}).`
-            : `رمز PIN للفرع لا يمكن أن يتطابق مع رمز PIN الرئيسي لصاحب المتجر (${merchant.pinCode}).`
-        );
-        return;
-      }
       const duplicatePin = branches.find((b) => b.id !== editingBranchId && b.pinCode && b.pinCode.trim() === cleanPin);
       if (duplicatePin) {
         setBranchPinError(
@@ -1051,7 +1063,11 @@ export default function MerchantDashboardClient({
         }
         updated = [...list, branchPayload];
       }
-      await syncBranches(updated);
+      const syncResult = await syncBranches(updated);
+      if (!syncResult.ok) {
+        setBranchPinError(syncResult.error || "تعذر حفظ بيانات الفرع.");
+        return;
+      }
       setIsBranchModalOpen(false);
       setEditingBranchId(null);
     } finally {
@@ -1098,12 +1114,17 @@ export default function MerchantDashboardClient({
     }
   };
 
-  const activeBranch = authRole === "BRANCH_STAFF" && authBranch
-    ? authBranch
+  const liveAuthBranch = useMemo<BranchItem | null>(() => {
+    if (authRole !== "BRANCH_STAFF" || !authBranch) return null;
+    return branches.find((b) => b.id === authBranch.id) || authBranch;
+  }, [authRole, authBranch, branches]);
+
+  const activeBranch = authRole === "BRANCH_STAFF" && liveAuthBranch
+    ? liveAuthBranch
     : (branches.find((b) => b.id === deviceBranchId) || branches.find((b) => b.isMain) || branches[0]);
   const activeBranchName = (isMultiBranch || authRole === "BRANCH_STAFF") && activeBranch ? activeBranch.name : undefined;
 
-  const effectiveSelectedBranchId = authRole === "BRANCH_STAFF" && authBranch ? authBranch.id : selectedBranchId;
+  const effectiveSelectedBranchId = authRole === "BRANCH_STAFF" && liveAuthBranch ? liveAuthBranch.id : selectedBranchId;
   const selectedBranch = effectiveSelectedBranchId === "ALL" ? null : branches.find((b) => b.id === effectiveSelectedBranchId);
 
   // Filter transactions by branch if selected
@@ -1240,6 +1261,7 @@ export default function MerchantDashboardClient({
         headers: { "Content-Type": "application/json" },
         signal: AbortSignal.timeout(8000),
         body: JSON.stringify({
+          actorRole: authRole,
           loyaltyMode: merchantLoyaltyMode,
           cashbackRate: Number(merchantCashbackRate),
           latitude: isNaN(latNum) ? undefined : latNum,
@@ -1281,31 +1303,15 @@ export default function MerchantDashboardClient({
     }
   };
 
-  // Check PIN session
+  // Clear legacy insecure sessionStorage keys on mount (now verified strictly via HttpOnly cookie)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem(`walink_m_pin_${merchant.slug}`);
-      if (saved === "unlocked") {
-        setIsUnlocked(true);
-        const savedRole = sessionStorage.getItem(`walink_m_role_${merchant.slug}`);
-        if (savedRole === "BRANCH_STAFF") {
-          setAuthRole("BRANCH_STAFF");
-          const savedBranchStr = sessionStorage.getItem(`walink_m_branch_${merchant.slug}`);
-          if (savedBranchStr) {
-            try {
-              const parsedBranch = JSON.parse(savedBranchStr);
-              setAuthBranch(parsedBranch);
-              setSelectedBranchId(parsedBranch.id);
-              setDeviceBranchId(parsedBranch.id);
-              setAnalyticsBranchFilter(parsedBranch.name);
-            } catch (err) {
-              console.warn("Failed to parse branch from session:", err);
-            }
-          }
-        } else {
-          setAuthRole("OWNER");
-          setAuthBranch(null);
-        }
+      try {
+        sessionStorage.removeItem(`walink_m_pin_${merchant.slug}`);
+        sessionStorage.removeItem(`walink_m_role_${merchant.slug}`);
+        sessionStorage.removeItem(`walink_m_branch_${merchant.slug}`);
+      } catch {
+        // ignore
       }
     }
   }, [merchant.slug]);
@@ -1379,56 +1385,133 @@ export default function MerchantDashboardClient({
     }
   };
 
-  const handleVerifyPin = (code: string) => {
+  const handleVerifyPin = async (code: string) => {
     const cleanCode = code.trim();
-    // 1. Owner Master PIN
-    if (cleanCode === merchant.pinCode || cleanCode === "1234") {
-      setIsUnlocked(true);
-      setAuthRole("OWNER");
-      setAuthBranch(null);
-      setPinError(false);
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(`walink_m_pin_${merchant.slug}`, "unlocked");
-        sessionStorage.setItem(`walink_m_role_${merchant.slug}`, "OWNER");
-        sessionStorage.removeItem(`walink_m_branch_${merchant.slug}`);
-      }
-      return;
-    }
+    if (!cleanCode || verifyingPin) return;
 
-    // 2. Branch Dedicated PIN (Matches any branch pinCode)
-    const matchedBranch = branches.find((b) => b.pinCode && b.pinCode.trim() === cleanCode);
-    if (matchedBranch) {
-      setIsUnlocked(true);
-      setAuthRole("BRANCH_STAFF");
-      setAuthBranch(matchedBranch);
-      setSelectedBranchId(matchedBranch.id);
-      setDeviceBranchId(matchedBranch.id);
-      setAnalyticsBranchFilter(matchedBranch.name);
-      setPinError(false);
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(`walink_m_pin_${merchant.slug}`, "unlocked");
-        sessionStorage.setItem(`walink_m_role_${merchant.slug}`, "BRANCH_STAFF");
-        sessionStorage.setItem(`walink_m_branch_${merchant.slug}`, JSON.stringify(matchedBranch));
-      }
-      return;
-    }
+    setVerifyingPin(true);
+    setPinError(false);
+    setPinErrorMsg(null);
 
-    // 3. Invalid PIN
-    setPinError(true);
-    setPinInput("");
+    try {
+      const res = await fetch(`/api/m/${merchant.slug}/auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(8000),
+        body: JSON.stringify({ pin: cleanCode }),
+      });
+
+      const data = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        role?: MerchantAuthRole;
+        branch?: BranchItem | null;
+        staffName?: string | null;
+        branches?: BranchItem[];
+      };
+
+      if (!res.ok || !data.ok || !data.role) {
+        setPinError(true);
+        setPinErrorMsg(data.error || "الكود غير صحيح، عاود المحاولة");
+        setPinInput("");
+        return;
+      }
+
+      const verifiedRole: MerchantAuthRole = data.role;
+      const verifiedBranch = data.branch || null;
+      const scopedBranches = Array.isArray(data.branches) ? data.branches : [];
+
+      setAuthRole(verifiedRole);
+      setAuthBranch(verifiedBranch);
+      setAuthStaffName(data.staffName || null);
+      setBranches(scopedBranches);
+
+      if (verifiedRole === "BRANCH_STAFF" && verifiedBranch) {
+        setSelectedBranchId(verifiedBranch.id);
+        setDeviceBranchId(verifiedBranch.id);
+        setAnalyticsBranchFilter(verifiedBranch.name);
+      } else {
+        setSelectedBranchId("ALL");
+        setAnalyticsBranchFilter("ALL");
+      }
+
+      // Immediately hydrate authorized store data from /api/m/[slug] using newly issued HttpOnly cookie
+      try {
+        const storeRes = await fetch(`/api/m/${merchant.slug}?t=${Date.now()}`, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(8000),
+        });
+        if (storeRes.ok) {
+          const storeData = await storeRes.json();
+          if (Array.isArray(storeData.customers)) {
+            customersRef.current = storeData.customers;
+            setCustomers(storeData.customers);
+          }
+          if (Array.isArray(storeData.transactions)) {
+            setTransactions(storeData.transactions);
+          }
+          if (Array.isArray(storeData.campaigns)) {
+            setCampaigns(storeData.campaigns);
+          }
+          if (storeData.metrics) {
+            setMetrics(storeData.metrics);
+          }
+          if (storeData.merchant) {
+            setMerchant((prev) => ({
+              ...prev,
+              ...storeData.merchant,
+            }));
+          }
+        }
+      } catch (hydrateErr) {
+        console.warn("Store post-auth hydration warning:", hydrateErr);
+      }
+
+      setActiveTab("home");
+      setPinInput("");
+      setIsUnlocked(true);
+    } catch (err) {
+      console.error("PIN verification request failed:", err);
+      setPinError(true);
+      setPinErrorMsg("تعذر الاتصال بالخادم، حاول مجدداً");
+    } finally {
+      setVerifyingPin(false);
+    }
   };
 
-  const handleLogoutOrSwitchAccount = () => {
+  const handleLogoutOrSwitchAccount = async () => {
+    try {
+      await fetch(`/api/m/${merchant.slug}/auth`, {
+        method: "DELETE",
+        signal: AbortSignal.timeout(5000),
+      });
+    } catch {
+      // ignore network blip on logout
+    }
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem(`walink_m_pin_${merchant.slug}`);
-      sessionStorage.removeItem(`walink_m_role_${merchant.slug}`);
-      sessionStorage.removeItem(`walink_m_branch_${merchant.slug}`);
+      try {
+        sessionStorage.removeItem(`walink_m_pin_${merchant.slug}`);
+        sessionStorage.removeItem(`walink_m_role_${merchant.slug}`);
+        sessionStorage.removeItem(`walink_m_branch_${merchant.slug}`);
+        localStorage.removeItem(`walink_branches_${merchant.slug}`);
+      } catch {
+        // ignore
+      }
     }
     setIsUnlocked(false);
     setPinInput("");
     setPinError(false);
+    setPinErrorMsg(null);
     setAuthRole("OWNER");
     setAuthBranch(null);
+    setAuthStaffName(null);
+    setBranches([]);
+    setCustomers([]);
+    customersRef.current = [];
+    setTransactions([]);
+    setCampaigns([]);
+    setMonthlyAnalytics(null);
+    setActiveTab("home");
     setIsMenuDrawerOpen(false);
   };
 
@@ -1593,9 +1676,9 @@ export default function MerchantDashboardClient({
           customerId: c.id,
           identifier: c.passSerial || c.memberCode,
           action: "STAMP",
-          staffName: authRole === "BRANCH_STAFF" && authBranch ? authBranch.name : (locale === "fr" ? "Gérant" : locale === "es" ? "Gerente" : "المدير"),
-          branchName: authRole === "BRANCH_STAFF" && authBranch ? authBranch.name : (isMultiBranch ? activeBranchName : undefined),
-          overrideCooldown: authRole === "OWNER",
+          staffName: authRole === "BRANCH_STAFF" && liveAuthBranch ? liveAuthBranch.name : authStaffName || (locale === "fr" ? "Gérant" : locale === "es" ? "Gerente" : "المدير"),
+          branchName: authRole === "BRANCH_STAFF" && liveAuthBranch ? liveAuthBranch.name : (isMultiBranch ? activeBranchName : undefined),
+          overrideCooldown: isOwner,
           lang: locale,
         }),
       });
@@ -1649,9 +1732,9 @@ export default function MerchantDashboardClient({
           customerId: c.id,
           identifier: c.passSerial || c.memberCode,
           action: "REDEEM",
-          staffName: authRole === "BRANCH_STAFF" && authBranch ? authBranch.name : (locale === "fr" ? "Gérant" : locale === "es" ? "Gerente" : "المدير"),
-          branchName: authRole === "BRANCH_STAFF" && authBranch ? authBranch.name : (isMultiBranch ? activeBranchName : undefined),
-          overrideCooldown: authRole === "OWNER",
+          staffName: authRole === "BRANCH_STAFF" && liveAuthBranch ? liveAuthBranch.name : authStaffName || (locale === "fr" ? "Gérant" : locale === "es" ? "Gerente" : "المدير"),
+          branchName: authRole === "BRANCH_STAFF" && liveAuthBranch ? liveAuthBranch.name : (isMultiBranch ? activeBranchName : undefined),
+          overrideCooldown: isOwner,
           lang: locale,
         }),
       });
@@ -1694,6 +1777,7 @@ export default function MerchantDashboardClient({
 
   // Handle Switch to Promo Tab from Home Alert
   const handleSwitchToPromoQuiet = () => {
+    if (isRestrictedStaff) return;
     setActiveTab("promo");
     setPromoAudience("QUIET");
     setPromoMessage(`توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية`);
@@ -1701,7 +1785,7 @@ export default function MerchantDashboardClient({
 
   // Handle Promo Send
   const handleSendCampaign = async () => {
-    if (!promoMessage.trim()) return;
+    if (isRestrictedStaff || !promoMessage.trim()) return;
     setSendingPromo(true);
     setPromoSuccessMsg(null);
 
@@ -1711,6 +1795,7 @@ export default function MerchantDashboardClient({
         headers: { "Content-Type": "application/json" },
         signal: AbortSignal.timeout(8000),
         body: JSON.stringify({
+          actorRole: authRole,
           title: "عرض ترويجي من " + merchant.name,
           message: promoMessage.trim(),
           audience: promoAudience,
@@ -1743,6 +1828,7 @@ export default function MerchantDashboardClient({
 
   // Handle Automation Toggle
   const handleToggleAutomation = async (key: keyof typeof automations) => {
+    if (isRestrictedStaff) return;
     const updated = { ...automations, [key]: !automations[key] };
     setAutomations(updated);
     setSavingSettings(true);
@@ -1752,7 +1838,7 @@ export default function MerchantDashboardClient({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({ [key]: updated[key] }),
+        body: JSON.stringify({ actorRole: authRole, [key]: updated[key] }),
       });
     } catch (err) {
       console.error("Error saving automation setting:", err);
@@ -1835,7 +1921,7 @@ export default function MerchantDashboardClient({
   const costCredits = Math.max(1, audienceTargetCount);
   const remainingCredits = merchant.credits - costCredits;
 
-  // PIN Gate Screen
+  // PIN Gate Screen (Server-Verified HttpOnly Auth — Zero PIN Leakage)
   if (!isUnlocked) {
     return (
       <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center p-4 text-[#173E30]">
@@ -1846,52 +1932,89 @@ export default function MerchantDashboardClient({
 
           <div>
             <h2 className="font-bold text-lg text-[#173E30]">{merchant.name}</h2>
-            <p className="text-xs text-[#5F655D] mt-0.5">
-              {branches.some((b) => b.pinCode)
-                ? (locale === "fr" ? "Entrez le PIN propriétaire ou le PIN de votre succursale" : "أدخل رمز صاحب المتجر أو رمز الفرع الخاص بك")
-                : "لوحة تشغيل التاجر • دخل كود الـ PIN"}
+            <p className="text-xs text-[#5F655D] mt-1">
+              {merchant.hasBranchPins
+                ? locale === "fr"
+                  ? "Entrez le PIN propriétaire ou le PIN de votre succursale"
+                  : locale === "es"
+                  ? "Introduce el PIN de gerente o de tu sucursal"
+                  : "أدخل رمز المدير أو رمز الكاشير الخاص بالفرع"
+                : locale === "fr"
+                ? "Tableau de bord commerçant • Entrez votre code PIN"
+                : "لوحة تشغيل التاجر • أدخل الرمز السري (PIN)"}
             </p>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-xs flex items-center justify-center gap-1.5 font-semibold">
-            <span>كود الدخول السريع:</span>
-            <strong className="font-mono text-sm tracking-widest">{merchant.pinCode}</strong>
-          </div>
+          {merchant.slug === "cafe-atlas" && (
+            <div className="p-2.5 rounded-xl bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-xs flex items-center justify-center gap-1.5 font-semibold">
+              <span>كود التجربة (Demo):</span>
+              <strong className="font-mono text-sm tracking-widest">1234</strong>
+            </div>
+          )}
 
-          <div className="space-y-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleVerifyPin(pinInput);
+            }}
+            className="space-y-3"
+          >
             <input
               type="password"
               inputMode="numeric"
               pattern="[0-9]*"
               autoComplete="one-time-code"
-              maxLength={4}
+              maxLength={6}
               value={pinInput}
               onChange={(e) => {
-                setPinInput(e.target.value);
-                if (e.target.value.length === 4) {
-                  handleVerifyPin(e.target.value);
+                const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 6);
+                setPinInput(digitsOnly);
+                if (pinError) {
+                  setPinError(false);
+                  setPinErrorMsg(null);
                 }
               }}
               placeholder="••••"
-              aria-label="رمز PIN للتاجر"
+              aria-label="رمز PIN للتاجر أو الكاشير"
               className="w-full bg-[#FAF7F2] border border-[#C8D1BE] rounded-2xl py-3 text-center text-xl font-mono tracking-widest text-[#008069] focus:outline-none focus:border-[#008069] focus:bg-white"
             />
+            <span className="text-[10px] text-[#5F655D] block">
+              {locale === "fr"
+                ? "Code PIN de 4 à 6 chiffres"
+                : locale === "es"
+                ? "Código PIN de 4 a 6 dígitos"
+                : "رمز سري من 4 إلى 6 أرقام"}
+            </span>
 
             {pinError && (
               <p className="text-xs text-red-600 font-semibold">
-                الكود غير صحيح، عاود المحاولة
+                {pinErrorMsg || "الكود غير صحيح، عاود المحاولة"}
               </p>
             )}
 
             <button
-              type="button"
-              onClick={() => handleVerifyPin(merchant.pinCode)}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#008069]/20 transition"
+              type="submit"
+              disabled={verifyingPin || pinInput.trim().length < 4}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#008069]/20 transition cursor-pointer"
             >
-              <Unlock className="w-4 h-4" />
-              <span>دخول سريع بنقرة واحدة (1-Click)</span>
+              {verifyingPin ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Unlock className="w-4 h-4" />
+              )}
+              <span>
+                {verifyingPin
+                  ? locale === "fr"
+                    ? "Vérification..."
+                    : "جاري التحقق..."
+                  : locale === "fr"
+                  ? "Se connecter"
+                  : locale === "es"
+                  ? "Iniciar sesión"
+                  : "تسجيل الدخول"}
+              </span>
             </button>
-          </div>
+          </form>
 
           <div className="pt-2 text-center">
             <a href={getAdminUrl()} className="text-[11px] text-[#5F655D] hover:text-[#008069] font-medium transition">
@@ -2167,10 +2290,12 @@ export default function MerchantDashboardClient({
               <h1 className="font-bold text-sm text-white truncate max-w-[140px]">
                 {merchant.name}
               </h1>
-              {authRole === "BRANCH_STAFF" && authBranch ? (
+              {isRestrictedStaff ? (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-400 text-[#075E54] font-extrabold flex items-center gap-1 shadow-sm">
                   <MapPin className="w-2.5 h-2.5" />
-                  <span className="truncate max-w-[90px]">{authBranch.name}</span>
+                  <span className="truncate max-w-[90px]">
+                    {liveAuthBranch ? liveAuthBranch.name : authStaffName || (locale === "fr" ? "Caissier" : "كاشير")}
+                  </span>
                 </span>
               ) : (
                 <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-white/20 text-white font-bold">
@@ -2240,21 +2365,21 @@ export default function MerchantDashboardClient({
           <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
             {/* Multi-Branch Selector Header (MULTI Plan Exclusive) */}
             {isMultiBranch && branches.length > 0 && (
-              authRole === "BRANCH_STAFF" && authBranch ? (
+              isRestrictedStaff && liveAuthBranch ? (
                 <div className="flex items-center justify-between p-3 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs font-bold text-[#173E30] flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-[#008069]" />
                       <span>{locale === "fr" ? "Point de vente :" : locale === "es" ? "Sucursal:" : "الفرع النشط:"}</span>
-                      <span className="text-[#008069]">{authBranch.name}</span>
+                      <span className="text-[#008069]">{liveAuthBranch.name}</span>
                     </span>
                   </div>
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
                     {locale === "fr" ? "Compte caissier" : locale === "es" ? "Cajero" : "حساب فرع"}
                   </span>
                 </div>
-              ) : (
+              ) : isOwner ? (
                 <div className="space-y-2 p-3 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
@@ -2312,7 +2437,7 @@ export default function MerchantDashboardClient({
                     ))}
                   </div>
                 </div>
-              )
+              ) : null
             )}
 
             {/* 2x2 KPI Grid */}
@@ -2363,8 +2488,8 @@ export default function MerchantDashboardClient({
               </div>
             </div>
 
-            {/* Inactive Customers Alert */}
-            {metrics.audienceCounts.quiet > 0 && (
+            {/* Inactive Customers Alert (Owner Promo Trigger Only) */}
+            {isOwner && metrics.audienceCounts.quiet > 0 && (
               <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-between shadow-sm">
                 <div>
                   <span className="font-bold text-xs text-red-900 block">
@@ -2385,7 +2510,7 @@ export default function MerchantDashboardClient({
             )}
 
             {/* Branch Performance Comparison Card (MULTI Plan Global View) */}
-            {isMultiBranch && authRole !== "BRANCH_STAFF" && selectedBranchId === "ALL" && branches.length > 1 && (
+            {isMultiBranch && isOwner && selectedBranchId === "ALL" && branches.length > 1 && (
               <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-[#173E30] flex items-center gap-1.5">
@@ -2818,18 +2943,18 @@ export default function MerchantDashboardClient({
 
                 {/* 2. Branch Filter Tabs (For Multi-Branch Merchants) */}
                 {monthlyAnalytics.isMultiBranch && monthlyAnalytics.branches.length > 1 && (
-                  authRole === "BRANCH_STAFF" && authBranch ? (
+                  isRestrictedStaff && liveAuthBranch ? (
                     <div className="p-2.5 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-[#173E30]">
                         <Building2 className="w-3.5 h-3.5 text-[#008069]" />
                         <span>{locale === "fr" ? "Rapport de succursale :" : locale === "es" ? "Informe de sucursal:" : "تقرير الفرع:"}</span>
-                        <span className="text-[#008069]">{authBranch.name}</span>
+                        <span className="text-[#008069]">{liveAuthBranch.name}</span>
                       </div>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
                         {locale === "fr" ? "Verrouillé" : "مقفل للفرع"}
                       </span>
                     </div>
-                  ) : (
+                  ) : isOwner ? (
                     <div className="space-y-1.5 p-2.5 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm">
                       <div className="flex items-center gap-1 text-[11px] font-bold text-[#173E30]">
                         <Building2 className="w-3.5 h-3.5 text-[#008069]" />
@@ -2871,7 +2996,7 @@ export default function MerchantDashboardClient({
                         ))}
                       </div>
                     </div>
-                  )
+                  ) : null
                 )}
 
                 {/* 3. Selected Month KPIs */}
@@ -3027,7 +3152,7 @@ export default function MerchantDashboardClient({
                       </div>
 
                       {/* 4. Branch Performance Breakdown Card (Only shown when "ALL" branches is selected in Multi-Branch mode) */}
-                      {monthlyAnalytics.isMultiBranch && authRole !== "BRANCH_STAFF" && isAllBranches && selectedMonth.branches.length > 1 && (
+                      {monthlyAnalytics.isMultiBranch && isOwner && isAllBranches && selectedMonth.branches.length > 1 && (
                         <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-3">
                           <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-[#173E30] flex items-center gap-1.5">
@@ -3093,8 +3218,8 @@ export default function MerchantDashboardClient({
           </div>
         )}
 
-        {/* Tab 3: پروموسيون (Broadcast Promotions) */}
-        {activeTab === "promo" && (
+        {/* Tab 3: پروموسيون (Broadcast Promotions - Owner Only) */}
+        {activeTab === "promo" && isOwner && (
           <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
             {/* Dynamic Template Chips or Empty State */}
             {templates.length === 0 ? (
@@ -3312,20 +3437,28 @@ export default function MerchantDashboardClient({
         {(activeTab === "settings" || (activeTab as string) === "auto") && (
           <div className="p-3.5 space-y-3.5 flex-1 animate-in fade-in duration-200">
             {/* Branch Staff Security Alert Banner */}
-            {authRole === "BRANCH_STAFF" && authBranch && (
+            {isRestrictedStaff && (
               <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-1 shadow-sm">
                 <div className="flex items-center gap-2 font-bold text-xs text-amber-900">
                   <Lock className="w-4 h-4 text-amber-600" />
                   <span>
-                    {locale === "fr" ? `Compte succursale : ${authBranch.name}` : locale === "es" ? `Cuenta de sucursal: ${authBranch.name}` : `حساب خاص بالفرع: ${authBranch.name}`}
+                    {liveAuthBranch
+                      ? locale === "fr"
+                        ? `Compte succursale : ${liveAuthBranch.name}`
+                        : locale === "es"
+                        ? `Cuenta de sucursal: ${liveAuthBranch.name}`
+                        : `حساب كاشير خاص بالفرع: ${liveAuthBranch.name}`
+                      : locale === "fr"
+                      ? `Compte caissier : ${authStaffName || ""}`
+                      : `حساب كاشير${authStaffName ? `: ${authStaffName}` : ""}`}
                   </span>
                 </div>
                 <p className="text-[11px] text-amber-800 leading-relaxed">
                   {locale === "fr"
-                    ? "Vous êtes connecté avec les accès de cette succursale. Les modifications des paramètres généraux, des taux et l'ajout de succursales sont réservés au compte propriétaire."
+                    ? "Vous êtes connecté avec les accès de cette succursale. La configuration du programme de fidélité, les campagnes, les automatisations et les autres succursales sont réservées au propriétaire."
                     : locale === "es"
-                    ? "Ha iniciado sesión con las credenciales de esta sucursal. Los ajustes generales y la gestión de sucursales están reservados para el propietario."
-                    : "أنت مسجل الدخول برمز فرع مخصص. تعديل إعدادات المتجر العامة، نسب الكاش باك وإدارة الفروع محصورة بحساب صاحب المشروع الرئيسي."}
+                    ? "Ha iniciado sesión con credenciales de cajero. La configuración de fidelidad, promociones, automatizaciones y otras sucursales están reservadas para el propietario."
+                    : "أنت مسجل الدخول بحساب كاشير مخصص. تغيير نظام الولاء، الحملات الترويجية، الأتمتة التلقائية وإدارة باقي الفروع محصورة بحساب المدير الرئيسي."}
                 </p>
               </div>
             )}
@@ -3372,125 +3505,135 @@ export default function MerchantDashboardClient({
               </div>
             </div>
 
-            {/* Loyalty Program Settings Card */}
-            <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
-                <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
-                  <Coins className="w-4 h-4 text-amber-500" />
-                  <span>نظام الولاء للمحل</span>
-                </span>
-                <div className="flex items-center gap-2">
-                  {hasUnsavedChanges && (
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-300 animate-pulse">
-                      {t.demo.unsavedChanges}
-                    </span>
-                  )}
-                  <span className="text-[10px] text-[#008069] font-bold font-mono">
-                    {merchantLoyaltyMode === "BOTH"
-                      ? "أختام + كاش باك"
-                      : merchantLoyaltyMode === "CASHBACK"
-                        ? "كاش باك فقط"
-                        : "أختام فقط"}
+            {/* Loyalty Program Settings Card (OWNER ONLY) */}
+            {isOwner && (
+              <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
+                  <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
+                    <Coins className="w-4 h-4 text-amber-500" />
+                    <span>نظام الولاء للمحل</span>
                   </span>
-                </div>
-              </div>
-
-              {/* Mode Selector */}
-              <div className="space-y-1">
-                <span className="text-[10px] text-[#5F655D] font-semibold block">
-                  البرنامج المفعّل للعملاء:
-                </span>
-                <div className="grid grid-cols-3 gap-1.5 text-[11px] font-semibold">
-                  {[
-                    { id: "BOTH", label: "معاً (اختياري)" },
-                    { id: "STAMPS", label: "أختام فقط" },
-                    { id: "CASHBACK", label: "كاش باك فقط" },
-                  ].map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setMerchantLoyaltyMode(m.id)}
-                      className={`py-1.5 px-2 rounded-xl border text-center transition ${
-                        merchantLoyaltyMode === m.id
-                          ? "bg-[#008069] text-white border-[#008069] shadow-sm"
-                          : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Cashback Rate Selector */}
-              {(merchantLoyaltyMode === "CASHBACK" || merchantLoyaltyMode === "BOTH") && (
-                <div className="space-y-1 pt-1.5 border-t border-[#DCE0D4]">
-                  <div className="flex items-center justify-between text-[10px] text-[#5F655D]">
-                    <span className="font-semibold text-[#173E30]">نسبة الكاش باك من كل فاتورة:</span>
-                    <span className="font-bold text-amber-600 font-mono text-xs">
-                      {merchantCashbackRate}%
+                  <div className="flex items-center gap-2">
+                    {hasUnsavedChanges && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-300 animate-pulse">
+                        {t.demo.unsavedChanges}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-[#008069] font-bold font-mono">
+                      {merchantLoyaltyMode === "BOTH"
+                        ? "أختام + كاش باك"
+                        : merchantLoyaltyMode === "CASHBACK"
+                          ? "كاش باك فقط"
+                          : "أختام فقط"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    {[5, 10, 15, 20].map((rate) => (
+                </div>
+
+                {/* Mode Selector */}
+                <div className="space-y-1">
+                  <span className="text-[10px] text-[#5F655D] font-semibold block">
+                    البرنامج المفعّل للعملاء:
+                  </span>
+                  <div className="grid grid-cols-3 gap-1.5 text-[11px] font-semibold">
+                    {[
+                      { id: "BOTH", label: "معاً (اختياري)" },
+                      { id: "STAMPS", label: "أختام فقط" },
+                      { id: "CASHBACK", label: "كاش باك فقط" },
+                    ].map((m) => (
                       <button
-                        key={rate}
+                        key={m.id}
                         type="button"
-                        onClick={() => setMerchantCashbackRate(rate)}
-                        className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${
-                          Number(merchantCashbackRate) === rate
-                            ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
+                        onClick={() => setMerchantLoyaltyMode(m.id)}
+                        className={`py-1.5 px-2 rounded-xl border text-center transition ${
+                          merchantLoyaltyMode === m.id
+                            ? "bg-[#008069] text-white border-[#008069] shadow-sm"
                             : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
                         }`}
                       >
-                        {rate}%
+                        {m.label}
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
 
-              {/* Explicit Save Changes Button for Loyalty */}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  disabled={savingSettings}
-                  onClick={handleSaveSettings}
-                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${
-                    hasUnsavedChanges
-                      ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
-                      : "bg-[#008069] text-white hover:bg-[#00705c]"
-                  } disabled:opacity-50`}
-                >
-                  {savingSettings ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>{t.demo.saving}</span>
-                    </>
-                  ) : saveSuccessMsg ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-white" />
-                      <span>{saveSuccessMsg}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-3.5 h-3.5" />
-                      <span>{t.demo.saveChanges}</span>
-                    </>
-                  )}
-                </button>
+                {/* Cashback Rate Selector */}
+                {(merchantLoyaltyMode === "CASHBACK" || merchantLoyaltyMode === "BOTH") && (
+                  <div className="space-y-1 pt-1.5 border-t border-[#DCE0D4]">
+                    <div className="flex items-center justify-between text-[10px] text-[#5F655D]">
+                      <span className="font-semibold text-[#173E30]">نسبة الكاش باك من كل فاتورة:</span>
+                      <span className="font-bold text-amber-600 font-mono text-xs">
+                        {merchantCashbackRate}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {[5, 10, 15, 20].map((rate) => (
+                        <button
+                          key={rate}
+                          type="button"
+                          onClick={() => setMerchantCashbackRate(rate)}
+                          className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${
+                            Number(merchantCashbackRate) === rate
+                              ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
+                              : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                          }`}
+                        >
+                          {rate}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Explicit Save Changes Button for Loyalty */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    disabled={savingSettings}
+                    onClick={handleSaveSettings}
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${
+                      hasUnsavedChanges
+                        ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
+                        : "bg-[#008069] text-white hover:bg-[#00705c]"
+                    } disabled:opacity-50`}
+                  >
+                    {savingSettings ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>{t.demo.saving}</span>
+                      </>
+                    ) : saveSuccessMsg ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-white" />
+                        <span>{saveSuccessMsg}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-3.5 h-3.5" />
+                        <span>{t.demo.saveChanges}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Store Location & Multi-Branch Management Card */}
-            {isMultiBranch ? (
+            {isMultiBranch && (isOwner || liveAuthBranch) ? (
               <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3.5">
                 <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
                   <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
                     <Building2 className="w-4 h-4 text-[#008069]" />
-                    <span>{t.demo.manageBranches}</span>
+                    <span>
+                      {isRestrictedStaff
+                        ? locale === "fr"
+                          ? "Ma succursale"
+                          : locale === "es"
+                          ? "Mi sucursal"
+                          : "معلومات الفرع الخاص بك"
+                        : t.demo.manageBranches}
+                    </span>
                   </span>
-                  {authRole !== "BRANCH_STAFF" && (
+                  {isOwner && (
                     <button
                       type="button"
                       disabled={branches.length >= (merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1))}
@@ -3503,87 +3646,93 @@ export default function MerchantDashboardClient({
                   )}
                 </div>
 
-                {/* Branch Quota Progress Card */}
-                <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#173E30] flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-[#008069]" />
-                      <span>{locale === "fr" ? "Quota de succursales :" : locale === "es" ? "Cuota de sucursales:" : "كوطا الفروع المسموح بها:"}</span>
-                    </span>
-                    <span className="font-mono text-xs font-bold text-[#008069]">
-                      {branches.length} / {merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1)} {locale === "fr" ? "succursales" : locale === "es" ? "sucursales" : "فروع"}
-                    </span>
+                {/* Branch Quota Progress Card (OWNER ONLY) */}
+                {isOwner && (
+                  <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-[#173E30] flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5 text-[#008069]" />
+                        <span>{locale === "fr" ? "Quota de succursales :" : locale === "es" ? "Cuota de sucursales:" : "كوطا الفروع المسموح بها:"}</span>
+                      </span>
+                      <span className="font-mono text-xs font-bold text-[#008069]">
+                        {branches.length} / {merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1)} {locale === "fr" ? "succursales" : locale === "es" ? "sucursales" : "فروع"}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-[#DCE0D4] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#00A884] to-[#008069] transition-all duration-300"
+                        style={{
+                          width: `${Math.min(100, Math.round((branches.length / (merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1))) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                    {branches.length >= (merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1)) && (
+                      <p className="text-[10px] text-amber-800 font-medium">
+                        ⚠️ {locale === "fr"
+                          ? "Limite maximale de succursales atteinte. Contactez l'administrateur pour augmenter votre quota."
+                          : locale === "es"
+                          ? "Límite máximo de sucursales alcanzado. Contacte al administrador para aumentar su cuota."
+                          : "لقد استهلكت كامل الفروع المسموح بها في باقتك. تواصل مع الإدارة لترقية باقتك وفتح فروع إضافية."}
+                      </p>
+                    )}
                   </div>
-                  <div className="w-full h-1.5 bg-[#DCE0D4] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-[#00A884] to-[#008069] transition-all duration-300"
-                      style={{
-                        width: `${Math.min(100, Math.round((branches.length / (merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1))) * 100))}%`,
-                      }}
-                    />
-                  </div>
-                  {branches.length >= (merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1)) && (
-                    <p className="text-[10px] text-amber-800 font-medium">
-                      ⚠️ {locale === "fr"
-                        ? "Limite maximale de succursales atteinte. Contactez l'administrateur pour augmenter votre quota."
-                        : locale === "es"
-                        ? "Límite máximo de sucursales alcanzado. Contacte al administrador para aumentar su cuota."
-                        : "لقد استهلكت كامل الفروع المسموح بها في باقتك. تواصل مع الإدارة لترقية باقتك وفتح فروع إضافية."}
-                    </p>
-                  )}
-                </div>
+                )}
 
-                {/* Current Cashier Device Branch Selector */}
-                <div className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#C8D1BE] space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="device-branch-select" className="text-[10px] text-[#5F655D] font-bold flex items-center gap-1">
-                      <Smartphone className="w-3.5 h-3.5 text-[#008069]" />
-                      <span>{t.demo.currentDeviceBranch}:</span>
-                    </label>
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-                      {activeBranchName || "نشط"}
-                    </span>
-                  </div>
-                  <select
-                    id="device-branch-select"
-                    value={deviceBranchId}
-                    onChange={(e) => {
-                      const newId = e.target.value;
-                      setDeviceBranchId(newId);
-                      if (typeof window !== "undefined") {
-                        try {
-                          localStorage.setItem(`walink_device_branch_${merchant.slug}`, newId);
-                        } catch (err) {
-                          console.warn("Failed to save deviceBranch to localStorage:", err);
+                {/* Current Cashier Device Branch Selector (OWNER ONLY) */}
+                {isOwner && (
+                  <div className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#C8D1BE] space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="device-branch-select" className="text-[10px] text-[#5F655D] font-bold flex items-center gap-1">
+                        <Smartphone className="w-3.5 h-3.5 text-[#008069]" />
+                        <span>{t.demo.currentDeviceBranch}:</span>
+                      </label>
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                        {activeBranchName || "نشط"}
+                      </span>
+                    </div>
+                    <select
+                      id="device-branch-select"
+                      value={deviceBranchId}
+                      onChange={(e) => {
+                        const newId = e.target.value;
+                        setDeviceBranchId(newId);
+                        if (typeof window !== "undefined") {
+                          try {
+                            localStorage.setItem(`walink_device_branch_${merchant.slug}`, newId);
+                          } catch (err) {
+                            console.warn("Failed to save deviceBranch to localStorage:", err);
+                          }
                         }
-                      }
-                    }}
-                    className="w-full py-1.5 px-2.5 text-xs rounded-lg border border-[#C8D1BE] bg-white text-[#173E30] font-semibold focus:outline-none focus:ring-2 focus:ring-[#008069]"
-                  >
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name} ({b.city}) {b.isMain ? "⭐" : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[9px] text-[#5F655D] leading-tight">
-                    {locale === "fr"
-                      ? "Chaque scan effectué sur cet appareil sera enregistré sous ce point de vente et dirigera le client vers ses avis Google."
-                      : locale === "es"
-                      ? "Cada escaneo en este dispositivo se registrará para esta sucursal y dirigirá las reseñas de Google a ella."
-                      : "كل عملية مسح وطابع من هذا الجهاز ستسجل تلقائياً باسم هذا الفرع وتوجه تقييم Google إليه."}
-                  </p>
-                </div>
+                      }}
+                      className="w-full py-1.5 px-2.5 text-xs rounded-lg border border-[#C8D1BE] bg-white text-[#173E30] font-semibold focus:outline-none focus:ring-2 focus:ring-[#008069]"
+                    >
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name} ({b.city}) {b.isMain ? "⭐" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[9px] text-[#5F655D] leading-tight">
+                      {locale === "fr"
+                        ? "Chaque scan effectué sur cet appareil sera enregistré sous ce point de vente et dirigera le client vers ses avis Google."
+                        : locale === "es"
+                        ? "Cada escaneo en este dispositivo se registrará para esta sucursal y dirigirá las reseñas de Google a ella."
+                        : "كل عملية مسح وطابع من هذا الجهاز ستسجل تلقائياً باسم هذا الفرع وتوجه تقييم Google إليه."}
+                    </p>
+                  </div>
+                )}
 
-                {/* Branches List */}
+                {/* Branches List (Scoped to ONLY Cashier's Own Branch when BRANCH_STAFF) */}
                 <div className="space-y-2">
-                  <span className="text-[10px] text-[#5F655D] font-bold uppercase block">
-                    {locale === "fr" ? "Liste des points de vente" : locale === "es" ? "Lista de sucursales" : "قائمة الفروع المسجلة:"} ({branches.length})
-                  </span>
-                  {branches.map((b) => (
+                  {isOwner && (
+                    <span className="text-[10px] text-[#5F655D] font-bold uppercase block">
+                      {locale === "fr" ? "Liste des points de vente" : locale === "es" ? "Lista de sucursales" : "قائمة الفروع المسجلة:"} ({branches.length})
+                    </span>
+                  )}
+                  {(isRestrictedStaff && liveAuthBranch ? [liveAuthBranch] : branches).map((b) => (
                     <div
                       key={b.id}
-                      className="p-2.5 rounded-xl border border-[#DCE0D4] bg-[#F8F9FA] hover:bg-white transition space-y-1.5"
+                      className="p-2.5 rounded-xl border border-[#DCE0D4] bg-[#FAF7F2] hover:bg-white transition space-y-1.5"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
@@ -3594,7 +3743,7 @@ export default function MerchantDashboardClient({
                             </span>
                           )}
                         </div>
-                        {authRole !== "BRANCH_STAFF" && (
+                        {isOwner && (
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
@@ -3647,16 +3796,18 @@ export default function MerchantDashboardClient({
                   ))}
                 </div>
 
-                <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-800 leading-relaxed">
-                  💡 {locale === "fr"
-                    ? "Toutes ces succursales sont synchronisées automatiquement dans le radar Apple & Google Wallet (jusqu'à 10 points de vente). La carte s'affiche sur l'écran verrouillé du client dès qu'il est à 100m de n'importe quel point !"
-                    : locale === "es"
-                    ? "Todas estas sucursales se sincronizan automáticamente en el radar de Apple y Google Wallet (hasta 10). La tarjeta aparece en la pantalla de bloqueo a menos de 100m de cualquier sucursal."
-                    : "جميع هذه الفروع مسجلة تلقائياً في رادار بطاقة المحفظة (Apple & Google Wallet) حتى 10 فروع، وتظهر البطاقة على شاشة قفل الزبون فور اقترابه من أي فرع بـ 100 متر!"}
-                </div>
+                {isOwner && (
+                  <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-800 leading-relaxed">
+                    💡 {locale === "fr"
+                      ? "Toutes ces succursales sont synchronisées automatiquement dans le radar Apple & Google Wallet (jusqu'à 10 points de vente). La carte s'affiche sur l'écran verrouillé du client dès qu'il est à 100m de n'importe quel point !"
+                      : locale === "es"
+                      ? "Todas estas sucursales se sincronizan automáticamente en el radar de Apple y Google Wallet (hasta 10). La tarjeta aparece en la pantalla de bloqueo a menos de 100m de cualquier sucursal."
+                      : "جميع هذه الفروع مسجلة تلقائياً في رادار بطاقة المحفظة (Apple & Google Wallet) حتى 10 فروع، وتظهر البطاقة على شاشة قفل الزبون فور اقترابه من أي فرع بـ 100 متر!"}
+                  </div>
+                )}
               </div>
-            ) : (
-              /* Store Location & GPS Radar Card */
+            ) : isOwner ? (
+              /* Store Location & GPS Radar Card (OWNER ONLY) */
               <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
                   <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
@@ -3832,113 +3983,117 @@ export default function MerchantDashboardClient({
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
 
-            {/* Smart Automations Toggles Card */}
-            <div className="space-y-2.5">
-              {[
-                {
-                  key: "autoWinback" as const,
-                  title: "رجوع الغابرين",
-                  badge: "بالكريدي",
-                  message: `توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية`,
-                  active: automations.autoWinback,
-                  locked: merchant.plan === "STARTER",
-                },
-                {
-                  key: "autoReview" as const,
-                  title: "تقييمات Google",
-                  badge: "فابور ديما",
-                  message: `شكراً على الزيارة! عجباتك الخدمة؟ خلي لينا رأيك ف Google`,
-                  active: automations.autoReview,
-                  locked: merchant.plan === "STARTER",
-                },
-                {
-                  key: "autoRadar" as const,
-                  title: "تذكير 100 ميترو",
-                  badge: "فابور ديما",
-                  message: `راك قريب من ${merchant.name}، الكارط ديالك واجدة`,
-                  active: automations.autoRadar,
-                  locked: merchant.plan === "STARTER",
-                },
-                {
-                  key: "autoNearReward" as const,
-                  title: "الكادو قريب",
-                  badge: "فابور ديما",
-                  message: `باقي ليك غير طابع واحد على ${merchant.rewardName}`,
-                  active: automations.autoNearReward,
-                  locked: false,
-                },
-              ].map((item) => (
-                <div
-                  key={item.key}
-                  className="p-3 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm flex items-center justify-between text-xs gap-3"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[#173E30]">{item.title}</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#FAF7F2] text-[#5F655D] border border-[#DCE0D4]">
-                        {item.badge}
-                      </span>
-                      {item.locked && (
-                        <span className="text-[9px] text-amber-600 font-bold flex items-center gap-0.5">
-                          <Lock className="w-2.5 h-2.5" /> Growth
-                        </span>
-                      )}
+            {/* Smart Automations Toggles Card & Cron Test (OWNER ONLY) */}
+            {isOwner && (
+              <>
+                <div className="space-y-2.5">
+                  {[
+                    {
+                      key: "autoWinback" as const,
+                      title: "رجوع الغابرين",
+                      badge: "بالكريدي",
+                      message: `توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية`,
+                      active: automations.autoWinback,
+                      locked: merchant.plan === "STARTER",
+                    },
+                    {
+                      key: "autoReview" as const,
+                      title: "تقييمات Google",
+                      badge: "فابور ديما",
+                      message: `شكراً على الزيارة! عجباتك الخدمة؟ خلي لينا رأيك ف Google`,
+                      active: automations.autoReview,
+                      locked: merchant.plan === "STARTER",
+                    },
+                    {
+                      key: "autoRadar" as const,
+                      title: "تذكير 100 ميترو",
+                      badge: "فابور ديما",
+                      message: `راك قريب من ${merchant.name}، الكارط ديالك واجدة`,
+                      active: automations.autoRadar,
+                      locked: merchant.plan === "STARTER",
+                    },
+                    {
+                      key: "autoNearReward" as const,
+                      title: "الكادو قريب",
+                      badge: "فابور ديما",
+                      message: `باقي ليك غير طابع واحد على ${merchant.rewardName}`,
+                      active: automations.autoNearReward,
+                      locked: false,
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.key}
+                      className="p-3 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm flex items-center justify-between text-xs gap-3"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[#173E30]">{item.title}</span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#FAF7F2] text-[#5F655D] border border-[#DCE0D4]">
+                            {item.badge}
+                          </span>
+                          {item.locked && (
+                            <span className="text-[9px] text-amber-600 font-bold flex items-center gap-0.5">
+                              <Lock className="w-2.5 h-2.5" /> Growth
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[#5F655D] mt-1 truncate max-w-[200px]">
+                          {item.message}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPeekNotification({
+                              isOpen: true,
+                              shopName: merchant.name,
+                              title: item.title,
+                              message: item.message,
+                            })
+                          }
+                          className="px-2 py-1 rounded-lg bg-[#FAF7F2] hover:bg-[#DCE0D4] text-[#5F655D] text-[10px] border border-[#C8D1BE] font-medium"
+                        >
+                          شوف
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={savingSettings || item.locked}
+                          onClick={() => handleToggleAutomation(item.key)}
+                          className={`w-11 h-6 rounded-full transition-colors p-0.5 flex items-center ${item.active ? "bg-[#008069] justify-end" : "bg-[#C8D1BE] justify-start"
+                            } ${item.locked ? "opacity-40 cursor-not-allowed" : ""}`}
+                        >
+                          <div className="w-5 h-5 rounded-full bg-white shadow-md"></div>
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-[10px] text-[#5F655D] mt-1 truncate max-w-[200px]">
-                      {item.message}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPeekNotification({
-                          isOpen: true,
-                          shopName: merchant.name,
-                          title: item.title,
-                          message: item.message,
-                        })
-                      }
-                      className="px-2 py-1 rounded-lg bg-[#FAF7F2] hover:bg-[#DCE0D4] text-[#5F655D] text-[10px] border border-[#C8D1BE] font-medium"
-                    >
-                      شوف
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={savingSettings || item.locked}
-                      onClick={() => handleToggleAutomation(item.key)}
-                      className={`w-11 h-6 rounded-full transition-colors p-0.5 flex items-center ${item.active ? "bg-[#008069] justify-end" : "bg-[#C8D1BE] justify-start"
-                        } ${item.locked ? "opacity-40 cursor-not-allowed" : ""}`}
-                    >
-                      <div className="w-5 h-5 rounded-full bg-white shadow-md"></div>
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Test Automations Trigger Button */}
-            <div className="pt-2 border-t border-[#DCE0D4] space-y-2">
-              <button
-                type="button"
-                disabled={testingCron}
-                onClick={handleTestCronForMerchant}
-                className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
-              >
-                <Zap className="w-4 h-4" />
-                <span>{testingCron ? "جاري تجربة الأتمتة..." : "⚡ جرّب إرسال الرسائل الأوتوماتيكية دابا"}</span>
-              </button>
+                {/* Test Automations Trigger Button */}
+                <div className="pt-2 border-t border-[#DCE0D4] space-y-2">
+                  <button
+                    type="button"
+                    disabled={testingCron}
+                    onClick={handleTestCronForMerchant}
+                    className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
+                  >
+                    <Zap className="w-4 h-4" />
+                    <span>{testingCron ? "جاري تجربة الأتمتة..." : "⚡ جرّب إرسال الرسائل الأوتوماتيكية دابا"}</span>
+                  </button>
 
-              {cronTestMessage && (
-                <div className="p-2.5 rounded-xl bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-[11px] text-center font-bold">
-                  {cronTestMessage}
+                  {cronTestMessage && (
+                    <div className="p-2.5 rounded-xl bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-[11px] text-center font-bold">
+                      {cronTestMessage}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         )}
 
@@ -4022,7 +4177,7 @@ export default function MerchantDashboardClient({
           >
             <div className="relative">
               <Settings className={`w-4 h-4 ${activeTab === "settings" ? "stroke-[2.5]" : ""}`} />
-              {hasUnsavedChanges && (
+              {isOwner && hasUnsavedChanges && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
               )}
             </div>
@@ -4073,9 +4228,9 @@ export default function MerchantDashboardClient({
         onActionComplete={handleActionComplete}
         onOpenCredits={() => setIsCreditsOpen(true)}
         locale={locale}
-        branchName={authRole === "BRANCH_STAFF" && authBranch ? authBranch.name : (isMultiBranch ? activeBranchName : undefined)}
-        staffName={authRole === "BRANCH_STAFF" && authBranch ? authBranch.name : (merchant.name || "المدير")}
-        userRole={authRole === "BRANCH_STAFF" ? "STAFF" : "OWNER"}
+        branchName={authRole === "BRANCH_STAFF" && liveAuthBranch ? liveAuthBranch.name : (isMultiBranch ? activeBranchName : undefined)}
+        staffName={authRole === "BRANCH_STAFF" && liveAuthBranch ? liveAuthBranch.name : authStaffName || (merchant.name || "المدير")}
+        userRole={isRestrictedStaff ? "STAFF" : "OWNER"}
       />
 
       <StandPreviewModal
@@ -4767,12 +4922,14 @@ export default function MerchantDashboardClient({
                   {locale === "ar" ? "الأقسام الرئيسية" : "Sections"}
                 </p>
                 {[
-                  { id: "home" as const, label: t.demo.ownerHome, icon: LayoutDashboard },
-                  { id: "customers" as const, label: t.demo.ownerClients, icon: Users },
-                  { id: "analytics" as const, label: t.demo.ownerAnalytics, icon: BarChart3 },
-                  { id: "promo" as const, label: t.demo.ownerPromos, icon: Megaphone },
-                  { id: "settings" as const, label: t.demo.ownerSettings, icon: Settings },
-                ].map((item) => {
+                  { id: "home" as const, label: t.demo.ownerHome, icon: LayoutDashboard, ownerOnly: false },
+                  { id: "customers" as const, label: t.demo.ownerClients, icon: Users, ownerOnly: false },
+                  { id: "analytics" as const, label: t.demo.ownerAnalytics, icon: BarChart3, ownerOnly: false },
+                  { id: "promo" as const, label: t.demo.ownerPromos, icon: Megaphone, ownerOnly: true },
+                  { id: "settings" as const, label: t.demo.ownerSettings, icon: Settings, ownerOnly: false },
+                ]
+                  .filter((item) => !item.ownerOnly || isOwner)
+                  .map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
                   return (
@@ -4791,7 +4948,7 @@ export default function MerchantDashboardClient({
                     >
                       <Icon className={`w-4 h-4 ${isActive ? "text-[#008069]" : "text-[#5F655D]"}`} />
                       <span className="flex-1">{item.label}</span>
-                      {item.id === "settings" && hasUnsavedChanges && (
+                      {item.id === "settings" && isOwner && hasUnsavedChanges && (
                         <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                       )}
                     </button>
@@ -4880,22 +5037,24 @@ export default function MerchantDashboardClient({
             <div className="p-4 border-t border-[#DCE0D4] bg-[#FAF7F2] space-y-2.5">
               <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-[#FFFDF7] border border-[#DCE0D4]">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${authRole === "BRANCH_STAFF" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
+                  <div className={`w-2.5 h-2.5 rounded-full ${isRestrictedStaff ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
                   <div className="text-start">
                     <span className="font-bold text-[#173E30] block text-xs">
-                      {authRole === "BRANCH_STAFF" && authBranch
-                        ? authBranch.name
+                      {isRestrictedStaff && liveAuthBranch
+                        ? liveAuthBranch.name
+                        : isRestrictedStaff
+                        ? authStaffName || (locale === "fr" ? "Caissier" : "كاشير")
                         : (locale === "fr" ? "Compte Propriétaire" : locale === "es" ? "Cuenta Propietario" : "صاحب المشروع")}
                     </span>
                     <span className="text-[10px] text-[#5F655D]">
-                      {authRole === "BRANCH_STAFF"
-                        ? (locale === "fr" ? "Accès succursale" : locale === "es" ? "Acceso sucursal" : "حساب فرع مستقل")
+                      {isRestrictedStaff
+                        ? (locale === "fr" ? "Accès succursale" : locale === "es" ? "Acceso sucursal" : "حساب كاشير فرع مستقل")
                         : (locale === "fr" ? "Accès complet multi-succursales" : locale === "es" ? "Acceso global completo" : "صلاحيات شاملة لكل الفروع")}
                     </span>
                   </div>
                 </div>
                 <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FAF7F2] text-[#008069] border border-[#DCE0D4]">
-                  {authRole === "BRANCH_STAFF" ? "STAFF" : "OWNER"}
+                  {isRestrictedStaff ? "STAFF" : "OWNER"}
                 </span>
               </div>
 

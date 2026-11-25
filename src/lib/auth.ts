@@ -214,3 +214,141 @@ export async function verifyAdminToken(
     return null;
   }
 }
+
+// ==========================================
+// Merchant Store Session Auth (Phase 63)
+// ==========================================
+
+export type StoreSessionRole = "OWNER" | "BRANCH_STAFF" | "STAFF";
+
+export interface StoreSessionPayload {
+  slug: string;
+  role: StoreSessionRole;
+  branchId?: string;
+  branchName?: string;
+  staffName?: string;
+  expiresAt: number;
+}
+
+export function getStoreSessionCookieName(slug: string): string {
+  const safeSlug = slug.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `walink_store_session_${safeSlug}`;
+}
+
+function utf8ToBase64Url(input: string): string {
+  const bytes = new TextEncoder().encode(input);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 =
+    typeof btoa === "function"
+      ? btoa(binary)
+      : Buffer.from(bytes).toString("base64");
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64UrlToUtf8(input: string): string {
+  const padded = input.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((input.length + 3) % 4);
+  if (typeof atob === "function") {
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
+  }
+  return Buffer.from(padded, "base64").toString("utf8");
+}
+
+function getSessionSecret(explicitSecret?: string): string {
+  return (
+    explicitSecret ||
+    process.env.ADMIN_SESSION_SECRET ||
+    "fallback_secret_walink_2026"
+  );
+}
+
+/**
+ * Create a signed HMAC-SHA256 session token for a merchant store (OWNER, BRANCH_STAFF, or STAFF).
+ */
+export async function createStoreSessionToken(
+  payload: Omit<StoreSessionPayload, "expiresAt">,
+  secret?: string
+): Promise<string> {
+  const expiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
+  const fullPayload: StoreSessionPayload = {
+    ...payload,
+    expiresAt,
+  };
+  const encodedPayload = utf8ToBase64Url(JSON.stringify(fullPayload));
+  const signature = await hmacSign(getSessionSecret(secret), encodedPayload);
+  return `${encodedPayload}.${signature}`;
+}
+
+/**
+ * Verify a store session token and confirm it matches the requested merchant slug.
+ */
+export async function verifyStoreSessionToken(
+  token: string,
+  expectedSlug: string,
+  secret?: string
+): Promise<StoreSessionPayload | null> {
+  try {
+    if (!token || typeof token !== "string") return null;
+    const parts = token.split(".");
+    if (parts.length !== 2) return null;
+
+    const [encodedPayload, signature] = parts;
+    const expectedSignature = await hmacSign(
+      getSessionSecret(secret),
+      encodedPayload
+    );
+
+    if (!timingSafeCompare(signature, expectedSignature)) {
+      return null;
+    }
+
+    const parsed = JSON.parse(base64UrlToUtf8(encodedPayload)) as Partial<StoreSessionPayload>;
+    if (
+      !parsed ||
+      typeof parsed.slug !== "string" ||
+      parsed.slug !== expectedSlug ||
+      typeof parsed.expiresAt !== "number" ||
+      Date.now() > parsed.expiresAt
+    ) {
+      return null;
+    }
+
+    if (
+      parsed.role !== "OWNER" &&
+      parsed.role !== "BRANCH_STAFF" &&
+      parsed.role !== "STAFF"
+    ) {
+      return null;
+    }
+
+    return {
+      slug: parsed.slug,
+      role: parsed.role,
+      branchId: typeof parsed.branchId === "string" ? parsed.branchId : undefined,
+      branchName: typeof parsed.branchName === "string" ? parsed.branchName : undefined,
+      staffName: typeof parsed.staffName === "string" ? parsed.staffName : undefined,
+      expiresAt: parsed.expiresAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Read and verify the store session cookie from Next.js cookies/requestCookies.
+ */
+export async function getStoreSessionFromCookies(
+  cookieStore: { get(name: string): { value: string } | undefined },
+  slug: string
+): Promise<StoreSessionPayload | null> {
+  const cookie = cookieStore.get(getStoreSessionCookieName(slug));
+  if (!cookie?.value) return null;
+  return verifyStoreSessionToken(cookie.value, slug);
+}

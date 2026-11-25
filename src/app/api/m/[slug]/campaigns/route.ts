@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
 import { sendApplePassUpdate } from "@/lib/apple-wallet";
+import { getStoreSessionFromCookies } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
@@ -9,7 +10,24 @@ export async function POST(
 ) {
   try {
     const { slug } = params;
+    const session = await getStoreSessionFromCookies(req.cookies, slug);
     const body = await req.json();
+
+    if (
+      !session ||
+      session.role !== "OWNER" ||
+      body.actorRole === "BRANCH_STAFF" ||
+      body.actorRole === "STAFF"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "غير مصرح: إطلاق الحملات الترويجية محصور بحساب صاحب المشروع فقط.",
+        },
+        { status: 403 }
+      );
+    }
+
     const { title, message, audience = "ALL" } = body;
 
     if (!message || typeof message !== "string" || message.trim() === "") {

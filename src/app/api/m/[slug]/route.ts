@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getStoreSessionFromCookies } from "@/lib/auth";
+import {
+  filterBranchesForSession,
+  resolveEffectiveBranches,
+} from "@/lib/branches";
 
 export async function GET(
   req: NextRequest,
@@ -7,6 +12,14 @@ export async function GET(
 ) {
   try {
     const { slug } = params;
+    const session = await getStoreSessionFromCookies(req.cookies, slug);
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "غير مصرح بالوصول، يرجى تسجيل الدخول برمز PIN" },
+        { status: 401 }
+      );
+    }
 
     const merchant = await prisma.merchant.findUnique({
       where: { slug },
@@ -76,6 +89,12 @@ export async function GET(
       }
     }
 
+    const effectiveBranches = resolveEffectiveBranches(merchant);
+    const { branches: scopedBranches } = filterBranchesForSession(
+      effectiveBranches,
+      session
+    );
+
     return NextResponse.json({
       merchant: {
         id: merchant.id,
@@ -84,20 +103,26 @@ export async function GET(
         niche: merchant.niche,
         city: merchant.city,
         phone: merchant.phone,
-        pinCode: merchant.pinCode,
+        pinCode: "",
         logoIcon: merchant.logoIcon,
         primaryColor: merchant.primaryColor,
         bgGradient: merchant.bgGradient,
         stampsRequired: merchant.stampsRequired,
         rewardName: merchant.rewardName,
         customerPrefix: merchant.customerPrefix,
+        loyaltyMode: merchant.loyaltyMode,
+        cashbackRate: merchant.cashbackRate,
+        welcomeCashback: merchant.welcomeCashback,
+        minCashbackRedeem: merchant.minCashbackRedeem,
+        currency: merchant.currency,
         latitude: merchant.latitude,
         longitude: merchant.longitude,
         radarMessage: merchant.radarMessage,
         googleMapsUrl: merchant.googleMapsUrl,
+        promoTemplates: merchant.promoTemplates || "[]",
         plan: merchant.plan,
         maxBranches: merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1),
-        branches: merchant.branches || "[]",
+        branches: JSON.stringify(scopedBranches),
         credits: merchant.credits,
         autoWinback: merchant.autoWinback,
         autoReview: merchant.autoReview,
@@ -107,7 +132,7 @@ export async function GET(
       },
       customers: merchant.customers,
       transactions: merchant.transactions,
-      campaigns: merchant.campaigns,
+      campaigns: session.role === "OWNER" ? merchant.campaigns : [],
       metrics: {
         totalVisits,
         returningCustomers,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getStoreSessionFromCookies } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
@@ -7,7 +8,23 @@ export async function PATCH(
 ) {
   try {
     const { slug } = params;
+    const session = await getStoreSessionFromCookies(req.cookies, slug);
     const body = await req.json();
+
+    if (
+      !session ||
+      session.role !== "OWNER" ||
+      body.actorRole === "BRANCH_STAFF" ||
+      body.actorRole === "STAFF"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "غير مصرح: تعديل إعدادات المتجر ونظام الولاء والفروع محصور بحساب صاحب المشروع فقط.",
+        },
+        { status: 403 }
+      );
+    }
 
     const allowedSettings = [
       "autoWinback",
