@@ -1839,7 +1839,7 @@ export default function MerchantDashboardClient({
   if (!isUnlocked) {
     return (
       <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center p-4 text-[#173E30]">
-        <div className="w-full max-w-xs bg-white p-6 rounded-3xl border border-[#DCE0D4] shadow-xl text-center space-y-5">
+        <div className="w-full max-w-xs bg-[#FFFDF7] p-6 rounded-3xl border border-[#DCE0D4] shadow-xl text-center space-y-5">
           <div className="w-14 h-14 rounded-2xl bg-[#008069]/10 text-[#008069] border border-[#008069]/20 mx-auto flex items-center justify-center shadow-sm">
             <KeyRound className="w-7 h-7" />
           </div>
@@ -1975,7 +1975,7 @@ export default function MerchantDashboardClient({
           />
 
           <div
-            className="relative z-10 w-full max-w-sm bg-white border-2 border-emerald-500/30 rounded-3xl p-6 text-center text-[#173E30] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 cursor-default"
+            className="relative z-10 w-full max-w-sm bg-[#FFFDF7] border-2 border-[#008069]/30 rounded-3xl p-6 text-center text-[#173E30] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 cursor-default"
             dir={locale === "ar" ? "rtl" : "ltr"}
           >
             {/* Top Close Button */}
@@ -2241,7 +2241,7 @@ export default function MerchantDashboardClient({
             {/* Multi-Branch Selector Header (MULTI Plan Exclusive) */}
             {isMultiBranch && branches.length > 0 && (
               authRole === "BRANCH_STAFF" && authBranch ? (
-                <div className="flex items-center justify-between p-3 bg-white rounded-2xl border border-[#DCE0D4] shadow-sm">
+                <div className="flex items-center justify-between p-3 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs font-bold text-[#173E30] flex items-center gap-1.5">
@@ -2255,7 +2255,7 @@ export default function MerchantDashboardClient({
                   </span>
                 </div>
               ) : (
-                <div className="space-y-2 p-3 bg-white rounded-2xl border border-[#DCE0D4] shadow-sm">
+                <div className="space-y-2 p-3 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <Building2 className="w-4 h-4 text-[#008069]" />
@@ -2317,7 +2317,7 @@ export default function MerchantDashboardClient({
 
             {/* 2x2 KPI Grid */}
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="bg-white p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
+              <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
                 <span className="text-[11px] text-[#5F655D] block">
                   {selectedBranch ? `${t.demo.branchVisitsLabel} (${selectedBranch.name})` : "زيارات (إجمالي)"}
                 </span>
@@ -2331,7 +2331,7 @@ export default function MerchantDashboardClient({
                 </div>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
+              <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
                 <span className="text-[11px] text-[#5F655D] block">كليان رجعو</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold font-mono text-[#173E30]">
@@ -2343,7 +2343,7 @@ export default function MerchantDashboardClient({
                 </div>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
+              <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
                 <span className="text-[11px] text-[#5F655D] block">كادوات تعطاو</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold font-mono text-amber-600">
@@ -2353,7 +2353,7 @@ export default function MerchantDashboardClient({
                 </div>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
+              <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
                 <span className="text-[11px] text-[#5F655D] block">تقييم Google</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold font-mono text-amber-600 flex items-center gap-1">
@@ -2386,7 +2386,7 @@ export default function MerchantDashboardClient({
 
             {/* Branch Performance Comparison Card (MULTI Plan Global View) */}
             {isMultiBranch && authRole !== "BRANCH_STAFF" && selectedBranchId === "ALL" && branches.length > 1 && (
-              <div className="bg-white p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-3">
+              <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-[#173E30] flex items-center gap-1.5">
                     <Building2 className="w-4 h-4 text-[#008069]" />
@@ -2432,7 +2432,7 @@ export default function MerchantDashboardClient({
             )}
 
             {/* Weekly Visits Dynamic Bar Chart */}
-            <div className="bg-white p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-2.5">
+            <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-2.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-[#173E30]">هاد السيمانة — زيارات</span>
                 <span className="text-[11px] text-[#008069] font-mono font-bold">
@@ -2467,7 +2467,7 @@ export default function MerchantDashboardClient({
             </div>
 
             {/* Live Activity Feed */}
-            <div className="bg-white p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-2.5">
+            <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-2.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-[#173E30]">آخر الحركات</span>
                 {selectedBranch && (
@@ -2583,7 +2583,7 @@ export default function MerchantDashboardClient({
                   return (
                     <div
                       key={c.id}
-                      className={`w-full p-3.5 rounded-2xl bg-white border ${
+                      className={`w-full p-3.5 rounded-2xl bg-[#FFFDF7] border ${
                         isLocked ? "border-red-300 ring-1 ring-red-300 bg-red-50/20" : "border-[#DCE0D4]"
                       } shadow-sm space-y-2.5 text-xs transition`}
                     >
@@ -2819,7 +2819,7 @@ export default function MerchantDashboardClient({
                 {/* 2. Branch Filter Tabs (For Multi-Branch Merchants) */}
                 {monthlyAnalytics.isMultiBranch && monthlyAnalytics.branches.length > 1 && (
                   authRole === "BRANCH_STAFF" && authBranch ? (
-                    <div className="p-2.5 bg-white rounded-2xl border border-[#DCE0D4] shadow-sm flex items-center justify-between">
+                    <div className="p-2.5 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-[#173E30]">
                         <Building2 className="w-3.5 h-3.5 text-[#008069]" />
                         <span>{locale === "fr" ? "Rapport de succursale :" : locale === "es" ? "Informe de sucursal:" : "تقرير الفرع:"}</span>
@@ -2830,7 +2830,7 @@ export default function MerchantDashboardClient({
                       </span>
                     </div>
                   ) : (
-                    <div className="space-y-1.5 p-2.5 bg-white rounded-2xl border border-[#DCE0D4] shadow-sm">
+                    <div className="space-y-1.5 p-2.5 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm">
                       <div className="flex items-center gap-1 text-[11px] font-bold text-[#173E30]">
                         <Building2 className="w-3.5 h-3.5 text-[#008069]" />
                         <span>{locale === "fr" ? "Filtrer par succursale :" : locale === "es" ? "Filtrar por sucursal:" : "تصفية حسب الفرع:"}</span>
@@ -2940,7 +2940,7 @@ export default function MerchantDashboardClient({
                       {/* 2x2 KPI Cards */}
                       <div className="grid grid-cols-2 gap-2.5">
                         {/* 1. Visits & Growth */}
-                        <div className="bg-white p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
+                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
                           <span className="text-[11px] text-[#5F655D] block">
                             {t.demo.kpiTotalVisits}
                           </span>
@@ -2966,7 +2966,7 @@ export default function MerchantDashboardClient({
                         </div>
 
                         {/* 2. New Customers */}
-                        <div className="bg-white p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
+                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
                           <span className="text-[11px] text-[#5F655D] block">
                             {t.demo.newCustomersLabel}
                           </span>
@@ -2984,7 +2984,7 @@ export default function MerchantDashboardClient({
                         </div>
 
                         {/* 3. Rewards Delivered */}
-                        <div className="bg-white p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
+                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
                           <span className="text-[11px] text-[#5F655D] block">
                             {t.demo.rewardsDeliveredLabel}
                           </span>
@@ -3002,7 +3002,7 @@ export default function MerchantDashboardClient({
                         </div>
 
                         {/* 4. Sales / Cashback Activity */}
-                        <div className="bg-white p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
+                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
                           <span className="text-[11px] text-[#5F655D] block">
                             {merchant.loyaltyMode === "CASHBACK"
                               ? (locale === "fr" ? "Cashback distribué" : "كاش باك ممنوح")
@@ -3028,7 +3028,7 @@ export default function MerchantDashboardClient({
 
                       {/* 4. Branch Performance Breakdown Card (Only shown when "ALL" branches is selected in Multi-Branch mode) */}
                       {monthlyAnalytics.isMultiBranch && authRole !== "BRANCH_STAFF" && isAllBranches && selectedMonth.branches.length > 1 && (
-                        <div className="bg-white p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-3">
+                        <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-3">
                           <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-[#173E30] flex items-center gap-1.5">
                               <Building2 className="w-4 h-4 text-[#008069]" />
@@ -3098,7 +3098,7 @@ export default function MerchantDashboardClient({
           <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
             {/* Dynamic Template Chips or Empty State */}
             {templates.length === 0 ? (
-              <div className="p-3.5 rounded-2xl bg-white border border-[#DCE0D4] shadow-sm flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <span className="text-xs font-bold text-[#173E30] block">
                     {t.demo.noTemplatesYet}
@@ -3247,7 +3247,7 @@ export default function MerchantDashboardClient({
             </div>
 
             {/* Cost Summary Row */}
-            <div className="p-3 rounded-2xl bg-white border border-[#DCE0D4] shadow-sm flex items-center justify-between text-xs">
+            <div className="p-3 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm flex items-center justify-between text-xs">
               <span className="text-[#5F655D]">
                 غادي يتخصم: <strong className="text-amber-600 font-mono font-bold">{costCredits}</strong> كريدي
               </span>
@@ -3330,7 +3330,7 @@ export default function MerchantDashboardClient({
               </div>
             )}
             {/* Language Switcher Bar */}
-            <div className="p-3.5 rounded-2xl bg-white border border-[#DCE0D4] shadow-sm space-y-2.5">
+            <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
                   <Globe className="w-4 h-4 text-[#008069]" />
@@ -3373,7 +3373,7 @@ export default function MerchantDashboardClient({
             </div>
 
             {/* Loyalty Program Settings Card */}
-            <div className="p-3.5 rounded-2xl bg-white border border-[#DCE0D4] shadow-sm space-y-3">
+            <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
                 <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
                   <Coins className="w-4 h-4 text-amber-500" />
@@ -3484,7 +3484,7 @@ export default function MerchantDashboardClient({
 
             {/* Store Location & Multi-Branch Management Card */}
             {isMultiBranch ? (
-              <div className="p-3.5 rounded-2xl bg-white border border-[#DCE0D4] shadow-sm space-y-3.5">
+              <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3.5">
                 <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
                   <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
                     <Building2 className="w-4 h-4 text-[#008069]" />
@@ -3639,7 +3639,7 @@ export default function MerchantDashboardClient({
                       </div>
 
                       {b.radarMessage && (
-                        <p className="text-[9px] text-[#8696A0] bg-white p-1.5 rounded-lg border border-[#DCE0D4] italic line-clamp-1">
+                        <p className="text-[9px] text-[#5F655D] bg-[#FFFDF7] p-1.5 rounded-lg border border-[#DCE0D4] italic line-clamp-1">
                           🔔 &quot;{b.radarMessage}&quot;
                         </p>
                       )}
@@ -3657,7 +3657,7 @@ export default function MerchantDashboardClient({
               </div>
             ) : (
               /* Store Location & GPS Radar Card */
-              <div className="p-3.5 rounded-2xl bg-white border border-[#DCE0D4] shadow-sm space-y-3">
+              <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
                   <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-rose-500" />
@@ -3696,11 +3696,11 @@ export default function MerchantDashboardClient({
                       value={merchantGoogleMapsUrl}
                       onChange={(e) => handleGoogleMapsUrlChange(e.target.value)}
                       placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
-                      className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30] placeholder-[#8696A0]"
+                      className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30] placeholder-[#5F655D]"
                       dir="ltr"
                     />
                   </div>
-                  <span className="text-[9px] text-[#8696A0] block">
+                  <span className="text-[9px] text-[#5F655D] block">
                     {locale === "fr"
                       ? "💡 Collez un lien Google Maps et les coordonnées GPS seront extraites automatiquement."
                       : locale === "es"
@@ -3872,7 +3872,7 @@ export default function MerchantDashboardClient({
               ].map((item) => (
                 <div
                   key={item.key}
-                  className="p-3 rounded-2xl bg-white border border-[#DCE0D4] shadow-sm flex items-center justify-between text-xs gap-3"
+                  className="p-3 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm flex items-center justify-between text-xs gap-3"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -3944,7 +3944,7 @@ export default function MerchantDashboardClient({
 
         {/* Bottom Navigation Bar with Safe Area Bottom Padding */}
         <nav
-          className="sticky bottom-0 z-30 bg-white border-t border-[#DCE0D4] grid grid-cols-5 items-center px-1 py-1 text-center text-xs shadow-lg"
+          className="sticky bottom-0 z-30 bg-[#FFFDF7] border-t border-[#DCE0D4] grid grid-cols-5 items-center px-1 py-1 text-center text-xs shadow-lg"
           style={{
             paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)",
           }}
@@ -4105,7 +4105,7 @@ export default function MerchantDashboardClient({
       {isTemplateModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div
-            className="w-full max-w-sm bg-white rounded-3xl p-5 border border-[#DCE0D4] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-sm bg-[#FFFDF7] rounded-3xl p-5 border border-[#DCE0D4] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
             dir={isRTL ? "rtl" : "ltr"}
           >
             <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
@@ -4243,7 +4243,7 @@ export default function MerchantDashboardClient({
       {isBranchModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div
-            className="w-full max-w-sm bg-white rounded-3xl p-5 border border-[#DCE0D4] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-sm bg-[#FFFDF7] rounded-3xl p-5 border border-[#DCE0D4] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
             dir={isRTL ? "rtl" : "ltr"}
           >
             <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
@@ -4316,7 +4316,7 @@ export default function MerchantDashboardClient({
                   className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono font-bold tracking-widest text-[#008069]"
                   dir="ltr"
                 />
-                <span className="text-[9px] text-[#8696A0] block">
+                <span className="text-[9px] text-[#5F655D] block">
                   {locale === "fr"
                     ? "Permet aux caissiers de cette succursale de se connecter directement à leur compte dédié."
                     : locale === "es"
@@ -4354,10 +4354,10 @@ export default function MerchantDashboardClient({
                   value={branchGmapsInput}
                   onChange={(e) => handleBranchGoogleMapsUrlChange(e.target.value)}
                   placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
-                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30] placeholder-[#8696A0]"
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30] placeholder-[#5F655D]"
                   dir="ltr"
                 />
-                <span className="text-[9px] text-[#8696A0] block">
+                <span className="text-[9px] text-[#5F655D] block">
                   💡 {locale === "fr"
                     ? "Collez le lien Google Maps du point de vente pour extraire les coordonnées GPS automatiquement."
                     : locale === "es"
@@ -4504,7 +4504,7 @@ export default function MerchantDashboardClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div
             dir={isRTL ? "rtl" : "ltr"}
-            className="relative w-full max-w-sm bg-white border border-[#DCE0D4] rounded-3xl shadow-2xl p-6 text-[#173E30] space-y-4"
+            className="relative w-full max-w-sm bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl shadow-2xl p-6 text-[#173E30] space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4]">
               <div className="flex items-center gap-2">
@@ -4725,7 +4725,7 @@ export default function MerchantDashboardClient({
           />
 
           {/* Drawer Panel */}
-          <div className="relative w-full max-w-xs bg-white text-[#173E30] h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
+          <div className="relative w-full max-w-xs bg-[#FFFDF7] text-[#173E30] h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
             {/* Drawer Header with Safe-Area Top Padding */}
             <div
               className="px-4 pb-4 bg-[#075E54] text-white flex items-center justify-between shadow-sm"
@@ -4878,7 +4878,7 @@ export default function MerchantDashboardClient({
 
             {/* Drawer Footer with Role Badge & Account Switcher */}
             <div className="p-4 border-t border-[#DCE0D4] bg-[#FAF7F2] space-y-2.5">
-              <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-white border border-[#DCE0D4]">
+              <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-[#FFFDF7] border border-[#DCE0D4]">
                 <div className="flex items-center gap-2">
                   <div className={`w-2.5 h-2.5 rounded-full ${authRole === "BRANCH_STAFF" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
                   <div className="text-start">
@@ -4928,7 +4928,7 @@ export default function MerchantDashboardClient({
             onClick={() => setIsAddCustomerOpen(false)}
           />
           <div
-            className="relative z-10 bg-white border border-[#DCE0D4] rounded-3xl p-5 max-w-sm w-full text-[#173E30] shadow-2xl animate-in zoom-in-95 duration-200"
+            className="relative z-10 bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl p-5 max-w-sm w-full text-[#173E30] shadow-2xl animate-in zoom-in-95 duration-200"
             dir={locale === "ar" ? "rtl" : "ltr"}
           >
             {/* Header */}

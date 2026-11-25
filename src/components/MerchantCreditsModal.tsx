@@ -43,29 +43,29 @@ export default function MerchantCreditsModal({
       dir={isRTL ? "rtl" : "ltr"}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-sm bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-5 sm:p-6 text-[#111B21] space-y-3.5">
+      <div className="relative w-full max-w-sm bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl shadow-2xl p-5 sm:p-6 text-[#173E30] space-y-3.5">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF]">
+        <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4]">
           <div className="flex items-center gap-2">
             <span className="p-2 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 shadow-sm">
               <Coins className="w-5 h-5" />
             </span>
             <div>
-              <h3 className="font-bold text-base text-[#111B21]">
+              <h3 className="font-bold text-base text-[#173E30]">
                 {locale === "ar"
                   ? "رصيد الكريدي والشحن"
                   : locale === "fr"
                   ? "Solde et Recharge Crédits"
                   : "Saldo y Recarga de Créditos"}
               </h3>
-              <p className="text-[11px] text-[#54656F]">{merchantName}</p>
+              <p className="text-[11px] text-[#5F655D]">{merchantName}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label={locale === "ar" ? "إغلاق" : locale === "fr" ? "Fermer" : "Cerrar"}
-            className="p-1.5 rounded-xl hover:bg-[#F0F2F5] text-[#54656F]"
+            className="p-1.5 rounded-xl hover:bg-[#FAF7F2] text-[#5F655D]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -93,8 +93,8 @@ export default function MerchantCreditsModal({
         </div>
 
         {/* Current Balance */}
-        <div className="p-3.5 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-center justify-between">
-          <span className="text-xs text-[#54656F] font-semibold">
+        <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-center justify-between">
+          <span className="text-xs text-[#5F655D] font-semibold">
             {locale === "ar"
               ? "رصيدك المتاح حالياً:"
               : locale === "fr"
@@ -108,14 +108,14 @@ export default function MerchantCreditsModal({
                 {locale === "ar" ? "كريدي" : locale === "fr" ? "crédits" : "créditos"}
               </span>
             </span>
-            <span className="text-[10px] text-[#54656F] font-mono font-semibold">
+            <span className="text-[10px] text-[#5F655D] font-mono font-semibold">
               ≈ {dhEquivalent} DH
             </span>
           </div>
         </div>
 
         {/* Info */}
-        <p className="text-[11px] text-[#54656F] leading-relaxed">
+        <p className="text-[11px] text-[#5F655D] leading-relaxed">
           {locale === "ar"
             ? "يُستخدم الكريدي في إضافة الطوابع، استبدال الجوائز، معاملات الكاش باك، وإرسال العروض الترويجية لزبائنك."
             : locale === "fr"
@@ -125,7 +125,7 @@ export default function MerchantCreditsModal({
 
         {/* Pricing Packs (Selectable) */}
         <div className="space-y-2">
-          <label className="text-[11px] font-bold text-[#111B21] block">
+          <label className="text-[11px] font-bold text-[#173E30] block">
             {locale === "ar"
               ? "اختر باقة الشحن المطلوبة:"
               : locale === "fr"
@@ -143,7 +143,7 @@ export default function MerchantCreditsModal({
                   className={`w-full p-2.5 rounded-xl border text-right transition flex items-center justify-between text-xs cursor-pointer ${
                     isSelected
                       ? "bg-amber-500/10 border-amber-400 text-amber-950 ring-1 ring-amber-400/50 shadow-sm"
-                      : "bg-[#F0F2F5] border-[#E9EDEF] hover:bg-[#E9EDEF] text-[#111B21]"
+                      : "bg-[#FAF7F2] border-[#DCE0D4] hover:bg-[#E8EDE3] text-[#173E30]"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -151,14 +151,14 @@ export default function MerchantCreditsModal({
                       className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                         isSelected
                           ? "border-amber-600 bg-amber-600 text-white"
-                          : "border-[#D1D7DB] bg-white"
+                          : "border-[#C8D1BE] bg-[#FFFDF7]"
                       }`}
                     >
                       {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                     </div>
                     <div>
-                      <span className="font-bold text-[#111B21] block">{pkg.label}</span>
-                      <span className="text-[10px] text-[#54656F]">
+                      <span className="font-bold text-[#173E30] block">{pkg.label}</span>
+                      <span className="text-[10px] text-[#5F655D]">
                         {pkg.credits.toLocaleString()}{" "}
                         {locale === "ar"
                           ? "عملية أو إشعار"
@@ -208,7 +208,7 @@ export default function MerchantCreditsModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#54656F] text-xs font-semibold border border-[#D1D7DB] transition cursor-pointer"
+            className="w-full py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#E8EDE3] text-[#5F655D] text-xs font-semibold border border-[#C8D1BE] transition cursor-pointer"
           >
             {locale === "ar" ? "إغلاق" : locale === "fr" ? "Fermer" : "Cerrar"}
           </button>

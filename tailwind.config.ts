@@ -50,9 +50,18 @@ const config: Config = {
         },
       },
       fontFamily: {
-        arabic: ['var(--font-noto-arabic)', '"Noto Sans Arabic"', '"Plus Jakarta Sans"', 'sans-serif'],
+        arabic: [
+          'var(--font-alexandria)',
+          '"Alexandria"',
+          'var(--font-noto-arabic)',
+          '"Noto Sans Arabic"',
+          '"Plus Jakarta Sans"',
+          'sans-serif',
+        ],
         sans: [
           'var(--font-plus-jakarta)',
+          'var(--font-alexandria)',
+          '"Alexandria"',
           'var(--font-noto-arabic)',
           'var(--font-inter)',
           '"Google Sans"',
