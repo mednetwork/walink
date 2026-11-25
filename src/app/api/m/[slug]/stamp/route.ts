@@ -5,6 +5,7 @@ import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
 import { sendApplePassUpdate } from "@/lib/apple-wallet";
 import { getLocalizedRewardName } from "@/lib/i18n/rewards";
 import { Locale } from "@/lib/i18n/translations";
+import { getStoreSessionFromCookies } from "@/lib/auth";
 
 /**
  * Processes deferred referral reward when a referred customer completes their first store visit.
@@ -173,6 +174,7 @@ export async function POST(
 ) {
   try {
     const { slug } = params;
+    const session = await getStoreSessionFromCookies(req.cookies, slug);
     const body = await req.json();
     const {
       customerId,
@@ -228,9 +230,19 @@ export async function POST(
       );
     }
 
-    // Resolve Branch-Specific Google Maps URL for Reviews (Refinement 2)
+    // Resolve Branch Attribution & Branch-Specific Google Maps URL for Reviews
+    // Authoritative server rule: BRANCH_STAFF session cookie always enforces its assigned branchName
     let branchReviewUrl = merchant.googleMapsUrl || "https://maps.google.com";
-    const resolvedBranchName = typeof branchName === "string" && branchName.trim() ? branchName.trim() : null;
+    const clientBranchName =
+      typeof branchName === "string" && branchName.trim() ? branchName.trim() : null;
+    const resolvedBranchName =
+      session?.role === "BRANCH_STAFF" && session.branchName
+        ? session.branchName.trim()
+        : clientBranchName;
+    const resolvedStaffName =
+      session?.role === "BRANCH_STAFF" && session.branchName
+        ? session.branchName.trim()
+        : staffName || "المدير";
 
     if (resolvedBranchName && merchant.branches) {
       try {
@@ -238,7 +250,7 @@ export async function POST(
         if (Array.isArray(parsedBranches)) {
           const foundBranch = parsedBranches.find(
             (b: { name?: string; id?: string; googleMapsUrl?: string }) =>
-              b.name === resolvedBranchName || b.id === resolvedBranchName
+              (b.name && b.name.trim() === resolvedBranchName) || b.id === resolvedBranchName
           );
           if (foundBranch && foundBranch.googleMapsUrl && foundBranch.googleMapsUrl.trim()) {
             branchReviewUrl = foundBranch.googleMapsUrl.trim();
@@ -480,7 +492,7 @@ export async function POST(
             type: "CASHBACK_EARNED",
             billAmount: bill,
             cashbackDelta: totalCredited,
-            staffName: staffName || "المدير",
+            staffName: resolvedStaffName,
             branchName: resolvedBranchName,
             note: isFirstActivation
               ? `تفعيل البطاقة + كاش باك الفاتورة الأولى ${earned} ${currency} 💰🎁`
@@ -610,7 +622,7 @@ export async function POST(
             customerId: customer.id,
             type: "CASHBACK_REDEEMED",
             cashbackDelta: -toRedeem,
-            staffName: staffName || "المدير",
+            staffName: resolvedStaffName,
             branchName: resolvedBranchName,
             note: `خصم ${toRedeem} ${currency} من رصيد الكاش باك`,
             createdAt: now,
@@ -699,7 +711,7 @@ export async function POST(
             customerId: customer.id,
             type: "REWARD_REDEEMED",
             stampsDelta: -merchant.stampsRequired,
-            staffName: staffName || "المدير",
+            staffName: resolvedStaffName,
             branchName: resolvedBranchName,
             note: `تسليم المكافأة: ${merchant.rewardName} 🎁`,
             createdAt: now,

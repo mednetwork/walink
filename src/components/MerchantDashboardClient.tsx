@@ -89,7 +89,12 @@ interface NavigatorWithStandalone extends Navigator {
 function isStandaloneNavigator(nav: Navigator): nav is NavigatorWithStandalone {
   return "standalone" in nav;
 }
-import MerchantScannerModal, { CustomerSummary, ActionSuccessPayload } from "@/components/MerchantScannerModal";
+import MerchantScannerModal, {
+  CustomerSummary,
+  ActionSuccessPayload,
+  CreatedTransactionSummary,
+} from "@/components/MerchantScannerModal";
+import type { WeeklyVisitDay, BranchLiveMetric } from "@/lib/metrics";
 import StandPreviewModal from "@/components/StandPreviewModal";
 import LockScreenPeekModal from "@/components/LockScreenPeekModal";
 import MerchantCreditsModal from "@/components/MerchantCreditsModal";
@@ -216,6 +221,8 @@ interface MerchantDashboardClientProps {
     totalVisits: number;
     returningCustomers: number;
     totalRewards: number;
+    weeklyVisits?: WeeklyVisitDay[];
+    byBranch?: Record<string, BranchLiveMetric>;
     audienceCounts: {
       all: number;
       quiet: number;
@@ -423,9 +430,12 @@ export default function MerchantDashboardClient({
           }
         }
 
-        // Sync metrics, credits & scoped branches
+        // Sync metrics, transactions, credits & scoped branches
         if (data.metrics) {
           setMetrics(data.metrics);
+        }
+        if (Array.isArray(data.transactions)) {
+          setTransactions(data.transactions);
         }
         if (data.merchant && typeof data.merchant.credits === "number") {
           setMerchant((prev) =>
@@ -515,7 +525,7 @@ export default function MerchantDashboardClient({
         cashbackBalance: newCustLoyaltyType === "CASHBACK" ? Number(merchant.welcomeCashback || 0) : 0,
         totalCashbackEarned: newCustLoyaltyType === "CASHBACK" ? Number(merchant.welcomeCashback || 0) : 0,
         totalSpent: 0,
-        totalVisits: 1,
+        totalVisits: 0,
         rewardsRedeemed: 0,
         lastVisitAt: new Date(),
         isActivated: true,
@@ -1130,14 +1140,39 @@ export default function MerchantDashboardClient({
   // Filter transactions by branch if selected
   const displayedTransactions = useMemo<TransactionData[]>(() => {
     if (!isMultiBranch || !selectedBranch) return transactions;
-    return transactions.filter((t: TransactionData) => t.branchName === selectedBranch.name);
+    const target = selectedBranch.name.trim();
+    return transactions.filter(
+      (t: TransactionData) => t.branchName && t.branchName.trim() === target
+    );
   }, [transactions, selectedBranch, isMultiBranch]);
 
-  // Branch-specific statistics
-  const branchVisitsCount = useMemo<number>(() => {
-    if (!isMultiBranch || !selectedBranch) return metrics.totalVisits;
-    return displayedTransactions.filter((t: TransactionData) => t.type === "STAMP_ADDED" || t.type === "CASHBACK_EARNED").length;
-  }, [displayedTransactions, selectedBranch, metrics.totalVisits, isMultiBranch]);
+  // Branch-scoped live KPIs & 7-day activity (zero cross-branch leakage)
+  const displayedMetrics = useMemo(() => {
+    if ((isMultiBranch || authRole === "BRANCH_STAFF") && selectedBranch) {
+      const branchMetric = metrics.byBranch?.[selectedBranch.name];
+      if (branchMetric) {
+        return {
+          visits: branchMetric.visits,
+          returningCustomers: branchMetric.returningCustomers,
+          rewards: branchMetric.rewards,
+          weeklyVisits: branchMetric.weeklyVisits,
+        };
+      }
+      return {
+        visits: 0,
+        returningCustomers: 0,
+        rewards: 0,
+        weeklyVisits: [],
+      };
+    }
+
+    return {
+      visits: metrics.totalVisits,
+      returningCustomers: metrics.returningCustomers,
+      rewards: metrics.totalRewards,
+      weeklyVisits: metrics.weeklyVisits || [],
+    };
+  }, [metrics, selectedBranch, isMultiBranch, authRole]);
 
   // Tab 4 (Settings) States
   const [merchantLoyaltyMode, setMerchantLoyaltyMode] = useState(merchant.loyaltyMode || "BOTH");
@@ -1553,7 +1588,8 @@ export default function MerchantDashboardClient({
     updatedCustomer: CustomerSummary,
     msg: string,
     remainingCredits?: number,
-    successData?: ActionSuccessPayload
+    successData?: ActionSuccessPayload,
+    createdTransaction?: CreatedTransactionSummary
   ) => {
     // Clear any existing toast and success modal timeouts before starting a new one
     if (toastTimeoutRef.current) {
@@ -1628,23 +1664,59 @@ export default function MerchantDashboardClient({
       )
     );
 
-    // Update live metrics
+    const effectiveBranchName =
+      createdTransaction?.branchName ??
+      (authRole === "BRANCH_STAFF" && liveAuthBranch
+        ? liveAuthBranch.name
+        : isMultiBranch
+        ? activeBranchName || null
+        : null);
+    const txType =
+      createdTransaction?.type ??
+      (successData?.type === "CASHBACK"
+        ? "CASHBACK_EARNED"
+        : successData?.type === "REDEEM"
+        ? "REWARD_REDEEMED"
+        : "STAMP_ADDED");
+    const isVisitTx = txType === "STAMP_ADDED" || txType === "CASHBACK_EARNED";
+    const isRewardTx = txType === "REWARD_REDEEMED" || txType === "CASHBACK_REDEEMED";
+
+    // Optimistically update both global & branch-specific live metrics
     setMetrics((prev) => {
-      const isNowReturning = updatedCustomer.totalVisits > 1;
+      const nextByBranch = { ...(prev.byBranch || {}) };
+      if (effectiveBranchName) {
+        const curBranch = nextByBranch[effectiveBranchName] || {
+          branchId: effectiveSelectedBranchId === "ALL" ? "br_main" : effectiveSelectedBranchId,
+          branchName: effectiveBranchName,
+          visits: 0,
+          returningCustomers: 0,
+          rewards: 0,
+          weeklyVisits: [],
+        };
+        nextByBranch[effectiveBranchName] = {
+          ...curBranch,
+          visits: curBranch.visits + (isVisitTx ? 1 : 0),
+          rewards: curBranch.rewards + (isRewardTx ? 1 : 0),
+        };
+      }
       return {
         ...prev,
-        totalVisits: prev.totalVisits + 1,
-        returningCustomers: isNowReturning ? prev.returningCustomers : prev.returningCustomers,
+        totalVisits: prev.totalVisits + (isVisitTx ? 1 : 0),
+        totalRewards: prev.totalRewards + (isRewardTx ? 1 : 0),
+        byBranch: nextByBranch,
       };
     });
 
-    // Add local transaction
+    // Add local transaction with proper branchName
     const newTx: TransactionData = {
-      id: `tx-${Date.now()}`,
-      type: "STAMP_ADDED",
-      stampsDelta: 1,
-      note: msg,
-      createdAt: new Date().toISOString(),
+      id: createdTransaction?.id || `tx-${Date.now()}`,
+      type: txType,
+      stampsDelta: createdTransaction?.stampsDelta ?? (isVisitTx ? 1 : 0),
+      branchName: effectiveBranchName,
+      note: createdTransaction?.note || msg,
+      createdAt: createdTransaction?.createdAt
+        ? new Date(createdTransaction.createdAt).toISOString()
+        : new Date().toISOString(),
       customer: {
         id: updatedCustomer.id,
         name: updatedCustomer.name,
@@ -1652,11 +1724,35 @@ export default function MerchantDashboardClient({
         phone: updatedCustomer.phone,
       },
     };
-    setTransactions((prev) => [newTx, ...prev.slice(0, 14)]);
+    setTransactions((prev) => [newTx, ...prev.slice(0, 24)]);
+
+    // Trigger immediate authoritative server sync for distinct returningCustomers, weekly chart & branch totals
+    fetch(`/api/m/${merchant.slug}?t=${Date.now()}`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        if (data.metrics) setMetrics(data.metrics);
+        if (Array.isArray(data.transactions)) setTransactions(data.transactions);
+      })
+      .catch(() => {
+        // Non-blocking background sync
+      });
 
     // Invalidate/refresh monthly analytics in background on new cashier action (Phase 54 Refinement 2)
     fetchMonthlyAnalytics(true);
-  }, [fetchMonthlyAnalytics, merchant.stampsRequired]);
+  }, [
+    fetchMonthlyAnalytics,
+    merchant.stampsRequired,
+    merchant.slug,
+    authRole,
+    liveAuthBranch,
+    isMultiBranch,
+    activeBranchName,
+    effectiveSelectedBranchId,
+  ]);
 
   // Direct 1-Click Customer Loyalty Actions (Phase 53)
   const handleDirectStamp = async (c: CustomerData) => {
@@ -1705,7 +1801,13 @@ export default function MerchantDashboardClient({
         isRewardEarned: data.customer.stamps >= merchant.stampsRequired,
         rewardName: merchant.rewardName,
       };
-      handleActionComplete(data.customer, data.message, data.remainingCredits, successPayload);
+      handleActionComplete(
+        data.customer,
+        data.message,
+        data.remainingCredits,
+        successPayload,
+        data.transaction
+      );
     } catch (err: unknown) {
       soundEngine.playAlert();
       const msg = err instanceof Error ? err.message : (locale === "fr" ? "Erreur lors du traitement" : "خطأ أثناء إضافة الختم");
@@ -1760,7 +1862,13 @@ export default function MerchantDashboardClient({
         stampsRequired: merchant.stampsRequired,
         rewardName: merchant.rewardName,
       };
-      handleActionComplete(data.customer, data.message, data.remainingCredits, successPayload);
+      handleActionComplete(
+        data.customer,
+        data.message,
+        data.remainingCredits,
+        successPayload,
+        data.transaction
+      );
     } catch (err: unknown) {
       soundEngine.playAlert();
       const msg = err instanceof Error ? err.message : (locale === "fr" ? "Erreur lors du traitement" : "خطأ أثناء تسليم المكافأة");
@@ -2448,11 +2556,13 @@ export default function MerchantDashboardClient({
                 </span>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold font-mono text-[#173E30]">
-                    {selectedBranch ? branchVisitsCount : metrics.totalVisits}
+                    {displayedMetrics.visits}
                   </span>
-                  <span className="text-[10px] text-[#008069] font-bold font-mono">
-                    +18%
-                  </span>
+                  {displayedMetrics.visits > 0 && (
+                    <span className="text-[10px] text-[#008069] font-bold font-mono">
+                      نشط
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -2460,11 +2570,13 @@ export default function MerchantDashboardClient({
                 <span className="text-[11px] text-[#5F655D] block">كليان رجعو</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold font-mono text-[#173E30]">
-                    {metrics.returningCustomers}
+                    {displayedMetrics.returningCustomers}
                   </span>
-                  <span className="text-[10px] text-[#008069] font-bold font-mono">
-                    +11%
-                  </span>
+                  {displayedMetrics.returningCustomers > 0 && (
+                    <span className="text-[10px] text-[#008069] font-bold font-mono">
+                      عملاء
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -2472,7 +2584,7 @@ export default function MerchantDashboardClient({
                 <span className="text-[11px] text-[#5F655D] block">كادوات تعطاو</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold font-mono text-amber-600">
-                    {metrics.totalRewards}
+                    {displayedMetrics.rewards}
                   </span>
                   <span className="text-[10px] text-amber-600 font-bold">مكافأة</span>
                 </div>
@@ -2524,8 +2636,7 @@ export default function MerchantDashboardClient({
 
                 <div className="space-y-2">
                   {branches.map((b) => {
-                    const branchTxs = transactions.filter((t) => t.branchName === b.name);
-                    const bVisits = branchTxs.filter((t) => t.type === "STAMP_ADDED" || t.type === "CASHBACK_EARNED").length;
+                    const bVisits = metrics.byBranch?.[b.name]?.visits ?? 0;
                     const pct = metrics.totalVisits > 0 ? Math.min(100, Math.round((bVisits / metrics.totalVisits) * 100)) : 0;
                     return (
                       <div key={b.id} className="p-2.5 rounded-xl bg-[#FAF7F2] space-y-1.5">
@@ -2546,7 +2657,7 @@ export default function MerchantDashboardClient({
                         <div className="w-full bg-[#C8D1BE] h-1.5 rounded-full overflow-hidden">
                           <div
                             className="bg-gradient-to-r from-[#00A884] to-[#008069] h-full rounded-full transition-all duration-500"
-                            style={{ width: `${Math.max(8, pct)}%` }}
+                            style={{ width: `${bVisits > 0 ? Math.max(8, pct) : 0}%` }}
                           />
                         </div>
                       </div>
@@ -2561,33 +2672,50 @@ export default function MerchantDashboardClient({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-[#173E30]">هاد السيمانة — زيارات</span>
                 <span className="text-[11px] text-[#008069] font-mono font-bold">
-                  +{metrics.totalVisits * 12} درهم نشاط
+                  {displayedMetrics.visits} زيارة مسجلة
                 </span>
               </div>
 
               <div className="h-24 flex items-end justify-between gap-2 pt-2 px-1">
-                {[
-                  { day: "إثن", h: "45%" },
-                  { day: "ثلا", h: "60%" },
-                  { day: "أرب", h: "35%" },
-                  { day: "خمي", h: "80%" },
-                  { day: "جمع", h: "95%" },
-                  { day: "سبت", h: "100%" },
-                  { day: "أحد", h: `${Math.min(100, Math.max(30, metrics.totalVisits * 8))}%`, today: true },
-                ].map((bar, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                    <div
-                      className={`w-full rounded-t-lg transition-all duration-500 ${bar.today
-                        ? "bg-gradient-to-t from-[#008069] to-[#00A884] shadow-sm"
-                        : "bg-[#DCE0D4] hover:bg-[#C8D1BE]"
-                        }`}
-                      style={{ height: bar.h }}
-                    />
-                    <span className={`text-[10px] ${bar.today ? "text-[#008069] font-bold" : "text-[#5F655D]"}`}>
-                      {bar.day}
-                    </span>
-                  </div>
-                ))}
+                {(() => {
+                  const weekBars =
+                    displayedMetrics.weeklyVisits.length > 0
+                      ? displayedMetrics.weeklyVisits
+                      : [
+                          { dateKey: "1", label: "إثن", visits: 0, isToday: false },
+                          { dateKey: "2", label: "ثلا", visits: 0, isToday: false },
+                          { dateKey: "3", label: "أرب", visits: 0, isToday: false },
+                          { dateKey: "4", label: "خمي", visits: 0, isToday: false },
+                          { dateKey: "5", label: "جمع", visits: 0, isToday: false },
+                          { dateKey: "6", label: "سبت", visits: 0, isToday: false },
+                          { dateKey: "7", label: "أحد", visits: 0, isToday: true },
+                        ];
+                  const maxDayVisits = Math.max(1, ...weekBars.map((d) => d.visits));
+                  return weekBars.map((bar) => {
+                    const barHeight =
+                      bar.visits > 0
+                        ? `${Math.max(22, Math.round((bar.visits / maxDayVisits) * 100))}%`
+                        : "10%";
+                    return (
+                      <div key={bar.dateKey} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                        <div
+                          className={`w-full rounded-t-lg transition-all duration-500 ${
+                            bar.visits > 0
+                              ? bar.isToday
+                                ? "bg-gradient-to-t from-[#008069] to-[#00A884] shadow-sm"
+                                : "bg-[#008069]/65 hover:bg-[#008069]"
+                              : "bg-[#DCE0D4]"
+                          }`}
+                          style={{ height: barHeight }}
+                          title={`${bar.label}: ${bar.visits}`}
+                        />
+                        <span className={`text-[10px] ${bar.isToday ? "text-[#008069] font-bold" : "text-[#5F655D]"}`}>
+                          {bar.label}
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
 

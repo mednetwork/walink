@@ -9,6 +9,10 @@ import {
   filterBranchesForSession,
   resolveEffectiveBranches,
 } from "@/lib/branches";
+import {
+  computeMerchantMetrics,
+  scopeMetricsToBranch,
+} from "@/lib/metrics";
 import MerchantDashboardClient from "@/components/MerchantDashboardClient";
 
 export const viewport: Viewport = {
@@ -64,7 +68,7 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
       },
       transactions: {
         orderBy: { createdAt: "desc" },
-        take: 15,
+        take: 25,
         include: {
           customer: {
             select: {
@@ -110,24 +114,6 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
   }
 
   const now = new Date();
-  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-
-  let totalVisits = 0;
-  let returningCustomers = 0;
-  let totalRewards = 0;
-  let quietCount = 0;
-  let nearCount = 0;
-  let vipCount = 0;
-
-  for (const c of merchant.customers) {
-    totalVisits += c.totalVisits;
-    totalRewards += c.rewardsRedeemed;
-
-    if (c.totalVisits > 1) returningCustomers++;
-    if (new Date(c.lastVisitAt) <= fourteenDaysAgo) quietCount++;
-    if (c.stamps === merchant.stampsRequired - 1) nearCount++;
-    if (c.totalVisits >= 10) vipCount++;
-  }
 
   // Resolve store session from HttpOnly signed cookie (Zero PIN leakage in SSR)
   const session = await getStoreSessionFromCookies(cookies(), slug);
@@ -146,6 +132,44 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
 
   const sessionRole =
     isSessionValid && session ? session.role : ("OWNER" as const);
+
+  // Authoritative server-side metrics across ALL transactions (only queried when authenticated)
+  const allTransactionsForMetrics = isSessionValid
+    ? await prisma.transaction.findMany({
+        where: { merchantId: merchant.id },
+        select: {
+          id: true,
+          customerId: true,
+          type: true,
+          branchName: true,
+          staffName: true,
+          note: true,
+          createdAt: true,
+        },
+      })
+    : [];
+
+  const computedMetrics = isSessionValid
+    ? computeMerchantMetrics({
+        customers: merchant.customers,
+        transactions: allTransactionsForMetrics,
+        branches: effectiveBranches,
+        stampsRequired: merchant.stampsRequired,
+        now,
+      })
+    : {
+        totalVisits: 0,
+        returningCustomers: 0,
+        totalRewards: 0,
+        weeklyVisits: [],
+        audienceCounts: { all: 0, quiet: 0, near: 0, vip: 0 },
+        byBranch: {},
+      };
+
+  const finalMetrics =
+    isSessionValid && session?.role === "BRANCH_STAFF" && matchedBranch
+      ? scopeMetricsToBranch(computedMetrics, matchedBranch, now)
+      : computedMetrics;
 
   // Serialize dates for Client Component (never send raw owner PIN or unauthorized data)
   const serializedMerchant = {
@@ -206,8 +230,17 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
       }))
     : [];
 
+  const scopedRawTransactions =
+    isSessionValid && session?.role === "BRANCH_STAFF" && matchedBranch
+      ? merchant.transactions.filter(
+          (tx) =>
+            tx.branchName &&
+            tx.branchName.trim() === matchedBranch.name.trim()
+        )
+      : merchant.transactions;
+
   const serializedTransactions = isSessionValid
-    ? merchant.transactions.map((tx) => ({
+    ? scopedRawTransactions.map((tx) => ({
         id: tx.id,
         type: tx.type,
         stampsDelta: tx.stampsDelta,
@@ -249,17 +282,7 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
       initialCustomers={serializedCustomers}
       initialTransactions={serializedTransactions}
       initialCampaigns={serializedCampaigns}
-      initialMetrics={{
-        totalVisits,
-        returningCustomers,
-        totalRewards,
-        audienceCounts: {
-          all: merchant.customers.length,
-          quiet: quietCount,
-          near: nearCount,
-          vip: vipCount,
-        },
-      }}
+      initialMetrics={finalMetrics}
     />
   );
 }

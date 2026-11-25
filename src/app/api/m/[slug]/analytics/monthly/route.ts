@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getStoreSessionFromCookies } from "@/lib/auth";
+import { resolveEffectiveBranches } from "@/lib/branches";
+import { isPhysicalCounterVisit, isRewardRedemptionTx } from "@/lib/metrics";
 
 export interface BranchMonthlyStat {
   branchName: string;
@@ -53,6 +56,14 @@ export async function GET(
 ) {
   try {
     const { slug } = params;
+    const session = await getStoreSessionFromCookies(req.cookies, slug);
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "غير مصرح بالوصول، يرجى تسجيل الدخول" },
+        { status: 401 }
+      );
+    }
 
     const merchant = await prisma.merchant.findUnique({
       where: { slug },
@@ -61,10 +72,16 @@ export async function GET(
         name: true,
         slug: true,
         city: true,
+        phone: true,
         plan: true,
+        maxBranches: true,
         currency: true,
         loyaltyMode: true,
         branches: true,
+        latitude: true,
+        longitude: true,
+        googleMapsUrl: true,
+        radarMessage: true,
         createdAt: true,
       },
     });
@@ -77,43 +94,19 @@ export async function GET(
     }
 
     // 1. Resolve Configured Branches & Default Main Branch
-    interface RawBranch {
-      id?: string;
-      name?: string;
-      city?: string;
-      isMain?: boolean;
-    }
-
-    let parsedBranches: RawBranch[] = [];
-    if (merchant.branches) {
-      try {
-        const parsed = JSON.parse(merchant.branches);
-        if (Array.isArray(parsed)) parsedBranches = parsed;
-      } catch {
-        parsedBranches = [];
-      }
-    }
-
+    const effectiveBranches = resolveEffectiveBranches(merchant);
     const defaultMainBranchName = `الفرع الرئيسي (${merchant.city || "الدار البيضاء"})`;
     const resolvedBranches: Array<{
       id: string;
       name: string;
       city?: string;
       isMain: boolean;
-    }> = [];
-
-    if (parsedBranches.length > 0) {
-      for (const b of parsedBranches) {
-        if (b.name && b.name.trim()) {
-          resolvedBranches.push({
-            id: b.id || `br_${resolvedBranches.length}`,
-            name: b.name.trim(),
-            city: b.city || merchant.city || "",
-            isMain: Boolean(b.isMain || resolvedBranches.length === 0),
-          });
-        }
-      }
-    }
+    }> = effectiveBranches.map((b, idx) => ({
+      id: b.id || `br_${idx}`,
+      name: b.name.trim(),
+      city: b.city || merchant.city || "",
+      isMain: Boolean(b.isMain || idx === 0),
+    }));
 
     if (resolvedBranches.length === 0) {
       resolvedBranches.push({
@@ -129,8 +122,23 @@ export async function GET(
       resolvedBranches[0].isMain = true;
     }
 
-    const mainBranch = resolvedBranches.find((b) => b.isMain) || resolvedBranches[0];
-    const isMultiBranch = merchant.plan === "MULTI" && resolvedBranches.length > 1;
+    const scopedStaffBranch =
+      session.role === "BRANCH_STAFF" && session.branchName
+        ? resolvedBranches.find(
+            (b) =>
+              (session.branchId && b.id === session.branchId) ||
+              b.name.trim() === session.branchName?.trim()
+          ) || {
+            id: session.branchId || "br_staff",
+            name: session.branchName.trim(),
+            city: merchant.city || "",
+            isMain: false,
+          }
+        : null;
+
+    const isMultiBranch =
+      (merchant.plan === "MULTI" || (merchant.maxBranches ?? 1) > 1) &&
+      resolvedBranches.length > 1;
 
     // 2. Generate Calendar Month Timeline (at least 6-12 months, ordered newest first)
     const now = new Date();
@@ -178,6 +186,8 @@ export async function GET(
           billAmount: true,
           cashbackDelta: true,
           branchName: true,
+          staffName: true,
+          note: true,
           createdAt: true,
         },
         orderBy: { createdAt: "asc" },
@@ -243,44 +253,39 @@ export async function GET(
       }
     }
 
-    // Process Transactions
+    // Process Transactions (Strictly count physical counter visits; never bleed null-branch into Main Branch)
     for (const tx of transactions) {
       const key = tx.createdAt.toISOString().slice(0, 7);
       const bucket = buckets.get(key);
       if (!bucket) continue;
 
-      const isVisit = tx.type === "STAMP_ADDED" || tx.type === "CASHBACK_EARNED";
-      const isReward = tx.type === "REWARD_REDEEMED" || tx.type === "CASHBACK_REDEEMED";
+      const isVisit = isPhysicalCounterVisit(tx);
+      const isReward = isRewardRedemptionTx(tx);
       const bill = tx.billAmount ? Number(tx.billAmount) : 0;
-      const cashbackDist = tx.cashbackDelta && tx.cashbackDelta > 0 ? Number(tx.cashbackDelta) : 0;
+      const cashbackDist =
+        tx.cashbackDelta && tx.cashbackDelta > 0 && isVisit ? Number(tx.cashbackDelta) : 0;
 
       if (isVisit) bucket.visits += 1;
       if (isReward) bucket.rewards += 1;
       bucket.billAmount += bill;
       bucket.cashbackDistributed += cashbackDist;
 
-      // CRITICAL DETAIL 1: Multi-Branch Attribution Fallback
-      // When branchName is null, empty, or unassigned, attribute strictly to the Main Branch
-      let targetBranchName = mainBranch.name;
       if (tx.branchName && tx.branchName.trim()) {
         const trimmed = tx.branchName.trim();
-        if (bucket.branchMap.has(trimmed)) {
-          targetBranchName = trimmed;
+        const branchStat = bucket.branchMap.get(trimmed);
+        if (branchStat) {
+          if (isVisit) branchStat.visits += 1;
+          if (isReward) branchStat.rewards += 1;
+          branchStat.billAmount += bill;
+          branchStat.cashbackDistributed += cashbackDist;
         }
-      }
-
-      const branchStat = bucket.branchMap.get(targetBranchName);
-      if (branchStat) {
-        if (isVisit) branchStat.visits += 1;
-        if (isReward) branchStat.rewards += 1;
-        branchStat.billAmount += bill;
-        branchStat.cashbackDistributed += cashbackDist;
       }
     }
 
     // 5. Construct Final Month Summaries & Compute Safe Growth Rate
     const currentMonthKey = `${currentYear}-${currentMonth + 1 < 10 ? `0${currentMonth + 1}` : currentMonth + 1}`;
     const months: MonthAnalyticsSummary[] = [];
+    const outputBranches = scopedStaffBranch ? [scopedStaffBranch] : resolvedBranches;
 
     for (let i = 0; i < monthKeys.length; i++) {
       const key = monthKeys[i];
@@ -288,38 +293,21 @@ export async function GET(
       if (!bucket) continue;
       const [y, m] = key.split("-").map(Number);
 
-      // Safe growth comparison vs previous calendar month (which is at index i + 1)
-      let growthVsPrevMonth = 0;
-      if (i + 1 < monthKeys.length) {
-        const prevKey = monthKeys[i + 1];
-        const prevBucket = buckets.get(prevKey);
-        if (prevBucket) {
-          const prevVisits = prevBucket.visits;
-          const currVisits = bucket.visits;
-          if (prevVisits > 0) {
-            growthVsPrevMonth = Math.round(((currVisits - prevVisits) / prevVisits) * 100);
-          } else if (currVisits > 0) {
-            growthVsPrevMonth = 100;
-          } else {
-            growthVsPrevMonth = 0;
-          }
-        }
-      }
-
       // Format branch breakdown for this month
-      const branchStats: BranchMonthlyStat[] = resolvedBranches.map((b) => {
+      const branchStats: BranchMonthlyStat[] = outputBranches.map((b) => {
         const stat = bucket.branchMap.get(b.name) || {
           visits: 0,
           rewards: 0,
           billAmount: 0,
           cashbackDistributed: 0,
         };
-        const visitsShare =
-          bucket.visits > 0
-            ? Math.round((stat.visits / bucket.visits) * 1000) / 10
-            : resolvedBranches.length > 0 && b.isMain
+        const visitsShare = scopedStaffBranch
+          ? stat.visits > 0
             ? 100
-            : 0;
+            : 0
+          : bucket.visits > 0
+          ? Math.round((stat.visits / bucket.visits) * 1000) / 10
+          : 0;
 
         return {
           branchName: b.name,
@@ -333,19 +321,57 @@ export async function GET(
         };
       });
 
+      const scopedStat = scopedStaffBranch
+        ? bucket.branchMap.get(scopedStaffBranch.name) || {
+            visits: 0,
+            rewards: 0,
+            billAmount: 0,
+            cashbackDistributed: 0,
+          }
+        : null;
+
+      // Safe growth comparison vs previous calendar month (which is at index i + 1)
+      let growthVsPrevMonth = 0;
+      if (i + 1 < monthKeys.length) {
+        const prevKey = monthKeys[i + 1];
+        const prevBucket = buckets.get(prevKey);
+        if (prevBucket) {
+          const prevVisits = scopedStaffBranch
+            ? prevBucket.branchMap.get(scopedStaffBranch.name)?.visits || 0
+            : prevBucket.visits;
+          const currVisits = scopedStat ? scopedStat.visits : bucket.visits;
+          if (prevVisits > 0) {
+            growthVsPrevMonth = Math.round(((currVisits - prevVisits) / prevVisits) * 100);
+          } else if (currVisits > 0) {
+            growthVsPrevMonth = 100;
+          } else {
+            growthVsPrevMonth = 0;
+          }
+        }
+      }
+
       months.push({
         monthKey: key,
         year: y,
         monthNumber: m,
         isCurrentMonth: key === currentMonthKey,
-        combined: {
-          totalVisits: bucket.visits,
-          newCustomers: bucket.newCustomers,
-          rewardsRedeemed: bucket.rewards,
-          totalBillAmount: Math.round(bucket.billAmount * 100) / 100,
-          cashbackDistributed: Math.round(bucket.cashbackDistributed * 100) / 100,
-          growthVsPrevMonth,
-        },
+        combined: scopedStat
+          ? {
+              totalVisits: scopedStat.visits,
+              newCustomers: 0,
+              rewardsRedeemed: scopedStat.rewards,
+              totalBillAmount: Math.round(scopedStat.billAmount * 100) / 100,
+              cashbackDistributed: Math.round(scopedStat.cashbackDistributed * 100) / 100,
+              growthVsPrevMonth,
+            }
+          : {
+              totalVisits: bucket.visits,
+              newCustomers: bucket.newCustomers,
+              rewardsRedeemed: bucket.rewards,
+              totalBillAmount: Math.round(bucket.billAmount * 100) / 100,
+              cashbackDistributed: Math.round(bucket.cashbackDistributed * 100) / 100,
+              growthVsPrevMonth,
+            },
         branches: branchStats,
       });
     }
@@ -360,7 +386,7 @@ export async function GET(
         currency: merchant.currency || "DH",
         loyaltyMode: merchant.loyaltyMode || "STAMPS",
       },
-      branches: resolvedBranches,
+      branches: outputBranches,
       months,
     };
 

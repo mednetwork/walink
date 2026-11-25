@@ -69,6 +69,15 @@ export interface ActionSuccessPayload {
   currency?: string;
 }
 
+export interface CreatedTransactionSummary {
+  id: string;
+  type: string;
+  stampsDelta: number;
+  branchName?: string | null;
+  note?: string | null;
+  createdAt?: string | Date;
+}
+
 interface MerchantScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -85,7 +94,8 @@ interface MerchantScannerModalProps {
     updatedCustomer: CustomerSummary,
     message: string,
     remainingCredits?: number,
-    successData?: ActionSuccessPayload
+    successData?: ActionSuccessPayload,
+    createdTransaction?: CreatedTransactionSummary
   ) => void;
   onOpenCredits?: () => void;
   locale?: Locale;
@@ -319,7 +329,7 @@ export default function MerchantScannerModal({
             type: "CASHBACK",
             customerName: data.customer.name,
             memberCode: data.customer.memberCode,
-            cashbackEarned: data.earnedAmount || calculatedEarned,
+            cashbackEarned: data.earned ?? data.earnedAmount ?? calculatedEarned,
             cashbackBalance: data.customer.cashbackBalance,
             billAmount: Number(payload.billAmount) || parseFloat(billAmount) || 0,
             currency,
@@ -335,7 +345,24 @@ export default function MerchantScannerModal({
           };
         }
 
-        onActionComplete(data.customer, data.message, data.remainingCredits, successPayload);
+        const txSummary: CreatedTransactionSummary | undefined = data.transaction
+          ? {
+              id: data.transaction.id,
+              type: data.transaction.type,
+              stampsDelta: data.transaction.stampsDelta ?? 0,
+              branchName: data.transaction.branchName ?? branchName ?? null,
+              note: data.transaction.note ?? message,
+              createdAt: data.transaction.createdAt,
+            }
+          : undefined;
+
+        onActionComplete(
+          data.customer,
+          data.message,
+          data.remainingCredits,
+          successPayload,
+          txSummary
+        );
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "خطأ أثناء المعالجة";
         setMessage({ text: msg, type: "error" });

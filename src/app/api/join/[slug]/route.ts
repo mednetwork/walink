@@ -276,7 +276,7 @@ export async function POST(
         stamps: initialStamps,
         cashbackBalance: initialCashback,
         totalCashbackEarned: initialCashback,
-        totalVisits: 1,
+        totalVisits: 0,
         referredByCode: referrerCustomer ? referrerCustomer.memberCode : null,
         isActivated: !isReferred,
         walletType: "WEBPASS",
