@@ -71,6 +71,7 @@ interface MerchantData {
   slug: string;
   niche: string;
   city: string;
+  logoIcon?: string;
   phone?: string | null;
   primaryColor: string;
   bgGradient: string;
@@ -1502,6 +1503,7 @@ export default function CustomerPassHubClient({
           <WalletPassPreview
             name={merchant.name}
             niche={merchant.niche}
+            logoIcon={merchant.logoIcon}
             primaryColor={merchant.primaryColor}
             bgGradient={merchant.bgGradient}
             loyaltyType={customer.loyaltyType || "STAMPS"}

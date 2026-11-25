@@ -25,10 +25,78 @@ import {
   Shirt,
   Smartphone,
   ExternalLink,
+  ShoppingBag,
+  ShoppingCart,
+  Tag,
+  Gem,
+  Gift,
+  Pizza,
+  Cake,
+  IceCream2,
+  CupSoda,
+  Flower2,
+  Heart,
+  Stethoscope,
+  Dumbbell,
+  Smile,
+  Wrench,
+  Camera,
+  Glasses,
+  Laptop,
+  PawPrint,
+  BookOpen,
+  Briefcase,
+  Trophy,
+  Crown,
+  Flame,
+  Star,
 } from "lucide-react";
 import { NICHE_PRESETS, PLANS_INFO } from "@/lib/constants";
 import WalletPassPreview from "@/components/WalletPassPreview";
 import StandPreviewModal from "@/components/StandPreviewModal";
+
+export const CUSTOM_NICHE_ICONS = [
+  // تجزئة ومتاجر
+  { id: "store", label: "متجر عام", icon: Store },
+  { id: "shopping-bag", label: "حقائب وموضة", icon: ShoppingBag },
+  { id: "shopping-cart", label: "سوبرماركت", icon: ShoppingCart },
+  { id: "tag", label: "تخفيضات ومستلزمات", icon: Tag },
+  { id: "gem", label: "مجوهرات وذهب", icon: Gem },
+  { id: "gift", label: "هدايا وعطور", icon: Gift },
+
+  // مقاهي ومطاعم
+  { id: "coffee", label: "مقهى وكافيه", icon: Coffee },
+  { id: "utensils", label: "مطعم ووجبات", icon: Utensils },
+  { id: "pizza", label: "بيتزا وسناك", icon: Pizza },
+  { id: "cake", label: "حلويات ومخبزة", icon: Cake },
+  { id: "ice-cream-2", label: "مثلجات وآيس كريم", icon: IceCream2 },
+  { id: "cup-soda", label: "عصائر ومشروبات", icon: CupSoda },
+
+  // صحة وتجميل ورياضة
+  { id: "scissors", label: "حلاقة وصالون", icon: Scissors },
+  { id: "sparkles", label: "تجميل وعناية", icon: Sparkles },
+  { id: "flower-2", label: "سبا وعناية طبيعية", icon: Flower2 },
+  { id: "dumbbell", label: "نادي وجيم", icon: Dumbbell },
+  { id: "stethoscope", label: "صيدلية وعيادة", icon: Stethoscope },
+  { id: "smile", label: "طب أسنان", icon: Smile },
+  { id: "heart", label: "صحة ورعاية", icon: Heart },
+
+  // سيارات وخدمات وتقنية
+  { id: "car", label: "لافاچ وسيارات", icon: Car },
+  { id: "wrench", label: "صيانة وإصلاحات", icon: Wrench },
+  { id: "shirt", label: "مصبانة وتنظيف", icon: Shirt },
+  { id: "camera", label: "تصوير واستوديو", icon: Camera },
+  { id: "glasses", label: "بصريات ونظارات", icon: Glasses },
+  { id: "smartphone", label: "هواتف وإلكترونيات", icon: Smartphone },
+  { id: "laptop", label: "حواسيب وإعلاميات", icon: Laptop },
+  { id: "paw-print", label: "بيطري وحيوانات", icon: PawPrint },
+  { id: "book-open", label: "مكتبة ووراقة", icon: BookOpen },
+  { id: "briefcase", label: "خدمات واستشارات", icon: Briefcase },
+  { id: "trophy", label: "أنشطة وبطولات", icon: Trophy },
+  { id: "crown", label: "خدمات VIP", icon: Crown },
+  { id: "flame", label: "شواء وطاقة", icon: Flame },
+  { id: "star", label: "تميز عام", icon: Star },
+];
 
 interface MerchantFormData {
   id?: string;
@@ -137,7 +205,17 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
     setFormData((prev) => ({
       ...prev,
       niche: preset.id,
-      logoIcon: preset.icon,
+      logoIcon:
+        preset.id === "other" &&
+        prev.logoIcon &&
+        prev.logoIcon !== "coffee" &&
+        prev.logoIcon !== "scissors" &&
+        prev.logoIcon !== "utensils" &&
+        prev.logoIcon !== "car" &&
+        prev.logoIcon !== "sparkles" &&
+        prev.logoIcon !== "shirt"
+          ? prev.logoIcon
+          : preset.icon,
       primaryColor: preset.color,
       bgGradient: preset.gradient,
       rewardName: prev.name ? prev.rewardName : preset.reward,
@@ -207,13 +285,15 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
         {/* Right Column: Form Inputs (7 cols on lg) */}
         <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
           {/* Section 1: Niche Preset Chips */}
-          <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-3">
-            <label className="text-xs font-bold text-[#111B21] block">
-              1. اختر نوع النشاط التجاري (Niche):
-            </label>
-            <p className="text-[11px] text-[#54656F]">
-              اختيار النشاط يطبق تلقائياً الألوان الرسمية، الأيقونة، والمكافأة المقترحة.
-            </p>
+          <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
+            <div>
+              <label className="text-xs font-bold text-[#111B21] block">
+                1. اختر نوع النشاط التجاري (Niche):
+              </label>
+              <p className="text-[11px] text-[#54656F] mt-0.5">
+                اختيار النشاط يطبق تلقائياً الألوان الرسمية، الأيقونة، والمكافأة المقترحة.
+              </p>
+            </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
               {Object.values(NICHE_PRESETS).map((preset) => {
@@ -238,6 +318,49 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                 );
               })}
             </div>
+
+            {/* Custom Niche Icon Picker (Only when "نشاط تجاري آخر" is selected) */}
+            {formData.niche === "other" && (
+              <div className="pt-3 border-t border-[#E9EDEF] space-y-2.5 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#111B21]">
+                    <Sparkles className="w-4 h-4 text-[#008069]" />
+                    <span>اختر أيقونة النشاط التجاري (Icon Picker):</span>
+                  </div>
+                  <span className="text-[11px] text-[#54656F] bg-[#F0F2F5] px-2.5 py-0.5 rounded-lg border border-[#D1D7DB]">
+                    الأيقونة المحددة: <span className="font-mono font-bold text-[#008069]">{formData.logoIcon || "store"}</span>
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#54656F]">
+                  ستظهر هذه الأيقونة في أعلى بطاقة العميل وداخل خانات الطوابع بدلاً من الأرقام التقليدية.
+                </p>
+
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-1 max-h-60 overflow-y-auto p-1.5 border border-[#E9EDEF] rounded-2xl bg-[#F8FAFC]">
+                  {CUSTOM_NICHE_ICONS.map((item) => {
+                    const IconComp = item.icon;
+                    const isIconSelected =
+                      formData.logoIcon?.toLowerCase() === item.id.toLowerCase() ||
+                      formData.logoIcon?.toLowerCase().replace(/[\s_-]+/g, "") === item.id.toLowerCase().replace(/[\s_-]+/g, "");
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, logoIcon: item.id }))}
+                        className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
+                          isIconSelected
+                            ? "bg-[#008069]/15 border-[#008069] text-[#008069] font-bold shadow-sm ring-2 ring-[#008069]"
+                            : "bg-white border-[#E2E8F0] hover:bg-[#F1F5F9] text-[#475569] hover:border-[#CBD5E1]"
+                        }`}
+                        title={item.label}
+                      >
+                        <IconComp className={`w-5 h-5 flex-shrink-0 ${isIconSelected ? "text-[#008069]" : "text-[#64748B]"}`} />
+                        <span className="text-[10px] leading-tight truncate w-full text-center">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Section 2: Basic Merchant Information */}
@@ -901,6 +1024,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
               <WalletPassPreview
                 name={formData.name || "اسم المحل هنا"}
                 niche={formData.niche}
+                logoIcon={formData.logoIcon}
                 primaryColor={formData.primaryColor}
                 bgGradient={formData.bgGradient}
                 loyaltyType={previewLoyaltyType}

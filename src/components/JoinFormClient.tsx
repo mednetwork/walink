@@ -385,6 +385,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           <WalletPassPreview
             name={merchant.name}
             niche={merchant.niche}
+            logoIcon={merchant.logoIcon}
             primaryColor={merchant.primaryColor}
             bgGradient={merchant.bgGradient}
             loyaltyType={selectedLoyaltyType}

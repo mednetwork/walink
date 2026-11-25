@@ -14,12 +14,130 @@ import {
   Check,
   Coins,
   QrCode as QrIcon,
+  ShoppingBag,
+  ShoppingCart,
+  Tag,
+  Gem,
+  Pizza,
+  Cake,
+  IceCream2,
+  CupSoda,
+  Flower2,
+  Heart,
+  Stethoscope,
+  Dumbbell,
+  Smile,
+  Wrench,
+  Camera,
+  Glasses,
+  Smartphone,
+  Laptop,
+  PawPrint,
+  Dog,
+  BookOpen,
+  Briefcase,
+  Trophy,
+  Crown,
+  Flame,
+  Star,
+  type LucideIcon,
 } from "lucide-react";
 import { Locale } from "@/lib/i18n/translations";
+
+export const MERCHANT_ICON_MAP: Record<string, LucideIcon> = {
+  // Retail & Shopping
+  store: Store,
+  shoppingbag: ShoppingBag,
+  "shopping-bag": ShoppingBag,
+  shoppingcart: ShoppingCart,
+  "shopping-cart": ShoppingCart,
+  tag: Tag,
+  gem: Gem,
+  gift: Gift,
+
+  // Food & Beverage
+  coffee: Coffee,
+  cafe: Coffee,
+  utensils: Utensils,
+  snack: Utensils,
+  restaurant: Utensils,
+  pizza: Pizza,
+  cake: Cake,
+  bakery: Cake,
+  icecream: IceCream2,
+  icecream2: IceCream2,
+  "ice-cream-2": IceCream2,
+  "ice-cream": IceCream2,
+  cupsoda: CupSoda,
+  "cup-soda": CupSoda,
+
+  // Beauty, Wellness & Health
+  scissors: Scissors,
+  barber: Scissors,
+  sparkles: Sparkles,
+  beauty: Sparkles,
+  flower2: Flower2,
+  "flower-2": Flower2,
+  spa: Flower2,
+  heart: Heart,
+  stethoscope: Stethoscope,
+  clinic: Stethoscope,
+  pharmacy: Stethoscope,
+  dumbbell: Dumbbell,
+  gym: Dumbbell,
+  fitness: Dumbbell,
+  smile: Smile,
+  dental: Smile,
+
+  // Automotive, Tech & Services
+  car: Car,
+  wash: Car,
+  carwash: Car,
+  wrench: Wrench,
+  mechanic: Wrench,
+  repair: Wrench,
+  shirt: Shirt,
+  laundry: Shirt,
+  camera: Camera,
+  photography: Camera,
+  glasses: Glasses,
+  optics: Glasses,
+  smartphone: Smartphone,
+  phone: Smartphone,
+  electronics: Smartphone,
+  laptop: Laptop,
+  computer: Laptop,
+  pawprint: PawPrint,
+  "paw-print": PawPrint,
+  dog: Dog,
+  pet: Dog,
+  bookopen: BookOpen,
+  "book-open": BookOpen,
+  library: BookOpen,
+  bookstore: BookOpen,
+  briefcase: Briefcase,
+  agency: Briefcase,
+  services: Briefcase,
+  trophy: Trophy,
+  sports: Trophy,
+  crown: Crown,
+  vip: Crown,
+  flame: Flame,
+  grill: Flame,
+  star: Star,
+};
+
+export function getMerchantLucideIcon(iconOrNiche?: string): LucideIcon {
+  if (!iconOrNiche) return Store;
+  const raw = String(iconOrNiche).trim().toLowerCase();
+  const cleanKey = raw.replace(/[\s_-]+/g, "");
+  return MERCHANT_ICON_MAP[raw] || MERCHANT_ICON_MAP[cleanKey] || Store;
+}
 
 export interface WalletPassPreviewProps {
   name?: string;
   niche?: string;
+  logoIcon?: string;
   primaryColor?: string;
   bgGradient?: string;
   loyaltyType?: "STAMPS" | "CASHBACK";
@@ -43,6 +161,7 @@ export interface WalletPassPreviewProps {
 export default function WalletPassPreview({
   name = "Café Atlas",
   niche = "cafe",
+  logoIcon,
   primaryColor = "#5b3519",
   bgGradient = "linear-gradient(150deg, #5c371d 0%, #2a170b 100%)",
   loyaltyType = "STAMPS",
@@ -80,25 +199,7 @@ export default function WalletPassPreview({
       .catch((err) => console.error("QR Code generation error:", err));
   }, [qrValue, memberCode, compact]);
 
-  const getNicheIcon = () => {
-    switch (niche) {
-      case "barber":
-        return <Scissors className="w-4 h-4 text-amber-300" />;
-      case "snack":
-        return <Utensils className="w-4 h-4 text-amber-300" />;
-      case "wash":
-        return <Car className="w-4 h-4 text-amber-300" />;
-      case "beauty":
-        return <Sparkles className="w-4 h-4 text-amber-300" />;
-      case "laundry":
-        return <Shirt className="w-4 h-4 text-amber-300" />;
-      case "other":
-        return <Store className="w-4 h-4 text-amber-300" />;
-      case "cafe":
-      default:
-        return <Coffee className="w-4 h-4 text-amber-300" />;
-    }
-  };
+  const MerchantIconComponent = getMerchantLucideIcon(logoIcon || niche);
 
   const safeStampsRequired = Math.max(3, Math.min(10, stampsRequired || 5));
   const safeStamps = Math.max(0, Math.min(safeStampsRequired, stamps || 0));
@@ -185,7 +286,7 @@ export default function WalletPassPreview({
       <div className="flex items-center justify-between pb-4 border-b border-white/[0.12] relative z-10">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-2xl bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
-            {getNicheIcon()}
+            <MerchantIconComponent className="w-5 h-5 text-amber-300" />
           </div>
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -294,7 +395,7 @@ export default function WalletPassPreview({
                   {isCollected ? (
                     <Check className="w-5 h-5 stroke-[3]" />
                   ) : (
-                    <span className="text-xs font-semibold">{index + 1}</span>
+                    <MerchantIconComponent className="w-5 h-5 text-white/40 drop-shadow-sm transition-transform duration-200 hover:scale-110" />
                   )}
                 </div>
               );

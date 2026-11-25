@@ -137,6 +137,7 @@ export default async function CustomerPassPage({ params }: PassPageProps) {
     slug: customer.merchant.slug,
     niche: customer.merchant.niche,
     city: customer.merchant.city,
+    logoIcon: customer.merchant.logoIcon,
     primaryColor: customer.merchant.primaryColor,
     bgGradient: customer.merchant.bgGradient,
     stampsRequired: customer.merchant.stampsRequired,
