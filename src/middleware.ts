@@ -38,9 +38,10 @@ export async function middleware(req: NextRequest) {
     !host.includes(".");
 
   // -------------------------------------------------------------
-  // 0. UNIVERSAL APPLE PASSKIT WEB SERVICE & PASS DOWNLOAD BYPASS
-  // Required so iPhones calling webServiceURL (/api/apple/v1/...) or /api/pass/.../pkpass
-  // on ANY domain (walink.ma, wclient.walink.ma, etc.) never hit domain-isolation Stealth 404!
+  // 0. UNIVERSAL PASSKIT & GOOGLE WALLET MEDIA BYPASS
+  // Required so iPhones calling webServiceURL (/api/apple/v1/...) and Google Wallet
+  // fetching /api/pass/*/stamps-image or /api/pass/*/pkpass on ANY domain
+  // (walink.ma, www.walink.ma, wclient.walink.ma) never hit Stealth 404!
   // -------------------------------------------------------------
   if (pathname.startsWith("/api/apple/") || pathname.startsWith("/api/pass/")) {
     return NextResponse.next();
@@ -208,13 +209,14 @@ export async function middleware(req: NextRequest) {
   // 6. MAIN PUBLIC LANDING DOMAIN: walink.ma & www.walink.ma
   // -------------------------------------------------------------
   if (host === "walink.ma" || host === "www.walink.ma") {
-    // Only public marketing & legal routes are permitted
+    // Only public marketing, legal, and Google Wallet pass media routes are permitted
     const isPublicAllowed =
       pathname === "/" ||
       pathname === "/privacy" ||
       pathname === "/terms" ||
       pathname === "/support" ||
-      pathname.startsWith("/api/leads");
+      pathname.startsWith("/api/leads") ||
+      pathname.startsWith("/api/pass/");
 
     if (!isPublicAllowed) {
       // 404 Stealth Mode: Any access to /admin, /m, /pass, /join, /api/* is masked

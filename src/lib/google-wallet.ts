@@ -87,6 +87,8 @@ export interface MerchantPassModel {
   id: string;
   slug: string;
   name: string;
+  niche?: string | null;
+  logoIcon?: string | null;
   primaryColor?: string | null;
   currency?: string | null;
   stampsRequired: number;
@@ -363,6 +365,30 @@ export function buildLoyaltyObject(
     },
   ];
 
+  if (!isCashback) {
+    const safeRequired = Math.max(1, merchant.stampsRequired || 5);
+    const safeStamps = isUnactivated
+      ? 0
+      : Math.max(0, Math.min(safeRequired, customer.stamps || 0));
+    const dotsLimit = Math.min(safeRequired, 15);
+    const filledDots = isUnactivated
+      ? 0
+      : Math.min(dotsLimit, Math.round((safeStamps / safeRequired) * dotsLimit));
+    const emptyDots = Math.max(0, dotsLimit - filledDots);
+    const dotsDisplay = `${"●".repeat(filledDots)}${"○".repeat(emptyDots)} (${safeStamps} / ${safeRequired})`;
+
+    textModulesData.unshift({
+      id: "stamps_progress",
+      header:
+        locale === "fr"
+          ? "Progression des tampons"
+          : locale === "es"
+          ? "Progreso de sellos"
+          : "تقدم الأختام",
+      body: dotsDisplay,
+    });
+  }
+
   if (merchant.termsText) {
     textModulesData.push({
       id: "terms",
@@ -370,6 +396,32 @@ export function buildLoyaltyObject(
       body: merchant.termsText,
     });
   }
+
+  // Dynamic Visual Stamps Strip PNG (1032x336 heroImage) with strict cache-busting query params
+  const heroRequired = Math.max(1, merchant.stampsRequired || 5);
+  const heroStamps = isUnactivated
+    ? 0
+    : Math.max(0, Math.min(heroRequired, customer.stamps || 0));
+  const heroImageUrl = `https://wclient.walink.ma/api/pass/${encodeURIComponent(
+    customer.passSerial
+  )}/stamps-image?s=${heroStamps}&t=${heroRequired}&a=${isUnactivated ? 0 : 1}&vip=${
+    customer.isVip ? 1 : 0
+  }&v=${Date.now()}`;
+
+  const heroImage = {
+    kind: "walletobjects#image",
+    sourceUri: {
+      uri: heroImageUrl,
+    },
+    contentDescription: {
+      defaultValue: {
+        language: locale === "fr" ? "fr" : locale === "es" ? "es" : "ar",
+        value: isCashback
+          ? `${merchant.name} - ${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
+          : `${merchant.name} - ${heroStamps} / ${heroRequired}`,
+      },
+    },
+  };
 
   return {
     id: objectId,
@@ -379,6 +431,7 @@ export function buildLoyaltyObject(
     accountName: customer.name,
     loyaltyPoints,
     secondaryLoyaltyPoints,
+    heroImage,
     barcode: {
       type: "QR_CODE",
       value: `WALINK:${customer.passSerial}`,
@@ -539,6 +592,7 @@ export async function pushGoogleWalletUpdate(
         body: JSON.stringify({
           loyaltyPoints: loyaltyObject.loyaltyPoints,
           secondaryLoyaltyPoints: loyaltyObject.secondaryLoyaltyPoints,
+          heroImage: loyaltyObject.heroImage,
           textModulesData: loyaltyObject.textModulesData,
         }),
       }
