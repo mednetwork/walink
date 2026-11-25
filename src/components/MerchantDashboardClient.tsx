@@ -89,7 +89,7 @@ interface NavigatorWithStandalone extends Navigator {
 function isStandaloneNavigator(nav: Navigator): nav is NavigatorWithStandalone {
   return "standalone" in nav;
 }
-import MerchantScannerModal, { CustomerSummary } from "@/components/MerchantScannerModal";
+import MerchantScannerModal, { CustomerSummary, ActionSuccessPayload } from "@/components/MerchantScannerModal";
 import StandPreviewModal from "@/components/StandPreviewModal";
 import LockScreenPeekModal from "@/components/LockScreenPeekModal";
 import MerchantCreditsModal from "@/components/MerchantCreditsModal";
@@ -282,11 +282,19 @@ export default function MerchantDashboardClient({
   } | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 3-Second Celebratory Operation Success Modal State (Phase 59)
+  const [successModalData, setSuccessModalData] = useState<ActionSuccessPayload | null>(null);
+  const successModalTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     return () => {
       if (toastTimeoutRef.current) {
         clearTimeout(toastTimeoutRef.current);
         toastTimeoutRef.current = null;
+      }
+      if (successModalTimeoutRef.current) {
+        clearTimeout(successModalTimeoutRef.current);
+        successModalTimeoutRef.current = null;
       }
     };
   }, []);
@@ -1312,11 +1320,20 @@ export default function MerchantDashboardClient({
     }
   }, [activeTab, monthlyAnalytics, isLoadingAnalytics, fetchMonthlyAnalytics]);
 
-  const handleActionComplete = useCallback((updatedCustomer: CustomerSummary, msg: string, remainingCredits?: number) => {
-    // Clear any existing toast timeout before starting a new debounced one
+  const handleActionComplete = useCallback((
+    updatedCustomer: CustomerSummary,
+    msg: string,
+    remainingCredits?: number,
+    successData?: ActionSuccessPayload
+  ) => {
+    // Clear any existing toast and success modal timeouts before starting a new one
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current);
       toastTimeoutRef.current = null;
+    }
+    if (successModalTimeoutRef.current) {
+      clearTimeout(successModalTimeoutRef.current);
+      successModalTimeoutRef.current = null;
     }
 
     // Sync live credits count immediately when returned from transaction
@@ -1327,10 +1344,34 @@ export default function MerchantDashboardClient({
     // Trigger light haptic feedback on mobile if supported
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       try {
-        navigator.vibrate([30, 50, 30]);
+        navigator.vibrate([40, 60, 40]);
       } catch {
         // ignore
       }
+    }
+
+    // Set 3-Second Celebratory Operation Success Modal State
+    if (successData) {
+      setSuccessModalData(successData);
+      successModalTimeoutRef.current = setTimeout(() => {
+        setSuccessModalData(null);
+        successModalTimeoutRef.current = null;
+      }, 3000);
+    } else {
+      const isCb = updatedCustomer.loyaltyType === "CASHBACK";
+      setSuccessModalData({
+        type: isCb ? "CASHBACK" : "STAMP",
+        customerName: updatedCustomer.name,
+        memberCode: updatedCustomer.memberCode,
+        stamps: updatedCustomer.stamps,
+        stampsRequired: merchant.stampsRequired,
+        cashbackBalance: updatedCustomer.cashbackBalance,
+        currency: "DH",
+      });
+      successModalTimeoutRef.current = setTimeout(() => {
+        setSuccessModalData(null);
+        successModalTimeoutRef.current = null;
+      }, 3000);
     }
 
     // Set trilingual floating toast banner
@@ -1340,7 +1381,7 @@ export default function MerchantDashboardClient({
       memberCode: updatedCustomer.memberCode,
     });
 
-    // 4.5s debounce timeout
+    // 4.5s debounce timeout for toast
     toastTimeoutRef.current = setTimeout(() => {
       setActionSuccessToast(null);
       toastTimeoutRef.current = null;
@@ -1386,7 +1427,7 @@ export default function MerchantDashboardClient({
 
     // Invalidate/refresh monthly analytics in background on new cashier action (Phase 54 Refinement 2)
     fetchMonthlyAnalytics(true);
-  }, [fetchMonthlyAnalytics]);
+  }, [fetchMonthlyAnalytics, merchant.stampsRequired]);
 
   // Direct 1-Click Customer Loyalty Actions (Phase 53)
   const handleDirectStamp = async (c: CustomerData) => {
@@ -1426,7 +1467,16 @@ export default function MerchantDashboardClient({
       }
 
       soundEngine.playStampChime();
-      handleActionComplete(data.customer, data.message, data.remainingCredits);
+      const successPayload: ActionSuccessPayload = {
+        type: "STAMP",
+        customerName: data.customer.name,
+        memberCode: data.customer.memberCode,
+        stamps: data.customer.stamps,
+        stampsRequired: merchant.stampsRequired,
+        isRewardEarned: data.customer.stamps >= merchant.stampsRequired,
+        rewardName: merchant.rewardName,
+      };
+      handleActionComplete(data.customer, data.message, data.remainingCredits, successPayload);
     } catch (err: unknown) {
       soundEngine.playAlert();
       const msg = err instanceof Error ? err.message : (locale === "fr" ? "Erreur lors du traitement" : "خطأ أثناء إضافة الختم");
@@ -1473,7 +1523,15 @@ export default function MerchantDashboardClient({
       }
 
       soundEngine.playRewardChime();
-      handleActionComplete(data.customer, data.message, data.remainingCredits);
+      const successPayload: ActionSuccessPayload = {
+        type: "REDEEM",
+        customerName: data.customer.name,
+        memberCode: data.customer.memberCode,
+        stamps: data.customer.stamps,
+        stampsRequired: merchant.stampsRequired,
+        rewardName: merchant.rewardName,
+      };
+      handleActionComplete(data.customer, data.message, data.remainingCredits, successPayload);
     } catch (err: unknown) {
       soundEngine.playAlert();
       const msg = err instanceof Error ? err.message : (locale === "fr" ? "Erreur lors du traitement" : "خطأ أثناء تسليم المكافأة");
@@ -1745,6 +1803,186 @@ export default function MerchantDashboardClient({
         </aside>
       )}
 
+      {/* 3-Second Celebratory Operation Success Modal (Phase 59) */}
+      {successModalData && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
+          onClick={() => {
+            if (successModalTimeoutRef.current) {
+              clearTimeout(successModalTimeoutRef.current);
+              successModalTimeoutRef.current = null;
+            }
+            setSuccessModalData(null);
+          }}
+        >
+          <div
+            className="relative w-full max-w-sm bg-white border-2 border-emerald-500/30 rounded-3xl p-6 text-center text-[#173E30] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 cursor-default"
+            onClick={(e) => e.stopPropagation()}
+            dir={locale === "ar" ? "rtl" : "ltr"}
+          >
+            {/* Top Close Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (successModalTimeoutRef.current) {
+                  clearTimeout(successModalTimeoutRef.current);
+                  successModalTimeoutRef.current = null;
+                }
+                setSuccessModalData(null);
+              }}
+              aria-label={locale === "ar" ? "إغلاق" : "Fermer"}
+              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-slate-100 text-[#5F655D] hover:text-[#173E30] transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Celebration Icon Header */}
+            <div className="flex justify-center mb-3">
+              {successModalData.type === "CASHBACK" ? (
+                <div className="w-16 h-16 rounded-full bg-amber-500/15 border-2 border-amber-500/40 flex items-center justify-center text-amber-500 shadow-md">
+                  <Coins className="w-9 h-9 stroke-[2.2] animate-bounce" />
+                </div>
+              ) : successModalData.type === "REDEEM" ? (
+                <div className="w-16 h-16 rounded-full bg-emerald-500/15 border-2 border-emerald-500/40 flex items-center justify-center text-[#008069] shadow-md">
+                  <Gift className="w-9 h-9 stroke-[2.2] animate-bounce" />
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-[#008069]/15 border-2 border-[#008069]/40 flex items-center justify-center text-[#008069] shadow-md">
+                  <CheckCircle2 className="w-9 h-9 stroke-[2.4] text-[#008069]" />
+                </div>
+              )}
+            </div>
+
+            {/* Title & Customer Pill */}
+            <div className="space-y-1 mb-4">
+              <h3 className="font-extrabold text-lg text-[#173E30]">
+                {successModalData.type === "CASHBACK"
+                  ? locale === "ar"
+                    ? "تمت إضافة الكاش باك بنجاح! 💰"
+                    : locale === "fr"
+                    ? "Cashback ajouté avec succès ! 💰"
+                    : "¡Cashback añadido con éxito! 💰"
+                  : successModalData.type === "REDEEM"
+                  ? locale === "ar"
+                    ? "تم تسليم المكافأة بنجاح! 🎁"
+                    : locale === "fr"
+                    ? "Récompense remise avec succès ! 🎁"
+                    : "¡Recompensa entregada con éxito! 🎁"
+                  : successModalData.isRewardEarned
+                  ? locale === "ar"
+                    ? "🎉 مبروك! الزبون أكمل البطاقة!"
+                    : locale === "fr"
+                    ? "🎉 Félicitations ! Carte complétée !"
+                    : "🎉 ¡Felicidades! ¡Tarjeta completada!"
+                  : locale === "ar"
+                  ? "تمت إضافة الختم بنجاح! ⭐"
+                  : locale === "fr"
+                  ? "Tampon ajouté avec succès ! ⭐"
+                  : "¡Sello añadido con éxito! ⭐"}
+              </h3>
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF7F2] border border-[#DCE0D4] text-xs">
+                <span className="font-bold text-[#173E30]">{successModalData.customerName}</span>
+                <span className="text-[#5F655D] font-mono font-semibold">#{successModalData.memberCode}</span>
+              </div>
+            </div>
+
+            {/* Metrics Display Box */}
+            {successModalData.type === "CASHBACK" ? (
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2 mb-4 text-xs">
+                <div className="flex items-baseline justify-center gap-1 font-mono text-amber-700">
+                  <span className="text-2xl font-black">
+                    +{Number(successModalData.cashbackEarned || 0).toFixed(2)}
+                  </span>
+                  <span className="text-sm font-bold">{successModalData.currency || "DH"}</span>
+                </div>
+                <p className="text-[11px] text-amber-800 font-semibold">
+                  {locale === "ar"
+                    ? "أُضيف إلى رصيد المحفظة"
+                    : locale === "fr"
+                    ? "Ajouté au solde du portefeuille"
+                    : "Añadido al saldo del monedero"}
+                  {successModalData.billAmount ? (
+                    <span className="block text-[10px] text-amber-700/80 mt-0.5">
+                      {locale === "ar"
+                        ? `(من فاتورة بقيمة ${successModalData.billAmount} DH)`
+                        : `(Facture de ${successModalData.billAmount} DH)`}
+                    </span>
+                  ) : null}
+                </p>
+                <div className="pt-2 border-t border-amber-200/60 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-600 font-medium">
+                    {locale === "ar" ? "رصيد المحفظة الجديد:" : "Nouveau solde :"}
+                  </span>
+                  <span className="font-mono font-bold text-amber-900">
+                    {Number(successModalData.cashbackBalance || 0).toFixed(2)} {successModalData.currency || "DH"}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-2.5 mb-4 text-xs">
+                <div className="flex items-center justify-center gap-1.5 font-bold text-emerald-800 text-sm">
+                  <span className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-mono font-black text-base shadow-sm">
+                    +1
+                  </span>
+                  <span>
+                    {locale === "ar" ? "طابع مضاف للبطاقة" : "Tampon ajouté"}
+                  </span>
+                </div>
+
+                {/* Stamp Circles Visual Indicator */}
+                <div className="flex items-center justify-center gap-1.5 py-1 flex-wrap">
+                  {Array.from({ length: successModalData.stampsRequired || merchant.stampsRequired || 8 }).map((_, idx) => {
+                    const isFilled = idx < (successModalData.stamps ?? 0);
+                    return (
+                      <div
+                        key={idx}
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                          isFilled
+                            ? "bg-[#008069] text-white shadow-sm scale-105"
+                            : "bg-white border border-[#C8D1BE] text-[#5F655D]"
+                        }`}
+                      >
+                        {isFilled ? "✓" : idx + 1}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-1 flex items-center justify-between text-[11px] text-[#5F655D]">
+                  <span>{locale === "ar" ? "مجموع الأختام:" : "Total tampons :"}</span>
+                  <span className="font-mono font-bold text-[#008069]">
+                    {successModalData.stamps} / {successModalData.stampsRequired || merchant.stampsRequired}
+                  </span>
+                </div>
+
+                {successModalData.isRewardEarned && (
+                  <div className="p-2 rounded-xl bg-amber-100 border border-amber-300 text-amber-900 font-bold text-[11px] animate-pulse">
+                    🎁 {merchant.rewardName || "مكافأة الزبون المميز"}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Auto-Dismiss Timer Bar */}
+            <div className="space-y-1">
+              <div className="w-full bg-[#E8EDE3] h-1.5 rounded-full overflow-hidden">
+                <div className="bg-[#008069] h-full animate-shrink-progress" />
+              </div>
+              <p className="text-[10px] text-[#5F655D]">
+                {locale === "ar"
+                  ? "تختفي هذه النافذة تلقائياً خلال 3 ثوانٍ (أو انقر للمتابعة)"
+                  : locale === "fr"
+                  ? "Fermeture automatique dans 3s (ou cliquez)"
+                  : "Cierre automático en 3s (o haga clic)"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Centered Mobile Container */}
       <div
         className={`w-full max-w-[440px] flex flex-col justify-between bg-[#FAF7F2] text-[#173E30] relative ${isFrameMode
@@ -1752,8 +1990,13 @@ export default function MerchantDashboardClient({
           : "min-h-screen border-x border-[#DCE0D4]"
           }`}
       >
-        {/* Top App Bar - WhatsApp Business Dark Teal Header with Menu Toggle */}
-        <header className="sticky top-0 z-30 p-3.5 bg-[#075E54] text-white shadow-md flex items-center justify-between">
+        {/* Top App Bar - WhatsApp Business Dark Teal Header with Safe Area Insets */}
+        <header
+          className="sticky top-0 z-30 px-3.5 pb-3 bg-[#075E54] text-white shadow-md flex items-center justify-between transition-all"
+          style={{
+            paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)",
+          }}
+        >
           {/* Menu Drawer Toggle Button + Merchant Branding */}
           <div className="flex items-center gap-2.5">
             <button
@@ -3449,8 +3692,13 @@ export default function MerchantDashboardClient({
           </div>
         )}
 
-        {/* Bottom Navigation Bar */}
-        <nav className="sticky bottom-0 z-30 bg-white border-t border-[#DCE0D4] grid grid-cols-5 items-center px-1 py-1 text-center text-xs shadow-lg">
+        {/* Bottom Navigation Bar with Safe Area Bottom Padding */}
+        <nav
+          className="sticky bottom-0 z-30 bg-white border-t border-[#DCE0D4] grid grid-cols-5 items-center px-1 py-1 text-center text-xs shadow-lg"
+          style={{
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)",
+          }}
+        >
           {/* 1. الرئيسية */}
           <button
             type="button"
@@ -4187,8 +4435,13 @@ export default function MerchantDashboardClient({
 
           {/* Drawer Panel */}
           <div className="relative w-full max-w-xs bg-white text-[#173E30] h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
-            {/* Drawer Header */}
-            <div className="p-4 bg-[#075E54] text-white flex items-center justify-between shadow-sm">
+            {/* Drawer Header with Safe-Area Top Padding */}
+            <div
+              className="px-4 pb-4 bg-[#075E54] text-white flex items-center justify-between shadow-sm"
+              style={{
+                paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)",
+              }}
+            >
               <div className="flex items-center gap-2.5">
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm text-white shadow-sm border border-white/20"

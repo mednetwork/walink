@@ -337,3 +337,17 @@ label {
   color: #008069;
   flex-shrink: 0;
 }
+
+/* 3-Second Operation Success Modal Shrink Countdown */
+@keyframes shrink-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-shrink-progress {
+  animation: shrink-progress 3s linear forwards;
+}

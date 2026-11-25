@@ -55,6 +55,20 @@ export interface CustomerSummary {
   lastVisitAt?: string | Date;
 }
 
+export interface ActionSuccessPayload {
+  type: "STAMP" | "CASHBACK" | "REDEEM";
+  customerName: string;
+  memberCode: string;
+  stamps?: number;
+  stampsRequired?: number;
+  isRewardEarned?: boolean;
+  rewardName?: string;
+  cashbackEarned?: number;
+  cashbackBalance?: number;
+  billAmount?: number;
+  currency?: string;
+}
+
 interface MerchantScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -67,7 +81,12 @@ interface MerchantScannerModalProps {
   currency?: string;
   minCashbackRedeem?: number;
   customers: CustomerSummary[];
-  onActionComplete: (updatedCustomer: CustomerSummary, message: string, remainingCredits?: number) => void;
+  onActionComplete: (
+    updatedCustomer: CustomerSummary,
+    message: string,
+    remainingCredits?: number,
+    successData?: ActionSuccessPayload
+  ) => void;
   onOpenCredits?: () => void;
   locale?: Locale;
   staffName?: string;
@@ -111,6 +130,10 @@ export default function MerchantScannerModal({
   const [redeemAmount, setRedeemAmount] = useState<string>("");
   const [redeemBillTotal, setRedeemBillTotal] = useState<string>("");
   const billInputRef = useRef<HTMLInputElement | null>(null);
+
+  const calculatedEarned = Number(
+    (((parseFloat(billAmount) || 0) * cashbackRate) / 100).toFixed(2)
+  );
 
   // Anti-Fraud Cooldown & Web NFC State
   const [cooldownWarning, setCooldownWarning] = useState<{
@@ -279,7 +302,40 @@ export default function MerchantScannerModal({
           soundEngine.playStampChime();
         }
 
-        onActionComplete(data.customer, data.message, data.remainingCredits);
+        // Construct rich OperationSuccessPayload for the 3-second celebratory modal
+        let successPayload: ActionSuccessPayload | undefined = undefined;
+        if (payload.action === "STAMP") {
+          successPayload = {
+            type: "STAMP",
+            customerName: data.customer.name,
+            memberCode: data.customer.memberCode,
+            stamps: data.customer.stamps,
+            stampsRequired,
+            isRewardEarned: data.customer.stamps >= stampsRequired,
+            rewardName,
+          };
+        } else if (payload.action === "CASHBACK_EARN") {
+          successPayload = {
+            type: "CASHBACK",
+            customerName: data.customer.name,
+            memberCode: data.customer.memberCode,
+            cashbackEarned: data.earnedAmount || calculatedEarned,
+            cashbackBalance: data.customer.cashbackBalance,
+            billAmount: Number(payload.billAmount) || parseFloat(billAmount) || 0,
+            currency,
+          };
+        } else if (payload.action === "REDEEM" || payload.action === "CASHBACK_REDEEM") {
+          successPayload = {
+            type: "REDEEM",
+            customerName: data.customer.name,
+            memberCode: data.customer.memberCode,
+            stamps: data.customer.stamps,
+            stampsRequired,
+            rewardName,
+          };
+        }
+
+        onActionComplete(data.customer, data.message, data.remainingCredits, successPayload);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "خطأ أثناء المعالجة";
         setMessage({ text: msg, type: "error" });
@@ -287,12 +343,12 @@ export default function MerchantScannerModal({
         setLoading(false);
       }
     },
-    [slug, locale, staffName, branchName, loyaltyMode, stopCamera, onActionComplete, handleModalClose]
+    [slug, locale, staffName, branchName, loyaltyMode, stopCamera, onActionComplete, handleModalClose, stampsRequired, rewardName, calculatedEarned, billAmount, currency]
   );
 
-  // Process decoded QR text
+  // Process decoded QR text: Direct Auto-Stamp on STAMPS or Instant Bill Calculator on CASHBACK
   const handleScannedCode = useCallback(
-    (code: string) => {
+    async (code: string) => {
       const raw = code.trim();
       if (!raw) return;
 
@@ -308,7 +364,7 @@ export default function MerchantScannerModal({
         : null;
 
       // Look up customer in local customers cache
-      const matched =
+      let matched: CustomerSummary | null =
         customers.find((c) => {
           if (passSerialFromUrl && c.passSerial === passSerialFromUrl) return true;
           if (
@@ -325,26 +381,83 @@ export default function MerchantScannerModal({
           return false;
         }) || null;
 
-      if (matched) {
-        handleSelectCustomer(matched);
-        const isCustCashback = matched.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
-        setMessage({
-          text:
-            locale === "ar"
-              ? isCustCashback
-                ? `✅ تم مسح بطاقة ${matched.name}! أدخل ثمن الفاتورة لحساب الكاش باك 💰`
-                : `✅ تم التعرف على بطاقة ${matched.name} (#${matched.memberCode})`
-              : locale === "fr"
-              ? `✅ Carte de ${matched.name} (#${matched.memberCode}) identifiée`
-              : `✅ Tarjeta de ${matched.name} (#${matched.memberCode}) identificada`,
-          type: "success",
-        });
+      if (!matched) {
+        // Not in local cache (freshly registered customer). Fetch live via LOOKUP
+        setLoading(true);
+        try {
+          const res = await fetch(`/api/m/${slug}/stamp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              identifier: raw,
+              action: "LOOKUP",
+              lang: locale,
+              staffName,
+              branchName,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && data.customer) {
+            matched = data.customer;
+          } else {
+            soundEngine.playAlert();
+            setMessage({
+              text: data.error || (locale === "ar" ? "لم يتم العثور على بطاقة مطابقة" : "Carte introuvable"),
+              type: "error",
+            });
+            setTimeout(() => {
+              scanLockRef.current = false;
+            }, 1800);
+            return;
+          }
+        } catch {
+          soundEngine.playAlert();
+          setMessage({
+            text: locale === "ar" ? "فشل الاتصال بالخادم" : "Erreur de connexion",
+            type: "error",
+          });
+          setTimeout(() => {
+            scanLockRef.current = false;
+          }, 1800);
+          return;
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      if (!matched) return;
+
+      const isCustCashback = matched.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
+
+      if (isCustCashback) {
+        // Stop camera, show Bill Amount POS Calculator modal view with auto-focused bill input
+        stopCamera();
+        setSelectedCustomer(matched);
+        setPosTab("earn");
+        setBillAmount("");
+        soundEngine.playRewardChime();
+        setTimeout(() => {
+          billInputRef.current?.focus();
+        }, 150);
       } else {
-        // Not in local cache, safely resolve via server LOOKUP without stamping or deducting credits!
-        executeStampRequest({ identifier: raw, action: "LOOKUP" });
+        // STAMPS loyalty program:
+        if (matched.stamps >= stampsRequired) {
+          // Card already completed and ready to redeem! Show redeem view
+          stopCamera();
+          setSelectedCustomer(matched);
+          soundEngine.playRewardChime();
+        } else {
+          // Under stampsRequired: Auto-Execute action: "STAMP" immediately!
+          stopCamera();
+          await executeStampRequest({
+            customerId: matched.id,
+            identifier: matched.passSerial || matched.memberCode,
+            action: "STAMP",
+          });
+        }
       }
     },
-    [customers, handleSelectCustomer, locale, loyaltyMode, executeStampRequest]
+    [customers, loyaltyMode, stampsRequired, slug, locale, staffName, branchName, stopCamera, executeStampRequest]
   );
 
   // Real-Time Frame Scanner (Engine A: jsQR + Engine B: BarcodeDetector Boost)
@@ -576,12 +689,19 @@ export default function MerchantScannerModal({
     e.target.value = "";
   }, [handleScannedCode, locale, stopCamera]);
 
-  // Scanner Lifecycle: Clean up camera hardware if modal closed or tab changed
+  // Scanner Lifecycle: Auto-start camera immediately when opened without pre-selected customer
   useEffect(() => {
-    if (!isOpen || activeTab !== "camera") {
+    if (isOpen) {
+      if (!initialCustomer && !selectedCustomer) {
+        startCamera();
+      }
+    } else {
       stopCamera();
+      setSelectedCustomer(null);
+      setMessage(null);
+      setCameraState("idle");
     }
-  }, [isOpen, activeTab, stopCamera]);
+  }, [isOpen, initialCustomer, selectedCustomer, startCamera, stopCamera]);
 
   // Direct Pre-Selected Customer Handler: Open Zero-Scroll POS view directly without starting camera
   useEffect(() => {
@@ -742,10 +862,6 @@ export default function MerchantScannerModal({
     ? selectedCustomer.stamps >= stampsRequired
     : false;
 
-  const calculatedEarned = Number(
-    (((parseFloat(billAmount) || 0) * cashbackRate) / 100).toFixed(2)
-  );
-
   const parsedRedeem = parseFloat(redeemAmount) || 0;
   const parsedBillTotal = parseFloat(redeemBillTotal) || 0;
   const remainingCashToPay = Math.max(0, parsedBillTotal - parsedRedeem);
@@ -756,6 +872,10 @@ export default function MerchantScannerModal({
     <div
       dir={isRTL ? "rtl" : "ltr"}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
+      style={{
+        paddingTop: "max(env(safe-area-inset-top, 0px), 0.75rem)",
+        paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0.75rem)",
+      }}
     >
       <div className="relative w-full max-w-md bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-5 text-[#111B21] my-6 space-y-4">
         {/* Header */}
@@ -831,55 +951,6 @@ export default function MerchantScannerModal({
           </div>
         </div>
 
-        {/* Tab Switcher (Hidden when selectedCustomer is active to guarantee Zero-Scroll) */}
-        <div className={`grid grid-cols-3 gap-1.5 p-1 bg-[#F0F2F5] rounded-2xl border border-[#E9EDEF] text-xs ${selectedCustomer ? "hidden" : ""}`}>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("camera");
-              setMessage(null);
-            }}
-            className={`py-2 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition ${
-              activeTab === "camera"
-                ? "bg-[#008069] text-white shadow-sm"
-                : "text-[#54656F] hover:text-[#111B21]"
-            }`}
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>كاميرا QR</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("manual");
-              setMessage(null);
-            }}
-            className={`py-2 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition ${
-              activeTab === "manual"
-                ? "bg-[#008069] text-white shadow-sm"
-                : "text-[#54656F] hover:text-[#111B21]"
-            }`}
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span>بحث يدوي</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleNfcScan}
-            disabled={nfcScanning}
-            className={`py-2 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition border ${
-              nfcScanning
-                ? "bg-amber-100 text-amber-800 border-amber-300 animate-pulse"
-                : "bg-white text-[#008069] border-[#D1D7DB] hover:bg-[#F0F2F5]"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{nfcScanning ? "جاري التقريب..." : "مسح NFC"}</span>
-          </button>
-        </div>
-
         {/* Credits Exhausted Alert Card */}
         {creditsExhausted && (
           <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-amber-950 text-xs space-y-2.5 animate-in fade-in">
@@ -932,250 +1003,130 @@ export default function MerchantScannerModal({
             <button
               type="button"
               onClick={() => executeStampRequest(cooldownWarning.payload, true)}
-              className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm"
+              className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
             >
               <span>{t.walletEnterprise.staff.overrideCooldown}</span>
             </button>
           </div>
         )}
 
-        {/* Camera View Mode (Hidden via CSS when selectedCustomer is active, preserving videoRef.current in DOM) */}
-        {activeTab === "camera" && (
-          <div className={`space-y-3 ${selectedCustomer ? "hidden" : ""}`}>
-            <div className="relative aspect-square w-full max-w-[340px] mx-auto rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center shadow-inner">
-              {/* Native Video Element (Always mounted in DOM to prevent iOS WebKit unmount race conditions) */}
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className={`absolute inset-0 w-full h-full object-cover rounded-2xl transition-opacity duration-300 ${
-                  cameraState === "active" ? "opacity-100" : "opacity-0 pointer-events-none"
-                }`}
-              />
+        {/* Direct Camera Stream View (Active Immediately on Modal Open) */}
+        <div className={`space-y-3 ${selectedCustomer ? "hidden" : ""}`}>
+          <div className="relative aspect-square w-full max-w-[340px] mx-auto rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center shadow-inner">
+            {/* Native Video Element */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className={`absolute inset-0 w-full h-full object-cover rounded-2xl transition-opacity duration-300 ${
+                cameraState === "active" ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+            />
 
-              {/* Offscreen Canvas for jsQR Frame Decoding */}
-              <canvas ref={canvasRef} className="hidden" />
+            {/* Offscreen Canvas for Frame Decoding */}
+            <canvas ref={canvasRef} className="hidden" />
 
-              {/* Native Camera Photo Snapshot File Input (capture="environment") */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleNativeImageCapture}
-                className="hidden"
-              />
+            {/* Fallback Camera Photo Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleNativeImageCapture}
+              className="hidden"
+            />
 
-              {/* Viewfinder Target Overlays & Laser when active */}
-              {cameraState === "active" && (
-                <div className="absolute inset-8 border-2 border-[#00A884] rounded-2xl pointer-events-none flex items-center justify-center z-10">
-                  <span className="w-full h-0.5 bg-[#00A884] absolute shadow-[0_0_12px_#00A884] animate-pulse" />
+            {/* Target Overlays & Laser Animation when Active */}
+            {cameraState === "active" && (
+              <div className="absolute inset-8 border-2 border-[#00A884] rounded-2xl pointer-events-none flex items-center justify-center z-10">
+                <span className="w-full h-0.5 bg-[#00A884] absolute shadow-[0_0_12px_#00A884] animate-pulse" />
+              </div>
+            )}
+
+            {/* Camera Requesting or Initializing */}
+            {(cameraState === "requesting" || cameraState === "idle") && (
+              <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 space-y-2.5 z-10 text-center">
+                <div className="w-10 h-10 border-3 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs text-slate-300 font-medium">
+                  {locale === "ar"
+                    ? "جاري تشغيل الكاميرا والماسح..."
+                    : locale === "fr"
+                    ? "Initialisation de la caméra..."
+                    : "Iniciando cámara..."}
+                </p>
+              </div>
+            )}
+
+            {/* Camera Permission Denied or Hardware Error */}
+            {(cameraState === "permission_denied" || cameraState === "error") && (
+              <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 space-y-3 z-10 text-center">
+                <div className="w-11 h-11 rounded-2xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center mx-auto text-rose-300">
+                  <AlertCircle className="w-6 h-6" />
                 </div>
-              )}
-
-              {/* Camera State 1: Requesting / Loading */}
-              {cameraState === "requesting" && (
-                <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 space-y-2.5 z-10 text-center">
-                  <div className="w-10 h-10 border-3 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-xs text-slate-300 font-medium">
-                    {locale === "ar"
-                      ? "جاري تهيئة الكاميرا والماسح..."
-                      : locale === "fr"
-                      ? "Initialisation de la caméra..."
-                      : "Inicializando la cámara..."}
+                <div>
+                  <p className="text-xs font-bold text-white">
+                    {cameraState === "permission_denied"
+                      ? locale === "ar"
+                        ? "تم رفض إذن الكاميرا"
+                        : "Accès caméra refusé"
+                      : locale === "ar"
+                      ? "تعذر تشغيل الكاميرا"
+                      : "Error de cámara"}
+                  </p>
+                  <p className="text-[11px] text-rose-200/90 mt-1 leading-relaxed">
+                    {cameraState === "permission_denied"
+                      ? locale === "ar"
+                        ? "يرجى تفعيل إذن الكاميرا من إعدادات المتصفح، أو التقط صورة للرمز أدناه."
+                        : "Veuillez autoriser la caméra dans les paramètres de votre navigateur, ou prenez une photo."
+                      : cameraErrorMessage ||
+                        (locale === "ar"
+                          ? "تأكد من عدم استخدام الكاميرا من قِبل تطبيق آخر، أو التقط صورة مباشرة للرمز."
+                          : "Vérifiez qu'aucune autre application n'utilise la caméra.")}
                   </p>
                 </div>
-              )}
-
-              {/* Camera State 2: Idle (Prompt to start with direct user gesture) */}
-              {cameraState === "idle" && (
-                <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 space-y-3 z-10 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center mx-auto text-emerald-300">
-                    <Camera className="w-6 h-6 stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">
-                      {locale === "ar"
-                        ? "جاهز للمسح الضوئي"
-                        : locale === "fr"
-                        ? "Prêt pour le scan"
-                        : "Listo para escanear"}
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      {locale === "ar"
-                        ? "اضغط لتشغيل الكاميرا ومسح كود الزبون"
-                        : locale === "fr"
-                        ? "Appuyez pour activer la caméra"
-                        : "Toca para activar la cámara"}
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-center gap-2 pt-1 w-full max-w-xs px-2">
-                    <button
-                      type="button"
-                      onClick={startCamera}
-                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#008069]/30 active:scale-95 transition cursor-pointer"
-                    >
-                      <Camera className="w-4 h-4 stroke-[2.5]" />
-                      <span>
-                        {locale === "ar"
-                          ? "تشغيل الكاميرا والمسح 📷"
-                          : locale === "fr"
-                          ? "Activer la caméra 📷"
-                          : "Activar la cámara 📷"}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/90 font-medium text-[11px] flex items-center justify-center gap-1.5 transition border border-white/10 cursor-pointer"
-                    >
-                      <Camera className="w-3.5 h-3.5" />
-                      <span>
-                        {locale === "ar"
-                          ? "📸 التقاط صورة"
-                          : locale === "fr"
-                          ? "📸 Prendre photo"
-                          : "📸 Tomar foto"}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Camera State 3: Permission Denied or Error */}
-              {(cameraState === "permission_denied" || cameraState === "error") && (
-                <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-4 space-y-3 z-10 text-center">
-                  <div className="w-11 h-11 rounded-2xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center mx-auto text-rose-300">
-                    <AlertCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">
-                      {cameraState === "permission_denied"
-                        ? locale === "ar"
-                          ? "تم رفض إذن الكاميرا"
-                          : locale === "fr"
-                          ? "Accès caméra refusé"
-                          : "Acceso a cámara denegado"
-                        : locale === "ar"
-                        ? "تعذر تشغيل الكاميرا"
-                        : locale === "fr"
-                        ? "Erreur de caméra"
-                        : "Error de cámara"}
-                    </p>
-                    <p className="text-[11px] text-rose-200/90 mt-1 leading-relaxed">
-                      {cameraState === "permission_denied"
-                        ? locale === "ar"
-                          ? "يرجى تفعيل إذن الكاميرا من إعدادات المتصفح أو إعدادات النظام ثم إعادة المحاولة، أو استخدم زر التقاط صورة أدناه."
-                          : locale === "fr"
-                          ? "Veuillez autoriser la caméra dans les paramètres de votre navigateur, ou prenez une photo directe ci-dessous."
-                          : "Active el permiso de cámara en los ajustes o tome una foto directamente abajo."
-                        : cameraErrorMessage ||
-                          (locale === "ar"
-                            ? "تأكد من عدم استخدام الكاميرا من قِبل تطبيق آخر، أو التقط صورة مباشرة للرمز أدناه."
-                            : locale === "fr"
-                            ? "Vérifiez qu'aucune autre application n'utilise la caméra, ou prenez une photo."
-                            : "Verifique que otra aplicación no esté usando la cámara, o tome una foto.")}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={startCamera}
-                      className="px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs flex items-center gap-1.5 transition active:scale-95 border border-white/20 cursor-pointer"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span>{locale === "ar" ? "إعادة المحاولة" : locale === "fr" ? "Réessayer" : "Reintentar"}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
-                    >
-                      <Camera className="w-3.5 h-3.5" />
-                      <span>{locale === "ar" ? "📸 التقاط صورة للرمز" : locale === "fr" ? "📸 Prendre photo" : "📸 Tomar foto"}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("manual")}
-                      className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
-                    >
-                      <Search className="w-3.5 h-3.5" />
-                      <span>{locale === "ar" ? "بحث يدوي" : locale === "fr" ? "Recherche" : "Buscar"}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Camera Control Bar & Snapshot Rescue Pill */}
-            <div className="flex items-center justify-between px-1">
-              {cameraState === "active" ? (
-                <>
-                  <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                    {locale === "ar"
-                      ? "الماسح نشط، وجّه الكاميرا إلى كود QR"
-                      : locale === "fr"
-                      ? "Scanner actif, visez le QR code"
-                      : "Escáner activo, enfoque el código QR"}
-                  </span>
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={stopCamera}
-                    className="text-[11px] text-[#54656F] hover:text-[#111B21] font-bold underline cursor-pointer"
+                    onClick={startCamera}
+                    className="px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs flex items-center gap-1.5 transition active:scale-95 border border-white/20 cursor-pointer"
                   >
-                    {locale === "ar" ? "إيقاف الكاميرا" : locale === "fr" ? "Arrêter" : "Detener"}
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>{locale === "ar" ? "إعادة المحاولة" : "Réessayer"}</span>
                   </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-[11px] text-[#008069] hover:text-[#00A884] font-bold flex items-center gap-1.5 transition underline cursor-pointer py-0.5"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>
-                    {locale === "ar"
-                      ? "📸 مسح بديل عبر التقاط صورة بالكاميرا"
-                      : locale === "fr"
-                      ? "📸 Scanner via photo directe"
-                      : "📸 Escanear mediante foto"}
-                  </span>
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Manual Search Mode (Hidden when selectedCustomer is active to guarantee Zero-Scroll) */}
-        {activeTab === "manual" && (
-          <form onSubmit={handleSearchSubmit} className={`space-y-3 ${selectedCustomer ? "hidden" : ""}`}>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#111B21] block">
-                {t.merchant.manualLookup}
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  inputMode="tel"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t.merchant.searchPlaceholder}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] placeholder-[#54656F] text-xs font-mono focus:outline-none focus:border-[#008069] focus:bg-white"
-                />
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="absolute left-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-gradient-to-r from-[#00A884] to-[#008069] text-white font-bold text-xs flex items-center gap-1 hover:from-[#008069] disabled:opacity-50 shadow-sm cursor-pointer"
-                >
-                  <Search className="w-3.5 h-3.5" />
-                  <span>بحث وختم</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>{locale === "ar" ? "📸 التقاط صورة للرمز" : "📸 Prendre photo"}</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          </form>
-        )}
+            )}
+          </div>
+
+          {/* Active Status Live Indicator */}
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              {locale === "ar"
+                ? "الماسح نشط، وجّه الكاميرا إلى كود QR"
+                : locale === "fr"
+                ? "Scanner actif, visez le QR code"
+                : "Escáner activo, enfoque el código QR"}
+            </span>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-[11px] text-[#54656F] hover:text-[#008069] font-medium flex items-center gap-1 cursor-pointer"
+            >
+              <Camera className="w-3 h-3" />
+              <span>{locale === "ar" ? "التقاط صورة" : "Prendre photo"}</span>
+            </button>
+          </div>
+        </div>
 
         {/* Status Feedback Message */}
         {message && (

@@ -1,10 +1,19 @@
 import React from "react";
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Store, AlertTriangle, ArrowRight } from "lucide-react";
 import prisma from "@/lib/prisma";
 import MerchantDashboardClient from "@/components/MerchantDashboardClient";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#075E54",
+};
 
 interface MerchantPageProps {
   params: {
