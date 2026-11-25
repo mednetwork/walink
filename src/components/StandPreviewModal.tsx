@@ -128,7 +128,7 @@ export default function StandPreviewModal({
                   className="w-44 h-44 aspect-square object-contain"
                 />
               ) : (
-                <div className="w-44 h-44 flex items-center justify-center bg-gray-100 text-gray-400">
+                <div className="w-44 h-44 flex items-center justify-center bg-[#FAF7F2] text-[#5F655D]">
                   <QrIcon className="w-10 h-10 animate-pulse" />
                 </div>
               )}

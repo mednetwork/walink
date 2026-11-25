@@ -1989,7 +1989,7 @@ export default function MerchantDashboardClient({
                 setSuccessModalData(null);
               }}
               aria-label={locale === "ar" ? "إغلاق" : "Fermer"}
-              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-slate-100 text-[#5F655D] hover:text-[#173E30] transition cursor-pointer"
+              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-[#FAF7F2] text-[#5F655D] hover:text-[#173E30] transition cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -2069,7 +2069,7 @@ export default function MerchantDashboardClient({
                   ) : null}
                 </p>
                 <div className="pt-2 border-t border-amber-200/60 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-600 font-medium">
+                  <span className="text-[#5F655D] font-medium">
                     {locale === "ar" ? "رصيد المحفظة الجديد:" : "Nouveau solde :"}
                   </span>
                   <span className="font-mono font-bold text-amber-900">
@@ -2931,7 +2931,7 @@ export default function MerchantDashboardClient({
                             {locale === "fr" ? "Mois en cours" : locale === "es" ? "Mes en curso" : "الشهر الجاري"}
                           </span>
                         ) : (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold border border-slate-200">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF7F2] text-[#5F655D] font-bold border border-[#DCE0D4]">
                             {locale === "fr" ? "Mois clôturé" : locale === "es" ? "Mes cerrado" : "شهر منتهي"}
                           </span>
                         )}
@@ -4657,32 +4657,32 @@ export default function MerchantDashboardClient({
             className="fixed inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setShowIOSInstallGuide(false)}
           />
-          <div className="relative z-10 bg-[#0F172A] border border-slate-700/80 rounded-3xl p-5 max-w-sm w-full text-white shadow-2xl">
+          <div className="relative z-10 bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl p-5 max-w-sm w-full text-[#173E30] shadow-2xl">
             <button
               type="button"
               onClick={() => setShowIOSInstallGuide(false)}
-              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-white/10 text-white/60 hover:text-white"
+              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-[#FAF7F2] text-[#5F655D] hover:text-[#173E30]"
             >
               <X className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
+              <div className="w-10 h-10 rounded-2xl bg-[#008069]/10 border border-[#008069]/20 flex items-center justify-center text-[#008069]">
                 <Smartphone className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-white">
+                <h3 className="font-bold text-sm text-[#173E30]">
                   {locale === "ar"
                     ? `إضافة ${merchant.name} للشاشة الرئيسية`
                     : locale === "fr"
                     ? `Ajouter ${merchant.name} à l'écran d'accueil`
                     : `Añadir ${merchant.name} a inicio`}
                 </h3>
-                <p className="text-xs text-slate-400">iPhone / iPad Safari</p>
+                <p className="text-xs text-[#5F655D]">iPhone / iPad Safari</p>
               </div>
             </div>
-            <div className="space-y-3 text-xs text-slate-300">
-              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center shrink-0">1</span>
+            <div className="space-y-3 text-xs text-[#173E30]">
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#FAF7F2] border border-[#DCE0D4]">
+                <span className="w-5 h-5 rounded-full bg-[#008069]/15 text-[#008069] font-bold flex items-center justify-center shrink-0">1</span>
                 <p>
                   {locale === "ar"
                     ? "اضغط على زر المشاركة (Share) في أسفل شاشة Safari"
@@ -4691,8 +4691,8 @@ export default function MerchantDashboardClient({
                     : "Toca el botón Compartir en la parte inferior de Safari"}
                 </p>
               </div>
-              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center shrink-0">2</span>
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#FAF7F2] border border-[#DCE0D4]">
+                <span className="w-5 h-5 rounded-full bg-[#008069]/15 text-[#008069] font-bold flex items-center justify-center shrink-0">2</span>
                 <p>
                   {locale === "ar"
                     ? 'مرّر للأسفل واختر "إضافة إلى الصفحة الرئيسية" (+)'
@@ -4705,7 +4705,7 @@ export default function MerchantDashboardClient({
             <button
               type="button"
               onClick={() => setShowIOSInstallGuide(false)}
-              className="w-full mt-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition"
+              className="w-full mt-5 py-2.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white font-bold text-xs transition"
             >
               {locale === "ar" ? "فهمت" : locale === "fr" ? "J'ai compris" : "Entendido"}
             </button>
@@ -4949,7 +4949,7 @@ export default function MerchantDashboardClient({
               <button
                 type="button"
                 onClick={() => setIsAddCustomerOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 text-[#5F655D] hover:text-[#173E30] transition cursor-pointer"
+                className="p-1.5 rounded-lg hover:bg-[#FAF7F2] text-[#5F655D] hover:text-[#173E30] transition cursor-pointer"
                 aria-label="إغلاق"
               >
                 <X className="w-4 h-4" />
@@ -5001,7 +5001,7 @@ export default function MerchantDashboardClient({
                     className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       newCustLoyaltyType === "STAMPS"
                         ? "bg-[#008069] text-white border-[#008069] shadow-sm"
-                        : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-slate-100"
+                        : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-[#E8EDE3]"
                     }`}
                   >
                     <Stamp className="w-3.5 h-3.5" />
@@ -5013,7 +5013,7 @@ export default function MerchantDashboardClient({
                     className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       newCustLoyaltyType === "CASHBACK"
                         ? "bg-amber-600 text-white border-amber-600 shadow-sm"
-                        : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-slate-100"
+                        : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-[#E8EDE3]"
                     }`}
                   >
                     <Coins className="w-3.5 h-3.5" />
