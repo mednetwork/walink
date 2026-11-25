@@ -49,6 +49,8 @@ import {
   Share2,
   Stamp,
   BarChart3,
+  Menu,
+  UserPlus,
 } from "lucide-react";
 import { soundEngine } from "@/lib/sound";
 import type { MonthlyAnalyticsResponse } from "@/app/api/m/[slug]/analytics/monthly/route";
@@ -130,6 +132,7 @@ interface CustomerData {
   securityPin?: string;
   failedPinAttempts?: number;
   pinLockedUntil?: string | null;
+  isActivated?: boolean;
 }
 
 interface TransactionData {
@@ -248,6 +251,24 @@ export default function MerchantDashboardClient({
   const [isStandOpen, setIsStandOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
 
+  // Drawer Menu & Manual Add Customer Modal States (Phase 58)
+  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [newCustName, setNewCustName] = useState("");
+  const [newCustPhone, setNewCustPhone] = useState("");
+  const [newCustPin, setNewCustPin] = useState("");
+  const [newCustLoyaltyType, setNewCustLoyaltyType] = useState<"STAMPS" | "CASHBACK">(
+    merchant.loyaltyMode === "CASHBACK" ? "CASHBACK" : "STAMPS"
+  );
+  const [isAddingCustomer, setIsAddingCustomer] = useState(false);
+  const [addCustomerError, setAddCustomerError] = useState<string | null>(null);
+
+  // Live Customer Polling Reference Snapshot (Phase 58)
+  const customersRef = useRef<CustomerData[]>(initialCustomers);
+  useEffect(() => {
+    customersRef.current = customers;
+  }, [customers]);
+
   // Direct Customer Action States (Phase 53)
   const [stampingCustomerId, setStampingCustomerId] = useState<string | null>(null);
   const [preselectedCustomer, setPreselectedCustomer] = useState<CustomerData | null>(null);
@@ -269,6 +290,203 @@ export default function MerchantDashboardClient({
       }
     };
   }, []);
+
+  // Non-Disruptive 4-Second Live Customer Polling with customersRef Diffing (Phase 58)
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const pollMerchantData = async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+
+      try {
+        const res = await fetch(`/api/m/${merchant.slug}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!isMounted || !data.customers || !Array.isArray(data.customers)) return;
+
+        const incomingCustomers: CustomerData[] = data.customers;
+        const currentCustomers = customersRef.current;
+
+        // Check if anything meaningful changed
+        const currentIds = new Set(currentCustomers.map((c) => c.id));
+        const newCustomer = incomingCustomers.find((c) => !currentIds.has(c.id));
+        const hasLengthChanged = incomingCustomers.length !== currentCustomers.length;
+
+        let hasDataChanged = hasLengthChanged || Boolean(newCustomer);
+
+        if (!hasDataChanged) {
+          // Check if any customer stamps, cashback, visits, or activation state changed
+          const currentMap = new Map(currentCustomers.map((c) => [c.id, c]));
+          for (const inc of incomingCustomers) {
+            const cur = currentMap.get(inc.id);
+            if (!cur) {
+              hasDataChanged = true;
+              break;
+            }
+            if (
+              cur.stamps !== inc.stamps ||
+              Math.abs(Number(cur.cashbackBalance || 0) - Number(inc.cashbackBalance || 0)) >= 0.01 ||
+              cur.totalVisits !== inc.totalVisits ||
+              cur.rewardsRedeemed !== inc.rewardsRedeemed ||
+              cur.isActivated !== inc.isActivated ||
+              cur.securityPin !== inc.securityPin
+            ) {
+              hasDataChanged = true;
+              break;
+            }
+          }
+        }
+
+        if (hasDataChanged) {
+          customersRef.current = incomingCustomers;
+          setCustomers(incomingCustomers);
+
+          // If a brand-new customer joined, notify merchant with chime & floating toast!
+          if (newCustomer) {
+            soundEngine.playRewardChime();
+            setActionSuccessToast({
+              message:
+                locale === "fr"
+                  ? `✨ Nouveau client inscrit : ${newCustomer.name} (#${newCustomer.memberCode})`
+                  : locale === "es"
+                  ? `✨ Nuevo cliente registrado: ${newCustomer.name} (#${newCustomer.memberCode})`
+                  : `✨ انضم زبون جديد الآن: ${newCustomer.name} (#${newCustomer.memberCode})`,
+              customerName: newCustomer.name,
+              memberCode: newCustomer.memberCode,
+            });
+
+            if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+            toastTimeoutRef.current = setTimeout(() => {
+              setActionSuccessToast(null);
+            }, 5000);
+          }
+        }
+
+        // Sync metrics & credits
+        if (data.metrics) {
+          setMetrics(data.metrics);
+        }
+        if (data.merchant && typeof data.merchant.credits === "number") {
+          setMerchant((prev) =>
+            prev.credits !== data.merchant.credits
+              ? { ...prev, credits: data.merchant.credits }
+              : prev
+          );
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          // Silently ignore transient polling network blips
+        }
+      }
+    };
+
+    const interval = setInterval(pollMerchantData, 4000);
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearInterval(interval);
+    };
+  }, [merchant.slug, locale]);
+
+  // Handler for Manual Customer Creation (Phase 58)
+  const handleAddCustomerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustName.trim()) {
+      setAddCustomerError(
+        locale === "fr"
+          ? "Veuillez entrer le nom du client"
+          : locale === "es"
+          ? "Por favor introduce el nombre del cliente"
+          : "يرجى كتابة اسم الزبون"
+      );
+      return;
+    }
+    if (!newCustPhone.trim()) {
+      setAddCustomerError(
+        locale === "fr"
+          ? "Veuillez entrer le numéro de téléphone"
+          : locale === "es"
+          ? "Por favor introduce el número de teléfono"
+          : "يرجى كتابة رقم الهاتف"
+      );
+      return;
+    }
+
+    setIsAddingCustomer(true);
+    setAddCustomerError(null);
+
+    try {
+      const res = await fetch(`/api/join/${merchant.slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newCustName.trim(),
+          phone: newCustPhone.trim(),
+          loyaltyType: newCustLoyaltyType,
+          securityPin: newCustPin.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "تعذر إضافة الزبون");
+      }
+
+      // Add newly created customer immediately to local list
+      const createdCustomer: CustomerData = {
+        id: data.customerId || `cust-${Date.now()}`,
+        name: newCustName.trim(),
+        phone: newCustPhone.trim(),
+        memberCode: data.memberCode || data.passSerial?.slice(-4) || "0000",
+        passSerial: data.passSerial || `pass-${Date.now()}`,
+        loyaltyType: newCustLoyaltyType,
+        stamps: newCustLoyaltyType === "STAMPS" ? 1 : 0,
+        cashbackBalance: newCustLoyaltyType === "CASHBACK" ? Number(merchant.welcomeCashback || 0) : 0,
+        totalCashbackEarned: newCustLoyaltyType === "CASHBACK" ? Number(merchant.welcomeCashback || 0) : 0,
+        totalSpent: 0,
+        totalVisits: 1,
+        rewardsRedeemed: 0,
+        lastVisitAt: new Date(),
+        isActivated: true,
+        securityPin: newCustPin.trim() || undefined,
+      };
+
+      setCustomers((prev) => [createdCustomer, ...prev]);
+      customersRef.current = [createdCustomer, ...customersRef.current];
+
+      soundEngine.playRewardChime();
+      setActionSuccessToast({
+        message:
+          locale === "fr"
+            ? `Client ajouté avec succès : ${createdCustomer.name}`
+            : locale === "es"
+            ? `Cliente añadido con éxito: ${createdCustomer.name}`
+            : `🎉 تمت إضافة الزبون بنجاح: ${createdCustomer.name}`,
+        customerName: createdCustomer.name,
+        memberCode: createdCustomer.memberCode,
+      });
+
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      toastTimeoutRef.current = setTimeout(() => {
+        setActionSuccessToast(null);
+      }, 5000);
+
+      setIsAddCustomerOpen(false);
+      setNewCustName("");
+      setNewCustPhone("");
+      setNewCustPin("");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "حدث خطأ أثناء إضافة الزبون";
+      setAddCustomerError(msg);
+    } finally {
+      setIsAddingCustomer(false);
+    }
+  };
   const [peekNotification, setPeekNotification] = useState<{ isOpen: boolean; message: string; title: string; shopName?: string }>({
     isOpen: false,
     message: "",
@@ -1534,25 +1752,25 @@ export default function MerchantDashboardClient({
           : "min-h-screen border-x border-[#DCE0D4]"
           }`}
       >
-        {/* Top App Bar - WhatsApp Business Dark Teal Header */}
+        {/* Top App Bar - WhatsApp Business Dark Teal Header with Menu Toggle */}
         <header className="sticky top-0 z-30 p-3.5 bg-[#075E54] text-white shadow-md flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-sm border border-white/20"
-              style={{ background: merchant.bgGradient || merchant.primaryColor }}
+          {/* Menu Drawer Toggle Button + Merchant Branding */}
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsMenuDrawerOpen(true)}
+              aria-label={locale === "ar" ? "فتح القائمة الرئيسية" : "Ouvrir le menu"}
+              className="p-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 border border-white/20 text-white transition flex items-center justify-center shadow-sm cursor-pointer"
             >
-              {merchant.name.slice(0, 2)}
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="font-bold text-xs text-white truncate max-w-[120px]">
-                  {merchant.name}
-                </h1>
-                <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-white/20 text-white font-bold">
-                  {merchant.plan}
-                </span>
-              </div>
-              <span className="text-[10px] text-emerald-200 block">اليوم</span>
+              <Menu className="w-5 h-5 text-white" />
+            </button>
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-bold text-sm text-white truncate max-w-[160px]">
+                {merchant.name}
+              </h1>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-white/20 text-white font-bold">
+                {merchant.plan}
+              </span>
             </div>
           </div>
 
@@ -1586,72 +1804,12 @@ export default function MerchantDashboardClient({
               onClick={() => setIsStandOpen(true)}
               title="عرض ستاند الكاونتر الذكي"
               aria-label="عرض ستاند الكاونتر الذكي"
-              className="p-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white transition shadow-sm"
+              className="p-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white transition shadow-sm cursor-pointer"
             >
               <QrCode className="w-4 h-4 text-white" />
             </button>
-
-            {/* Install App Button (Hidden if already standalone) */}
-            {!isInstalled && (
-              <button
-                type="button"
-                onClick={handleInstallApp}
-                title={locale === "ar" ? "تثبيت لوحة المتجر على الشاشة الرئيسية" : "Installer sur l'écran d'accueil"}
-                aria-label="تثبيت لوحة المتجر على الشاشة الرئيسية"
-                className="p-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-emerald-300 hover:text-white transition shadow-sm"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-            )}
           </div>
         </header>
-
-        {/* PWA Home Screen Installation Prompt Banner (Hidden if standalone or dismissed) */}
-        {!isInstalled && !isInstallDismissed && (
-          <div className="mx-3.5 mt-3 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-[#075E54]/80 to-emerald-950/80 border border-emerald-500/30 text-white shadow-lg backdrop-blur-sm flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0 text-emerald-300">
-                <Smartphone className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold truncate text-white">
-                  {locale === "ar"
-                    ? `تثبيت تطبيق ${merchant.name}`
-                    : locale === "fr"
-                    ? `Installer l'application ${merchant.name}`
-                    : `Instalar la app de ${merchant.name}`}
-                </p>
-                <p className="text-[11px] text-emerald-200/80 truncate">
-                  {locale === "ar"
-                    ? "وصول سريع بنقرة واحدة للشاشة الرئيسية"
-                    : locale === "fr"
-                    ? "Accès rapide en 1 clic sur l'écran d'accueil"
-                    : "Acceso rápido en 1 toque en inicio"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={handleInstallApp}
-                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>
-                  {locale === "ar" ? "تثبيت" : locale === "fr" ? "Installer" : "Instalar"}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsInstallDismissed(true)}
-                aria-label="إغلاق إشعار التثبيت"
-                className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Prominent Scanner Bar Button (Always on Top) */}
         <div className="p-3.5 pb-2">
@@ -1944,17 +2102,28 @@ export default function MerchantDashboardClient({
         {/* Tab 2: الكليان (CRM) */}
         {activeTab === "customers" && (
           <div className="p-3.5 space-y-3.5 flex-1 animate-in fade-in duration-200">
-            {/* Search Input */}
-            <div className="relative">
-              <input
-                type="text"
-                value={crmSearch}
-                onChange={(e) => setCrmSearch(e.target.value)}
-                placeholder="قلّب بالسمية، النمرة، ولا الكود #..."
-                aria-label="بحث في قائمة الزبائن"
-                className="w-full bg-white border border-[#C8D1BE] rounded-2xl px-4 py-2.5 text-xs text-[#173E30] placeholder-[#5F655D] focus:outline-none focus:border-[#008069] shadow-sm"
-              />
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#5F655D]" />
+            {/* Search Input & Quick Add Button */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={crmSearch}
+                  onChange={(e) => setCrmSearch(e.target.value)}
+                  placeholder="قلّب بالسمية، النمرة، ولا الكود #..."
+                  aria-label="بحث في قائمة الزبائن"
+                  className="w-full bg-white border border-[#C8D1BE] rounded-2xl px-4 py-2.5 text-xs text-[#173E30] placeholder-[#5F655D] focus:outline-none focus:border-[#008069] shadow-sm"
+                />
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#5F655D]" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddCustomerOpen(true)}
+                className="px-3 py-2.5 rounded-2xl bg-[#008069] hover:bg-[#00705a] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition shrink-0 cursor-pointer"
+                title="إضافة زبون جديد يدوياً"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span className="hidden sm:inline">إضافة زبون</span>
+              </button>
             </div>
 
             {/* Filter Pills */}
@@ -3281,37 +3450,88 @@ export default function MerchantDashboardClient({
         )}
 
         {/* Bottom Navigation Bar */}
-        <nav className="sticky bottom-0 z-30 bg-white border-t border-[#DCE0D4] grid grid-cols-5 p-1.5 text-center text-xs shadow-lg">
-          {[
-            { id: "home" as const, label: t.demo.ownerHome, icon: LayoutDashboard },
-            { id: "customers" as const, label: t.demo.ownerClients, icon: Users },
-            { id: "analytics" as const, label: t.demo.ownerAnalytics, icon: BarChart3 },
-            { id: "promo" as const, label: t.demo.ownerPromos, icon: Megaphone },
-            { id: "settings" as const, label: t.demo.ownerSettings, icon: Settings },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
-                  isActive ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
-                }`}
-              >
-                <div className="relative">
-                  <Icon className={`w-4 h-4 ${isActive ? "stroke-[2.5]" : ""}`} />
-                  {tab.id === "settings" && hasUnsavedChanges && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
-                  )}
+        <nav className="sticky bottom-0 z-30 bg-white border-t border-[#DCE0D4] grid grid-cols-5 items-center px-1 py-1 text-center text-xs shadow-lg">
+          {/* 1. الرئيسية */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("home")}
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
+              activeTab === "home" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+            }`}
+          >
+            <LayoutDashboard className={`w-4 h-4 ${activeTab === "home" ? "stroke-[2.5]" : ""}`} />
+            <span className="text-[10px] sm:text-xs font-medium truncate w-full block text-center leading-tight">
+              {t.demo.ownerHome}
+            </span>
+          </button>
+
+          {/* 2. الزبائن */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("customers")}
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
+              activeTab === "customers" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+            }`}
+          >
+            <Users className={`w-4 h-4 ${activeTab === "customers" ? "stroke-[2.5]" : ""}`} />
+            <span className="text-[10px] sm:text-xs font-medium truncate w-full block text-center leading-tight">
+              {t.demo.ownerClients}
+            </span>
+          </button>
+
+          {/* 3. Center Elevated Floating Camera FAB (Strictly matches reference image media_1795566331431_8ed38111.png) */}
+          <div className="relative flex flex-col items-center justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                setPreselectedCustomer(null);
+                setIsScannerOpen(true);
+              }}
+              aria-label={locale === "ar" ? "مسح بطاقة العميل / إضافة ختم أو كاش باك" : "Scanner / Ajouter un tampon ou cashback"}
+              className="group -mt-6 flex items-center justify-center cursor-pointer transition-transform duration-200 active:scale-90 hover:scale-105"
+            >
+              {/* Outer Translucent Halo Ring */}
+              <div className="w-14 h-14 rounded-full bg-[#008069]/15 group-hover:bg-[#008069]/25 p-1.5 flex items-center justify-center transition-all duration-300 shadow-md">
+                {/* Inner Solid Gradient Circle with Camera Icon */}
+                <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#075E54] via-[#008069] to-[#00A884] text-white flex items-center justify-center shadow-lg border-2 border-white">
+                  <Camera className="w-6 h-6 stroke-[2.3] text-white" />
                 </div>
-                <span className="text-[10px] sm:text-xs font-medium truncate w-full block text-center leading-tight">
-                  {tab.label}
-                </span>
-              </button>
-            );
-          })}
+              </div>
+            </button>
+          </div>
+
+          {/* 4. التقارير */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("analytics")}
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
+              activeTab === "analytics" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+            }`}
+          >
+            <BarChart3 className={`w-4 h-4 ${activeTab === "analytics" ? "stroke-[2.5]" : ""}`} />
+            <span className="text-[10px] sm:text-xs font-medium truncate w-full block text-center leading-tight">
+              {t.demo.ownerAnalytics}
+            </span>
+          </button>
+
+          {/* 5. الإعدادات */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("settings")}
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
+              activeTab === "settings" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+            }`}
+          >
+            <div className="relative">
+              <Settings className={`w-4 h-4 ${activeTab === "settings" ? "stroke-[2.5]" : ""}`} />
+              {hasUnsavedChanges && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
+              )}
+            </div>
+            <span className="text-[10px] sm:text-xs font-medium truncate w-full block text-center leading-tight">
+              {t.demo.ownerSettings}
+            </span>
+          </button>
         </nav>
       </div>
 
@@ -3952,6 +4172,316 @@ export default function MerchantDashboardClient({
             >
               {locale === "ar" ? "فهمت" : locale === "fr" ? "J'ai compris" : "Entendido"}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Slide-Over Drawer Menu (Phase 58) */}
+      {isMenuDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex" dir={locale === "ar" ? "rtl" : "ltr"}>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+            onClick={() => setIsMenuDrawerOpen(false)}
+          />
+
+          {/* Drawer Panel */}
+          <div className="relative w-full max-w-xs bg-white text-[#173E30] h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
+            {/* Drawer Header */}
+            <div className="p-4 bg-[#075E54] text-white flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm text-white shadow-sm border border-white/20"
+                  style={{ background: merchant.bgGradient || merchant.primaryColor }}
+                >
+                  {merchant.name.slice(0, 2)}
+                </div>
+                <div>
+                  <h2 className="font-bold text-sm text-white truncate max-w-[170px]">
+                    {merchant.name}
+                  </h2>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/20 text-white font-bold inline-block mt-0.5">
+                    {merchant.plan}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMenuDrawerOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer"
+                aria-label="إغلاق القائمة"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Drawer Navigation Links & Tools */}
+            <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+              {/* Navigation Sections */}
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-[#5F655D] px-2 uppercase tracking-wider">
+                  {locale === "ar" ? "الأقسام الرئيسية" : "Sections"}
+                </p>
+                {[
+                  { id: "home" as const, label: t.demo.ownerHome, icon: LayoutDashboard },
+                  { id: "customers" as const, label: t.demo.ownerClients, icon: Users },
+                  { id: "analytics" as const, label: t.demo.ownerAnalytics, icon: BarChart3 },
+                  { id: "promo" as const, label: t.demo.ownerPromos, icon: Megaphone },
+                  { id: "settings" as const, label: t.demo.ownerSettings, icon: Settings },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setIsMenuDrawerOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition text-start cursor-pointer ${
+                        isActive
+                          ? "bg-[#008069]/10 text-[#008069] border border-[#008069]/20"
+                          : "hover:bg-[#FAF7F2] text-[#173E30]"
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 ${isActive ? "text-[#008069]" : "text-[#5F655D]"}`} />
+                      <span className="flex-1">{item.label}</span>
+                      {item.id === "settings" && hasUnsavedChanges && (
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="h-px bg-[#DCE0D4]" />
+
+              {/* Quick Tools & Shortcuts */}
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-[#5F655D] px-2 uppercase tracking-wider">
+                  {locale === "ar" ? "أدوات سريعة" : "Outils rapides"}
+                </p>
+
+                {/* Credits recharge */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuDrawerOpen(false);
+                    setIsCreditsOpen(true);
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Coins className="w-4 h-4 text-amber-500" />
+                    <span>{locale === "ar" ? "رصيد العمليات" : "Solde de crédits"}</span>
+                  </div>
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
+                    {merchant.credits}
+                  </span>
+                </button>
+
+                {/* Counter Stand QR */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuDrawerOpen(false);
+                    setIsStandOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start cursor-pointer"
+                >
+                  <QrCode className="w-4 h-4 text-[#008069]" />
+                  <span>{locale === "ar" ? "ستاند الكاونتر الذكي" : "Stand QR Comptoir"}</span>
+                </button>
+
+                {/* Join Link in New Tab */}
+                <a
+                  href={`/join/${merchant.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start"
+                >
+                  <ExternalLink className="w-4 h-4 text-[#008069]" />
+                  <span>{locale === "ar" ? "صفحة تسجيل العملاء" : "Page d'inscription"}</span>
+                </a>
+
+                {/* PWA Install in Drawer if available */}
+                {!isInstalled && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuDrawerOpen(false);
+                      handleInstallApp();
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-emerald-600" />
+                    <span>{locale === "ar" ? "تثبيت التطبيق على الهاتف" : "Installer l'application"}</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="h-px bg-[#DCE0D4]" />
+
+              {/* Language Switcher */}
+              <div className="p-2 space-y-2">
+                <p className="text-[11px] font-bold text-[#5F655D] uppercase tracking-wider">
+                  {locale === "ar" ? "اللغة" : "Langue"}
+                </p>
+                <LanguageSwitcher size="sm" variant="light" />
+              </div>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-4 border-t border-[#DCE0D4] bg-[#FAF7F2] text-center">
+              <span className="text-[10px] text-[#5F655D] font-mono">
+                Walink Engine v3.2 • {merchant.slug}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Add Customer Modal (Phase 58) */}
+      {isAddCustomerOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsAddCustomerOpen(false)}
+        >
+          <div
+            className="bg-white border border-[#DCE0D4] rounded-3xl p-5 max-w-sm w-full text-[#173E30] shadow-2xl relative animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            dir={locale === "ar" ? "rtl" : "ltr"}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4] mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#008069]/10 text-[#008069] flex items-center justify-center font-bold">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#173E30]">
+                    {locale === "ar" ? "إضافة زبون جديد" : "Ajouter un client"}
+                  </h3>
+                  <p className="text-[11px] text-[#5F655D]">
+                    {locale === "ar" ? "تسجيل فوري وظهور مباشر في اللوحة" : "Enregistrement direct en temps réel"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddCustomerOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-[#5F655D] hover:text-[#173E30] transition cursor-pointer"
+                aria-label="إغلاق"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleAddCustomerSubmit} className="space-y-3.5">
+              {/* Name */}
+              <div>
+                <label className="block text-xs font-bold text-[#173E30] mb-1">
+                  {locale === "ar" ? "اسم الزبون *" : "Nom du client *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newCustName}
+                  onChange={(e) => setNewCustName(e.target.value)}
+                  placeholder={locale === "ar" ? "مثال: يوسف العلمي" : "Ex: Youssef El Alami"}
+                  className="w-full bg-[#FAF7F2] border-2 border-[#DCE0D4] focus:border-[#008069] rounded-xl px-3.5 py-2 text-xs text-[#173E30] outline-none transition"
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-xs font-bold text-[#173E30] mb-1">
+                  {locale === "ar" ? "رقم الهاتف / الواتساب *" : "Téléphone / WhatsApp *"}
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={newCustPhone}
+                  onChange={(e) => setNewCustPhone(e.target.value)}
+                  placeholder="06XXXXXXXX"
+                  className="w-full bg-[#FAF7F2] border-2 border-[#DCE0D4] focus:border-[#008069] rounded-xl px-3.5 py-2 text-xs font-mono text-[#173E30] outline-none transition text-start"
+                  dir="ltr"
+                />
+              </div>
+
+              {/* Loyalty Type Selector */}
+              <div>
+                <label className="block text-xs font-bold text-[#173E30] mb-1">
+                  {locale === "ar" ? "نوع برنامج الولاء" : "Type de fidélité"}
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewCustLoyaltyType("STAMPS")}
+                    className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      newCustLoyaltyType === "STAMPS"
+                        ? "bg-[#008069] text-white border-[#008069] shadow-sm"
+                        : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-slate-100"
+                    }`}
+                  >
+                    <Stamp className="w-3.5 h-3.5" />
+                    <span>{locale === "ar" ? "طوابع" : "Tampons"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewCustLoyaltyType("CASHBACK")}
+                    className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      newCustLoyaltyType === "CASHBACK"
+                        ? "bg-amber-600 text-white border-amber-600 shadow-sm"
+                        : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-slate-100"
+                    }`}
+                  >
+                    <Coins className="w-3.5 h-3.5" />
+                    <span>{locale === "ar" ? "كاش باك" : "Cashback"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Optional PIN */}
+              <div>
+                <label className="block text-xs font-bold text-[#173E30] mb-1">
+                  {locale === "ar" ? "رمز PIN (اختياري 4 أرقام)" : "Code PIN (optionnel 4 chiffres)"}
+                </label>
+                <input
+                  type="password"
+                  maxLength={4}
+                  value={newCustPin}
+                  onChange={(e) => setNewCustPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="••••"
+                  className="w-full bg-[#FAF7F2] border-2 border-[#DCE0D4] focus:border-[#008069] rounded-xl px-3.5 py-2 text-center text-sm font-mono tracking-widest text-[#173E30] outline-none transition"
+                />
+              </div>
+
+              {/* Error Message */}
+              {addCustomerError && (
+                <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold text-center">
+                  {addCustomerError}
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isAddingCustomer}
+                className="w-full py-2.5 rounded-xl bg-[#008069] hover:bg-[#00705a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition disabled:opacity-50 cursor-pointer active:scale-98"
+              >
+                {isAddingCustomer ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4" />
+                    <span>{locale === "ar" ? "إضافة وتفعيل البطاقة فوراً" : "Ajouter & Activer"}</span>
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </div>
       )}
