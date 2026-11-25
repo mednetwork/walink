@@ -20,6 +20,7 @@ import {
   Star,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Eye,
   Send,
   Radio,
@@ -319,11 +320,12 @@ export default function MerchantDashboardClient({
   const [preselectedCustomer, setPreselectedCustomer] = useState<CustomerData | null>(null);
   const activeRole: "OWNER" | "STAFF" = "OWNER";
 
-  // Floating Cashier Action Success Toast State & Debounced Timer Ref
+  // Floating Cashier Action Success / Warning Toast State & Debounced Timer Ref
   const [actionSuccessToast, setActionSuccessToast] = useState<{
     message: string;
     customerName: string;
     memberCode: string;
+    variant?: "success" | "warning";
   } | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1787,8 +1789,33 @@ export default function MerchantDashboardClient({
         return;
       }
 
+      if (res.status === 429 && data.error === "COOLDOWN_ACTIVE") {
+        soundEngine.playAlert();
+        if (toastTimeoutRef.current) {
+          clearTimeout(toastTimeoutRef.current);
+          toastTimeoutRef.current = null;
+        }
+        setActionSuccessToast({
+          variant: "warning",
+          customerName: c.name,
+          memberCode: c.memberCode,
+          message:
+            data.message ||
+            (locale === "fr"
+              ? "Cette carte a déjà été tamponnée récemment (règle des 30 min)."
+              : locale === "es"
+              ? "Esta tarjeta ya recibió un sello recientemente (regla de 30 min)."
+              : "⏳ تنبيه: تم عمل ختم لهذا الزبون قبل قليل، يرجى انتظار 30 دقيقة."),
+        });
+        toastTimeoutRef.current = setTimeout(() => {
+          setActionSuccessToast(null);
+          toastTimeoutRef.current = null;
+        }, 6500);
+        return;
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || (locale === "fr" ? "Échec de l'ajout du tampon" : locale === "es" ? "Error al agregar sello" : "فشل إضافة الختم"));
+        throw new Error(data.message || data.error || (locale === "fr" ? "Échec de l'ajout du tampon" : locale === "es" ? "Error al agregar sello" : "فشل إضافة الختم"));
       }
 
       soundEngine.playStampChime();
@@ -2136,32 +2163,66 @@ export default function MerchantDashboardClient({
 
   return (
     <div className={`min-h-screen bg-[#FAF7F2] flex justify-center text-[#173E30] selection:bg-[#008069] selection:text-white font-arabic ${isFrameMode ? "py-8" : ""}`}>
-      {/* Floating Cashier Action Success Toast Banner (Trilingual: AR, FR, ES) */}
+      {/* Floating Cashier Action Success / Cooldown Warning Toast Banner (Trilingual: AR, FR, ES) */}
       {actionSuccessToast && (
         <aside
-          role="status"
-          aria-live="polite"
+          role={actionSuccessToast.variant === "warning" ? "alert" : "status"}
+          aria-live={actionSuccessToast.variant === "warning" ? "assertive" : "polite"}
           className="fixed top-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:left-auto sm:max-w-md z-50 animate-in slide-in-from-top-3 fade-in duration-300"
         >
-          <div className="bg-gradient-to-r from-[#008069] to-[#00A884] text-white p-3.5 rounded-2xl shadow-xl shadow-[#008069]/30 border border-white/20 flex items-center justify-between gap-3">
+          <div
+            className={`${
+              actionSuccessToast.variant === "warning"
+                ? "bg-gradient-to-r from-amber-500 to-amber-600 text-amber-950 shadow-xl shadow-amber-500/30 border border-amber-300"
+                : "bg-gradient-to-r from-[#008069] to-[#00A884] text-white shadow-xl shadow-[#008069]/30 border border-white/20"
+            } p-3.5 rounded-2xl flex items-center justify-between gap-3`}
+          >
             <div className="flex items-center gap-2.5 min-w-0">
-              <span className="p-2 rounded-xl bg-white/20 text-white shrink-0 shadow-sm">
-                <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+              <span
+                className={`p-2 rounded-xl shrink-0 shadow-sm ${
+                  actionSuccessToast.variant === "warning"
+                    ? "bg-amber-950/15 text-amber-950"
+                    : "bg-white/20 text-white"
+                }`}
+              >
+                {actionSuccessToast.variant === "warning" ? (
+                  <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                )}
               </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-bold text-xs">
-                    {locale === "ar"
+                    {actionSuccessToast.variant === "warning"
+                      ? locale === "ar"
+                        ? "تنبيه الحماية الزمنية (30 دقيقة)"
+                        : locale === "fr"
+                        ? "Protection anti-fraude (30 min)"
+                        : "Alerta antifraude (30 min)"
+                      : locale === "ar"
                       ? "تمت العملية بنجاح! ⭐"
                       : locale === "fr"
                       ? "Opération réussie ! ⭐"
                       : "¡Operación completada! ⭐"}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-mono font-bold">
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                      actionSuccessToast.variant === "warning"
+                        ? "bg-amber-950/15 text-amber-950"
+                        : "bg-black/20 text-white"
+                    }`}
+                  >
                     #{actionSuccessToast.memberCode}
                   </span>
                 </div>
-                <p className="text-[11px] text-white/95 truncate font-medium mt-0.5">
+                <p
+                  className={`text-[11px] font-semibold mt-0.5 leading-snug ${
+                    actionSuccessToast.variant === "warning"
+                      ? "text-amber-950"
+                      : "text-white/95 truncate font-medium"
+                  }`}
+                >
                   {actionSuccessToast.message}
                 </p>
               </div>
@@ -2176,7 +2237,11 @@ export default function MerchantDashboardClient({
                 setActionSuccessToast(null);
               }}
               aria-label={locale === "ar" ? "إغلاق الإشعار" : locale === "fr" ? "Fermer l'alerte" : "Cerrar aviso"}
-              className="p-1 rounded-lg hover:bg-white/20 text-white/80 hover:text-white transition shrink-0 cursor-pointer"
+              className={`p-1 rounded-lg transition shrink-0 cursor-pointer ${
+                actionSuccessToast.variant === "warning"
+                  ? "hover:bg-amber-950/15 text-amber-950"
+                  : "hover:bg-white/20 text-white/80 hover:text-white"
+              }`}
             >
               <X className="w-4 h-4" />
             </button>

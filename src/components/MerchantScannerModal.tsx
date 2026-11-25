@@ -191,14 +191,17 @@ export default function MerchantScannerModal({
   const handleModalClose = useCallback(() => {
     stopCamera();
     setSelectedCustomer(null);
+    setCooldownWarning(null);
     setMessage(null);
     setCreditsExhausted(false);
+    scanLockRef.current = false;
     onClose();
   }, [stopCamera, onClose]);
 
   const handleSelectCustomer = useCallback((c: CustomerSummary) => {
     stopCamera();
     setSelectedCustomer(c);
+    setCooldownWarning(null);
     setMessage(null);
     const isCustCashback = c.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
     if (isCustCashback) {
@@ -231,7 +234,7 @@ export default function MerchantScannerModal({
               staffName ||
               (locale === "fr" ? "Gérant" : locale === "es" ? "Gerente" : "المدير"),
             branchName: branchName || undefined,
-            overrideCooldown: override,
+            overrideCooldown: userRole === "OWNER" ? true : override,
           }),
         });
 
@@ -254,9 +257,16 @@ export default function MerchantScannerModal({
         }
 
         if (res.status === 429 && data.error === "COOLDOWN_ACTIVE") {
+          stopCamera();
           setCooldownWarning({
-            minutesLeft: data.minutesLeft || 5,
-            message: data.message || "تم مسح بطاقة هذا العميل مؤخراً",
+            minutesLeft: data.minutesLeft || 30,
+            message:
+              data.message ||
+              (locale === "fr"
+                ? "Cette carte a déjà été tamponnée récemment (règle des 30 min)."
+                : locale === "es"
+                ? "Esta tarjeta ya fue sellada recientemente (regla de 30 min)."
+                : "تم عمل ختم لهذا الزبون مؤخراً، يرجى الانتظار 30 دقيقة."),
             payload,
           });
           soundEngine.playAlert();
@@ -370,7 +380,7 @@ export default function MerchantScannerModal({
         setLoading(false);
       }
     },
-    [slug, locale, staffName, branchName, loyaltyMode, stopCamera, onActionComplete, handleModalClose, stampsRequired, rewardName, calculatedEarned, billAmount, currency]
+    [slug, locale, staffName, branchName, userRole, loyaltyMode, stopCamera, onActionComplete, handleModalClose, stampsRequired, rewardName, calculatedEarned, billAmount, currency]
   );
 
   // Process decoded QR text: Direct Auto-Stamp on STAMPS or Instant Bill Calculator on CASHBACK
@@ -654,7 +664,11 @@ export default function MerchantScannerModal({
   // Reset Customer & Return to Square Scanner View
   const handleResetCustomer = useCallback(() => {
     setSelectedCustomer(null);
+    setCooldownWarning(null);
     setMessage(null);
+    setBillAmount("");
+    setRedeemAmount("");
+    scanLockRef.current = false;
     setActiveTab("camera");
     startCamera();
   }, [startCamera]);
@@ -1022,23 +1036,41 @@ export default function MerchantScannerModal({
 
         {/* Anti-Fraud Cooldown Warning Banner */}
         {cooldownWarning && (
-          <div className={`p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs space-y-2 animate-in fade-in ${selectedCustomer ? "hidden" : ""}`}>
-            <div className="flex items-center gap-2 font-bold text-amber-800">
-              <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-3 animate-in fade-in shadow-sm">
+            <div className="flex items-start gap-2.5 font-bold text-amber-900 leading-relaxed">
+              <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
               <span>{cooldownWarning.message}</span>
             </div>
-            <button
-              type="button"
-              onClick={() => executeStampRequest(cooldownWarning.payload, true)}
-              className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-            >
-              <span>{t.walletEnterprise.staff.overrideCooldown}</span>
-            </button>
+            <div className="flex flex-col gap-2">
+              {userRole === "OWNER" && (
+                <button
+                  type="button"
+                  onClick={() => executeStampRequest(cooldownWarning.payload, true)}
+                  className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <span>{t.walletEnterprise.staff.overrideCooldown}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleResetCustomer}
+                className="w-full py-2.5 px-3 rounded-xl bg-[#FFFDF7] hover:bg-[#FAF7F2] text-[#173E30] border border-[#C8D1BE] font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-[#008069]" />
+                <span>
+                  {locale === "fr"
+                    ? "Scanner un autre client"
+                    : locale === "es"
+                    ? "Escanear otro cliente"
+                    : "🔄 مسح بطاقة عميل آخر"}
+                </span>
+              </button>
+            </div>
           </div>
         )}
 
         {/* Direct Camera Stream View (Active Immediately on Modal Open) */}
-        <div className={`space-y-3 ${selectedCustomer ? "hidden" : ""}`}>
+        <div className={`space-y-3 ${selectedCustomer || cooldownWarning ? "hidden" : ""}`}>
           <div className="relative aspect-square w-full max-w-[340px] mx-auto rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center shadow-inner">
             {/* Native Video Element */}
             <video

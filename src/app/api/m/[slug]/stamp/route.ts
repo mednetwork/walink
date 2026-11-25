@@ -6,6 +6,7 @@ import { sendApplePassUpdate } from "@/lib/apple-wallet";
 import { getLocalizedRewardName } from "@/lib/i18n/rewards";
 import { Locale } from "@/lib/i18n/translations";
 import { getStoreSessionFromCookies } from "@/lib/auth";
+import { isPhysicalCounterVisit } from "@/lib/metrics";
 
 /**
  * Processes deferred referral reward when a referred customer completes their first store visit.
@@ -184,7 +185,6 @@ export async function POST(
       redeemAmount,
       staffName = "المدير",
       branchName,
-      overrideCooldown = false,
       lang: reqLang = "ar",
     } = body;
     const lang: Locale =
@@ -349,42 +349,79 @@ export async function POST(
     const now = new Date();
     const currency = merchant.currency || "DH";
 
-    // Anti-Fraud Cooldown check (for STAMP and CASHBACK_EARN)
+    // Authoritative Cross-Branch 30-Minute Anti-Fraud Cooldown (Enforced strictly for Cashiers; Unlimited for verified OWNER)
+    const isOwnerSession = session?.role === "OWNER";
+    const enforcedCooldownMinutes =
+      merchant.cooldownMinutes && merchant.cooldownMinutes > 0
+        ? merchant.cooldownMinutes
+        : 30;
+
     if (
       (action === "STAMP" || action === "CASHBACK_EARN") &&
-      (merchant.cooldownMinutes || 0) > 0 &&
-      !overrideCooldown
+      !isOwnerSession
     ) {
-      const lastTx = await prisma.transaction.findFirst({
+      const recentPhysicalTxs = await prisma.transaction.findMany({
         where: {
           merchantId: merchant.id,
           customerId: customer.id,
           type: { in: ["STAMP_ADDED", "CASHBACK_EARNED"] },
+          staffName: { not: "النظام" },
+        },
+        select: {
+          id: true,
+          type: true,
+          branchName: true,
+          staffName: true,
+          note: true,
+          createdAt: true,
         },
         orderBy: { createdAt: "desc" },
+        take: 10,
       });
+
+      const lastTx = recentPhysicalTxs.find((tx) => isPhysicalCounterVisit(tx));
 
       if (lastTx) {
         const diffMs = now.getTime() - new Date(lastTx.createdAt).getTime();
-        const cooldownMs = (merchant.cooldownMinutes || 30) * 60 * 1000;
+        const cooldownMs = enforcedCooldownMinutes * 60 * 1000;
         if (diffMs < cooldownMs) {
+          const minsAgo = Math.max(0, Math.floor(diffMs / 60000));
           const minutesLeft = Math.max(1, Math.ceil((cooldownMs - diffMs) / 60000));
-          const cooldownMsg =
-            lang === "fr"
-              ? `⚠️ Protection anti-fraude : Cette carte a été scannée il y a ${Math.floor(
-                  diffMs / 60000
-                )} min. Veuillez patienter (${minutesLeft} min restantes) ou valider avec le code gérant.`
-              : lang === "es"
-              ? `⚠️ Protección antifraude: Esta tarjeta fue escaneada hace ${Math.floor(
-                  diffMs / 60000
-                )} min. Por favor espera (${minutesLeft} min restantes) o confirma como gerente.`
-              : `⚠️ حماية من التلاعب: تم مسح بطاقة هذا العميل قبل ${Math.floor(
-                  diffMs / 60000
-                )} دقيقة! يرجى الانتظار (${minutesLeft} دقيقة متبقية) أو تأكيد العملية بصلاحية المدير.`;
+          const lastBranchLabel = lastTx.branchName?.trim() || null;
+
+          let cooldownMsg = "";
+          if (lang === "fr") {
+            const elapsedText =
+              minsAgo < 1 ? "à l'instant" : `il y a ${minsAgo} min`;
+            const branchText = lastBranchLabel
+              ? ` (succursale : ${lastBranchLabel})`
+              : "";
+            cooldownMsg = `⏳ Alerte : Cette carte a déjà reçu un tampon/cashback ${elapsedText}${branchText}. Règle de protection (${enforcedCooldownMinutes} min) : veuillez patienter encore ${minutesLeft} min.`;
+          } else if (lang === "es") {
+            const elapsedText =
+              minsAgo < 1 ? "hace un momento" : `hace ${minsAgo} min`;
+            const branchText = lastBranchLabel
+              ? ` (sucursal: ${lastBranchLabel})`
+              : "";
+            cooldownMsg = `⏳ Aviso: Esta tarjeta ya recibió un sello/cashback ${elapsedText}${branchText}. Regla de protección (${enforcedCooldownMinutes} min): espere ${minutesLeft} min restantes.`;
+          } else {
+            const elapsedText =
+              minsAgo < 1
+                ? "منذ لحظات (أقل من دقيقة)"
+                : `قبل ${minsAgo} دقيقة`;
+            const branchText = lastBranchLabel
+              ? ` في فرع (${lastBranchLabel})`
+              : "";
+            cooldownMsg = `⏳ تنبيه: تم عمل ختم/عملية لهذا الزبون ${elapsedText}${branchText}. لا يمكن إضافة ختم جديد إلا بعد مرور ${enforcedCooldownMinutes} دقيقة (متبقي ${minutesLeft} دقيقة).`;
+          }
+
           return NextResponse.json(
             {
               error: "COOLDOWN_ACTIVE",
               minutesLeft,
+              minsAgo,
+              cooldownMinutes: enforcedCooldownMinutes,
+              branchName: lastBranchLabel,
               message: cooldownMsg,
             },
             { status: 429 }
