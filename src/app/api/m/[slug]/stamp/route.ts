@@ -45,11 +45,36 @@ async function processReferralActivationReward(
 
     const currency = merchant.currency || "DH";
     const isReferrerCashback = referrer.loyaltyType === "CASHBACK";
-    const refBonusDH = Number(merchant.referralBonus || 10);
     const now = new Date();
 
+    let refBonusDH = 0;
+    if (isReferrerCashback) {
+      // Cross-Program Referral Rule: Find lowest positive cashback earned previously on referrer's card
+      const lowestTx = await prisma.transaction.findFirst({
+        where: {
+          customerId: referrer.id,
+          type: "CASHBACK_EARNED",
+          cashbackDelta: { gt: 0 },
+        },
+        orderBy: { cashbackDelta: "asc" },
+        select: { cashbackDelta: true },
+      });
+
+      if (lowestTx && typeof lowestTx.cashbackDelta === "number" && lowestTx.cashbackDelta > 0) {
+        refBonusDH = Number(lowestTx.cashbackDelta.toFixed(2));
+      } else if (merchant.welcomeCashback && merchant.welcomeCashback > 0) {
+        refBonusDH = Number(merchant.welcomeCashback.toFixed(2));
+      } else if (merchant.referralBonus && merchant.referralBonus > 0) {
+        refBonusDH = Number(merchant.referralBonus.toFixed(2));
+      } else {
+        refBonusDH = 5;
+      }
+    }
+
     const referrerNotifTitle = merchant.name;
-    const referrerNotifBody = `🎉 قام صديقك ${referredCustomer.name} بزيارة المتجر وتفعيل بطاقته! تمت إضافة مكافأة الإحالة إلى بطاقتك.`;
+    const referrerNotifBody = isReferrerCashback
+      ? `🎉 قام صديقك ${referredCustomer.name} بزيارة المتجر وتفعيل بطاقته! تمت إضافة مكافأة الإحالة (+${refBonusDH} ${currency}) إلى رصيد الكاش باك الخاص بك.`
+      : `🎉 قام صديقك ${referredCustomer.name} بزيارة المتجر وتفعيل بطاقته! تمت إضافة خِتم مكافأة الإحالة إلى بطاقتك.`;
 
     let updatedReferrer;
 
@@ -70,7 +95,7 @@ async function processReferralActivationReward(
             type: "CASHBACK_EARNED",
             cashbackDelta: refBonusDH,
             staffName: "النظام",
-            note: `مكافأة زيارة وتفعيل صديقك: ${referredCustomer.name} 🎁`,
+            note: `مكافأة زيارة وتفعيل صديقك: ${referredCustomer.name} 🎁 (+${refBonusDH} ${currency})`,
             createdAt: now,
           },
         }),
@@ -78,7 +103,7 @@ async function processReferralActivationReward(
           data: {
             merchantId: merchant.id,
             customerId: referrer.id,
-            type: "REWARD",
+            type: "CASHBACK",
             title: referrerNotifTitle,
             body: referrerNotifBody,
             createdAt: now,
@@ -366,6 +391,19 @@ export async function POST(
       ? merchant.cashbackRate + (merchant.vipCashbackBonus || 5)
       : merchant.cashbackRate;
 
+    // Action 0: LOOKUP (Retrieve customer details for cashier/scanner without stamping or deducting credits)
+    if (action === "LOOKUP") {
+      return NextResponse.json({
+        success: true,
+        action: "LOOKUP",
+        customer,
+        isVip: isVipCustomer,
+        effectiveCashbackRate,
+        loyaltyMode: merchant.loyaltyMode,
+        remainingCredits: merchant.credits,
+      });
+    }
+
     // Action 1: SWITCH_TYPE (Toggle customer between STAMPS and CASHBACK)
     if (action === "SWITCH_TYPE") {
       const targetType = customer.loyaltyType === "CASHBACK" ? "STAMPS" : "CASHBACK";
@@ -456,7 +494,7 @@ export async function POST(
           data: {
             merchantId: merchant.id,
             customerId: customer.id,
-            type: "STAMP",
+            type: "CASHBACK",
             title: merchant.name,
             body: isFirstActivation
               ? `🎉 أهلاً بك! تم تفعيل بطاقتك وإضافة كاش باك زيارتك الأولى (+${earned} ${currency})! رصيدك المتاح: ${newBalance} ${currency}.`
@@ -582,7 +620,7 @@ export async function POST(
           data: {
             merchantId: merchant.id,
             customerId: customer.id,
-            type: "REWARD",
+            type: "CASHBACK",
             title: merchant.name,
             body: `🎉 تم استخدام ${toRedeem} ${currency} من رصيدك. رصيدك المتبقي: ${remainingBal} ${currency}.`,
             createdAt: now,
@@ -734,7 +772,7 @@ export async function POST(
     // Action 5: ADD STAMP (Default)
     const isFirstActivation = customer.isActivated === false;
     const totalStampsAdded = 1; // Exactly 1 stamp (activates the card and grants their 1st stamp)
-    const nextStamps = customer.stamps + totalStampsAdded;
+    const nextStamps = isFirstActivation ? 1 : customer.stamps + totalStampsAdded;
     const isRewardUnlocked = nextStamps >= merchant.stampsRequired;
     const stampsLeft = Math.max(0, merchant.stampsRequired - nextStamps);
 
@@ -742,7 +780,7 @@ export async function POST(
       prisma.customer.update({
         where: { id: customer.id },
         data: {
-          stamps: { increment: totalStampsAdded },
+          stamps: isFirstActivation ? 1 : { increment: totalStampsAdded },
           totalVisits: { increment: 1 },
           isVip: isVipCustomer,
           isActivated: true,

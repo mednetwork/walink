@@ -1130,6 +1130,9 @@ export default function CustomerPassHubClient({
               if (latestNotif.type === "STAMP") {
                 bannerIcon = "stamp";
                 bannerKind = "stamp_added";
+              } else if (latestNotif.type === "CASHBACK") {
+                bannerIcon = "cashback";
+                bannerKind = "cashback_earned";
               } else if (latestNotif.type === "REWARD") {
                 bannerIcon = "reward";
                 bannerKind = "reward_unlocked";
@@ -1176,7 +1179,8 @@ export default function CustomerPassHubClient({
             data.customer.rewardsRedeemed !== prevCust.rewardsRedeemed ||
             data.customer.loyaltyType !== prevCust.loyaltyType ||
             data.customer.totalVisits !== prevCust.totalVisits ||
-            data.customer.isVip !== prevCust.isVip;
+            data.customer.isVip !== prevCust.isVip ||
+            data.customer.isActivated !== prevCust.isActivated;
 
           if (hasCustomerChanged) {
             customerRef.current = data.customer;

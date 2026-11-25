@@ -132,6 +132,12 @@ export async function GET(
           lang === "fr"
             ? `Plus qu'un seul tampon pour obtenir ${localizedReward} chez ${customer.merchant.name} !`
             : `¡Solo te falta un sello para conseguir ${localizedReward} en ${customer.merchant.name}!`;
+      } else if (n.type === "CASHBACK") {
+        title =
+          lang === "fr"
+            ? "Mise à jour du Cashback ! 💰"
+            : "¡Actualización de Cashback! 💰";
+        body = n.body;
       } else if (n.type === "RADAR") {
         title = customer.merchant.name;
         body =

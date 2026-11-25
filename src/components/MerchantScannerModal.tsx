@@ -107,9 +107,10 @@ export default function MerchantScannerModal({
 
   // Cashback POS Calculator State
   const [posTab, setPosTab] = useState<"earn" | "redeem">("earn");
-  const [billAmount, setBillAmount] = useState<string>("150");
+  const [billAmount, setBillAmount] = useState<string>("");
   const [redeemAmount, setRedeemAmount] = useState<string>("");
   const [redeemBillTotal, setRedeemBillTotal] = useState<string>("");
+  const billInputRef = useRef<HTMLInputElement | null>(null);
 
   // Anti-Fraud Cooldown & Web NFC State
   const [cooldownWarning, setCooldownWarning] = useState<{
@@ -166,12 +167,17 @@ export default function MerchantScannerModal({
     stopCamera();
     setSelectedCustomer(c);
     setMessage(null);
+    const isCustCashback = c.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
+    if (isCustCashback) {
+      setPosTab("earn");
+      setBillAmount("");
+    }
     setRedeemAmount(
       c.cashbackBalance && c.cashbackBalance > 0
         ? String(c.cashbackBalance)
         : ""
     );
-  }, [stopCamera]);
+  }, [stopCamera, loyaltyMode]);
 
   // Unified API Action Executor with Anti-Fraud Cooldown Interception & Staff Attribution
   const executeStampRequest = useCallback(
@@ -231,6 +237,31 @@ export default function MerchantScannerModal({
         if (payload.action === "SWITCH_TYPE") {
           setSelectedCustomer(data.customer);
           setMessage({ text: data.message, type: "success" });
+        } else if (payload.action === "LOOKUP") {
+          // Rule 1: Do NOT auto-close modal on LOOKUP! Keep open in POS Calculator mode
+          const cust = data.customer;
+          const isCustCashback = cust?.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
+          stopCamera();
+          setSelectedCustomer(cust);
+          if (isCustCashback) {
+            setPosTab("earn");
+            setBillAmount("");
+            soundEngine.playRewardChime();
+          } else {
+            soundEngine.playStampChime();
+          }
+          setMessage({
+            text:
+              locale === "ar"
+                ? isCustCashback
+                  ? `✅ تم التعرف على بطاقة ${cust.name}! أدخل ثمن الفاتورة لحساب الكاش باك 💰`
+                  : `✅ تم التعرف على بطاقة ${cust.name} (#${cust.memberCode})`
+                : locale === "fr"
+                ? `✅ Carte de ${cust.name} (#${cust.memberCode}) identifiée`
+                : `✅ Tarjeta de ${cust.name} (#${cust.memberCode}) identificada`,
+            type: "success",
+          });
+          return;
         } else {
           // Action succeeded (STAMP, REDEEM, CASHBACK_EARN, CASHBACK_REDEEM)
           // Close modal immediately and notify parent dashboard
@@ -256,7 +287,7 @@ export default function MerchantScannerModal({
         setLoading(false);
       }
     },
-    [slug, locale, staffName, branchName, onActionComplete, handleModalClose]
+    [slug, locale, staffName, branchName, loyaltyMode, stopCamera, onActionComplete, handleModalClose]
   );
 
   // Process decoded QR text
@@ -296,21 +327,24 @@ export default function MerchantScannerModal({
 
       if (matched) {
         handleSelectCustomer(matched);
+        const isCustCashback = matched.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
         setMessage({
           text:
             locale === "ar"
-              ? `✅ تم التعرف على بطاقة ${matched.name} (#${matched.memberCode})`
+              ? isCustCashback
+                ? `✅ تم مسح بطاقة ${matched.name}! أدخل ثمن الفاتورة لحساب الكاش باك 💰`
+                : `✅ تم التعرف على بطاقة ${matched.name} (#${matched.memberCode})`
               : locale === "fr"
               ? `✅ Carte de ${matched.name} (#${matched.memberCode}) identifiée`
               : `✅ Tarjeta de ${matched.name} (#${matched.memberCode}) identificada`,
           type: "success",
         });
       } else {
-        // Not in local cache, resolve via server stamp API
-        executeStampRequest({ identifier: raw, action: "STAMP" });
+        // Not in local cache, safely resolve via server LOOKUP without stamping or deducting credits!
+        executeStampRequest({ identifier: raw, action: "LOOKUP" });
       }
     },
-    [customers, handleSelectCustomer, locale, executeStampRequest]
+    [customers, handleSelectCustomer, locale, loyaltyMode, executeStampRequest]
   );
 
   // Real-Time Frame Scanner (Engine A: jsQR + Engine B: BarcodeDetector Boost)
@@ -555,6 +589,11 @@ export default function MerchantScannerModal({
       stopCamera();
       setSelectedCustomer(initialCustomer);
       setMessage(null);
+      const isCustCashback = initialCustomer.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
+      if (isCustCashback) {
+        setPosTab("earn");
+        setBillAmount("");
+      }
       setRedeemAmount(
         initialCustomer.cashbackBalance && initialCustomer.cashbackBalance > 0
           ? String(initialCustomer.cashbackBalance)
@@ -564,14 +603,29 @@ export default function MerchantScannerModal({
       setSelectedCustomer(null);
       setMessage(null);
     }
-  }, [isOpen, initialCustomer, stopCamera]);
+  }, [isOpen, initialCustomer, stopCamera, loyaltyMode]);
+
+  // Auto-focus bill amount input when Cashback POS Calculator is active
+  useEffect(() => {
+    if (
+      isOpen &&
+      selectedCustomer &&
+      (selectedCustomer.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK") &&
+      posTab === "earn"
+    ) {
+      const timer = setTimeout(() => {
+        billInputRef.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, selectedCustomer, loyaltyMode, posTab]);
 
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     await executeStampRequest({
       identifier: searchQuery.trim(),
-      action: "STAMP",
+      action: "LOOKUP",
     });
   };
 
@@ -1292,10 +1346,12 @@ export default function MerchantScannerModal({
                         {t.merchant.billAmountLabel.replace("{currency}", currency)}
                       </label>
                       <input
+                        ref={billInputRef}
                         type="number"
                         inputMode="decimal"
                         min="1"
                         step="any"
+                        placeholder="0.00"
                         value={billAmount}
                         onChange={(e) => setBillAmount(e.target.value)}
                         className="w-full px-3 py-2 rounded-xl bg-white border border-[#D1D7DB] text-[#111B21] font-mono text-sm focus:outline-none focus:border-[#008069] shadow-sm"
