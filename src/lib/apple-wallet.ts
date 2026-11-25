@@ -700,8 +700,8 @@ export async function generateApplePass(
 
   pass.backFields.push({
     key: "support",
-    label: "Walink",
-    value: "walink.ma - البطاقة الرقمية الذكية",
+    label: merchant.name,
+    value: `${merchant.name} - البطاقة الرقمية الذكية`,
   });
 
   // Geofencing Radar Locations

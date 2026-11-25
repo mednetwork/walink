@@ -1,8 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Store, AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import prisma from "@/lib/prisma";
 import JoinFormClient from "@/components/JoinFormClient";
 
@@ -68,15 +66,6 @@ export default async function CustomerJoinPage({ params }: JoinPageProps) {
           <p className="text-xs text-[#5F655D] leading-relaxed">
             عذراً، هذا المحل التجاري غير مفعل أو أن الرابط غير صحيح.
           </p>
-          <div className="pt-2">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#008069] hover:bg-[#00705c] text-white font-semibold text-xs transition shadow-sm"
-            >
-              <ArrowRight className="w-4 h-4" />
-              <span>العودة للرئيسية</span>
-            </Link>
-          </div>
         </div>
       </div>
     );

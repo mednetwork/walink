@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
 import {
   Sparkles,
   Smartphone,
@@ -16,7 +15,6 @@ import {
   Check,
   CheckCircle2,
   Radio,
-  ArrowRight,
   Share2,
   Download,
   Code,
@@ -1831,11 +1829,11 @@ export default function CustomerPassHubClient({
                 locale === "ar"
                   ? `🔐 رابط بطاقة الولاء الخاصة بي في ${merchant.name}:\n${typeof window !== "undefined"
                     ? window.location.href
-                    : `https://walink.ma/pass/${customer.passSerial}`
+                    : `https://wclient.walink.ma/pass/${customer.passSerial}`
                   }\n\n💡 رمز الاسترجاع (PIN): ${currentSecurityPin}`
                   : `🔐 Lien de mon pass fidélité chez ${merchant.name} :\n${typeof window !== "undefined"
                     ? window.location.href
-                    : `https://walink.ma/pass/${customer.passSerial}`
+                    : `https://wclient.walink.ma/pass/${customer.passSerial}`
                   }\n\n💡 Code PIN de récupération : ${currentSecurityPin}`
               )}`}
               target="_blank"
@@ -1970,16 +1968,9 @@ export default function CustomerPassHubClient({
         </div>
       </div>
 
-      {/* Footer Return Link */}
-      <footer className="py-6 text-center text-xs text-[#5F655D] space-y-2">
-        <Link
-          href="/"
-          className="hover:text-[#008069] font-medium transition inline-flex items-center gap-1.5"
-        >
-          <span>منصة والينك (walink.ma)</span>
-          <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-        </Link>
-        <p className="text-[10px] text-[#5F655D]">
+      {/* Footer Merchant Identity */}
+      <footer className="py-6 text-center text-xs text-[#5F655D]">
+        <p className="text-[11px] font-medium text-[#5F655D]">
           البطاقة الرقمية الرسمية لـ {merchant.name}
         </p>
       </footer>

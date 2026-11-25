@@ -555,9 +555,9 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
       <div className="pt-6 pb-2 text-center space-y-2 text-[11px] text-[#5F655D] font-medium">
         <div className="flex items-center justify-center gap-2">
           <Lock className="w-3.5 h-3.5 text-[#008069]" />
-          <span>Apple Wallet & Google Wallet • مشفّرة 100%</span>
+          <span>Apple Wallet &amp; Google Wallet • مشفّرة 100%</span>
         </div>
-        <p>© {new Date().getFullYear()} Walink (walink.ma)</p>
+        <p>© {new Date().getFullYear()} {merchant.name}</p>
       </div>
 
       {/* Security PIN Verification Modal for Existing Customers */}

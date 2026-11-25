@@ -1,8 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { AlertCircle, ArrowRight } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import prisma from "@/lib/prisma";
 import CustomerPassHubClient from "@/components/CustomerPassHubClient";
 
@@ -62,24 +60,15 @@ export default async function CustomerPassPage({ params }: PassPageProps) {
 
   if (!customer) {
     return (
-      <div className="min-h-screen bg-[#0B0F17] text-white flex items-center justify-center p-4">
-        <div className="w-full max-w-md glass-panel p-8 rounded-3xl text-center space-y-4 border border-white/10">
-          <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 mx-auto flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAF7F2] text-[#173E30] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#FFFDF7] p-8 rounded-3xl text-center space-y-4 border border-[#DCE0D4] shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 mx-auto flex items-center justify-center">
             <AlertCircle className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-bold text-white">بطاقة الوفاء غير موجودة</h1>
-          <p className="text-xs text-white/60 leading-relaxed">
+          <h1 className="text-xl font-bold text-[#173E30]">بطاقة الوفاء غير موجودة</h1>
+          <p className="text-xs text-[#5F655D] leading-relaxed">
             تعذر العثور على بطاقة الوفاء المطلوبة. تأكد من صحة الرابط أو قم بالتسجيل من جديد.
           </p>
-          <div className="pt-2">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition"
-            >
-              <ArrowRight className="w-4 h-4" />
-              <span>العودة للرئيسية</span>
-            </Link>
-          </div>
         </div>
       </div>
     );

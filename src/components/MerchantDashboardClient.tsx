@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import Link from "next/link";
-import { getAdminUrl, getPassUrl } from "@/lib/urls";
+import { getJoinUrl, getPassUrl } from "@/lib/urls";
 import {
   LayoutDashboard,
   Users,
@@ -419,8 +418,8 @@ export default function MerchantDashboardClient({
                 locale === "fr"
                   ? `✨ Nouveau client inscrit : ${newCustomer.name} (#${newCustomer.memberCode})`
                   : locale === "es"
-                  ? `✨ Nuevo cliente registrado: ${newCustomer.name} (#${newCustomer.memberCode})`
-                  : `✨ انضم زبون جديد الآن: ${newCustomer.name} (#${newCustomer.memberCode})`,
+                    ? `✨ Nuevo cliente registrado: ${newCustomer.name} (#${newCustomer.memberCode})`
+                    : `✨ انضم زبون جديد الآن: ${newCustomer.name} (#${newCustomer.memberCode})`,
               customerName: newCustomer.name,
               memberCode: newCustomer.memberCode,
             });
@@ -479,8 +478,8 @@ export default function MerchantDashboardClient({
         locale === "fr"
           ? "Veuillez entrer le nom du client"
           : locale === "es"
-          ? "Por favor introduce el nombre del cliente"
-          : "يرجى كتابة اسم الزبون"
+            ? "Por favor introduce el nombre del cliente"
+            : "يرجى كتابة اسم الزبون"
       );
       return;
     }
@@ -489,8 +488,8 @@ export default function MerchantDashboardClient({
         locale === "fr"
           ? "Veuillez entrer le numéro de téléphone"
           : locale === "es"
-          ? "Por favor introduce el número de teléfono"
-          : "يرجى كتابة رقم الهاتف"
+            ? "Por favor introduce el número de teléfono"
+            : "يرجى كتابة رقم الهاتف"
       );
       return;
     }
@@ -543,8 +542,8 @@ export default function MerchantDashboardClient({
           locale === "fr"
             ? `Client ajouté avec succès : ${createdCustomer.name}`
             : locale === "es"
-            ? `Cliente añadido con éxito: ${createdCustomer.name}`
-            : `🎉 تمت إضافة الزبون بنجاح: ${createdCustomer.name}`,
+              ? `Cliente añadido con éxito: ${createdCustomer.name}`
+              : `🎉 تمت إضافة الزبون بنجاح: ${createdCustomer.name}`,
         customerName: createdCustomer.name,
         memberCode: createdCustomer.memberCode,
       });
@@ -621,8 +620,8 @@ export default function MerchantDashboardClient({
           locale === "ar"
             ? "رمز PIN يجب أن يتكون من 4 أرقام حصراً (مثال: 1234)"
             : locale === "fr"
-            ? "Le PIN doit être composé de 4 chiffres (ex: 1234)"
-            : "El PIN debe tener 4 dígitos (ej: 1234)",
+              ? "Le PIN doit être composé de 4 chiffres (ex: 1234)"
+              : "El PIN debe tener 4 dígitos (ej: 1234)",
       }));
       return;
     }
@@ -645,11 +644,11 @@ export default function MerchantDashboardClient({
         prev.map((c) =>
           c.id === pinResetModal.customer?.id
             ? {
-                ...c,
-                securityPin: data.customer.securityPin,
-                failedPinAttempts: 0,
-                pinLockedUntil: null,
-              }
+              ...c,
+              securityPin: data.customer.securityPin,
+              failedPinAttempts: 0,
+              pinLockedUntil: null,
+            }
             : c
         )
       );
@@ -838,8 +837,8 @@ export default function MerchantDashboardClient({
         locale === "fr"
           ? `Promo Weekend : -20% ce samedi et dimanche chez ${merchant.name}`
           : locale === "es"
-          ? `Promo Fin de Semana: -20% este sábado y domingo en ${merchant.name}`
-          : `عرض الويكاند: -20% هاد السبت والحد ف ${merchant.name}`,
+            ? `Promo Fin de Semana: -20% este sábado y domingo en ${merchant.name}`
+            : `عرض الويكاند: -20% هاد السبت والحد ف ${merchant.name}`,
     },
     {
       id: "new",
@@ -848,8 +847,8 @@ export default function MerchantDashboardClient({
         locale === "fr"
           ? `Nouveau au menu chez ${merchant.name}. Venez le tester en avant-première !`
           : locale === "es"
-          ? `¡Novedad en la carta de ${merchant.name}! Pruébalo antes que nadie.`
-          : `جديد فالمونيو ف ${merchant.name}. أجي ذوقو قبل الناس`,
+            ? `¡Novedad en la carta de ${merchant.name}! Pruébalo antes que nadie.`
+            : `جديد فالمونيو ف ${merchant.name}. أجي ذوقو قبل الناس`,
     },
     {
       id: "double",
@@ -858,8 +857,8 @@ export default function MerchantDashboardClient({
         locale === "fr"
           ? `Aujourd'hui, double tampon chez ${merchant.name} jusqu'à 18h !`
           : locale === "es"
-          ? `¡Hoy doble sello en ${merchant.name} hasta las 18h!`
-          : `اليوم الطابع دوبل ف ${merchant.name} حتى لـ 6 دالعشية`,
+            ? `¡Hoy doble sello en ${merchant.name} hasta las 18h!`
+            : `اليوم الطابع دوبل ف ${merchant.name} حتى لـ 6 دالعشية`,
     },
     {
       id: "miss",
@@ -868,8 +867,8 @@ export default function MerchantDashboardClient({
         locale === "fr"
           ? `Vous nous manquez ! Passez cette semaine chez ${merchant.name} : un tampon offert.`
           : locale === "es"
-          ? `¡Te echamos de menos! Pásate esta semana por ${merchant.name} y llévate un sello de regalo.`
-          : `توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية`,
+            ? `¡Te echamos de menos! Pásate esta semana por ${merchant.name} y llévate un sello de regalo.`
+            : `توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية`,
     },
   ];
 
@@ -1028,8 +1027,8 @@ export default function MerchantDashboardClient({
           locale === "fr"
             ? "Le code PIN de la succursale doit comporter exactement 4 chiffres (ex: 2222)."
             : locale === "es"
-            ? "El código PIN de la sucursal debe contener exactamente 4 dígitos (ej: 2222)."
-            : "رمز PIN للفرع يجب أن يتكون من 4 أرقام حصراً (مثال: 2222)."
+              ? "El código PIN de la sucursal debe contener exactamente 4 dígitos (ej: 2222)."
+              : "رمز PIN للفرع يجب أن يتكون من 4 أرقام حصراً (مثال: 2222)."
         );
         return;
       }
@@ -1039,8 +1038,8 @@ export default function MerchantDashboardClient({
           locale === "fr"
             ? `Ce code PIN est déjà utilisé pour la succursale (${duplicatePin.name}). Chaque succursale doit avoir un PIN unique.`
             : locale === "es"
-            ? `Este código PIN ya está en uso en la sucursal (${duplicatePin.name}). Cada sucursal debe tener un PIN único.`
-            : `رمز PIN هذا مستعمل بالفعل في فرع (${duplicatePin.name}). يرجى اختيار رمز مختلف لكل فرع.`
+              ? `Este código PIN ya está en uso en la sucursal (${duplicatePin.name}). Cada sucursal debe tener un PIN único.`
+              : `رمز PIN هذا مستعمل بالفعل في فرع (${duplicatePin.name}). يرجى اختيار رمز مختلف لكل فرع.`
         );
         return;
       }
@@ -1232,8 +1231,8 @@ export default function MerchantDashboardClient({
           locale === "fr"
             ? "Coordonnées extraites du lien Google Maps !"
             : locale === "es"
-            ? "¡Coordenadas extraídas del enlace de Google Maps!"
-            : "تم استخراج الإحداثيات تلقائياً من رابط خرائط Google بنجاح 🎯",
+              ? "¡Coordenadas extraídas del enlace de Google Maps!"
+              : "تم استخراج الإحداثيات تلقائياً من رابط خرائط Google بنجاح 🎯",
       });
     }
   };
@@ -1246,8 +1245,8 @@ export default function MerchantDashboardClient({
           locale === "fr"
             ? "La géolocalisation n'est pas supportée par votre navigateur"
             : locale === "es"
-            ? "Geolocalización no soportada por su navegador"
-            : "خاصية تحديد الموقع غير مدعومة في متصفحك",
+              ? "Geolocalización no soportada por su navegador"
+              : "خاصية تحديد الموقع غير مدعومة في متصفحك",
       });
       return;
     }
@@ -1266,8 +1265,8 @@ export default function MerchantDashboardClient({
             locale === "fr"
               ? `Position GPS détectée avec succès (±${Math.round(pos.coords.accuracy)}m)`
               : locale === "es"
-              ? `Ubicación GPS detectada con éxito (±${Math.round(pos.coords.accuracy)}m)`
-              : `تم التقاط إحداثيات موقعك الجغرافي بنجاح (دقة ±${Math.round(pos.coords.accuracy)} متر) 📍`,
+                ? `Ubicación GPS detectada con éxito (±${Math.round(pos.coords.accuracy)}m)`
+                : `تم التقاط إحداثيات موقعك الجغرافي بنجاح (دقة ±${Math.round(pos.coords.accuracy)} متر) 📍`,
         });
       },
       (err) => {
@@ -1278,8 +1277,8 @@ export default function MerchantDashboardClient({
             locale === "fr"
               ? "Impossible d'accéder au GPS. Veuillez autoriser la localisation."
               : locale === "es"
-              ? "Acceso GPS denegado. Permita la localización."
-              : "تعذر الوصول للموقع. يرجى تفعيل إذن الموقع الجغرافي بالمتصفح.",
+                ? "Acceso GPS denegado. Permita la localización."
+                : "تعذر الوصول للموقع. يرجى تفعيل إذن الموقع الجغرافي بالمتصفح.",
         });
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -1332,8 +1331,8 @@ export default function MerchantDashboardClient({
           locale === "fr"
             ? "Erreur lors de l'enregistrement"
             : locale === "es"
-            ? "Error al guardar"
-            : "تعذر حفظ الإعدادات، يرجى المحاولة ثانية",
+              ? "Error al guardar"
+              : "تعذر حفظ الإعدادات، يرجى المحاولة ثانية",
       });
     } finally {
       setSavingSettings(false);
@@ -1572,8 +1571,8 @@ export default function MerchantDashboardClient({
         locale === "fr"
           ? "Erreur lors du chargement des données"
           : locale === "es"
-          ? "Error al cargar los datos"
-          : "تعذر تحميل التحليلات الشهرية"
+            ? "Error al cargar los datos"
+            : "تعذر تحميل التحليلات الشهرية"
       );
     } finally {
       setIsLoadingAnalytics(false);
@@ -1671,15 +1670,15 @@ export default function MerchantDashboardClient({
       (authRole === "BRANCH_STAFF" && liveAuthBranch
         ? liveAuthBranch.name
         : isMultiBranch
-        ? activeBranchName || null
-        : null);
+          ? activeBranchName || null
+          : null);
     const txType =
       createdTransaction?.type ??
       (successData?.type === "CASHBACK"
         ? "CASHBACK_EARNED"
         : successData?.type === "REDEEM"
-        ? "REWARD_REDEEMED"
-        : "STAMP_ADDED");
+          ? "REWARD_REDEEMED"
+          : "STAMP_ADDED");
     const isVisitTx = txType === "STAMP_ADDED" || txType === "CASHBACK_EARNED";
     const isRewardTx = txType === "REWARD_REDEEMED" || txType === "CASHBACK_REDEEMED";
 
@@ -1804,8 +1803,8 @@ export default function MerchantDashboardClient({
             (locale === "fr"
               ? "Cette carte a déjà été tamponnée récemment (règle des 30 min)."
               : locale === "es"
-              ? "Esta tarjeta ya recibió un sello recientemente (regla de 30 min)."
-              : "⏳ تنبيه: تم عمل ختم لهذا الزبون قبل قليل، يرجى انتظار 30 دقيقة."),
+                ? "Esta tarjeta ya recibió un sello recientemente (regla de 30 min)."
+                : "⏳ تنبيه: تم عمل ختم لهذا الزبون قبل قليل، يرجى انتظار 30 دقيقة."),
         });
         toastTimeoutRef.current = setTimeout(() => {
           setActionSuccessToast(null);
@@ -2072,11 +2071,11 @@ export default function MerchantDashboardClient({
                 ? locale === "fr"
                   ? "Entrez le PIN propriétaire ou le PIN de votre succursale"
                   : locale === "es"
-                  ? "Introduce el PIN de gerente o de tu sucursal"
-                  : "أدخل رمز المدير أو رمز الكاشير الخاص بالفرع"
+                    ? "Introduce el PIN de gerente o de tu sucursal"
+                    : "أدخل رمز المدير أو رمز الكاشير الخاص بالفرع"
                 : locale === "fr"
-                ? "Tableau de bord commerçant • Entrez votre code PIN"
-                : "لوحة تشغيل التاجر • أدخل الرمز السري (PIN)"}
+                  ? "Tableau de bord commerçant • Entrez votre code PIN"
+                  : "لوحة تشغيل التاجر • أدخل الرمز السري (PIN)"}
             </p>
           </div>
 
@@ -2117,8 +2116,8 @@ export default function MerchantDashboardClient({
               {locale === "fr"
                 ? "Code PIN de 4 à 6 chiffres"
                 : locale === "es"
-                ? "Código PIN de 4 a 6 dígitos"
-                : "رمز سري من 4 إلى 6 أرقام"}
+                  ? "Código PIN de 4 a 6 dígitos"
+                  : "رمز سري من 4 إلى 6 أرقام"}
             </span>
 
             {pinError && (
@@ -2143,19 +2142,13 @@ export default function MerchantDashboardClient({
                     ? "Vérification..."
                     : "جاري التحقق..."
                   : locale === "fr"
-                  ? "Se connecter"
-                  : locale === "es"
-                  ? "Iniciar sesión"
-                  : "تسجيل الدخول"}
+                    ? "Se connecter"
+                    : locale === "es"
+                      ? "Iniciar sesión"
+                      : "تسجيل الدخول"}
               </span>
             </button>
           </form>
-
-          <div className="pt-2 text-center">
-            <a href={getAdminUrl()} className="text-[11px] text-[#5F655D] hover:text-[#008069] font-medium transition">
-              الرجوع للوحة السوبر أدمن
-            </a>
-          </div>
         </div>
       </div>
     );
@@ -2171,19 +2164,17 @@ export default function MerchantDashboardClient({
           className="fixed top-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:left-auto sm:max-w-md z-50 animate-in slide-in-from-top-3 fade-in duration-300"
         >
           <div
-            className={`${
-              actionSuccessToast.variant === "warning"
-                ? "bg-gradient-to-r from-amber-500 to-amber-600 text-amber-950 shadow-xl shadow-amber-500/30 border border-amber-300"
-                : "bg-gradient-to-r from-[#008069] to-[#00A884] text-white shadow-xl shadow-[#008069]/30 border border-white/20"
-            } p-3.5 rounded-2xl flex items-center justify-between gap-3`}
+            className={`${actionSuccessToast.variant === "warning"
+              ? "bg-gradient-to-r from-amber-500 to-amber-600 text-amber-950 shadow-xl shadow-amber-500/30 border border-amber-300"
+              : "bg-gradient-to-r from-[#008069] to-[#00A884] text-white shadow-xl shadow-[#008069]/30 border border-white/20"
+              } p-3.5 rounded-2xl flex items-center justify-between gap-3`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <span
-                className={`p-2 rounded-xl shrink-0 shadow-sm ${
-                  actionSuccessToast.variant === "warning"
-                    ? "bg-amber-950/15 text-amber-950"
-                    : "bg-white/20 text-white"
-                }`}
+                className={`p-2 rounded-xl shrink-0 shadow-sm ${actionSuccessToast.variant === "warning"
+                  ? "bg-amber-950/15 text-amber-950"
+                  : "bg-white/20 text-white"
+                  }`}
               >
                 {actionSuccessToast.variant === "warning" ? (
                   <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
@@ -2198,30 +2189,28 @@ export default function MerchantDashboardClient({
                       ? locale === "ar"
                         ? "تنبيه الحماية الزمنية (30 دقيقة)"
                         : locale === "fr"
-                        ? "Protection anti-fraude (30 min)"
-                        : "Alerta antifraude (30 min)"
+                          ? "Protection anti-fraude (30 min)"
+                          : "Alerta antifraude (30 min)"
                       : locale === "ar"
-                      ? "تمت العملية بنجاح! ⭐"
-                      : locale === "fr"
-                      ? "Opération réussie ! ⭐"
-                      : "¡Operación completada! ⭐"}
+                        ? "تمت العملية بنجاح! ⭐"
+                        : locale === "fr"
+                          ? "Opération réussie ! ⭐"
+                          : "¡Operación completada! ⭐"}
                   </span>
                   <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
-                      actionSuccessToast.variant === "warning"
-                        ? "bg-amber-950/15 text-amber-950"
-                        : "bg-black/20 text-white"
-                    }`}
+                    className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${actionSuccessToast.variant === "warning"
+                      ? "bg-amber-950/15 text-amber-950"
+                      : "bg-black/20 text-white"
+                      }`}
                   >
                     #{actionSuccessToast.memberCode}
                   </span>
                 </div>
                 <p
-                  className={`text-[11px] font-semibold mt-0.5 leading-snug ${
-                    actionSuccessToast.variant === "warning"
-                      ? "text-amber-950"
-                      : "text-white/95 truncate font-medium"
-                  }`}
+                  className={`text-[11px] font-semibold mt-0.5 leading-snug ${actionSuccessToast.variant === "warning"
+                    ? "text-amber-950"
+                    : "text-white/95 truncate font-medium"
+                    }`}
                 >
                   {actionSuccessToast.message}
                 </p>
@@ -2237,11 +2226,10 @@ export default function MerchantDashboardClient({
                 setActionSuccessToast(null);
               }}
               aria-label={locale === "ar" ? "إغلاق الإشعار" : locale === "fr" ? "Fermer l'alerte" : "Cerrar aviso"}
-              className={`p-1 rounded-lg transition shrink-0 cursor-pointer ${
-                actionSuccessToast.variant === "warning"
-                  ? "hover:bg-amber-950/15 text-amber-950"
-                  : "hover:bg-white/20 text-white/80 hover:text-white"
-              }`}
+              className={`p-1 rounded-lg transition shrink-0 cursor-pointer ${actionSuccessToast.variant === "warning"
+                ? "hover:bg-amber-950/15 text-amber-950"
+                : "hover:bg-white/20 text-white/80 hover:text-white"
+                }`}
             >
               <X className="w-4 h-4" />
             </button>
@@ -2314,25 +2302,25 @@ export default function MerchantDashboardClient({
                   ? locale === "ar"
                     ? "تمت إضافة الكاش باك بنجاح! 💰"
                     : locale === "fr"
-                    ? "Cashback ajouté avec succès ! 💰"
-                    : "¡Cashback añadido con éxito! 💰"
+                      ? "Cashback ajouté avec succès ! 💰"
+                      : "¡Cashback añadido con éxito! 💰"
                   : successModalData.type === "REDEEM"
-                  ? locale === "ar"
-                    ? "تم تسليم المكافأة بنجاح! 🎁"
-                    : locale === "fr"
-                    ? "Récompense remise avec succès ! 🎁"
-                    : "¡Recompensa entregada con éxito! 🎁"
-                  : successModalData.isRewardEarned
-                  ? locale === "ar"
-                    ? "🎉 مبروك! الزبون أكمل البطاقة!"
-                    : locale === "fr"
-                    ? "🎉 Félicitations ! Carte complétée !"
-                    : "🎉 ¡Felicidades! ¡Tarjeta completada!"
-                  : locale === "ar"
-                  ? "تمت إضافة الختم بنجاح! ⭐"
-                  : locale === "fr"
-                  ? "Tampon ajouté avec succès ! ⭐"
-                  : "¡Sello añadido con éxito! ⭐"}
+                    ? locale === "ar"
+                      ? "تم تسليم المكافأة بنجاح! 🎁"
+                      : locale === "fr"
+                        ? "Récompense remise avec succès ! 🎁"
+                        : "¡Recompensa entregada con éxito! 🎁"
+                    : successModalData.isRewardEarned
+                      ? locale === "ar"
+                        ? "🎉 مبروك! الزبون أكمل البطاقة!"
+                        : locale === "fr"
+                          ? "🎉 Félicitations ! Carte complétée !"
+                          : "🎉 ¡Felicidades! ¡Tarjeta completada!"
+                      : locale === "ar"
+                        ? "تمت إضافة الختم بنجاح! ⭐"
+                        : locale === "fr"
+                          ? "Tampon ajouté avec succès ! ⭐"
+                          : "¡Sello añadido con éxito! ⭐"}
               </h3>
 
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF7F2] border border-[#DCE0D4] text-xs">
@@ -2354,8 +2342,8 @@ export default function MerchantDashboardClient({
                   {locale === "ar"
                     ? "أُضيف إلى رصيد المحفظة"
                     : locale === "fr"
-                    ? "Ajouté au solde du portefeuille"
-                    : "Añadido al saldo del monedero"}
+                      ? "Ajouté au solde du portefeuille"
+                      : "Añadido al saldo del monedero"}
                   {successModalData.billAmount ? (
                     <span className="block text-[10px] text-amber-700/80 mt-0.5">
                       {locale === "ar"
@@ -2391,11 +2379,10 @@ export default function MerchantDashboardClient({
                     return (
                       <div
                         key={idx}
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
-                          isFilled
-                            ? "bg-[#008069] text-white shadow-sm scale-105"
-                            : "bg-white border border-[#C8D1BE] text-[#5F655D]"
-                        }`}
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${isFilled
+                          ? "bg-[#008069] text-white shadow-sm scale-105"
+                          : "bg-white border border-[#C8D1BE] text-[#5F655D]"
+                          }`}
                       >
                         {isFilled ? "✓" : idx + 1}
                       </div>
@@ -2427,8 +2414,8 @@ export default function MerchantDashboardClient({
                 {locale === "ar"
                   ? "تختفي هذه النافذة تلقائياً خلال 3 ثوانٍ (أو انقر للمتابعة)"
                   : locale === "fr"
-                  ? "Fermeture automatique dans 3s (ou cliquez)"
-                  : "Cierre automático en 3s (o haga clic)"}
+                    ? "Fermeture automatique dans 3s (ou cliquez)"
+                    : "Cierre automático en 3s (o haga clic)"}
               </p>
             </div>
           </div>
@@ -2483,18 +2470,17 @@ export default function MerchantDashboardClient({
             <button
               type="button"
               onClick={() => setIsCreditsOpen(true)}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-mono text-xs font-bold transition shadow-sm ${
-                merchant.credits <= 20
-                  ? "bg-amber-500/25 border border-amber-400 text-amber-200 ring-2 ring-amber-400/50 animate-pulse"
-                  : "bg-white/15 hover:bg-white/25 border border-white/20 text-amber-300"
-              }`}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-mono text-xs font-bold transition shadow-sm ${merchant.credits <= 20
+                ? "bg-amber-500/25 border border-amber-400 text-amber-200 ring-2 ring-amber-400/50 animate-pulse"
+                : "bg-white/15 hover:bg-white/25 border border-white/20 text-amber-300"
+                }`}
               title={
                 merchant.credits <= 20
                   ? locale === "ar"
                     ? "رصيد النقاط منخفض! اضغط للشحن"
                     : locale === "fr"
-                    ? "Crédits faibles ! Cliquez pour recharger"
-                    : "¡Créditos bajos! Haga clic para recargar"
+                      ? "Crédits faibles ! Cliquez pour recharger"
+                      : "¡Créditos bajos! Haga clic para recargar"
                   : undefined
               }
             >
@@ -2579,11 +2565,10 @@ export default function MerchantDashboardClient({
                     <button
                       type="button"
                       onClick={() => setSelectedBranchId("ALL")}
-                      className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-bold flex items-center gap-1.5 ${
-                        selectedBranchId === "ALL"
-                          ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                          : "bg-[#FAF7F2] border-[#C8D1BE] text-[#5F655D] hover:bg-[#DCE0D4]"
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-bold flex items-center gap-1.5 ${selectedBranchId === "ALL"
+                        ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                        : "bg-[#FAF7F2] border-[#C8D1BE] text-[#5F655D] hover:bg-[#DCE0D4]"
+                        }`}
                     >
                       <Globe className="w-3.5 h-3.5" />
                       <span>{t.demo.allBranches}</span>
@@ -2594,11 +2579,10 @@ export default function MerchantDashboardClient({
                         key={b.id}
                         type="button"
                         onClick={() => setSelectedBranchId(b.id)}
-                        className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-semibold flex items-center gap-1.5 ${
-                          selectedBranchId === b.id
-                            ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                            : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
-                        }`}
+                        className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-semibold flex items-center gap-1.5 ${selectedBranchId === b.id
+                          ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                          : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                          }`}
                       >
                         <span>📍 {b.name}</span>
                         {b.isMain && (
@@ -2747,14 +2731,14 @@ export default function MerchantDashboardClient({
                     displayedMetrics.weeklyVisits.length > 0
                       ? displayedMetrics.weeklyVisits
                       : [
-                          { dateKey: "1", label: "إثن", visits: 0, isToday: false },
-                          { dateKey: "2", label: "ثلا", visits: 0, isToday: false },
-                          { dateKey: "3", label: "أرب", visits: 0, isToday: false },
-                          { dateKey: "4", label: "خمي", visits: 0, isToday: false },
-                          { dateKey: "5", label: "جمع", visits: 0, isToday: false },
-                          { dateKey: "6", label: "سبت", visits: 0, isToday: false },
-                          { dateKey: "7", label: "أحد", visits: 0, isToday: true },
-                        ];
+                        { dateKey: "1", label: "إثن", visits: 0, isToday: false },
+                        { dateKey: "2", label: "ثلا", visits: 0, isToday: false },
+                        { dateKey: "3", label: "أرب", visits: 0, isToday: false },
+                        { dateKey: "4", label: "خمي", visits: 0, isToday: false },
+                        { dateKey: "5", label: "جمع", visits: 0, isToday: false },
+                        { dateKey: "6", label: "سبت", visits: 0, isToday: false },
+                        { dateKey: "7", label: "أحد", visits: 0, isToday: true },
+                      ];
                   const maxDayVisits = Math.max(1, ...weekBars.map((d) => d.visits));
                   return weekBars.map((bar) => {
                     const barHeight =
@@ -2764,13 +2748,12 @@ export default function MerchantDashboardClient({
                     return (
                       <div key={bar.dateKey} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
                         <div
-                          className={`w-full rounded-t-lg transition-all duration-500 ${
-                            bar.visits > 0
-                              ? bar.isToday
-                                ? "bg-gradient-to-t from-[#008069] to-[#00A884] shadow-sm"
-                                : "bg-[#008069]/65 hover:bg-[#008069]"
-                              : "bg-[#DCE0D4]"
-                          }`}
+                          className={`w-full rounded-t-lg transition-all duration-500 ${bar.visits > 0
+                            ? bar.isToday
+                              ? "bg-gradient-to-t from-[#008069] to-[#00A884] shadow-sm"
+                              : "bg-[#008069]/65 hover:bg-[#008069]"
+                            : "bg-[#DCE0D4]"
+                            }`}
                           style={{ height: barHeight }}
                           title={`${bar.label}: ${bar.visits}`}
                         />
@@ -2901,9 +2884,8 @@ export default function MerchantDashboardClient({
                   return (
                     <div
                       key={c.id}
-                      className={`w-full p-3.5 rounded-2xl bg-[#FFFDF7] border ${
-                        isLocked ? "border-red-300 ring-1 ring-red-300 bg-red-50/20" : "border-[#DCE0D4]"
-                      } shadow-sm space-y-2.5 text-xs transition`}
+                      className={`w-full p-3.5 rounded-2xl bg-[#FFFDF7] border ${isLocked ? "border-red-300 ring-1 ring-red-300 bg-red-50/20" : "border-[#DCE0D4]"
+                        } shadow-sm space-y-2.5 text-xs transition`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
@@ -3053,8 +3035,8 @@ export default function MerchantDashboardClient({
                     {locale === "fr"
                       ? "Performances & historique mensuel"
                       : locale === "es"
-                      ? "Rendimiento e historial mensual"
-                      : "تحليلات وأداء الأشهر الفائتة"}
+                        ? "Rendimiento e historial mensual"
+                        : "تحليلات وأداء الأشهر الفائتة"}
                   </p>
                 </div>
               </div>
@@ -3111,20 +3093,18 @@ export default function MerchantDashboardClient({
                         key={m.monthKey}
                         type="button"
                         onClick={() => setSelectedMonthKey(m.monthKey)}
-                        className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                          isSelected
-                            ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                            : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
-                        }`}
+                        className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer ${isSelected
+                          ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                          : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                          }`}
                       >
                         <span>{formatMonthTitle(m.monthKey, locale)}</span>
                         {m.isCurrentMonth && (
                           <span
-                            className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
-                              isSelected
-                                ? "bg-white/20 text-white"
-                                : "bg-emerald-100 text-emerald-800"
-                            }`}
+                            className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${isSelected
+                              ? "bg-white/20 text-white"
+                              : "bg-emerald-100 text-emerald-800"
+                              }`}
                           >
                             {locale === "fr" ? "En cours" : locale === "es" ? "Actual" : "الحالي"}
                           </span>
@@ -3158,11 +3138,10 @@ export default function MerchantDashboardClient({
                         <button
                           type="button"
                           onClick={() => setAnalyticsBranchFilter("ALL")}
-                          className={`px-2.5 py-1 rounded-xl border whitespace-nowrap transition text-[11px] font-bold flex items-center gap-1 cursor-pointer ${
-                            analyticsBranchFilter === "ALL"
-                              ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                              : "bg-[#FAF7F2] border-[#C8D1BE] text-[#5F655D] hover:bg-[#DCE0D4]"
-                          }`}
+                          className={`px-2.5 py-1 rounded-xl border whitespace-nowrap transition text-[11px] font-bold flex items-center gap-1 cursor-pointer ${analyticsBranchFilter === "ALL"
+                            ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                            : "bg-[#FAF7F2] border-[#C8D1BE] text-[#5F655D] hover:bg-[#DCE0D4]"
+                            }`}
                         >
                           <Globe className="w-3 h-3" />
                           <span>{t.demo.allBranchesCombined}</span>
@@ -3173,11 +3152,10 @@ export default function MerchantDashboardClient({
                             key={b.id}
                             type="button"
                             onClick={() => setAnalyticsBranchFilter(b.name)}
-                            className={`px-2.5 py-1 rounded-xl border whitespace-nowrap transition text-[11px] font-semibold flex items-center gap-1 cursor-pointer ${
-                              analyticsBranchFilter === b.name
-                                ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                                : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
-                            }`}
+                            className={`px-2.5 py-1 rounded-xl border whitespace-nowrap transition text-[11px] font-semibold flex items-center gap-1 cursor-pointer ${analyticsBranchFilter === b.name
+                              ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                              : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                              }`}
                           >
                             <span>📍 {b.name}</span>
                             {b.isMain && (
@@ -3268,9 +3246,8 @@ export default function MerchantDashboardClient({
                             </span>
                             {growth !== null && (
                               <span
-                                className={`text-[10px] font-bold font-mono flex items-center ${
-                                  growth >= 0 ? "text-[#008069]" : "text-red-500"
-                                }`}
+                                className={`text-[10px] font-bold font-mono flex items-center ${growth >= 0 ? "text-[#008069]" : "text-red-500"
+                                  }`}
                               >
                                 {growth >= 0 ? `+${growth}%` : `${growth}%`}
                               </span>
@@ -3425,8 +3402,8 @@ export default function MerchantDashboardClient({
                     {locale === "fr"
                       ? "Créez vos modèles d'offres pour les envoyer en un clic."
                       : locale === "es"
-                      ? "Crea tus plantillas para enviar ofertas en un solo clic."
-                      : "أنشئ قوالب العروض المفضلة لديك لإرسالها بنقرة واحدة."}
+                        ? "Crea tus plantillas para enviar ofertas en un solo clic."
+                        : "أنشئ قوالب العروض المفضلة لديك لإرسالها بنقرة واحدة."}
                   </p>
                 </div>
                 <button
@@ -3457,11 +3434,10 @@ export default function MerchantDashboardClient({
                   {templates.map((tpl) => (
                     <div
                       key={tpl.id}
-                      className={`group inline-flex items-center rounded-xl border whitespace-nowrap transition text-[11px] font-semibold px-2 py-1 gap-1 ${
-                        promoTemplate === tpl.id
-                          ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                          : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
-                      }`}
+                      className={`group inline-flex items-center rounded-xl border whitespace-nowrap transition text-[11px] font-semibold px-2 py-1 gap-1 ${promoTemplate === tpl.id
+                        ? "bg-[#008069] border-[#008069] text-white shadow-sm"
+                        : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                        }`}
                     >
                       <button
                         type="button"
@@ -3639,19 +3615,19 @@ export default function MerchantDashboardClient({
                       ? locale === "fr"
                         ? `Compte succursale : ${liveAuthBranch.name}`
                         : locale === "es"
-                        ? `Cuenta de sucursal: ${liveAuthBranch.name}`
-                        : `حساب كاشير خاص بالفرع: ${liveAuthBranch.name}`
+                          ? `Cuenta de sucursal: ${liveAuthBranch.name}`
+                          : `حساب كاشير خاص بالفرع: ${liveAuthBranch.name}`
                       : locale === "fr"
-                      ? `Compte caissier : ${authStaffName || ""}`
-                      : `حساب كاشير${authStaffName ? `: ${authStaffName}` : ""}`}
+                        ? `Compte caissier : ${authStaffName || ""}`
+                        : `حساب كاشير${authStaffName ? `: ${authStaffName}` : ""}`}
                   </span>
                 </div>
                 <p className="text-[11px] text-amber-800 leading-relaxed">
                   {locale === "fr"
                     ? "Vous êtes connecté avec les accès de cette succursale. La configuration du programme de fidélité, les campagnes, les automatisations et les autres succursales sont réservées au propriétaire."
                     : locale === "es"
-                    ? "Ha iniciado sesión con credenciales de cajero. La configuración de fidelidad, promociones, automatizaciones y otras sucursales están reservadas para el propietario."
-                    : "أنت مسجل الدخول بحساب كاشير مخصص. تغيير نظام الولاء، الحملات الترويجية، الأتمتة التلقائية وإدارة باقي الفروع محصورة بحساب المدير الرئيسي."}
+                      ? "Ha iniciado sesión con credenciales de cajero. La configuración de fidelidad, promociones, automatizaciones y otras sucursales están reservadas para el propietario."
+                      : "أنت مسجل الدخول بحساب كاشير مخصص. تغيير نظام الولاء، الحملات الترويجية، الأتمتة التلقائية وإدارة باقي الفروع محصورة بحساب المدير الرئيسي."}
                 </p>
               </div>
             )}
@@ -3664,8 +3640,8 @@ export default function MerchantDashboardClient({
                     {locale === "fr"
                       ? "Langue de la plateforme"
                       : locale === "es"
-                      ? "Idioma de la plataforma"
-                      : "لغة لوحة التحكم"}
+                        ? "Idioma de la plataforma"
+                        : "لغة لوحة التحكم"}
                   </span>
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF7F2] text-[#5F655D] font-mono font-bold uppercase">
@@ -3684,11 +3660,10 @@ export default function MerchantDashboardClient({
                       key={l.key}
                       type="button"
                       onClick={() => setLocale(l.key)}
-                      className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${
-                        isSel
-                          ? "bg-[#008069] text-white border-[#008069] shadow-sm scale-[1.02]"
-                          : "bg-[#F7F8FA] hover:bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4]"
-                      }`}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${isSel
+                        ? "bg-[#008069] text-white border-[#008069] shadow-sm scale-[1.02]"
+                        : "bg-[#F7F8FA] hover:bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4]"
+                        }`}
                     >
                       <span className="text-sm">{l.flag}</span>
                       <span>{l.label}</span>
@@ -3737,11 +3712,10 @@ export default function MerchantDashboardClient({
                         key={m.id}
                         type="button"
                         onClick={() => setMerchantLoyaltyMode(m.id)}
-                        className={`py-1.5 px-2 rounded-xl border text-center transition ${
-                          merchantLoyaltyMode === m.id
-                            ? "bg-[#008069] text-white border-[#008069] shadow-sm"
-                            : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
-                        }`}
+                        className={`py-1.5 px-2 rounded-xl border text-center transition ${merchantLoyaltyMode === m.id
+                          ? "bg-[#008069] text-white border-[#008069] shadow-sm"
+                          : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                          }`}
                       >
                         {m.label}
                       </button>
@@ -3764,11 +3738,10 @@ export default function MerchantDashboardClient({
                           key={rate}
                           type="button"
                           onClick={() => setMerchantCashbackRate(rate)}
-                          className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${
-                            Number(merchantCashbackRate) === rate
-                              ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
-                              : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
-                          }`}
+                          className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${Number(merchantCashbackRate) === rate
+                            ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
+                            : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                            }`}
                         >
                           {rate}%
                         </button>
@@ -3783,11 +3756,10 @@ export default function MerchantDashboardClient({
                     type="button"
                     disabled={savingSettings}
                     onClick={handleSaveSettings}
-                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${
-                      hasUnsavedChanges
-                        ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
-                        : "bg-[#008069] text-white hover:bg-[#00705c]"
-                    } disabled:opacity-50`}
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${hasUnsavedChanges
+                      ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
+                      : "bg-[#008069] text-white hover:bg-[#00705c]"
+                      } disabled:opacity-50`}
                   >
                     {savingSettings ? (
                       <>
@@ -3821,8 +3793,8 @@ export default function MerchantDashboardClient({
                         ? locale === "fr"
                           ? "Ma succursale"
                           : locale === "es"
-                          ? "Mi sucursal"
-                          : "معلومات الفرع الخاص بك"
+                            ? "Mi sucursal"
+                            : "معلومات الفرع الخاص بك"
                         : t.demo.manageBranches}
                     </span>
                   </span>
@@ -3864,8 +3836,8 @@ export default function MerchantDashboardClient({
                         ⚠️ {locale === "fr"
                           ? "Limite maximale de succursales atteinte. Contactez l'administrateur pour augmenter votre quota."
                           : locale === "es"
-                          ? "Límite máximo de sucursales alcanzado. Contacte al administrador para aumentar su cuota."
-                          : "لقد استهلكت كامل الفروع المسموح بها في باقتك. تواصل مع الإدارة لترقية باقتك وفتح فروع إضافية."}
+                            ? "Límite máximo de sucursales alcanzado. Contacte al administrador para aumentar su cuota."
+                            : "لقد استهلكت كامل الفروع المسموح بها في باقتك. تواصل مع الإدارة لترقية باقتك وفتح فروع إضافية."}
                       </p>
                     )}
                   </div>
@@ -3909,8 +3881,8 @@ export default function MerchantDashboardClient({
                       {locale === "fr"
                         ? "Chaque scan effectué sur cet appareil sera enregistré sous ce point de vente et dirigera le client vers ses avis Google."
                         : locale === "es"
-                        ? "Cada escaneo en este dispositivo se registrará para esta sucursal y dirigirá las reseñas de Google a ella."
-                        : "كل عملية مسح وطابع من هذا الجهاز ستسجل تلقائياً باسم هذا الفرع وتوجه تقييم Google إليه."}
+                          ? "Cada escaneo en este dispositivo se registrará para esta sucursal y dirigirá las reseñas de Google a ella."
+                          : "كل عملية مسح وطابع من هذا الجهاز ستسجل تلقائياً باسم هذا الفرع وتوجه تقييم Google إليه."}
                     </p>
                   </div>
                 )}
@@ -3994,8 +3966,8 @@ export default function MerchantDashboardClient({
                     💡 {locale === "fr"
                       ? "Toutes ces succursales sont synchronisées automatiquement dans le radar Apple & Google Wallet (jusqu'à 10 points de vente). La carte s'affiche sur l'écran verrouillé du client dès qu'il est à 100m de n'importe quel point !"
                       : locale === "es"
-                      ? "Todas estas sucursales se sincronizan automáticamente en el radar de Apple y Google Wallet (hasta 10). La tarjeta aparece en la pantalla de bloqueo a menos de 100m de cualquier sucursal."
-                      : "جميع هذه الفروع مسجلة تلقائياً في رادار بطاقة المحفظة (Apple & Google Wallet) حتى 10 فروع، وتظهر البطاقة على شاشة قفل الزبون فور اقترابه من أي فرع بـ 100 متر!"}
+                        ? "Todas estas sucursales se sincronizan automáticamente en el radar de Apple y Google Wallet (hasta 10). La tarjeta aparece en la pantalla de bloqueo a menos de 100m de cualquier sucursal."
+                        : "جميع هذه الفروع مسجلة تلقائياً في رادار بطاقة المحفظة (Apple & Google Wallet) حتى 10 فروع، وتظهر البطاقة على شاشة قفل الزبون فور اقترابه من أي فرع بـ 100 متر!"}
                   </div>
                 )}
               </div>
@@ -4024,8 +3996,8 @@ export default function MerchantDashboardClient({
                   {locale === "fr"
                     ? "Coordonnées GPS utilisées pour le radar de proximité 100m et la géolocalisation sur Apple et Google Wallet."
                     : locale === "es"
-                    ? "Coordenadas GPS utilizadas para el radar de proximidad de 100m y la ubicación en Apple y Google Wallet."
-                    : "إحداثيات GPS تُستخدم لتشغيل رادار الـ 100 متر على بطاقات Apple و Google Wallet ومساعدة الزبائن في العثور عليك."}
+                      ? "Coordenadas GPS utilizadas para el radar de proximidad de 100m y la ubicación en Apple y Google Wallet."
+                      : "إحداثيات GPS تُستخدم لتشغيل رادار الـ 100 متر على بطاقات Apple و Google Wallet ومساعدة الزبائن في العثور عليك."}
                 </p>
 
                 {/* Google Maps Link Input with Smart Coordinate Parser */}
@@ -4048,8 +4020,8 @@ export default function MerchantDashboardClient({
                     {locale === "fr"
                       ? "💡 Collez un lien Google Maps et les coordonnées GPS seront extraites automatiquement."
                       : locale === "es"
-                      ? "💡 Pegue un enlace de Google Maps y las coordenadas GPS se extraerán automáticamente."
-                      : "💡 الصق رابط موقعك من Google Maps وسيتم استخراج الإحداثيات تلقائياً حتى لو كنت في المنزل."}
+                        ? "💡 Pegue un enlace de Google Maps y las coordenadas GPS se extraerán automáticamente."
+                        : "💡 الصق رابط موقعك من Google Maps وسيتم استخراج الإحداثيات تلقائياً حتى لو كنت في المنزل."}
                   </span>
                 </div>
 
@@ -4104,8 +4076,8 @@ export default function MerchantDashboardClient({
                           {locale === "fr"
                             ? "Recherche de la position GPS..."
                             : locale === "es"
-                            ? "Buscando ubicación GPS..."
-                            : "جاري التقاط إحداثيات GPS الدقيقة..."}
+                              ? "Buscando ubicación GPS..."
+                              : "جاري التقاط إحداثيات GPS الدقيقة..."}
                         </span>
                       </>
                     ) : (
@@ -4120,11 +4092,10 @@ export default function MerchantDashboardClient({
                 {/* GPS Status Message Toast */}
                 {gpsStatus && (
                   <div
-                    className={`p-2 rounded-xl text-[11px] font-semibold ${
-                      gpsStatus.type === "success"
-                        ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
-                        : "bg-red-50 border border-red-200 text-red-700"
-                    }`}
+                    className={`p-2 rounded-xl text-[11px] font-semibold ${gpsStatus.type === "success"
+                      ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                      : "bg-red-50 border border-red-200 text-red-700"
+                      }`}
                   >
                     {gpsStatus.msg}
                   </div>
@@ -4151,11 +4122,10 @@ export default function MerchantDashboardClient({
                     type="button"
                     disabled={savingSettings}
                     onClick={handleSaveSettings}
-                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${
-                      hasUnsavedChanges
-                        ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
-                        : "bg-[#008069] text-white hover:bg-[#00705c]"
-                    } disabled:opacity-50`}
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${hasUnsavedChanges
+                      ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
+                      : "bg-[#008069] text-white hover:bg-[#00705c]"
+                      } disabled:opacity-50`}
                   >
                     {savingSettings ? (
                       <>
@@ -4301,9 +4271,8 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setActiveTab("home")}
-            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
-              activeTab === "home" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
-            }`}
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "home" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+              }`}
           >
             <LayoutDashboard className={`w-4 h-4 ${activeTab === "home" ? "stroke-[2.5]" : ""}`} />
             <span className="text-[10px] sm:text-xs font-medium truncate w-full block text-center leading-tight">
@@ -4315,9 +4284,8 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setActiveTab("customers")}
-            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
-              activeTab === "customers" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
-            }`}
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "customers" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+              }`}
           >
             <Users className={`w-4 h-4 ${activeTab === "customers" ? "stroke-[2.5]" : ""}`} />
             <span className="text-[10px] sm:text-xs font-medium truncate w-full block text-center leading-tight">
@@ -4350,9 +4318,8 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setActiveTab("analytics")}
-            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
-              activeTab === "analytics" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
-            }`}
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "analytics" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+              }`}
           >
             <BarChart3 className={`w-4 h-4 ${activeTab === "analytics" ? "stroke-[2.5]" : ""}`} />
             <span className="text-[10px] sm:text-xs font-medium truncate w-full block text-center leading-tight">
@@ -4364,9 +4331,8 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setActiveTab("settings")}
-            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${
-              activeTab === "settings" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
-            }`}
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "settings" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+              }`}
           >
             <div className="relative">
               <Settings className={`w-4 h-4 ${activeTab === "settings" ? "stroke-[2.5]" : ""}`} />
@@ -4464,8 +4430,8 @@ export default function MerchantDashboardClient({
                     ? locale === "fr"
                       ? "Modifier le modèle"
                       : locale === "es"
-                      ? "Editar plantilla"
-                      : "تعديل القالب"
+                        ? "Editar plantilla"
+                        : "تعديل القالب"
                     : t.demo.createTemplateTitle}
                 </span>
               </h3>
@@ -4546,8 +4512,8 @@ export default function MerchantDashboardClient({
                   {locale === "fr"
                     ? "Astuce : Vous pouvez utiliser {shop} pour insérer le nom du magasin automatiquement."
                     : locale === "es"
-                    ? "Consejo: Puedes usar {shop} para insertar el nombre de la tienda automáticamente."
-                    : "نصيحة: يمكنك كتابة {shop} لإدراج اسم متجرك تلقائياً."}
+                      ? "Consejo: Puedes usar {shop} para insertar el nombre de la tienda automáticamente."
+                      : "نصيحة: يمكنك كتابة {shop} لإدراج اسم متجرك تلقائياً."}
                 </p>
               </div>
             </div>
@@ -4570,8 +4536,8 @@ export default function MerchantDashboardClient({
                     ? locale === "fr"
                       ? "Enregistrer les modifications"
                       : locale === "es"
-                      ? "Guardar cambios"
-                      : "حفظ التعديلات"
+                        ? "Guardar cambios"
+                        : "حفظ التعديلات"
                     : t.demo.addTemplate}
                 </span>
               </button>
@@ -4668,8 +4634,8 @@ export default function MerchantDashboardClient({
                   {locale === "fr"
                     ? "Permet aux caissiers de cette succursale de se connecter directement à leur compte dédié."
                     : locale === "es"
-                    ? "Permite a los cajeros de esta sucursal iniciar sesión en su cuenta dedicada."
-                    : "يستخدمه كاشير هذا الفرع لتسجيل الدخول إلى حسابه المخصص وتوثيق العمليات باسم الفرع."}
+                      ? "Permite a los cajeros de esta sucursal iniciar sesión en su cuenta dedicada."
+                      : "يستخدمه كاشير هذا الفرع لتسجيل الدخول إلى حسابه المخصص وتوثيق العمليات باسم الفرع."}
                 </span>
                 {branchPinError && (
                   <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[11px] font-semibold">
@@ -4709,8 +4675,8 @@ export default function MerchantDashboardClient({
                   💡 {locale === "fr"
                     ? "Collez le lien Google Maps du point de vente pour extraire les coordonnées GPS automatiquement."
                     : locale === "es"
-                    ? "Pegue el enlace de Google Maps de la sucursal para extraer las coordenadas automáticamente."
-                    : "الصق رابط Google Maps الخاص بالفرع وسيتم استخراج الإحداثيات تلقائياً."}
+                      ? "Pegue el enlace de Google Maps de la sucursal para extraer las coordenadas automáticamente."
+                      : "الصق رابط Google Maps الخاص بالفرع وسيتم استخراج الإحداثيات تلقائياً."}
                 </span>
               </div>
 
@@ -4773,11 +4739,10 @@ export default function MerchantDashboardClient({
               {/* GPS Status Message Toast */}
               {branchGpsStatus && (
                 <div
-                  className={`p-2 rounded-xl text-[11px] font-semibold ${
-                    branchGpsStatus.type === "success"
-                      ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
-                      : "bg-red-50 border border-red-200 text-red-700"
-                  }`}
+                  className={`p-2 rounded-xl text-[11px] font-semibold ${branchGpsStatus.type === "success"
+                    ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                    : "bg-red-50 border border-red-200 text-red-700"
+                    }`}
                 >
                   {branchGpsStatus.msg}
                 </div>
@@ -4830,8 +4795,8 @@ export default function MerchantDashboardClient({
                     ? locale === "fr"
                       ? "Enregistrer les modifications"
                       : locale === "es"
-                      ? "Guardar cambios"
-                      : "حفظ التعديلات"
+                        ? "Guardar cambios"
+                        : "حفظ التعديلات"
                     : t.demo.addBranch}
                 </span>
               </button>
@@ -5022,8 +4987,8 @@ export default function MerchantDashboardClient({
                   {locale === "ar"
                     ? `إضافة ${merchant.name} للشاشة الرئيسية`
                     : locale === "fr"
-                    ? `Ajouter ${merchant.name} à l'écran d'accueil`
-                    : `Añadir ${merchant.name} a inicio`}
+                      ? `Ajouter ${merchant.name} à l'écran d'accueil`
+                      : `Añadir ${merchant.name} a inicio`}
                 </h3>
                 <p className="text-xs text-[#5F655D]">iPhone / iPad Safari</p>
               </div>
@@ -5035,8 +5000,8 @@ export default function MerchantDashboardClient({
                   {locale === "ar"
                     ? "اضغط على زر المشاركة (Share) في أسفل شاشة Safari"
                     : locale === "fr"
-                    ? "Appuyez sur le bouton Partager en bas de Safari"
-                    : "Toca el botón Compartir en la parte inferior de Safari"}
+                      ? "Appuyez sur le bouton Partager en bas de Safari"
+                      : "Toca el botón Compartir en la parte inferior de Safari"}
                 </p>
               </div>
               <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#FAF7F2] border border-[#DCE0D4]">
@@ -5045,8 +5010,8 @@ export default function MerchantDashboardClient({
                   {locale === "ar"
                     ? 'مرّر للأسفل واختر "إضافة إلى الصفحة الرئيسية" (+)'
                     : locale === "fr"
-                    ? 'Faites défiler vers le bas et sélectionnez "Sur l\'écran d\'accueil" (+)'
-                    : 'Desplaza hacia abajo y selecciona "Añadir a pantalla de inicio" (+)'}
+                      ? 'Faites défiler vers le bas et sélectionnez "Sur l\'écran d\'accueil" (+)'
+                      : 'Desplaza hacia abajo y selecciona "Añadir a pantalla de inicio" (+)'}
                 </p>
               </div>
             </div>
@@ -5123,30 +5088,29 @@ export default function MerchantDashboardClient({
                 ]
                   .filter((item) => !item.ownerOnly || isOwner)
                   .map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        setIsMenuDrawerOpen(false);
-                      }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition text-start cursor-pointer ${
-                        isActive
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setIsMenuDrawerOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition text-start cursor-pointer ${isActive
                           ? "bg-[#008069]/10 text-[#008069] border border-[#008069]/20"
                           : "hover:bg-[#FAF7F2] text-[#173E30]"
-                      }`}
-                    >
-                      <Icon className={`w-4 h-4 ${isActive ? "text-[#008069]" : "text-[#5F655D]"}`} />
-                      <span className="flex-1">{item.label}</span>
-                      {item.id === "settings" && isOwner && hasUnsavedChanges && (
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                      )}
-                    </button>
-                  );
-                })}
+                          }`}
+                      >
+                        <Icon className={`w-4 h-4 ${isActive ? "text-[#008069]" : "text-[#5F655D]"}`} />
+                        <span className="flex-1">{item.label}</span>
+                        {item.id === "settings" && isOwner && hasUnsavedChanges && (
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                        )}
+                      </button>
+                    );
+                  })}
               </div>
 
               <div className="h-px bg-[#DCE0D4]" />
@@ -5190,7 +5154,7 @@ export default function MerchantDashboardClient({
 
                 {/* Join Link in New Tab */}
                 <a
-                  href={`/join/${merchant.slug}`}
+                  href={getJoinUrl(merchant.slug)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start"
@@ -5236,8 +5200,8 @@ export default function MerchantDashboardClient({
                       {isRestrictedStaff && liveAuthBranch
                         ? liveAuthBranch.name
                         : isRestrictedStaff
-                        ? authStaffName || (locale === "fr" ? "Caissier" : "كاشير")
-                        : (locale === "fr" ? "Compte Propriétaire" : locale === "es" ? "Cuenta Propietario" : "صاحب المشروع")}
+                          ? authStaffName || (locale === "fr" ? "Caissier" : "كاشير")
+                          : (locale === "fr" ? "Compte Propriétaire" : locale === "es" ? "Cuenta Propietario" : "صاحب المشروع")}
                     </span>
                     <span className="text-[10px] text-[#5F655D]">
                       {isRestrictedStaff
@@ -5350,11 +5314,10 @@ export default function MerchantDashboardClient({
                   <button
                     type="button"
                     onClick={() => setNewCustLoyaltyType("STAMPS")}
-                    className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                      newCustLoyaltyType === "STAMPS"
-                        ? "bg-[#008069] text-white border-[#008069] shadow-sm"
-                        : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-[#E8EDE3]"
-                    }`}
+                    className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${newCustLoyaltyType === "STAMPS"
+                      ? "bg-[#008069] text-white border-[#008069] shadow-sm"
+                      : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-[#E8EDE3]"
+                      }`}
                   >
                     <Stamp className="w-3.5 h-3.5" />
                     <span>{locale === "ar" ? "طوابع" : "Tampons"}</span>
@@ -5362,11 +5325,10 @@ export default function MerchantDashboardClient({
                   <button
                     type="button"
                     onClick={() => setNewCustLoyaltyType("CASHBACK")}
-                    className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                      newCustLoyaltyType === "CASHBACK"
-                        ? "bg-amber-600 text-white border-amber-600 shadow-sm"
-                        : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-[#E8EDE3]"
-                    }`}
+                    className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${newCustLoyaltyType === "CASHBACK"
+                      ? "bg-amber-600 text-white border-amber-600 shadow-sm"
+                      : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-[#E8EDE3]"
+                      }`}
                   >
                     <Coins className="w-3.5 h-3.5" />
                     <span>{locale === "ar" ? "كاش باك" : "Cashback"}</span>

@@ -151,7 +151,7 @@ export async function middleware(req: NextRequest) {
   // -------------------------------------------------------------
   if (host === "wstore.walink.ma") {
     if (pathname === "/") {
-      return NextResponse.redirect(new URL("https://walink.ma", req.url));
+      return stealth404(req);
     }
 
     const isAllowedStorePath =
@@ -171,7 +171,7 @@ export async function middleware(req: NextRequest) {
   // -------------------------------------------------------------
   if (host === "wclient.walink.ma") {
     if (pathname === "/") {
-      return NextResponse.redirect(new URL("https://walink.ma", req.url));
+      return stealth404(req);
     }
 
     const isAllowedPassPath =
@@ -191,7 +191,7 @@ export async function middleware(req: NextRequest) {
   // -------------------------------------------------------------
   if (host === "wjoin.walink.ma") {
     if (pathname === "/") {
-      return NextResponse.redirect(new URL("https://walink.ma", req.url));
+      return stealth404(req);
     }
 
     const isAllowedJoinPath =
