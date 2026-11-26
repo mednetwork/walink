@@ -4,6 +4,7 @@ import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
 import { sendApplePassUpdate } from "@/lib/apple-wallet";
 import { getStoreSessionFromCookies } from "@/lib/auth";
 import { formatBillingMonth } from "@/lib/pricing";
+import { runWithBoundedConcurrency } from "@/lib/utils";
 
 export async function POST(
   req: NextRequest,
@@ -55,35 +56,25 @@ export async function POST(
     const now = new Date();
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-    // Calculate segment count
-    let actualCount = 0;
-    for (const c of merchant.customers) {
-      if (audience === "QUIET" && new Date(c.lastVisitAt) <= fourteenDaysAgo) {
-        actualCount++;
-      } else if (audience === "NEAR_REWARD" && c.stamps === merchant.stampsRequired - 1) {
-        actualCount++;
-      } else if (audience === "VIP" && c.totalVisits >= 10) {
-        actualCount++;
-      } else if (audience === "ALL") {
-        actualCount++;
-      }
-    }
-
-    // Minimum target count for demo test
-    const targetCount = Math.max(1, actualCount);
-    const billingMonth = formatBillingMonth(now);
-
-    // Identify target customers to generate individual notifications
+    // Calculate segment & target customers in a single pass
     const targetCustomers = merchant.customers.filter((c) => {
       if (audience === "QUIET") return new Date(c.lastVisitAt) <= fourteenDaysAgo;
-      if (audience === "NEAR_REWARD") return c.stamps === merchant.stampsRequired - 1;
+      if (audience === "NEAR_REWARD") {
+        return c.stamps >= merchant.stampsRequired - 1 && c.stamps < merchant.stampsRequired;
+      }
       if (audience === "VIP") return c.totalVisits >= 10;
       return true; // ALL
     });
 
-    const customersToNotify = targetCustomers.length > 0 ? targetCustomers : merchant.customers.slice(0, 1);
+    // Minimum target count for demo test
+    const targetCount = Math.max(1, targetCustomers.length);
+    const billingMonth = formatBillingMonth(now);
+    const customersToNotify =
+      targetCustomers.length > 0 ? targetCustomers : merchant.customers.slice(0, 1);
+    const trimmedMessage = message.trim();
+    const notificationTitle = title ? title.trim() : merchant.name;
 
-    // Atomic postpaid transaction: record point usage for month-end billing & create campaign
+    // Atomic postpaid transaction: record point usage, create campaign, and bulk-insert all notifications
     const [, campaign] = await prisma.$transaction([
       prisma.pointUsage.create({
         data: {
@@ -97,40 +88,40 @@ export async function POST(
         data: {
           merchantId: merchant.id,
           title: title ? title.trim() : "عرض ترويجي جديد",
-          message: message.trim(),
+          message: trimmedMessage,
           audience,
           sentCount: targetCount,
           creditsUsed: targetCount,
           returnedCount: Math.max(1, Math.round(targetCount * 0.22)), // Realistic 22% return rate
         },
       }),
+      ...(customersToNotify.length > 0
+        ? [
+            prisma.notification.createMany({
+              data: customersToNotify.map((c) => ({
+                merchantId: merchant.id,
+                customerId: c.id,
+                type: "PROMO",
+                title: merchant.name,
+                body: trimmedMessage,
+                createdAt: now,
+              })),
+            }),
+          ]
+        : []),
     ]);
 
-    // Create Notification records for target customers & push to Google Wallet
-    for (const c of customersToNotify) {
-      await prisma.notification.create({
-        data: {
-          merchantId: merchant.id,
-          customerId: c.id,
-          type: "PROMO",
-          title: merchant.name,
-          body: message.trim(),
-          createdAt: now,
-        },
+    // Dispatch Google & Apple Wallet lock-screen pushes with bounded concurrency (chunks of 10)
+    if (customersToNotify.length > 0) {
+      void runWithBoundedConcurrency(customersToNotify, 10, async (c) => {
+        const pushTasks: Array<Promise<unknown>> = [
+          pushGoogleWalletUpdate(c, merchant, notificationTitle, trimmedMessage),
+        ];
+        if (c.applePushToken) {
+          pushTasks.push(sendApplePassUpdate(c.applePushToken));
+        }
+        await Promise.allSettled(pushTasks);
       });
-
-      // Push real-time lock-screen notification to Google Wallet
-      pushGoogleWalletUpdate(
-        c,
-        merchant,
-        title ? title.trim() : merchant.name,
-        message.trim()
-      ).catch(() => {});
-
-      // Push real-time silent pass update to Apple Wallet
-      if (c.applePushToken) {
-        sendApplePassUpdate(c.applePushToken).catch(() => {});
-      }
     }
 
     return NextResponse.json({

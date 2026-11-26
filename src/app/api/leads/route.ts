@@ -86,9 +86,16 @@ export async function PATCH(req: NextRequest) {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "") || `shop-${Date.now().toString().slice(-4)}`;
 
+      // Batch-check existing slugs matching baseSlug prefix in 1 query (no sequential while loop)
+      const matchingSlugs = await prisma.merchant.findMany({
+        where: { slug: { startsWith: baseSlug } },
+        select: { slug: true },
+      });
+      const existingSlugSet = new Set(matchingSlugs.map((m) => m.slug));
+
       let uniqueSlug = baseSlug;
       let counter = 1;
-      while (await prisma.merchant.findUnique({ where: { slug: uniqueSlug } })) {
+      while (existingSlugSet.has(uniqueSlug)) {
         uniqueSlug = `${baseSlug}-${counter}`;
         counter++;
       }

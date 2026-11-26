@@ -97,3 +97,31 @@ export function roundStamps(value: number | null | undefined): number {
 export function formatStamps(value: number | null | undefined): string {
   return String(roundStamps(value));
 }
+
+/**
+ * Splits an array into fixed-size chunks for bounded bulk SQL writes or external API calls.
+ */
+export function chunkArray<T>(items: readonly T[], chunkSize: number): T[][] {
+  if (items.length === 0) return [];
+  const safeSize = Math.max(1, Math.floor(chunkSize));
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += safeSize) {
+    chunks.push(items.slice(i, i + safeSize));
+  }
+  return chunks;
+}
+
+/**
+ * Executes async side effects across chunks of bounded size using Promise.allSettled
+ * to avoid external rate limits (429) or outbound socket exhaustion.
+ */
+export async function runWithBoundedConcurrency<T>(
+  items: readonly T[],
+  concurrency: number,
+  worker: (item: T) => Promise<unknown>
+): Promise<void> {
+  const batches = chunkArray(items, concurrency);
+  for (const batch of batches) {
+    await Promise.allSettled(batch.map((item) => worker(item)));
+  }
+}

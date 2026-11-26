@@ -43,27 +43,32 @@ export default async function AdminDashboardPage() {
   let dbError: string | null = null;
 
   try {
-    merchants = (await prisma.merchant.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        customers: {
-          take: 1,
-          select: {
-            passSerial: true,
+    const [merchantRows, customerCount, txCount] = await Promise.all([
+      prisma.merchant.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          customers: {
+            take: 1,
+            select: {
+              passSerial: true,
+            },
+          },
+          _count: {
+            select: {
+              customers: true,
+              transactions: true,
+              campaigns: true,
+            },
           },
         },
-        _count: {
-          select: {
-            customers: true,
-            transactions: true,
-            campaigns: true,
-          },
-        },
-      },
-    })) as typeof merchants;
+      }),
+      prisma.customer.count(),
+      prisma.transaction.count(),
+    ]);
 
-    totalCustomers = await prisma.customer.count();
-    totalTransactions = await prisma.transaction.count();
+    merchants = merchantRows as typeof merchants;
+    totalCustomers = customerCount;
+    totalTransactions = txCount;
   } catch (err: unknown) {
     console.error("Database connection/query error in AdminDashboardPage:", err);
     dbError =

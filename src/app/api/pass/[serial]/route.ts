@@ -54,27 +54,27 @@ export async function GET(
       );
     }
 
-    // Fetch latest campaign for this merchant created on or after customer joined
-    const latestCampaign = await prisma.campaign.findFirst({
-      where: {
-        merchantId: customer.merchantId,
-        createdAt: { gte: customer.createdAt },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    // Fetch latest notifications for this customer or merchant broadcast created on or after customer joined
-    const notifications = await prisma.notification.findMany({
-      where: {
-        merchantId: customer.merchantId,
-        OR: [
-          { customerId: customer.id },
-          { customerId: null, createdAt: { gte: customer.createdAt } },
-        ],
-      },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    });
+    // Fetch latest campaign & customer notifications in parallel
+    const [latestCampaign, notifications] = await Promise.all([
+      prisma.campaign.findFirst({
+        where: {
+          merchantId: customer.merchantId,
+          createdAt: { gte: customer.createdAt },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.notification.findMany({
+        where: {
+          merchantId: customer.merchantId,
+          OR: [
+            { customerId: customer.id },
+            { customerId: null, createdAt: { gte: customer.createdAt } },
+          ],
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+    ]);
 
     const langParam = req.nextUrl.searchParams.get("lang");
     const lang: Locale =

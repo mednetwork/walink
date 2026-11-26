@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
 import { formatBillingMonth } from "@/lib/pricing";
+import { chunkArray, runWithBoundedConcurrency } from "@/lib/utils";
+
+const BULK_INSERT_CHUNK_SIZE = 250;
 
 export async function GET(req: NextRequest) {
   return handleCron(req);
@@ -54,12 +57,45 @@ async function handleCron(req: NextRequest) {
     let totalNearRewards = 0;
     let totalCreditsDeducted = 0;
 
-    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const billingMonth = formatBillingMonth(now);
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+    const notificationsToCreate: Array<{
+      merchantId: string;
+      customerId: string;
+      type: string;
+      title: string;
+      body: string;
+      actionUrl: string;
+    }> = [];
+
+    const pointUsagesToCreate: Array<{
+      merchantId: string;
+      points: number;
+      source: string;
+      billingMonth: string;
+    }> = [];
+
+    const campaignsToCreate: Array<{
+      merchantId: string;
+      title: string;
+      message: string;
+      audience: string;
+      sentCount: number;
+      creditsUsed: number;
+    }> = [];
+
+    const walletPushJobs: Array<{
+      customer: (typeof merchants)[number]["customers"][number];
+      merchant: (typeof merchants)[number];
+      title: string;
+      body: string;
+    }> = [];
 
     for (const merchant of merchants) {
       let merchantWinbacks = 0;
       let merchantNearRewards = 0;
-      let merchantCreditsUsed = 0;
 
       // -------------------------------------------------------------
       // 1. 15-Day Win-Back Engine (autoWinback)
@@ -69,7 +105,7 @@ async function handleCron(req: NextRequest) {
           (c) => new Date(c.lastVisitAt) <= fourteenDaysAgo
         );
 
-        // If forceDemo is requested and no natural inactive customers exist, take the oldest visit customer
+        // If forceDemo is requested and no natural inactive customers exist, pick oldest visitor
         if (quietCustomers.length === 0 && forceDemo && merchant.customers.length > 0) {
           const sorted = [...merchant.customers].sort(
             (a, b) => new Date(a.lastVisitAt).getTime() - new Date(b.lastVisitAt).getTime()
@@ -78,50 +114,43 @@ async function handleCron(req: NextRequest) {
         }
 
         for (const customer of quietCustomers) {
-          // Create Notification
-          const notif = await prisma.notification.create({
-            data: {
-              merchantId: merchant.id,
-              customerId: customer.id,
-              type: "WINBACK",
-              title: "توحشناك! 🎁",
-              body: `توحشناك ${merchant.customerPrefix} ${customer.name}! هادي كثر من 15 يوم ما بانتيش عندنا في ${merchant.name}. دوز هاد السيمانة وعندك طابع هدية 🎁`,
-              actionUrl: `/pass/${customer.passSerial}`,
-            },
+          const notifTitle = "توحشناك! 🎁";
+          const notifBody = `توحشناك ${merchant.customerPrefix} ${customer.name}! هادي كثر من 15 يوم ما بانتيش عندنا في ${merchant.name}. دوز هاد السيمانة وعندك طابع هدية 🎁`;
+
+          notificationsToCreate.push({
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "WINBACK",
+            title: notifTitle,
+            body: notifBody,
+            actionUrl: `/pass/${customer.passSerial}`,
           });
 
-          // Push to Google Wallet
-          pushGoogleWalletUpdate(
+          walletPushJobs.push({
             customer,
             merchant,
-            notif.title,
-            notif.body
-          ).catch(() => {});
-
-          // Record postpaid point usage for month-end billing
-          await prisma.pointUsage.create({
-            data: {
-              merchantId: merchant.id,
-              points: 1,
-              source: "WINBACK",
-              billingMonth: formatBillingMonth(),
-            },
+            title: notifTitle,
+            body: notifBody,
           });
 
           merchantWinbacks++;
-          merchantCreditsUsed++;
         }
 
         if (merchantWinbacks > 0) {
-          await prisma.campaign.create({
-            data: {
-              merchantId: merchant.id,
-              title: "أوتوماتيك: استرجاع الزبناء الغابرين (Win-Back)",
-              message: `تم إرسال دعوة استرجاع إلى ${merchantWinbacks} زبون غائب منذ أكثر من 14 يوماً.`,
-              audience: "QUIET",
-              sentCount: merchantWinbacks,
-              creditsUsed: merchantWinbacks,
-            },
+          pointUsagesToCreate.push({
+            merchantId: merchant.id,
+            points: merchantWinbacks,
+            source: "WINBACK",
+            billingMonth,
+          });
+
+          campaignsToCreate.push({
+            merchantId: merchant.id,
+            title: "أوتوماتيك: استرجاع الزبناء الغابرين (Win-Back)",
+            message: `تم إرسال دعوة استرجاع إلى ${merchantWinbacks} زبون غائب منذ أكثر من 14 يوماً.`,
+            audience: "QUIET",
+            sentCount: merchantWinbacks,
+            creditsUsed: merchantWinbacks,
           });
         }
       }
@@ -131,24 +160,23 @@ async function handleCron(req: NextRequest) {
       // -------------------------------------------------------------
       if (merchant.autoNearReward) {
         let nearCustomers = merchant.customers.filter(
-          (c) => c.stamps === merchant.stampsRequired - 1
+          (c) =>
+            c.stamps >= merchant.stampsRequired - 1 &&
+            c.stamps < merchant.stampsRequired
         );
 
         if (nearCustomers.length === 0 && forceDemo && merchant.customers.length > 0) {
-          // If in demo mode and no customer is 1 stamp away, pick the first
           nearCustomers = [merchant.customers[0]];
         }
 
         for (const customer of nearCustomers) {
-          await prisma.notification.create({
-            data: {
-              merchantId: merchant.id,
-              customerId: customer.id,
-              type: "NEAR_REWARD",
-              title: "باقي ليك غير طابع واحد! ☕",
-              body: `باقي ليك غير طابع واحد على ${merchant.rewardName} فـ ${merchant.name}! دوز كمل الكارط ديالك اليوم.`,
-              actionUrl: `/pass/${customer.passSerial}`,
-            },
+          notificationsToCreate.push({
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: "NEAR_REWARD",
+            title: "باقي ليك غير طابع واحد! ☕",
+            body: `باقي ليك غير طابع واحد على ${merchant.rewardName} فـ ${merchant.name}! دوز كمل الكارط ديالك اليوم.`,
+            actionUrl: `/pass/${customer.passSerial}`,
           });
 
           merchantNearRewards++;
@@ -157,14 +185,45 @@ async function handleCron(req: NextRequest) {
 
       totalWinbacks += merchantWinbacks;
       totalNearRewards += merchantNearRewards;
-      totalCreditsDeducted += merchantCreditsUsed;
+      totalCreditsDeducted += merchantWinbacks;
 
       executionLog.push({
         merchantName: merchant.name,
         merchantSlug: merchant.slug,
         winbacks: merchantWinbacks,
         nearRewards: merchantNearRewards,
-        creditsDeducted: merchantCreditsUsed,
+        creditsDeducted: merchantWinbacks,
+      });
+    }
+
+    // Batch-persist all DB records in chunked transactions instead of 2N sequential queries
+    if (
+      notificationsToCreate.length > 0 ||
+      pointUsagesToCreate.length > 0 ||
+      campaignsToCreate.length > 0
+    ) {
+      await prisma.$transaction(async (tx) => {
+        for (const notifChunk of chunkArray(notificationsToCreate, BULK_INSERT_CHUNK_SIZE)) {
+          await tx.notification.createMany({ data: notifChunk });
+        }
+        if (pointUsagesToCreate.length > 0) {
+          await tx.pointUsage.createMany({ data: pointUsagesToCreate });
+        }
+        if (campaignsToCreate.length > 0) {
+          await tx.campaign.createMany({ data: campaignsToCreate });
+        }
+      });
+    }
+
+    // Dispatch Google Wallet notifications with bounded concurrency (10 at a time)
+    if (walletPushJobs.length > 0) {
+      await runWithBoundedConcurrency(walletPushJobs, 10, async (job) => {
+        await pushGoogleWalletUpdate(
+          job.customer,
+          job.merchant,
+          job.title,
+          job.body
+        );
       });
     }
 
@@ -186,4 +245,3 @@ async function handleCron(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-

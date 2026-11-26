@@ -213,40 +213,50 @@ export async function POST(
         requestedLoyaltyType === "CASHBACK" ? "CASHBACK" : "STAMPS";
     }
 
-    // Generate unique 4-digit member code
-    let memberCode = "";
-    let isUnique = false;
-    let attempts = 0;
+    // Generate a 12-code candidate pool & verify uniqueness in 1 batch query in parallel with referrer lookup
+    const candidatePool = new Set<string>();
+    while (candidatePool.size < 12) {
+      candidatePool.add(Math.floor(1000 + Math.random() * 9000).toString());
+    }
+    const candidateCodes = Array.from(candidatePool);
+    const trimmedRef = ref && typeof ref === "string" ? ref.trim() : "";
 
-    while (!isUnique && attempts < 10) {
-      memberCode = Math.floor(1000 + Math.random() * 9000).toString();
-      const checkCode = await prisma.customer.findFirst({
+    const [takenCodeRows, referrerCustomer] = await Promise.all([
+      prisma.customer.findMany({
         where: {
           merchantId: merchant.id,
-          memberCode,
+          memberCode: { in: candidateCodes },
         },
-      });
-      if (!checkCode) isUnique = true;
-      attempts++;
-    }
+        select: { memberCode: true },
+      }),
+      trimmedRef
+        ? prisma.customer.findFirst({
+            where: {
+              merchantId: merchant.id,
+              memberCode: trimmedRef,
+            },
+          })
+        : Promise.resolve(null),
+    ]);
 
-    if (!isUnique) {
-      memberCode = Date.now().toString().slice(-4);
+    const takenCodeSet = new Set(takenCodeRows.map((c) => c.memberCode));
+    let memberCode = candidateCodes.find((code) => !takenCodeSet.has(code)) || "";
+
+    // Safe fallback only if all 12 random codes collided in a dense store
+    if (!memberCode) {
+      let fallbackCode = Date.now().toString().slice(-4);
+      const existsFallback = await prisma.customer.findFirst({
+        where: { merchantId: merchant.id, memberCode: fallbackCode },
+        select: { id: true },
+      });
+      if (existsFallback) {
+        fallbackCode = Math.floor(1000 + Math.random() * 9000).toString();
+      }
+      memberCode = fallbackCode;
     }
 
     const isCashback = effectiveLoyaltyType === "CASHBACK";
     const welcomeBonus = isCashback ? Number(merchant.welcomeCashback || 0) : 0;
-
-    // Check if customer was referred by an existing member
-    let referrerCustomer = null;
-    if (ref && typeof ref === "string" && ref.trim()) {
-      referrerCustomer = await prisma.customer.findFirst({
-        where: {
-          merchantId: merchant.id,
-          memberCode: ref.trim(),
-        },
-      });
-    }
 
     const isReferred = Boolean(referrerCustomer);
 

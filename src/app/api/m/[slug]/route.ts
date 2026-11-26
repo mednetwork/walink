@@ -68,18 +68,30 @@ export async function GET(
       session
     );
 
-    const allTransactionsForMetrics = await prisma.transaction.findMany({
-      where: { merchantId: merchant.id },
-      select: {
-        id: true,
-        customerId: true,
-        type: true,
-        branchName: true,
-        staffName: true,
-        note: true,
-        createdAt: true,
-      },
-    });
+    const currentBillingMonth = formatBillingMonth(now);
+    const [allTransactionsForMetrics, pointAgg] = await Promise.all([
+      prisma.transaction.findMany({
+        where: { merchantId: merchant.id },
+        select: {
+          id: true,
+          customerId: true,
+          type: true,
+          branchName: true,
+          staffName: true,
+          note: true,
+          createdAt: true,
+        },
+      }),
+      session.role === "OWNER"
+        ? prisma.pointUsage.aggregate({
+            where: {
+              merchantId: merchant.id,
+              billingMonth: currentBillingMonth,
+            },
+            _sum: { points: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
     const computedMetrics = computeMerchantMetrics({
       customers: merchant.customers,
@@ -101,17 +113,6 @@ export async function GET(
           )
         : merchant.transactions;
 
-    const currentBillingMonth = formatBillingMonth(now);
-    const pointAgg =
-      session.role === "OWNER"
-        ? await prisma.pointUsage.aggregate({
-            where: {
-              merchantId: merchant.id,
-              billingMonth: currentBillingMonth,
-            },
-            _sum: { points: true },
-          })
-        : null;
     const monthlyPointsUsed = pointAgg?._sum.points ?? 0;
 
     return NextResponse.json({

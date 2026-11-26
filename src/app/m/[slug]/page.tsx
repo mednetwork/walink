@@ -124,21 +124,34 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
   const sessionRole =
     isSessionValid && session ? session.role : ("OWNER" as const);
 
-  // Authoritative server-side metrics across ALL transactions (only queried when authenticated)
-  const allTransactionsForMetrics = isSessionValid
-    ? await prisma.transaction.findMany({
-        where: { merchantId: merchant.id },
-        select: {
-          id: true,
-          customerId: true,
-          type: true,
-          branchName: true,
-          staffName: true,
-          note: true,
-          createdAt: true,
-        },
-      })
-    : [];
+  const currentBillingMonth = formatBillingMonth(now);
+
+  // Authoritative server-side metrics & billing point aggregation executed in parallel (only when authenticated)
+  const [allTransactionsForMetrics, pointUsageAgg] = isSessionValid
+    ? await Promise.all([
+        prisma.transaction.findMany({
+          where: { merchantId: merchant.id },
+          select: {
+            id: true,
+            customerId: true,
+            type: true,
+            branchName: true,
+            staffName: true,
+            note: true,
+            createdAt: true,
+          },
+        }),
+        sessionRole === "OWNER"
+          ? prisma.pointUsage.aggregate({
+              where: {
+                merchantId: merchant.id,
+                billingMonth: currentBillingMonth,
+              },
+              _sum: { points: true },
+            })
+          : Promise.resolve(null),
+      ])
+    : [[], null];
 
   const computedMetrics = isSessionValid
     ? computeMerchantMetrics({
@@ -162,17 +175,6 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
       ? scopeMetricsToBranch(computedMetrics, matchedBranch, now)
       : computedMetrics;
 
-  const currentBillingMonth = formatBillingMonth(now);
-  const pointUsageAgg =
-    isSessionValid && sessionRole === "OWNER"
-      ? await prisma.pointUsage.aggregate({
-          where: {
-            merchantId: merchant.id,
-            billingMonth: currentBillingMonth,
-          },
-          _sum: { points: true },
-        })
-      : null;
   const monthlyPointsUsed = pointUsageAgg?._sum.points ?? 0;
 
   // Serialize dates for Client Component (never send raw owner PIN or unauthorized data)
