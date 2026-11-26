@@ -3,7 +3,9 @@ import path from "path";
 import crypto from "crypto";
 import http2 from "http2";
 import { PKPass } from "passkit-generator";
-import { formatStamps, roundStamps } from "@/lib/utils";
+import prisma from "@/lib/prisma";
+import { buildDeduplicatedRadarLocations } from "@/lib/radar";
+import { formatStamps, roundStamps, runWithBoundedConcurrency } from "@/lib/utils";
 import { renderStampsStripPng } from "@/lib/stamps-png";
 
 export interface AppleWalletConfig {
@@ -501,50 +503,8 @@ export async function generateApplePass(
         : "La carte de fidélité est strictement personnelle. Les récompenses et soldes ne sont pas échangeables contre des espèces. Valable dans tous les points de vente participants."),
   };
 
-  // Build Geofencing Locations (up to 10 zones) — locked on STARTER (149 DH) or if autoRadar disabled
-  const canUseRadar = merchant.plan !== "STARTER" && merchant.autoRadar !== false;
-  const locations: Array<{
-    latitude: number;
-    longitude: number;
-    relevantText?: string;
-    maxDistance?: number;
-  }> = [];
-
-  if (canUseRadar && merchant.latitude && merchant.longitude) {
-    locations.push({
-      latitude: merchant.latitude,
-      longitude: merchant.longitude,
-      relevantText:
-        merchant.radarMessage ||
-        (locale === "ar"
-          ? "أنت بالقرب منا! تفضل بزيارتنا، بطاقتك ومكافآتك جاهزة."
-          : locale === "fr"
-          ? "Vous êtes tout près ! Passez nous voir, votre carte vous attend."
-          : "¡Estás muy cerca! Pasa a visitarnos, tus beneficios te esperan."),
-      maxDistance: 100,
-    });
-  }
-
-  if (canUseRadar && merchant.radarZones) {
-    try {
-      const parsed = JSON.parse(merchant.radarZones);
-      if (Array.isArray(parsed)) {
-        for (const z of parsed) {
-          if (locations.length >= 10) break;
-          if (z.lat && z.lng) {
-            locations.push({
-              latitude: Number(z.lat),
-              longitude: Number(z.lng),
-              relevantText: z.message || `${z.name} - ${merchant.name}`,
-              maxDistance: 100,
-            });
-          }
-        }
-      }
-    } catch {
-      // Ignore radarZones JSON parse error
-    }
-  }
+  // Build deduplicated geofencing locations (up to 10 zones)
+  const locations = buildDeduplicatedRadarLocations(merchant, locale);
 
   // Ensure authenticationToken is at least 16 characters per Apple PassKit requirement
   const authToken = (customer.passSerial + "walink2026").padEnd(20, "0");
@@ -566,6 +526,7 @@ export async function generateApplePass(
       organizationName: merchant.name,
       description: passStrings.description,
       logoText: merchant.name,
+      ...(locations.length > 0 ? { maxDistance: 100 } : {}),
       foregroundColor: "rgb(255, 255, 255)",
       backgroundColor: bgColor,
       labelColor:
@@ -898,4 +859,46 @@ export async function sendApplePassUpdate(pushToken: string): Promise<boolean> {
       resolve(false);
     }
   });
+}
+
+/**
+ * Updates `updatedAt` in a single batch write for all eligible Apple Wallet pass holders
+ * of a merchant and dispatches non-blocking silent APNs pushes so updated GPS locations sync
+ * in the background without triggering unwanted lock-screen banners.
+ */
+export async function syncMerchantAppleWalletLocations(merchantId: string): Promise<void> {
+  const customers = await prisma.customer.findMany({
+    where: {
+      merchantId,
+      applePushToken: { not: null },
+    },
+    select: {
+      id: true,
+      applePushToken: true,
+    },
+  });
+
+  const eligibleIds: string[] = [];
+  const uniqueTokens = new Set<string>();
+
+  for (const c of customers) {
+    const cleanToken = (c.applePushToken || "").trim();
+    if (!cleanToken || cleanToken === "apns-token-registered") continue;
+    eligibleIds.push(c.id);
+    uniqueTokens.add(cleanToken);
+  }
+
+  if (eligibleIds.length === 0 || uniqueTokens.size === 0) {
+    return;
+  }
+
+  await prisma.customer.updateMany({
+    where: { id: { in: eligibleIds } },
+    data: { updatedAt: new Date() },
+  });
+
+  const tokens = Array.from(uniqueTokens);
+  void runWithBoundedConcurrency(tokens, 10, (token) =>
+    sendApplePassUpdate(token).catch(() => false)
+  ).catch(() => {});
 }

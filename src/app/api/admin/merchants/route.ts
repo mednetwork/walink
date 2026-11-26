@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hasRadarAndReviewsFeature, normalizeMerchantPlan } from "@/lib/pricing";
+import { isValidCoordinatePair } from "@/lib/radar";
 
 export async function GET() {
   try {
@@ -53,8 +54,8 @@ export async function POST(req: NextRequest) {
       welcomeCashback = 5,
       minCashbackRedeem = 0,
       currency = "DH",
-      latitude = 33.5731,
-      longitude = -7.5898,
+      latitude = null,
+      longitude = null,
       radarMessage = "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك ومكافآتك جاهزة.",
       googleMapsUrl,
       plan = "GROWTH",
@@ -120,8 +121,8 @@ export async function POST(req: NextRequest) {
         welcomeCashback: Number(welcomeCashback) || 0,
         minCashbackRedeem: Number(minCashbackRedeem) || 0,
         currency: currency || "DH",
-        latitude: latitude ? parseFloat(String(latitude)) : null,
-        longitude: longitude ? parseFloat(String(longitude)) : null,
+        latitude: isValidCoordinatePair(latitude, longitude) ? parseFloat(String(latitude)) : null,
+        longitude: isValidCoordinatePair(latitude, longitude) ? parseFloat(String(longitude)) : null,
         radarMessage,
         googleMapsUrl,
         plan: resolvedPlan,

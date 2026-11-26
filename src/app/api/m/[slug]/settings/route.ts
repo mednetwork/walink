@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { getStoreSessionFromCookies } from "@/lib/auth";
 import { hasRadarAndReviewsFeature } from "@/lib/pricing";
 import { invalidateMerchantCache } from "@/lib/cache";
+import { syncMerchantAppleWalletLocations } from "@/lib/apple-wallet";
+import { isValidCoordinatePair } from "@/lib/radar";
 
 export async function PATCH(
   req: NextRequest,
@@ -87,16 +89,20 @@ export async function PATCH(
       updateData.referralBonus = Math.max(0, Number(body.referralBonus));
     }
 
-    if (body.latitude !== undefined && !isNaN(Number(body.latitude))) {
+    if (body.latitude === null || body.latitude === "") {
+      updateData.latitude = null;
+    } else if (body.latitude !== undefined) {
       const lat = Number(body.latitude);
-      if (lat >= -90 && lat <= 90) {
+      if (Number.isFinite(lat) && lat >= -90 && lat <= 90 && Math.abs(lat) > 0.00001) {
         updateData.latitude = lat;
       }
     }
 
-    if (body.longitude !== undefined && !isNaN(Number(body.longitude))) {
+    if (body.longitude === null || body.longitude === "") {
+      updateData.longitude = null;
+    } else if (body.longitude !== undefined) {
       const lng = Number(body.longitude);
-      if (lng >= -180 && lng <= 180) {
+      if (Number.isFinite(lng) && lng >= -180 && lng <= 180 && Math.abs(lng) > 0.00001) {
         updateData.longitude = lng;
       }
     }
@@ -198,37 +204,51 @@ export async function PATCH(
 
       updateData.branches = JSON.stringify(branchesArray);
 
-      // Refinement 4: Sync all branch coordinates and radarMessage into radarZones for Google & Apple Wallet (up to 10 locations)
+      // Refinement 4: Sync valid branch coordinates and radarMessage into radarZones (up to 10 locations) without fake defaults
       if (branchesArray.length > 0) {
-        const zones = branchesArray.slice(0, 10).map((b) => ({
-          name: b.name || "فرع المحل",
-          lat: Number(b.latitude) || 33.5731,
-          lng: Number(b.longitude) || -7.5898,
-          message: b.radarMessage || "أنت بالقرب من فرعنا! تفضل بزيارتنا وبطاقتك جاهزة.",
-        }));
+        const zones = branchesArray
+          .filter((b) => isValidCoordinatePair(b.latitude, b.longitude))
+          .slice(0, 10)
+          .map((b) => ({
+            name: b.name || "فرع المحل",
+            lat: Number(b.latitude),
+            lng: Number(b.longitude),
+            message: b.radarMessage || "أنت بالقرب من فرعنا! تفضل بزيارتنا وبطاقتك جاهزة.",
+          }));
         updateData.radarZones = JSON.stringify(zones);
 
-        // If there is a main branch or first branch, synchronize the primary location fields
+        // If there is a main branch or first branch, synchronize primary store metadata & valid GPS
         const mainBranch = branchesArray.find((b) => b.isMain) || branchesArray[0];
-        if (mainBranch && mainBranch.latitude !== undefined && mainBranch.longitude !== undefined) {
-          updateData.latitude = Number(mainBranch.latitude);
-          updateData.longitude = Number(mainBranch.longitude);
+        if (mainBranch) {
+          if (isValidCoordinatePair(mainBranch.latitude, mainBranch.longitude)) {
+            updateData.latitude = Number(mainBranch.latitude);
+            updateData.longitude = Number(mainBranch.longitude);
+          }
           if (mainBranch.googleMapsUrl) updateData.googleMapsUrl = mainBranch.googleMapsUrl;
           if (mainBranch.city) updateData.city = mainBranch.city;
         }
       }
     }
 
-    const existingMerchantPlan = await prisma.merchant.findUnique({
+    const existingMerchantState = await prisma.merchant.findUnique({
       where: { slug },
-      select: { plan: true },
+      select: {
+        id: true,
+        plan: true,
+        autoRadar: true,
+        latitude: true,
+        longitude: true,
+        radarMessage: true,
+        radarZones: true,
+        branches: true,
+      },
     });
 
-    if (!existingMerchantPlan) {
+    if (!existingMerchantState) {
       return NextResponse.json({ error: "المحل التجاري غير موجود" }, { status: 404 });
     }
 
-    if (!hasRadarAndReviewsFeature(existingMerchantPlan.plan)) {
+    if (!hasRadarAndReviewsFeature(existingMerchantState.plan)) {
       updateData.autoRadar = false;
       updateData.autoReview = false;
     }
@@ -239,6 +259,7 @@ export async function PATCH(
       select: {
         id: true,
         slug: true,
+        plan: true,
         loyaltyMode: true,
         cashbackRate: true,
         latitude: true,
@@ -266,6 +287,19 @@ export async function PATCH(
 
     invalidateMerchantCache(slug);
     invalidateMerchantCache(updated.slug);
+
+    const radarLocationsChanged =
+      updated.plan !== existingMerchantState.plan ||
+      updated.autoRadar !== existingMerchantState.autoRadar ||
+      updated.latitude !== existingMerchantState.latitude ||
+      updated.longitude !== existingMerchantState.longitude ||
+      updated.radarMessage !== existingMerchantState.radarMessage ||
+      updated.radarZones !== existingMerchantState.radarZones ||
+      updated.branches !== existingMerchantState.branches;
+
+    if (radarLocationsChanged) {
+      await syncMerchantAppleWalletLocations(updated.id);
+    }
 
     return NextResponse.json({
       success: true,

@@ -165,8 +165,8 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
     welcomeCashback: initialData?.welcomeCashback ?? 5,
     minCashbackRedeem: initialData?.minCashbackRedeem ?? 0,
     currency: initialData?.currency || "DH",
-    latitude: initialData?.latitude ?? 33.5731,
-    longitude: initialData?.longitude ?? -7.5898,
+    latitude: initialData?.latitude ?? null,
+    longitude: initialData?.longitude ?? null,
     radarMessage:
       initialData?.radarMessage ||
       "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة لجمع الأختام والكاش باك.",
@@ -880,7 +880,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
 
               <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
-                  نص إشعار الرادار عند اقتراب الزبون بـ 100 متر
+                  نص إشعار الرادار عند اقتراب الزبون بـ 100 متر (Apple Wallet للآيفون)
                 </label>
                 <textarea
                   rows={2}
@@ -891,6 +891,9 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                   placeholder="راك دايز من حدانا! دوز مرحبا بيك..."
                   className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#111B21] focus:outline-none focus:border-[#008069] focus:bg-white"
                 />
+                <p className="text-[10px] text-[#54656F] mt-1">
+                  ملاحظة: يظهر إشعار القرب 100 متر تلقائياً على شاشة قفل iPhone عبر Apple Wallet. Google Wallet على الأندرويد لا يدعم تنبيهات القرب الجغرافية.
+                </p>
               </div>
 
               <div className="sm:col-span-2">

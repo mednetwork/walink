@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateApplePass } from "@/lib/apple-wallet";
 
-// Epoch bumped when visual strip.png pass assets change so installed passes always refresh
-const PASS_ASSETS_VERSION_MS = new Date("2026-11-26T15:35:00Z").getTime();
+// Epoch bumped when visual strip.png or geofencing pass.json structure changes so installed passes refresh
+const PASS_ASSETS_VERSION_MS = new Date("2026-11-26T16:10:00Z").getTime();
 
 export async function GET(
   req: NextRequest,

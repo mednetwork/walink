@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hasRadarAndReviewsFeature, normalizeMerchantPlan } from "@/lib/pricing";
 import { invalidateMerchantCache, standByCodeCache } from "@/lib/cache";
+import { syncMerchantAppleWalletLocations } from "@/lib/apple-wallet";
 
 export async function GET(
   req: NextRequest,
@@ -121,7 +122,15 @@ export async function PATCH(
         ) {
           updateData[key] = Number(body[key]);
         } else if (key === "latitude" || key === "longitude") {
-          updateData[key] = body[key] !== null ? parseFloat(String(body[key])) : null;
+          const rawVal = body[key];
+          if (rawVal === null || rawVal === "") {
+            updateData[key] = null;
+          } else {
+            const parsedCoord = parseFloat(String(rawVal));
+            if (Number.isFinite(parsedCoord) && Math.abs(parsedCoord) > 0.00001) {
+              updateData[key] = parsedCoord;
+            }
+          }
         } else if (
           key.startsWith("auto") ||
           key === "isActive" ||
@@ -136,7 +145,18 @@ export async function PATCH(
 
     const existingMerchant = await prisma.merchant.findUnique({
       where: { id },
-      select: { slug: true, plan: true, maxBranches: true },
+      select: {
+        id: true,
+        slug: true,
+        plan: true,
+        maxBranches: true,
+        autoRadar: true,
+        latitude: true,
+        longitude: true,
+        radarMessage: true,
+        radarZones: true,
+        branches: true,
+      },
     });
 
     if (!existingMerchant) {
@@ -177,6 +197,19 @@ export async function PATCH(
     invalidateMerchantCache(existingMerchant.slug);
     invalidateMerchantCache(updated.slug);
     standByCodeCache.clear();
+
+    const radarLocationsChanged =
+      updated.plan !== existingMerchant.plan ||
+      updated.autoRadar !== existingMerchant.autoRadar ||
+      updated.latitude !== existingMerchant.latitude ||
+      updated.longitude !== existingMerchant.longitude ||
+      updated.radarMessage !== existingMerchant.radarMessage ||
+      updated.radarZones !== existingMerchant.radarZones ||
+      updated.branches !== existingMerchant.branches;
+
+    if (radarLocationsChanged) {
+      await syncMerchantAppleWalletLocations(updated.id);
+    }
 
     return NextResponse.json(updated);
   } catch (error: unknown) {

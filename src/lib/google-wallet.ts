@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { buildDeduplicatedRadarLocations } from "@/lib/radar";
 import { formatStamps, roundStamps } from "@/lib/utils";
 
 export interface GoogleWalletConfig {
@@ -147,36 +148,12 @@ export function buildLoyaltyClass(
     hexColor = "#008069";
   }
 
-  // Parse Multi-Zone Geofencing Locations (up to 10 points) — gated on STARTER (149 DH)
-  const canUseRadar = merchant.plan !== "STARTER" && merchant.autoRadar !== false;
-  const locationsList: Array<{ kind: string; latitude: number; longitude: number }> = [];
-  if (canUseRadar && merchant.latitude && merchant.longitude) {
-    locationsList.push({
-      kind: "walletobjects#latLongPoint",
-      latitude: Number(merchant.latitude),
-      longitude: Number(merchant.longitude),
-    });
-  }
-
-  try {
-    if (canUseRadar && merchant.radarZones) {
-      const parsed = JSON.parse(merchant.radarZones);
-      if (Array.isArray(parsed)) {
-        for (const zone of parsed) {
-          if (locationsList.length >= 10) break;
-          if (zone.lat && zone.lng) {
-            locationsList.push({
-              kind: "walletobjects#latLongPoint",
-              latitude: Number(zone.lat),
-              longitude: Number(zone.lng),
-            });
-          }
-        }
-      }
-    }
-  } catch {
-    // ignore json error
-  }
+  // Parse deduplicated Geofencing Locations (up to 10 points)
+  const locationsList = buildDeduplicatedRadarLocations(merchant, locale).map((loc) => ({
+    kind: "walletobjects#latLongPoint",
+    latitude: loc.latitude,
+    longitude: loc.longitude,
+  }));
 
   // Public Links Module
   const linksList: Array<{ uri: string; description: string }> = [];

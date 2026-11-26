@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getStoreSessionFromCookies } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
@@ -17,6 +18,21 @@ export async function POST(
       return NextResponse.json(
         { error: "بطاقة الوفاء غير موجودة" },
         { status: 404 }
+      );
+    }
+
+    const session = await getStoreSessionFromCookies(req.cookies, customer.merchant.slug);
+    if (!session) {
+      return NextResponse.json(
+        { error: "غير مصرح بتشغيل محاكاة الرادار بدون جلسة متجر صالحة" },
+        { status: 403 }
+      );
+    }
+
+    if (customer.merchant.plan === "STARTER" || !customer.merchant.autoRadar) {
+      return NextResponse.json(
+        { error: "رادار القرب 100m غير مفعّل لهذا المتجر" },
+        { status: 403 }
       );
     }
 

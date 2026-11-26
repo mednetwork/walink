@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { getJoinUrl, getPassUrl } from "@/lib/urls";
+import { isCasablancaPlaceholderCoords, isValidCoordinatePair } from "@/lib/radar";
 import { formatStamps } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -924,8 +925,8 @@ export default function MerchantDashboardClient({
   const [branchCityInput, setBranchCityInput] = useState(merchant.city || "الدار البيضاء");
   const [branchPinInput, setBranchPinInput] = useState("");
   const [branchPinError, setBranchPinError] = useState<string | null>(null);
-  const [branchLatInput, setBranchLatInput] = useState<string | number>(merchant.latitude ?? 33.5731);
-  const [branchLngInput, setBranchLngInput] = useState<string | number>(merchant.longitude ?? -7.5898);
+  const [branchLatInput, setBranchLatInput] = useState<string | number>(merchant.latitude ?? "");
+  const [branchLngInput, setBranchLngInput] = useState<string | number>(merchant.longitude ?? "");
   const [branchGmapsInput, setBranchGmapsInput] = useState("");
   const [branchRadarMsgInput, setBranchRadarMsgInput] = useState(merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.");
   const [branchPhoneInput, setBranchPhoneInput] = useState(merchant.phone || "");
@@ -973,8 +974,8 @@ export default function MerchantDashboardClient({
     setBranchCityInput(merchant.city || "الدار البيضاء");
     setBranchPinInput("");
     setBranchPinError(null);
-    setBranchLatInput(merchant.latitude ?? 33.5731);
-    setBranchLngInput(merchant.longitude ?? -7.5898);
+    setBranchLatInput(merchant.latitude ?? "");
+    setBranchLngInput(merchant.longitude ?? "");
     setBranchGmapsInput("");
     setBranchRadarMsgInput("أنت بالقرب من فرعنا! تفضل بزيارتنا وبطاقتك جاهزة.");
     setBranchPhoneInput("");
@@ -990,8 +991,8 @@ export default function MerchantDashboardClient({
     setBranchCityInput(b.city);
     setBranchPinInput(b.pinCode || "");
     setBranchPinError(null);
-    setBranchLatInput(b.latitude ?? 33.5731);
-    setBranchLngInput(b.longitude ?? -7.5898);
+    setBranchLatInput(b.latitude ?? "");
+    setBranchLngInput(b.longitude ?? "");
     setBranchGmapsInput(b.googleMapsUrl || "");
     setBranchRadarMsgInput(b.radarMessage || "أنت بالقرب من فرعنا! تفضل بزيارتنا وبطاقتك جاهزة.");
     setBranchPhoneInput(b.phone || "");
@@ -1060,8 +1061,12 @@ export default function MerchantDashboardClient({
         name,
         city: branchCityInput.trim() || merchant.city || "الدار البيضاء",
         pinCode: cleanPin || undefined,
-        latitude: Number(branchLatInput) || 33.5731,
-        longitude: Number(branchLngInput) || -7.5898,
+        latitude: isValidCoordinatePair(branchLatInput, branchLngInput)
+          ? Number(branchLatInput)
+          : undefined,
+        longitude: isValidCoordinatePair(branchLatInput, branchLngInput)
+          ? Number(branchLngInput)
+          : undefined,
         googleMapsUrl: branchGmapsInput.trim(),
         radarMessage: branchRadarMsgInput.trim(),
         phone: branchPhoneInput.trim(),
@@ -1185,8 +1190,8 @@ export default function MerchantDashboardClient({
   // Tab 4 (Settings) States
   const [merchantLoyaltyMode, setMerchantLoyaltyMode] = useState(merchant.loyaltyMode || "BOTH");
   const [merchantCashbackRate, setMerchantCashbackRate] = useState(merchant.cashbackRate || 10);
-  const [merchantLatitude, setMerchantLatitude] = useState<number | string>(merchant.latitude ?? 33.5731);
-  const [merchantLongitude, setMerchantLongitude] = useState<number | string>(merchant.longitude ?? -7.5898);
+  const [merchantLatitude, setMerchantLatitude] = useState<number | string>(merchant.latitude ?? "");
+  const [merchantLongitude, setMerchantLongitude] = useState<number | string>(merchant.longitude ?? "");
   const [merchantGoogleMapsUrl, setMerchantGoogleMapsUrl] = useState(merchant.googleMapsUrl || "");
   const [merchantRadarMessage, setMerchantRadarMessage] = useState(
     merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة."
@@ -1207,8 +1212,8 @@ export default function MerchantDashboardClient({
   const hasUnsavedChanges =
     merchantLoyaltyMode !== (merchant.loyaltyMode || "BOTH") ||
     Number(merchantCashbackRate) !== Number(merchant.cashbackRate || 10) ||
-    Number(merchantLatitude) !== Number(merchant.latitude ?? 33.5731) ||
-    Number(merchantLongitude) !== Number(merchant.longitude ?? -7.5898) ||
+    String(merchantLatitude) !== String(merchant.latitude ?? "") ||
+    String(merchantLongitude) !== String(merchant.longitude ?? "") ||
     merchantGoogleMapsUrl !== (merchant.googleMapsUrl || "") ||
     merchantRadarMessage !== (merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.");
 
@@ -1296,8 +1301,11 @@ export default function MerchantDashboardClient({
     setSavingSettings(true);
     setSaveSuccessMsg(null);
     try {
-      const latNum = Number(merchantLatitude);
-      const lngNum = Number(merchantLongitude);
+      const hasEmptyCoords =
+        String(merchantLatitude).trim() === "" && String(merchantLongitude).trim() === "";
+      const hasValidCoords = isValidCoordinatePair(merchantLatitude, merchantLongitude);
+      const latNum = hasEmptyCoords ? null : hasValidCoords ? Number(merchantLatitude) : undefined;
+      const lngNum = hasEmptyCoords ? null : hasValidCoords ? Number(merchantLongitude) : undefined;
 
       const res = await fetch(`/api/m/${merchant.slug}/settings`, {
         method: "PATCH",
@@ -1307,8 +1315,8 @@ export default function MerchantDashboardClient({
           actorRole: authRole,
           loyaltyMode: merchantLoyaltyMode,
           cashbackRate: Number(merchantCashbackRate),
-          latitude: isNaN(latNum) ? undefined : latNum,
-          longitude: isNaN(lngNum) ? undefined : lngNum,
+          latitude: latNum,
+          longitude: lngNum,
           googleMapsUrl: merchantGoogleMapsUrl.trim(),
           radarMessage: merchantRadarMessage.trim(),
         }),
@@ -1322,8 +1330,8 @@ export default function MerchantDashboardClient({
         ...m,
         loyaltyMode: merchantLoyaltyMode,
         cashbackRate: Number(merchantCashbackRate),
-        latitude: isNaN(latNum) ? m.latitude : latNum,
-        longitude: isNaN(lngNum) ? m.longitude : lngNum,
+        latitude: latNum === null ? undefined : latNum !== undefined ? latNum : m.latitude,
+        longitude: lngNum === null ? undefined : lngNum !== undefined ? lngNum : m.longitude,
         googleMapsUrl: merchantGoogleMapsUrl.trim(),
         radarMessage: merchantRadarMessage.trim(),
       }));
@@ -3981,10 +3989,10 @@ export default function MerchantDashboardClient({
                 {isOwner && (
                   <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-800 leading-relaxed">
                     💡 {locale === "fr"
-                      ? "Toutes ces succursales sont synchronisées automatiquement dans le radar Apple & Google Wallet (jusqu'à 10 points de vente). La carte s'affiche sur l'écran verrouillé du client dès qu'il est à 100m de n'importe quel point !"
+                      ? "Toutes ces succursales sont synchronisées automatiquement dans le radar de proximité 100m Apple Wallet (iPhone, jusqu'à 10 points). Google Wallet enregistre uniquement le lien Google Maps."
                       : locale === "es"
-                        ? "Todas estas sucursales se sincronizan automáticamente en el radar de Apple y Google Wallet (hasta 10). La tarjeta aparece en la pantalla de bloqueo a menos de 100m de cualquier sucursal."
-                        : "جميع هذه الفروع مسجلة تلقائياً في رادار بطاقة المحفظة (Apple & Google Wallet) حتى 10 فروع، وتظهر البطاقة على شاشة قفل الزبون فور اقترابه من أي فرع بـ 100 متر!"}
+                        ? "Todas estas sucursales se sincronizan automáticamente en el radar de proximidad de 100m de Apple Wallet (iPhone, hasta 10 puntos). Google Wallet solo guarda el enlace de mapas."
+                        : "جميع هذه الفروع مسجلة تلقائياً في رادار القرب 100 متر لبطاقة Apple Wallet على الآيفون (حتى 10 فروع، وتتحدث تلقائياً في الخلفية). أما Google Wallet على الأندرويد فينشر رابط خرائط Google فقط حسب قيود Google."}
                   </div>
                 )}
               </div>
@@ -4011,11 +4019,33 @@ export default function MerchantDashboardClient({
 
                 <p className="text-[11px] text-[#5F655D] leading-relaxed">
                   {locale === "fr"
-                    ? "Coordonnées GPS utilisées pour le radar de proximité 100m et la géolocalisation sur Apple et Google Wallet."
+                    ? "Coordonnées GPS utilisées pour le radar de proximité 100m sur iPhone (Apple Wallet) et la fiche du commerce sur Google Wallet."
                     : locale === "es"
-                      ? "Coordenadas GPS utilizadas para el radar de proximidad de 100m y la ubicación en Apple y Google Wallet."
-                      : "إحداثيات GPS تُستخدم لتشغيل رادار الـ 100 متر على بطاقات Apple و Google Wallet ومساعدة الزبائن في العثور عليك."}
+                      ? "Coordenadas GPS utilizadas para el radar de proximidad de 100m en iPhone (Apple Wallet) y la ubicación en Google Wallet."
+                      : "إحداثيات GPS تُستخدم لتشغيل رادار القرب 100 متر على شاشة قفل الآيفون (Apple Wallet) وتُربط بخرائط Google Wallet (لا يدعم Google Wallet إشعارات القرب التلقائية)."}
                 </p>
+
+                {automations.autoRadar &&
+                  merchant.plan !== "STARTER" &&
+                  (!isValidCoordinatePair(merchantLatitude, merchantLongitude) ||
+                    isCasablancaPlaceholderCoords(merchantLatitude, merchantLongitude, merchant.city)) && (
+                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-semibold flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <span>
+                        {!isValidCoordinatePair(merchantLatitude, merchantLongitude)
+                          ? locale === "fr"
+                            ? "Veuillez définir votre position GPS réelle ou coller un lien Google Maps pour activer le radar 100m sur iPhone."
+                            : locale === "es"
+                              ? "Configura tu ubicación GPS real o pega el enlace de Google Maps para activar el radar 100m en iPhone."
+                              : "يرجى تحديد موقع متجرك الحقيقي عبر الزر أدناه أو لصق رابط Google Maps لتفعيل رادار القرب 100 متر للآيفون."
+                          : locale === "fr"
+                            ? `Attention : les coordonnées actuelles correspondent au point par défaut de Casablanca alors que votre boutique est à ${merchant.city}. Mettez à jour votre position réelle.`
+                            : locale === "es"
+                              ? `Atención: las coordenadas actuales apuntan al valor predeterminado de Casablanca aunque tu tienda está en ${merchant.city}. Actualiza tu ubicación real.`
+                              : `تنبيه: الإحداثيات الحالية مضبوطة على الموقع الافتراضي للدار البيضاء بينما مدينتك المسجلة هي (${merchant.city}). حدّث الموقع الحقيقي لمتجرك لتشتغل تنبيهات القرب عند باب محلك.`}
+                      </span>
+                    </div>
+                  )}
 
                 {/* Google Maps Link Input with Smart Coordinate Parser */}
                 <div className="space-y-1">

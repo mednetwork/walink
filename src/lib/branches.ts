@@ -69,8 +69,8 @@ export function resolveEffectiveBranches(
         id: "br_main",
         name: `الفرع الرئيسي (${merchant.city})`,
         city: merchant.city,
-        latitude: merchant.latitude ?? 33.5731,
-        longitude: merchant.longitude ?? -7.5898,
+        latitude: merchant.latitude ?? undefined,
+        longitude: merchant.longitude ?? undefined,
         googleMapsUrl: merchant.googleMapsUrl || "",
         radarMessage:
           merchant.radarMessage ||
