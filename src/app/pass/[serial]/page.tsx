@@ -117,6 +117,7 @@ export default async function CustomerPassPage({ params }: PassPageProps) {
     isActivated: customer.isActivated ?? true,
     referredByCode: customer.referredByCode,
     referralsCount: customer.referralsCount,
+    hasClaimedReviewReward: customer.hasClaimedReviewReward ?? false,
     securityPin: customer.securityPin || customer.memberCode,
   };
 

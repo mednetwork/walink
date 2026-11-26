@@ -1128,8 +1128,8 @@ export const translations: Record<Locale, TranslationDictionary> = {
       },
       referral: {
         title: "🎁 شارك مع صديق واربح",
-        stampsDesc: "أهدِ صديقك بطاقة واحصل على ختم مجاني فور تسجيله!",
-        cashbackDesc: "أهدِ صديقك بطاقة واحصل على +{bonus} {currency} رصيد كاش باك مجاني فور تسجيله!",
+        stampsDesc: "أهدِ صديقك بطاقة واحصل على +0.5 ختم (نصف ختم) فور تفعيل بطاقته في أول زيارة!",
+        cashbackDesc: "أهدِ صديقك بطاقة واحصل على 50% (نصف) من كاش باك أول فاتورة له فور تفعيل بطاقته!",
         inviteFriend: "مشاركة عبر واتساب",
         copyLink: "نسخ الرابط",
         linkCopied: "تم النسخ!",
@@ -1733,8 +1733,8 @@ export const translations: Record<Locale, TranslationDictionary> = {
       },
       referral: {
         title: "🎁 Parrainez un ami et gagnez",
-        stampsDesc: "Offrez une carte à un ami et recevez un tampon gratuit dès son inscription !",
-        cashbackDesc: "Offrez une carte à un ami et recevez +{bonus} {currency} de cashback dès son inscription !",
+        stampsDesc: "Offrez une carte à un ami et recevez +0,5 tampon dès l'activation de sa carte lors de sa première visite !",
+        cashbackDesc: "Offrez une carte à un ami et recevez 50% du cashback de sa première facture dès l'activation de sa carte !",
         inviteFriend: "Partager sur WhatsApp",
         copyLink: "Copier le lien",
         linkCopied: "Copié !",
@@ -2338,8 +2338,8 @@ export const translations: Record<Locale, TranslationDictionary> = {
       },
       referral: {
         title: "🎁 Invita a un amigo y gana",
-        stampsDesc: "¡Regala una tarjeta a un amigo y recibe un sello gratis al registrarse!",
-        cashbackDesc: "¡Regala una tarjeta a un amigo y recibe +{bonus} {currency} de saldo cashback al registrarse!",
+        stampsDesc: "¡Regala una tarjeta a un amigo y recibe +0,5 sello en cuanto active su tarjeta en su primera visita!",
+        cashbackDesc: "¡Regala una tarjeta a un amigo y recibe el 50% del cashback de su primera factura al activar su tarjeta!",
         inviteFriend: "Compartir por WhatsApp",
         copyLink: "Copiar enlace",
         linkCopied: "¡Copiado!",

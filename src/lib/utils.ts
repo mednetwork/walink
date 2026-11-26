@@ -83,3 +83,17 @@ export function calculateDistanceInMeters(
 
   return Math.round(R * c);
 }
+
+/**
+ * Rounds stamp values cleanly to 2 decimal places (avoiding IEEE-754 float noise like 1.5000000001).
+ */
+export function roundStamps(value: number | null | undefined): number {
+  return Number((Number(value) || 0).toFixed(2));
+}
+
+/**
+ * Formats stamps nicely for display without trailing ".0" (e.g. 2 -> "2", 1.5 -> "1.5").
+ */
+export function formatStamps(value: number | null | undefined): string {
+  return String(roundStamps(value));
+}

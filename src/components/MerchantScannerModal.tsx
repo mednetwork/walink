@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { soundEngine } from "@/lib/sound";
 import { Locale, translations } from "@/lib/i18n/translations";
+import { formatStamps } from "@/lib/utils";
 
 interface BarcodeDetectorResult {
   rawValue: string;
@@ -1216,7 +1217,7 @@ export default function MerchantScannerModal({
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-[#5F655D] font-semibold">الأختام المجمّعة:</span>
                   <span className="font-mono font-bold text-[#008069] text-sm">
-                    {selectedCustomer.stamps} / {stampsRequired}
+                    {formatStamps(selectedCustomer.stamps)} / {stampsRequired}
                   </span>
                 </div>
 

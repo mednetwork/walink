@@ -105,7 +105,7 @@ model Customer {
   birthday          String?
   passSerial        String        @unique @default(cuid())
   memberCode        String        // 4-digit display ID e.g. "4821"
-  stamps            Int           @default(0)
+  stamps            Float         @default(0)
   loyaltyType       String        @default("STAMPS") // STAMPS or CASHBACK
   cashbackBalance   Float         @default(0)        // Current spendable cashback balance
   totalCashbackEarned Float       @default(0)        // Lifetime cashback earned
@@ -116,6 +116,7 @@ model Customer {
   isActivated        Boolean       @default(true)
   referredByCode     String?       // 4-digit memberCode of the customer who referred them
   referralsCount     Int           @default(0)      // How many friends this customer brought in
+  hasClaimedReviewReward Boolean   @default(false)  // Tracks one-time Google Maps 5-star review reward per card
   lastVisitAt       DateTime      @default(now())
   walletType        String        @default("WEBPASS") // APPLE, GOOGLE, WEBPASS
   pushSubscription  String?       @db.Text        // JSON string for Web Push API
@@ -139,8 +140,8 @@ model Transaction {
   merchant      Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   customerId    String
   customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  type          String    // STAMP_ADDED, REWARD_REDEEMED, CARD_CREATED, CASHBACK_EARNED, CASHBACK_REDEEMED
-  stampsDelta   Int       @default(1)
+  type          String    // STAMP_ADDED, REWARD_REDEEMED, CARD_CREATED, CASHBACK_EARNED, CASHBACK_REDEEMED, REVIEW_REWARD
+  stampsDelta   Float     @default(1)
   billAmount    Float?    // Original purchase bill amount (for CASHBACK_EARNED)
   cashbackDelta Float?    // +amount earned or -amount redeemed
   note          String?   @db.Text

@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { formatStamps, roundStamps } from "@/lib/utils";
 
 export interface GoogleWalletConfig {
   isConfigured: boolean;
@@ -319,7 +320,7 @@ export function buildLoyaltyObject(
     loyaltyPoints = {
       label: pointsLabel,
       balance: {
-        string: `${customer.stamps} / ${merchant.stampsRequired}`,
+        string: `${formatStamps(customer.stamps || 0)} / ${merchant.stampsRequired}`,
       },
     };
 
@@ -370,15 +371,15 @@ export function buildLoyaltyObject(
 
   if (!isCashback) {
     const safeRequired = Math.max(1, merchant.stampsRequired || 5);
-    const safeStamps = isUnactivated
-      ? 0
-      : Math.max(0, Math.min(safeRequired, customer.stamps || 0));
+    const rawStamps = isUnactivated ? 0 : roundStamps(customer.stamps || 0);
+    const safeStamps = Math.max(0, Math.min(safeRequired, rawStamps));
+    const formattedTotalStamps = formatStamps(rawStamps);
     const dotsLimit = Math.min(safeRequired, 15);
-    const filledDots = isUnactivated
-      ? 0
-      : Math.min(dotsLimit, Math.round((safeStamps / safeRequired) * dotsLimit));
-    const emptyDots = Math.max(0, dotsLimit - filledDots);
-    const dotsDisplay = `${"●".repeat(filledDots)}${"○".repeat(emptyDots)} (${safeStamps} / ${safeRequired})`;
+    const scaledStamps = isUnactivated ? 0 : (safeStamps / safeRequired) * dotsLimit;
+    const fullDots = Math.min(dotsLimit, Math.floor(scaledStamps));
+    const hasHalfDot = scaledStamps - fullDots >= 0.25 && fullDots < dotsLimit;
+    const emptyDots = Math.max(0, dotsLimit - fullDots - (hasHalfDot ? 1 : 0));
+    const dotsDisplay = `${"●".repeat(fullDots)}${hasHalfDot ? "◐" : ""}${"○".repeat(emptyDots)} (${formattedTotalStamps} / ${safeRequired})`;
 
     textModulesData.unshift({
       id: "stamps_progress",
@@ -404,10 +405,11 @@ export function buildLoyaltyObject(
   const heroRequired = Math.max(1, merchant.stampsRequired || 5);
   const heroStamps = isUnactivated
     ? 0
-    : Math.max(0, Math.min(heroRequired, customer.stamps || 0));
+    : Math.max(0, Math.min(heroRequired, roundStamps(customer.stamps || 0)));
+  const formattedHeroStamps = formatStamps(heroStamps);
   const heroImageUrl = `https://wclient.walink.ma/api/pass/${encodeURIComponent(
     customer.passSerial
-  )}/stamps-image?s=${heroStamps}&t=${heroRequired}&a=${isUnactivated ? 0 : 1}&vip=${
+  )}/stamps-image?s=${formattedHeroStamps}&t=${heroRequired}&a=${isUnactivated ? 0 : 1}&vip=${
     customer.isVip ? 1 : 0
   }&v=${Date.now()}`;
 
@@ -421,7 +423,7 @@ export function buildLoyaltyObject(
         language: locale === "fr" ? "fr" : locale === "es" ? "es" : "ar",
         value: isCashback
           ? `${merchant.name} - ${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
-          : `${merchant.name} - ${heroStamps} / ${heroRequired}`,
+          : `${merchant.name} - ${formatStamps(isUnactivated ? 0 : roundStamps(customer.stamps || 0))} / ${heroRequired}`,
       },
     },
   };

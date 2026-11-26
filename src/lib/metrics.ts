@@ -74,6 +74,7 @@ export function isPhysicalCounterVisit(tx: {
   if (
     lowerNote.includes("مكافأة إحالة") ||
     lowerNote.includes("مكافأة زيارة وتفعيل صديقك") ||
+    lowerNote.includes("مكافأة تقييم") ||
     lowerNote.includes("referral")
   ) {
     return false;
@@ -122,7 +123,7 @@ export function computeMerchantMetrics(params: {
 
   for (const c of customers) {
     if (new Date(c.lastVisitAt) <= fourteenDaysAgo) quietCount++;
-    if (c.stamps === stampsRequired - 1) nearCount++;
+    if (c.stamps >= stampsRequired - 1 && c.stamps < stampsRequired) nearCount++;
     if (c.totalVisits >= 10) vipCount++;
   }
 

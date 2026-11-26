@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import QRCode from "qrcode";
+import { formatStamps, roundStamps } from "@/lib/utils";
 import {
   Coffee,
   Scissors,
@@ -202,7 +203,8 @@ export default function WalletPassPreview({
   const MerchantIconComponent = getMerchantLucideIcon(logoIcon || niche);
 
   const safeStampsRequired = Math.max(3, Math.min(10, stampsRequired || 5));
-  const safeStamps = Math.max(0, Math.min(safeStampsRequired, stamps || 0));
+  const rawDisplayStamps = Math.max(0, roundStamps(stamps || 0));
+  const safeStamps = Math.max(0, Math.min(safeStampsRequired, rawDisplayStamps));
 
   const isVipCustomer = Boolean(
     isVip ||
@@ -319,7 +321,7 @@ export default function WalletPassPreview({
           <div className="text-center bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 shadow-sm">
             <div className="text-[10px] text-white/70 font-medium">{labels.stampsHeader}</div>
             <div className="text-sm font-bold text-sky-400 font-mono tracking-tight">
-              {safeStamps} / {safeStampsRequired}
+              {formatStamps(rawDisplayStamps)} / {safeStampsRequired}
             </div>
           </div>
         )}
@@ -359,21 +361,30 @@ export default function WalletPassPreview({
           {/* Circular Embossed Stamp Slots Grid */}
           <div className="grid grid-cols-5 gap-2.5 pt-2">
             {Array.from({ length: safeStampsRequired }).map((_, index) => {
-              const isCollected = index < safeStamps;
+              const slotFill = Math.max(0, Math.min(1, safeStamps - index));
+              const isCollected = slotFill >= 0.99;
+              const isHalfCollected = !isCollected && slotFill >= 0.25;
               const isGiftSlot = index === safeStampsRequired - 1;
 
               if (isGiftSlot) {
                 return (
                   <div
                     key={index}
-                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center transition-all duration-300 relative ${
+                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center transition-all duration-300 relative overflow-hidden ${
                       isCollected
                         ? "bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 ring-1 ring-amber-200 scale-105"
+                        : isHalfCollected
+                        ? "bg-black/40 border border-amber-300/70 text-white shadow-md"
                         : "bg-black/40 border border-dashed border-amber-400/50 text-amber-300/80"
                     }`}
                   >
-                    <Gift className={`w-5 h-5 ${isCollected ? "animate-pulse" : ""}`} />
-                    <span className="text-[9px] font-bold mt-0.5">{labels.giftSlot}</span>
+                    {isHalfCollected && (
+                      <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500/90 pointer-events-none" />
+                    )}
+                    <Gift className={`w-5 h-5 relative z-10 ${isCollected ? "animate-pulse" : ""}`} />
+                    <span className="text-[9px] font-bold mt-0.5 relative z-10">
+                      {isHalfCollected ? "½" : labels.giftSlot}
+                    </span>
                   </div>
                 );
               }
@@ -381,9 +392,11 @@ export default function WalletPassPreview({
               return (
                 <div
                   key={index}
-                  className={`aspect-square rounded-2xl flex flex-col items-center justify-center transition-all duration-300 relative ${
+                  className={`aspect-square rounded-2xl flex flex-col items-center justify-center transition-all duration-300 relative overflow-hidden ${
                     isCollected
                       ? "bg-gradient-to-br from-emerald-300 via-emerald-400 to-emerald-600 text-slate-950 font-bold shadow-md shadow-emerald-500/25 ring-1 ring-emerald-200/80"
+                      : isHalfCollected
+                      ? "bg-black/35 border border-emerald-300/70 text-white shadow-sm ring-1 ring-emerald-300/40"
                       : "bg-black/35 border border-white/10 text-white/40"
                   }`}
                   style={{
@@ -392,9 +405,19 @@ export default function WalletPassPreview({
                       : "inset 0 3px 6px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255,255,255,0.06)",
                   }}
                 >
-                  {isCollected ? (
-                    <Check className="w-5 h-5 stroke-[3]" />
-                  ) : (
+                  {isHalfCollected && (
+                    <>
+                      <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-br from-emerald-300 via-emerald-400 to-emerald-600 pointer-events-none" />
+                      <div className="relative z-10 flex flex-col items-center justify-center">
+                        <MerchantIconComponent className="w-4 h-4 text-white drop-shadow-sm" />
+                        <span className="text-[9px] font-black leading-none mt-0.5 text-emerald-100 drop-shadow-sm">
+                          ½
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {isCollected && <Check className="w-5 h-5 stroke-[3]" />}
+                  {!isCollected && !isHalfCollected && (
                     <MerchantIconComponent className="w-5 h-5 text-white/40 drop-shadow-sm transition-transform duration-200 hover:scale-110" />
                   )}
                 </div>

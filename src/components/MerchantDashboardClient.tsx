@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { getJoinUrl, getPassUrl } from "@/lib/urls";
+import { formatStamps } from "@/lib/utils";
 import {
   LayoutDashboard,
   Users,
@@ -2358,16 +2359,23 @@ export default function MerchantDashboardClient({
                 {/* Stamp Circles Visual Indicator */}
                 <div className="flex items-center justify-center gap-1.5 py-1 flex-wrap">
                   {Array.from({ length: successModalData.stampsRequired || merchant.stampsRequired || 8 }).map((_, idx) => {
-                    const isFilled = idx < (successModalData.stamps ?? 0);
+                    const slotFill = Math.max(0, Math.min(1, (successModalData.stamps ?? 0) - idx));
+                    const isFilled = slotFill >= 0.99;
+                    const isHalf = !isFilled && slotFill >= 0.25;
                     return (
                       <div
                         key={idx}
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${isFilled
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all relative overflow-hidden ${isFilled
                           ? "bg-[#008069] text-white shadow-sm scale-105"
+                          : isHalf
+                          ? "bg-white border border-[#008069] text-[#173E30] shadow-sm"
                           : "bg-white border border-[#C8D1BE] text-[#5F655D]"
                           }`}
                       >
-                        {isFilled ? "✓" : idx + 1}
+                        {isHalf && (
+                          <span className="absolute inset-y-0 left-0 w-1/2 bg-[#008069]/35 pointer-events-none" />
+                        )}
+                        <span className="relative z-10">{isFilled ? "✓" : isHalf ? "½" : idx + 1}</span>
                       </div>
                     );
                   })}
@@ -2376,7 +2384,7 @@ export default function MerchantDashboardClient({
                 <div className="pt-1 flex items-center justify-between text-[11px] text-[#5F655D]">
                   <span>{locale === "ar" ? "مجموع الأختام:" : "Total tampons :"}</span>
                   <span className="font-mono font-bold text-[#008069]">
-                    {successModalData.stamps} / {successModalData.stampsRequired || merchant.stampsRequired}
+                    {formatStamps(successModalData.stamps)} / {successModalData.stampsRequired || merchant.stampsRequired}
                   </span>
                 </div>
 
@@ -2792,7 +2800,7 @@ export default function MerchantDashboardClient({
                         className={`text-[11px] font-bold font-mono ${tx.stampsDelta > 0 ? "text-[#008069]" : "text-amber-600"
                           }`}
                       >
-                        {tx.note || (tx.stampsDelta > 0 ? "+1 طابع" : "استلام مكافأة")}
+                        {tx.note || (tx.stampsDelta > 0 ? `+${formatStamps(tx.stampsDelta)} طابع` : "استلام مكافأة")}
                       </span>
                     </div>
                   ))
@@ -2910,7 +2918,7 @@ export default function MerchantDashboardClient({
                               </span>
                             ) : (
                               <span className="font-mono font-bold text-[#008069] text-xs block">
-                                {c.stamps}/{merchant.stampsRequired}
+                                {formatStamps(c.stamps)}/{merchant.stampsRequired}
                               </span>
                             )}
                           </div>

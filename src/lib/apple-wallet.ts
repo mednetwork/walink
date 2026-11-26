@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 import http2 from "http2";
 import { PKPass } from "passkit-generator";
+import { formatStamps, roundStamps } from "@/lib/utils";
 
 export interface AppleWalletConfig {
   isConfigured: boolean;
@@ -268,22 +269,26 @@ export async function generateApplePass(
   const currency = merchant.currency || "DH";
   const bgColor = hexToRgb(merchant.primaryColor || "#5b3519");
 
-  // Visual Stamp Progress & Status Calculations
+  // Visual Stamp Progress & Status Calculations (supports 0.5 half-stamps with ◐)
   const isUnactivated = customer.isActivated === false;
   const stampsRequired = Math.max(1, merchant.stampsRequired || 5);
-  const currentStamps = customer.stamps || 0;
+  const currentStamps = isUnactivated ? 0 : roundStamps(customer.stamps || 0);
+  const formattedStamps = formatStamps(currentStamps);
   const isStampsFull = !isCashback && !isUnactivated && currentStamps >= stampsRequired;
-  const stampsRemaining = Math.max(0, stampsRequired - currentStamps);
+  const stampsRemaining = Math.max(0, roundStamps(stampsRequired - currentStamps));
+  const formattedRemaining = formatStamps(stampsRemaining);
 
-  let stampsProgressDisplay = `${currentStamps} / ${stampsRequired}`;
+  let stampsProgressDisplay = `${formattedStamps} / ${stampsRequired}`;
   if (isUnactivated) {
     const dots = "○".repeat(Math.min(stampsRequired, 5));
-    stampsProgressDisplay = `${dots} (${currentStamps}/${stampsRequired})`;
+    stampsProgressDisplay = `${dots} (0/${stampsRequired})`;
   } else if (stampsRequired <= 10) {
-    const earnedCount = Math.min(currentStamps, stampsRequired);
-    const remainingCount = Math.max(0, stampsRequired - earnedCount);
-    const dots = "●".repeat(earnedCount) + "○".repeat(remainingCount);
-    stampsProgressDisplay = `${dots} (${currentStamps}/${stampsRequired})`;
+    const clamped = Math.max(0, Math.min(stampsRequired, currentStamps));
+    const fullCount = Math.floor(clamped);
+    const hasHalf = clamped - fullCount >= 0.25 && fullCount < stampsRequired;
+    const remainingCount = Math.max(0, stampsRequired - fullCount - (hasHalf ? 1 : 0));
+    const dots = "●".repeat(fullCount) + (hasHalf ? "◐" : "") + "○".repeat(remainingCount);
+    stampsProgressDisplay = `${dots} (${formattedStamps}/${stampsRequired})`;
   }
 
   // Localized PassKit Field Strings
@@ -307,7 +312,7 @@ export async function generateApplePass(
       : "SELLOS",
     headerValue: isCashback
       ? `${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
-      : `${currentStamps} / ${stampsRequired}`,
+      : `${formattedStamps} / ${stampsRequired}`,
     primaryLabel: isUnactivated
       ? locale === "ar"
         ? "الهدية الأولى"
@@ -386,10 +391,10 @@ export async function generateApplePass(
         ? "🎁 Récompense prête !"
         : "🎁 ¡Recompensa lista!"
       : locale === "ar"
-      ? `باقي ${stampsRemaining} أختام`
+      ? `باقي ${formattedRemaining} أختام`
       : locale === "fr"
-      ? `Reste ${stampsRemaining} tampons`
-      : `Quedan ${stampsRemaining} sellos`,
+      ? `Reste ${formattedRemaining} tampons`
+      : `Quedan ${formattedRemaining} sellos`,
     cashbackRateLabel:
       locale === "ar"
         ? "نسبة الكاش باك"

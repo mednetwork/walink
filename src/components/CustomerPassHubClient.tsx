@@ -27,7 +27,7 @@ import {
   Lock,
 } from "lucide-react";
 import WalletPassPreview from "@/components/WalletPassPreview";
-import { formatTimeAgoArabic } from "@/lib/utils";
+import { formatTimeAgoArabic, formatStamps } from "@/lib/utils";
 import { soundEngine } from "@/lib/sound";
 import { Locale, translations, TranslationDictionary } from "@/lib/i18n/translations";
 import { getLocalizedRewardName } from "@/lib/i18n/rewards";
@@ -54,6 +54,7 @@ interface CustomerData {
   isActivated?: boolean;
   referredByCode?: string | null;
   referralsCount?: number;
+  hasClaimedReviewReward?: boolean;
   lastVisitAt: string | Date;
   walletType: string;
   pushSubscription: string | null;
@@ -1180,7 +1181,8 @@ export default function CustomerPassHubClient({
             data.customer.loyaltyType !== prevCust.loyaltyType ||
             data.customer.totalVisits !== prevCust.totalVisits ||
             data.customer.isVip !== prevCust.isVip ||
-            data.customer.isActivated !== prevCust.isActivated;
+            data.customer.isActivated !== prevCust.isActivated ||
+            Boolean(data.customer.hasClaimedReviewReward) !== Boolean(prevCust.hasClaimedReviewReward);
 
           if (hasCustomerChanged) {
             customerRef.current = data.customer;
@@ -1268,6 +1270,106 @@ export default function CustomerPassHubClient({
   };
 
   const isRewardReady = customer.stamps >= merchant.stampsRequired;
+
+  // Google Maps 5-Star One-Time Review Reward Flow
+  const [reviewStatus, setReviewStatus] = useState<"idle" | "verifying" | "claimed">(
+    customer.hasClaimedReviewReward ? "claimed" : "idle"
+  );
+  const [reviewNotice, setReviewNotice] = useState<string | null>(null);
+  const reviewStartAtRef = useRef<number>(0);
+  const reviewClaimLockRef = useRef<boolean>(false);
+  const reviewCleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (customer.hasClaimedReviewReward) {
+      setReviewStatus("claimed");
+    }
+  }, [customer.hasClaimedReviewReward]);
+
+  useEffect(() => {
+    return () => {
+      if (reviewCleanupRef.current) {
+        reviewCleanupRef.current();
+        reviewCleanupRef.current = null;
+      }
+    };
+  }, []);
+
+  const claimGoogleReviewReward = useCallback(async () => {
+    if (reviewClaimLockRef.current || customerRef.current.hasClaimedReviewReward) {
+      return;
+    }
+    reviewClaimLockRef.current = true;
+    if (reviewCleanupRef.current) {
+      reviewCleanupRef.current();
+      reviewCleanupRef.current = null;
+    }
+
+    try {
+      const res = await fetch(`/api/pass/${encodeURIComponent(customer.passSerial)}/review-reward`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang: locale }),
+        signal: AbortSignal.timeout(10000),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.customer) {
+        customerRef.current = data.customer;
+        setCustomer(data.customer);
+        setReviewStatus("claimed");
+        setReviewNotice(data.message || null);
+        soundEngine.playRewardChime();
+      } else if (data.alreadyClaimed) {
+        setCustomer((prev) => ({ ...prev, hasClaimedReviewReward: true }));
+        setReviewStatus("claimed");
+      } else {
+        setReviewStatus("idle");
+        reviewClaimLockRef.current = false;
+        setReviewNotice(data.error || null);
+      }
+    } catch (err) {
+      console.error("Failed to claim Google Maps review reward:", err);
+      setReviewStatus("idle");
+      reviewClaimLockRef.current = false;
+    }
+  }, [customer.passSerial, locale]);
+
+  const handleStartGoogleReview = () => {
+    if (customer.hasClaimedReviewReward || reviewStatus === "verifying") return;
+
+    const mapsUrl = merchant.googleMapsUrl || "https://maps.google.com";
+    window.open(mapsUrl, "_blank", "noopener,noreferrer");
+
+    if (reviewCleanupRef.current) {
+      reviewCleanupRef.current();
+    }
+
+    reviewStartAtRef.current = Date.now();
+    reviewClaimLockRef.current = false;
+    setReviewStatus("verifying");
+    setReviewNotice(null);
+
+    const onVisibilityChange = () => {
+      if (
+        typeof document !== "undefined" &&
+        document.visibilityState === "visible" &&
+        Date.now() - reviewStartAtRef.current >= 5000
+      ) {
+        void claimGoogleReviewReward();
+      }
+    };
+
+    const fallbackTimer = window.setTimeout(() => {
+      void claimGoogleReviewReward();
+    }, 8000);
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    reviewCleanupRef.current = () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.clearTimeout(fallbackTimer);
+    };
+  };
 
   return (
     <div
@@ -1524,36 +1626,101 @@ export default function CustomerPassHubClient({
           />
         </div>
 
-        {/* Google Maps 5-Star Review Prompt (Conditional, gated on STARTER 149 DH) */}
+        {/* Google Maps 5-Star Review Prompt & One-Time Reward (Gated on STARTER 149 DH & Activation) */}
         {merchant.plan !== "STARTER" &&
           merchant.autoReview &&
-          (isRewardReady || customer.rewardsRedeemed > 0) && (
+          customer.isActivated !== false && (
             <div
-              className={`p-4 rounded-2xl border border-amber-200 bg-white space-y-2 shadow-sm ${isRTL ? "text-right" : "text-left"
+              className={`p-4 rounded-2xl border border-amber-200 bg-white space-y-2.5 shadow-sm ${isRTL ? "text-right" : "text-left"
                 }`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-amber-600 font-bold text-xs">
                   <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-                  <span>هل أعجبتك الخدمة في {merchant.name}؟</span>
+                  <span>
+                    {locale === "fr"
+                      ? `Vous avez aimé ${merchant.name} ?`
+                      : locale === "es"
+                      ? `¿Te gustó la experiencia en ${merchant.name}?`
+                      : `هل أعجبتك الخدمة في ${merchant.name}؟`}
+                  </span>
                 </div>
-                <span className="text-[10px] text-amber-800 bg-amber-100 font-semibold px-2 py-0.5 rounded-md">
-                  Google Maps
+                <span className="text-[10px] text-amber-800 bg-amber-100 font-semibold px-2 py-0.5 rounded-md shrink-0">
+                  {isCashback
+                    ? locale === "fr"
+                      ? "+Bonus Cashback"
+                      : locale === "es"
+                      ? "+Bonus Cashback"
+                      : "مكافأة كاش باك 🎁"
+                    : locale === "fr"
+                    ? "+0,5 Tampon"
+                    : locale === "es"
+                    ? "+0,5 Sello"
+                    : "+0.5 ختم ⭐"}
                 </span>
               </div>
               <p className="text-xs text-[#5F655D] leading-relaxed">
-                ساعدنا بتقييم متجرنا على خرائط جوجل بـ 5 نجوم لمساعدة الآخرين على
-                اكتشافنا! ⭐
+                {locale === "fr"
+                  ? isCashback
+                    ? "Laissez un avis 5 étoiles sur Google Maps et recevez un bonus cashback directement dans votre portefeuille !"
+                    : "Laissez un avis 5 étoiles sur Google Maps et recevez immédiatement +0,5 tampon bonus sur votre carte !"
+                  : locale === "es"
+                  ? isCashback
+                    ? "¡Deja una reseña de 5 estrellas en Google Maps y recibe un bono cashback en tu cartera!"
+                    : "¡Deja una reseña de 5 estrellas en Google Maps y recibe +0,5 sello extra en tu tarjeta!"
+                  : isCashback
+                  ? "قيّم متجرنا بـ 5 نجوم على خرائط Google واحصل فوراً على مكافأة كاش باك تضاف إلى محفظتك!"
+                  : "قيّم متجرنا بـ 5 نجوم على خرائط Google واحصل فوراً على نصف ختم (+0.5 ختم) إضافي في بطاقتك!"}
               </p>
-              <a
-                href={merchant.googleMapsUrl || "https://maps.google.com"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-sm"
-              >
-                <span>تقييم في خرائط Google</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+
+              {customer.hasClaimedReviewReward || reviewStatus === "claimed" ? (
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      {locale === "fr"
+                        ? "✓ Récompense d'avis reçue"
+                        : locale === "es"
+                        ? "✓ Recompensa por reseña recibida"
+                        : "✓ تم استلام مكافأة التقييم"}
+                    </span>
+                  </div>
+                  {reviewNotice && (
+                    <p className="text-[11px] font-medium text-emerald-700">{reviewNotice}</p>
+                  )}
+                </div>
+              ) : reviewStatus === "verifying" ? (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 font-bold text-xs animate-pulse">
+                  <span>
+                    {locale === "fr"
+                      ? "⏳ Vérification de votre avis en cours..."
+                      : locale === "es"
+                      ? "⏳ Verificando tu reseña..."
+                      : "⏳ جاري التحقق من تقييمك..."}
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <button
+                    type="button"
+                    onClick={handleStartGoogleReview}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-sm min-h-[44px]"
+                  >
+                    <Star className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                    <span>
+                      {locale === "fr"
+                        ? "Noter 5★ sur Google Maps & Recevoir le bonus"
+                        : locale === "es"
+                        ? "Valorar 5★ en Google Maps y recibir bono"
+                        : "تقييم 5 نجوم في خرائط Google واستلام المكافأة"}
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                  {reviewNotice && (
+                    <p className="text-[11px] font-medium text-rose-600">{reviewNotice}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

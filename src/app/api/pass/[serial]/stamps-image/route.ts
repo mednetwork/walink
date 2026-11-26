@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  * Queries Prisma directly by passSerial to guarantee authentic merchant styling and stamp state.
  */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { serial: string } }
 ) {
   try {
@@ -27,10 +27,24 @@ export async function GET(
 
     const { merchant } = customer;
 
+    const rawStampsParam = req.nextUrl.searchParams.get("s");
+    const parsedQueryStamps = rawStampsParam !== null ? parseFloat(rawStampsParam) : NaN;
+    const resolvedStamps =
+      Number.isFinite(parsedQueryStamps) && parsedQueryStamps >= 0
+        ? Number(parsedQueryStamps.toFixed(2))
+        : Number((customer.stamps || 0).toFixed(2));
+
+    const rawRequiredParam = req.nextUrl.searchParams.get("t");
+    const parsedQueryRequired = rawRequiredParam !== null ? parseInt(rawRequiredParam, 10) : NaN;
+    const resolvedRequired =
+      Number.isFinite(parsedQueryRequired) && parsedQueryRequired >= 1
+        ? parsedQueryRequired
+        : merchant.stampsRequired || 5;
+
     const pngBuffer = renderStampsStripPng({
       primaryColor: merchant.primaryColor,
-      stamps: customer.stamps || 0,
-      stampsRequired: merchant.stampsRequired || 5,
+      stamps: resolvedStamps,
+      stampsRequired: resolvedRequired,
       isCashback: customer.loyaltyType === "CASHBACK",
       isVip: Boolean(customer.isVip),
       isActivated: customer.isActivated !== false,

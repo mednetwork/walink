@@ -269,6 +269,81 @@ function drawGradientCircle(
   }
 }
 
+function drawHalfFilledCircle(
+  buf: Uint8Array,
+  width: number,
+  height: number,
+  cx: number,
+  cy: number,
+  radius: number,
+  leftTopColor: RgbaColor,
+  leftBottomColor: RgbaColor,
+  rightTopColor: RgbaColor,
+  rightBottomColor: RgbaColor,
+  borderColor: RgbaColor,
+  borderWidth: number = 2.5
+): void {
+  const minX = Math.max(0, Math.floor(cx - radius - 3));
+  const maxX = Math.min(width - 1, Math.ceil(cx + radius + 3));
+  const minY = Math.max(0, Math.floor(cy - radius - 3));
+  const maxY = Math.min(height - 1, Math.ceil(cy + radius + 3));
+
+  for (let py = minY; py <= maxY; py++) {
+    const dy = py - cy;
+    const t = clamp01((dy + radius) / (2 * radius));
+    const lr = Math.round(leftTopColor.r * (1 - t) + leftBottomColor.r * t);
+    const lg = Math.round(leftTopColor.g * (1 - t) + leftBottomColor.g * t);
+    const lb = Math.round(leftTopColor.b * (1 - t) + leftBottomColor.b * t);
+    const la = (leftTopColor.a * (1 - t) + leftBottomColor.a * t) / 255;
+
+    const rr = Math.round(rightTopColor.r * (1 - t) + rightBottomColor.r * t);
+    const rg = Math.round(rightTopColor.g * (1 - t) + rightBottomColor.g * t);
+    const rb = Math.round(rightTopColor.b * (1 - t) + rightBottomColor.b * t);
+    const ra = (rightTopColor.a * (1 - t) + rightBottomColor.a * t) / 255;
+
+    for (let px = minX; px <= maxX; px++) {
+      const dx = px - cx;
+      const dist = Math.hypot(dx, dy);
+      const sd = dist - radius;
+      const idx = (py * width + px) * 4;
+
+      const fillCov = smoothCoverage(sd);
+      if (fillCov > 0) {
+        // Anti-aliased horizontal transition across dx = 0 (left half filled, right half empty)
+        const leftWeight = clamp01(0.5 - dx);
+        const rightWeight = 1 - leftWeight;
+        if (leftWeight > 0 && la > 0) {
+          blendPixel(buf, idx, lr, lg, lb, fillCov * la * leftWeight);
+        }
+        if (rightWeight > 0 && ra > 0) {
+          blendPixel(buf, idx, rr, rg, rb, fillCov * ra * rightWeight);
+        }
+        // Subtle crisp vertical divider line at cx inside circle
+        const dividerCov = smoothCoverage(Math.abs(dx) - 1);
+        if (dividerCov > 0) {
+          blendPixel(buf, idx, 255, 255, 255, fillCov * dividerCov * 0.55);
+        }
+      }
+
+      if (borderColor.a > 0) {
+        const halfBw = borderWidth / 2;
+        const ringDist = Math.abs(sd + halfBw) - halfBw;
+        const ringCov = smoothCoverage(ringDist);
+        if (ringCov > 0) {
+          blendPixel(
+            buf,
+            idx,
+            borderColor.r,
+            borderColor.g,
+            borderColor.b,
+            ringCov * (borderColor.a / 255)
+          );
+        }
+      }
+    }
+  }
+}
+
 function drawCapsuleLine(
   buf: Uint8Array,
   width: number,
@@ -739,7 +814,9 @@ export function renderStampsStripPng(options: StampStripRenderOptions): Buffer {
     for (let colIdx = 0; colIdx < row.length; colIdx++) {
       const slotIndex = row[colIdx];
       const cx = startLeftX + colIdx * (circleDiameter + gap);
-      const isCollected = slotIndex < earnedCount;
+      const slotFill = clamp01(earnedCount - slotIndex);
+      const isCollected = slotFill >= 0.99;
+      const isHalfCollected = !isCollected && slotFill >= 0.25;
       const isGiftSlot = slotIndex === totalRequired - 1;
 
       if (isGiftSlot) {
@@ -761,6 +838,27 @@ export function renderStampsStripPng(options: StampStripRenderOptions): Buffer {
             g: 24,
             b: 39,
             a: 255,
+          });
+        } else if (isHalfCollected) {
+          drawHalfFilledCircle(
+            rgba,
+            IMAGE_WIDTH,
+            IMAGE_HEIGHT,
+            cx,
+            cy,
+            radius,
+            { r: 252, g: 211, b: 77, a: 255 },
+            { r: 245, g: 158, b: 11, a: 255 },
+            { r: 0, g: 0, b: 0, a: 95 },
+            { r: 0, g: 0, b: 0, a: 120 },
+            { r: 253, g: 224, b: 71, a: 245 },
+            2.5
+          );
+          drawGiftGlyph(rgba, cx, cy, circleDiameter * 0.56, {
+            r: 255,
+            g: 255,
+            b: 255,
+            a: 245,
           });
         } else {
           drawGradientCircle(
@@ -805,6 +903,29 @@ export function renderStampsStripPng(options: StampStripRenderOptions): Buffer {
           b: 255,
           a: 255,
         });
+      } else if (isHalfCollected) {
+        drawHalfFilledCircle(
+          rgba,
+          IMAGE_WIDTH,
+          IMAGE_HEIGHT,
+          cx,
+          cy,
+          radius,
+          { r: 52, g: 211, b: 153, a: 255 },
+          { r: 5, g: 150, b: 105, a: 255 },
+          { r: 0, g: 0, b: 0, a: 80 },
+          { r: 0, g: 0, b: 0, a: 105 },
+          { r: 167, g: 243, b: 208, a: 235 },
+          2.5
+        );
+        drawNicheGlyph(
+          rgba,
+          options.iconOrNiche,
+          cx,
+          cy,
+          circleDiameter * 0.54,
+          { r: 255, g: 255, b: 255, a: 235 }
+        );
       } else {
         drawGradientCircle(
           rgba,
