@@ -52,7 +52,7 @@ export async function POST(
 
     const customer = await prisma.customer.findUnique({
       where: { passSerial: serial },
-      select: { id: true, pushSubscription: true },
+      select: { id: true, walletType: true, pushSubscription: true },
     });
 
     if (!customer) {
@@ -88,8 +88,14 @@ export async function POST(
       }
     }
 
+    // Preserve active APPLE/GOOGLE walletType when customer also enables Home Screen Web Push
     if (walletType && ["APPLE", "GOOGLE", "WEBPASS"].includes(walletType)) {
-      updateData.walletType = walletType;
+      const preservesExistingWallet =
+        walletType === "WEBPASS" &&
+        (customer.walletType === "APPLE" || customer.walletType === "GOOGLE");
+      if (!preservesExistingWallet) {
+        updateData.walletType = walletType;
+      }
     }
 
     if (Object.keys(updateData).length === 0) {

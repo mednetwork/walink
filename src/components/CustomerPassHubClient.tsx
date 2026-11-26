@@ -382,6 +382,33 @@ function isStandaloneNavigator(nav: Navigator): nav is NavigatorWithStandalone {
   return "standalone" in nav;
 }
 
+function createAbortSignalTimeout(ms: number): AbortSignal | undefined {
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+    return AbortSignal.timeout(ms);
+  }
+  return undefined;
+}
+
+function extractPushEndpoint(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith("{")) return null;
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      "endpoint" in parsed &&
+      typeof parsed.endpoint === "string"
+    ) {
+      return parsed.endpoint;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 function OfficialGoogleWalletIcon({ className = "w-10 h-8" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 50 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -623,8 +650,12 @@ export default function CustomerPassHubClient({
     }
   };
 
-  // Android PWA Direct Home Screen Installation State
+  // Home Screen PWA Installation State (iPhone & Android)
   const [isAndroid, setIsAndroid] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const [isIosNonSafari, setIsIosNonSafari] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [copiedPassLink, setCopiedPassLink] = useState(false);
   const [deferredInstallPrompt, setDeferredInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -635,14 +666,27 @@ export default function CustomerPassHubClient({
     if (typeof window !== "undefined") {
       const ua = navigator.userAgent || "";
       const isAndroidDevice = /android/i.test(ua);
-      setIsAndroid(isAndroidDevice);
+      const isIosDevice = /\b(iphone|ipad|ipod)\b/i.test(ua) && !isAndroidDevice;
+      const isNonSafariIos =
+        isIosDevice &&
+        /(CriOS|FxiOS|EdgiOS|OPiOS|Instagram|FBAN|FBAV|WhatsApp|Snapchat|Line\/|MicroMessenger)/i.test(
+          ua
+        );
 
-      // Check if already in standalone display mode
+      setIsAndroid(isAndroidDevice);
+      setIsIos(isIosDevice);
+      setIsIosNonSafari(isNonSafariIos);
+
+      // Detect standalone display mode across iOS WebClips and Android/Desktop PWAs
       const isStandaloneMode =
         window.matchMedia("(display-mode: standalone)").matches ||
         (isStandaloneNavigator(navigator) && navigator.standalone === true);
+      setIsStandalone(isStandaloneMode);
       if (isStandaloneMode) {
         setIsInstalled(true);
+        if ("Notification" in window && Notification.permission === "default") {
+          setShowStandalonePushPrompt(true);
+        }
       }
 
       // Ensure dynamic per-pass manifest link is injected in document head
@@ -737,7 +781,7 @@ export default function CustomerPassHubClient({
       if (!subscription) {
         const keyRes = await fetch(
           `/api/pass/${encodeURIComponent(customer.passSerial)}/subscribe`,
-          { signal: AbortSignal.timeout(8000) }
+          { signal: createAbortSignalTimeout(8000) }
         );
         if (!keyRes.ok) return false;
         const keyData = (await keyRes.json()) as { vapidPublicKey?: string };
@@ -756,7 +800,7 @@ export default function CustomerPassHubClient({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(8000),
+          signal: createAbortSignalTimeout(8000),
           body: JSON.stringify({
             pushSubscription: subscription.toJSON(),
             walletType:
@@ -767,6 +811,11 @@ export default function CustomerPassHubClient({
         }
       );
 
+      if (subRes.ok) {
+        const subJson = JSON.stringify(subscription.toJSON());
+        setCustomer((prev) => ({ ...prev, pushSubscription: subJson }));
+      }
+
       return subRes.ok;
     } catch (err) {
       console.warn("Web Push subscription setup skipped:", err);
@@ -774,19 +823,22 @@ export default function CustomerPassHubClient({
     }
   }, [customer.passSerial, customer.walletType, urlBase64ToUint8Array]);
 
-  // Register PWA Service Worker on mount & silently upgrade granted users to real Web Push
+  // Register PWA Service Worker & sync Web Push subscription if missing or endpoint changed
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
-        .then((reg) => {
+        .then(async (reg) => {
           console.log("Service Worker registered successfully:", reg.scope);
-          if (
-            "Notification" in window &&
-            Notification.permission === "granted" &&
-            !customer.pushSubscription?.trim().startsWith("{")
-          ) {
-            void subscribeToCryptographicWebPush();
+          if ("Notification" in window && Notification.permission === "granted") {
+            const readyReg = await navigator.serviceWorker.ready;
+            const activeSub = readyReg?.pushManager
+              ? await readyReg.pushManager.getSubscription().catch(() => null)
+              : null;
+            const storedEndpoint = extractPushEndpoint(customer.pushSubscription);
+            if (!activeSub || activeSub.endpoint !== storedEndpoint) {
+              void subscribeToCryptographicWebPush();
+            }
           }
         })
         .catch((err) => {
@@ -848,10 +900,14 @@ export default function CustomerPassHubClient({
     [locale, merchant, t]
   );
 
-  // Handle Push Permission (Trilingual with Immediate Status Sync)
+  // Handle Push Permission (Explicit Click Flow + iOS Home Screen Rescue)
   const handleEnablePush = useCallback(async (opts?: { silent?: boolean } | React.MouseEvent) => {
     const silent = Boolean(opts && typeof opts === "object" && "silent" in opts && opts.silent === true);
     if (typeof window === "undefined" || !("Notification" in window)) {
+      if (isIos && !isStandalone) {
+        setIsAndroidInstallModalOpen(true);
+        return;
+      }
       if (!silent) alert(t.pass.browserNoPushSupport);
       return;
     }
@@ -867,10 +923,13 @@ export default function CustomerPassHubClient({
           await fetch(`/api/pass/${encodeURIComponent(customer.passSerial)}/subscribe`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            signal: AbortSignal.timeout(8000),
+            signal: createAbortSignalTimeout(8000),
             body: JSON.stringify({
               pushSubscription: "browser-active",
-              walletType: "WEBPASS",
+              walletType:
+                customer.walletType === "APPLE" || customer.walletType === "GOOGLE"
+                  ? customer.walletType
+                  : "WEBPASS",
             }),
           });
         }
@@ -889,30 +948,22 @@ export default function CustomerPassHubClient({
     } catch (err) {
       console.error("Notification permission error:", err);
     }
-  }, [customer.passSerial, showBanner, subscribeToCryptographicWebPush, t]);
+  }, [
+    customer.passSerial,
+    customer.walletType,
+    isIos,
+    isStandalone,
+    showBanner,
+    subscribeToCryptographicWebPush,
+    t,
+  ]);
 
-  // One-time passive user-interaction listener for automatic notification opt-in on first touch/tap
-  useEffect(() => {
-    if (typeof window === "undefined" || !("Notification" in window)) return;
-    if (Notification.permission !== "default") return;
-
-    const onFirstUserTouch = () => {
-      // Trigger silent permission request on the user's first genuine interaction
-      void handleEnablePush({ silent: true });
-    };
-
-    window.addEventListener("click", onFirstUserTouch, { once: true, passive: true });
-    window.addEventListener("touchstart", onFirstUserTouch, { once: true, passive: true });
-
-    return () => {
-      window.removeEventListener("click", onFirstUserTouch);
-      window.removeEventListener("touchstart", onFirstUserTouch);
-    };
-  }, [handleEnablePush]);
-
-  // Handle Android PWA Direct Home Screen Installation with Smart Push Chaining
-  const handleInstallAndroidApp = useCallback(async () => {
+  // Handle Direct Home Screen Installation across iPhone & Android with Smart Push Chaining
+  const handleInstallHomeScreen = useCallback(async () => {
     if (isInstalled) {
+      if (isStandalone && typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+        setShowStandalonePushPrompt(true);
+      }
       showBanner({
         id: "already-installed",
         title: t.pass.pwaAlreadyInstalledTitle,
@@ -925,9 +976,8 @@ export default function CustomerPassHubClient({
     }
 
     if (deferredInstallPrompt) {
-      // Case A: Native install prompt is available
+      // Case A: Native Chromium install prompt available — call prompt() FIRST on user click
       try {
-        // 1. Call prompt() FIRST to preserve the active user gesture for the native PWA install dialog
         await deferredInstallPrompt.prompt();
         const choice = await deferredInstallPrompt.userChoice;
         if (choice.outcome === "accepted") {
@@ -942,14 +992,14 @@ export default function CustomerPassHubClient({
             meta: { kind: "pwa_installed" },
           });
 
-          // 2. Chained Push Notification Request after installation accepted
           if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
             try {
               const res = await Notification.requestPermission();
               if (res === "granted") {
-                await handleEnablePush();
+                setNotificationsEnabled(true);
+                setShowStandalonePushPrompt(false);
+                await subscribeToCryptographicWebPush();
               } else if (res === "default") {
-                // If browser requires separate click gesture, show sleek floating banner
                 setShowStandalonePushPrompt(true);
               }
             } catch (pErr) {
@@ -963,19 +1013,15 @@ export default function CustomerPassHubClient({
         setIsAndroidInstallModalOpen(true);
       }
     } else {
-      // Case B: deferredInstallPrompt is null (Fallback Visual Guide Modal)
-      // Since no native install dialog is competing for the user gesture,
-      // trigger Notification.requestPermission() IMMEDIATELY on this same click!
-      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-        void handleEnablePush();
-      }
+      // Case B: iOS Safari or Android fallback — open unified visual Home Screen installation modal
       setIsAndroidInstallModalOpen(true);
     }
   }, [
     deferredInstallPrompt,
-    handleEnablePush,
     isInstalled,
+    isStandalone,
     showBanner,
+    subscribeToCryptographicWebPush,
     t,
   ]);
 
@@ -1549,14 +1595,14 @@ export default function CustomerPassHubClient({
                   await handleEnablePush();
                   setShowStandalonePushPrompt(false);
                 }}
-                className="px-3 py-1.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold shadow-sm transition active:scale-95 flex items-center gap-1"
+                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold shadow-sm transition active:scale-95 flex items-center gap-1"
               >
                 <span>{locale === "fr" ? "Activer" : locale === "es" ? "Activar" : "تفعيل"}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setShowStandalonePushPrompt(false)}
-                className="w-7 h-7 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#DCE0D4] text-[#5F655D] hover:text-[#173E30] flex items-center justify-center transition"
+                className="w-11 h-11 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#DCE0D4] text-[#5F655D] hover:text-[#173E30] flex items-center justify-center transition"
                 aria-label="إغلاق"
               >
                 <X className="w-4 h-4" />
@@ -1795,62 +1841,106 @@ export default function CustomerPassHubClient({
             </div>
           </button>
 
-          {/* Android-Only Direct Home Screen Installation Button (PWA) */}
-          {isAndroid && (
-            <button
-              type="button"
-              onClick={handleInstallAndroidApp}
-              className="w-full h-[58px] rounded-2xl bg-gradient-to-r from-[#0F5132] via-[#008069] to-[#0A4738] hover:from-[#0B3D26] hover:to-[#006D59] text-white flex items-center justify-center gap-3.5 border border-emerald-400/40 shadow-md transition-all active:scale-[0.98] cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20">
-                <Smartphone className="w-5 h-5 text-emerald-200" />
-              </div>
-              <div className="flex flex-col text-start leading-tight select-none">
-                <span className="text-[11px] font-normal tracking-tight text-emerald-200">
-                  {locale === "ar"
-                    ? "تثبيت البطاقة كتطبيق بدون Wallet"
+          {/* Direct Home Screen Installation Button (All Devices: iPhone & Android) */}
+          <button
+            type="button"
+            onClick={handleInstallHomeScreen}
+            aria-label={
+              locale === "fr"
+                ? "Ajouter à l'écran d'accueil sans Wallet"
+                : locale === "es"
+                  ? "Añadir a la pantalla de inicio sin Wallet"
+                  : "إضافة البطاقة إلى الشاشة الرئيسية بدون Wallet"
+            }
+            className="w-full min-h-[58px] px-4 py-2 rounded-2xl bg-gradient-to-r from-[#173E30] via-[#008069] to-[#0F5132] hover:opacity-95 text-white flex items-center justify-center gap-3.5 border border-[#008069]/30 shadow-md transition-all active:scale-[0.98] cursor-pointer"
+          >
+            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20">
+              <Smartphone className="w-5 h-5 text-emerald-100" />
+            </div>
+            <div className="flex flex-col text-start leading-tight select-none">
+              <span className="text-[11px] font-normal tracking-tight text-emerald-100">
+                {locale === "ar"
+                  ? "تثبيت البطاقة كتطبيق بدون Wallet"
+                  : locale === "fr"
+                    ? "Installer l'application sans Wallet"
+                    : "Instalar aplicación sin Wallet"}
+              </span>
+              <span className="text-[15px] font-bold tracking-tight text-white -mt-0.5">
+                {isInstalled
+                  ? locale === "ar"
+                    ? "✅ البطاقة مثبتة في شاشتك الرئيسية"
                     : locale === "fr"
-                      ? "Installer l'application sans Wallet"
-                      : "Instalar aplicación sin Wallet"}
-                </span>
-                <span className="text-[15px] font-bold tracking-tight text-white -mt-0.5">
-                  {isInstalled
-                    ? (locale === "ar"
-                      ? "✅ البطاقة مثبتة في شاشتك الرئيسية"
-                      : locale === "fr"
-                        ? "✅ Carte déjà installée sur l'écran"
-                        : "✅ Tarjeta instalada en inicio")
-                    : (locale === "ar"
-                      ? "📲 إضافة إلى الشاشة الرئيسية (Android)"
-                      : locale === "fr"
-                        ? "📲 Ajouter à l'écran d'accueil"
-                        : "📲 Añadir a la pantalla de inicio")}
-                </span>
-              </div>
-            </button>
-          )}
+                      ? "✅ Carte installée sur l'écran d'accueil"
+                      : "✅ Tarjeta instalada en inicio"
+                  : locale === "ar"
+                    ? "📲 إضافة إلى الشاشة الرئيسية"
+                    : locale === "fr"
+                      ? "📲 Ajouter à l'écran d'accueil"
+                      : "📲 Añadir a la pantalla de inicio"}
+              </span>
+            </div>
+          </button>
 
-          {/* Browser Notifications Pill */}
+          {/* Browser / Lock-Screen Notifications Pill */}
           <button
             type="button"
             onClick={handleEnablePush}
-            className={`w-full py-2.5 px-3.5 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm ${notificationsEnabled
+            aria-label={
+              locale === "fr"
+                ? "Activer les notifications d'écran verrouillé"
+                : locale === "es"
+                  ? "Activar notificaciones en pantalla bloqueada"
+                  : "تفعيل إشعارات الشاشة والقرب"
+            }
+            className={`w-full min-h-[44px] py-2.5 px-3.5 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm ${notificationsEnabled
               ? "bg-[#008069]/10 border-[#008069]/30 text-[#008069]"
-              : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+              : "bg-[#FFFDF7] border-[#DCE0D4] text-[#173E30] hover:bg-[#FAF7F2]"
               }`}
           >
             {notificationsEnabled ? (
               <>
                 <BellRing className="w-4 h-4 text-[#008069]" />
-                <span>الإشعارات الفورية مفعّلة على هذا الجهاز</span>
+                <span>
+                  {locale === "fr"
+                    ? "Notifications instantanées activées sur cet appareil"
+                    : locale === "es"
+                      ? "Notificaciones instantáneas activadas en este dispositivo"
+                      : "الإشعارات الفورية مفعّلة على هذا الجهاز"}
+                </span>
+              </>
+            ) : isIos && !isStandalone ? (
+              <>
+                <Bell className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  {locale === "fr"
+                    ? "Activer les notifications (Ajoutez d'abord à l'écran d'accueil)"
+                    : locale === "es"
+                      ? "Activar notificaciones (Añade primero a la pantalla de inicio)"
+                      : "تفعيل الإشعارات (أضف البطاقة للشاشة الرئيسية أولاً)"}
+                </span>
               </>
             ) : (
               <>
-                <Bell className="w-4 h-4 text-amber-500" />
-                <span>تفعيل إشعارات الشاشة والقرب (Push Notifications)</span>
+                <Bell className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>
+                  {locale === "fr"
+                    ? "Activer les notifications d'écran verrouillé (Push)"
+                    : locale === "es"
+                      ? "Activar notificaciones en pantalla (Push)"
+                      : "تفعيل إشعارات الشاشة والقرب (Push Notifications)"}
+                </span>
               </>
             )}
           </button>
+
+          {/* Dual-Choice Reassurance Note */}
+          <p className="text-[11px] text-[#5F655D] bg-[#FAF7F2] border border-[#DCE0D4] rounded-2xl px-3.5 py-2.5 leading-relaxed text-center">
+            {locale === "fr"
+              ? "✨ Choisissez votre mode préféré : ajoutez la carte à Apple / Google Wallet, à l'écran d'accueil, ou aux deux ensemble — vos tampons et alertes restent synchronisés."
+              : locale === "es"
+                ? "✨ Elige tu forma favorita: añade la tarjeta a Apple / Google Wallet, a la pantalla de inicio o a ambos a la vez — tu saldo y alertas se sincronizan automáticamente."
+                : "✨ اختر الطريقة التي تناسبك: أضف البطاقة إلى Apple / Google Wallet، أو إلى الشاشة الرئيسية، أو إليهما معاً — رصيدك وإشعاراتك يتزامنان تلقائياً."}
+          </p>
         </div>
 
         {/* Viral Customer Referral Card */}
@@ -2496,16 +2586,16 @@ export default function CustomerPassHubClient({
         </div>
       )}
 
-      {/* Android PWA Visual Guide Modal (Fallback when prompt not immediately triggered) */}
+      {/* Unified iOS & Android Home Screen Visual Guide Modal */}
       {isAndroidInstallModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div
             dir={isRTL ? "rtl" : "ltr"}
-            className="relative w-full max-w-sm bg-white border border-[#DCE0D4] rounded-3xl shadow-2xl p-6 text-[#173E30] space-y-4"
+            className="relative w-full max-w-sm bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl shadow-2xl p-6 text-[#173E30] space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#E8F5E9] text-[#008069] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-[#008069]/10 text-[#008069] flex items-center justify-center">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
@@ -2513,75 +2603,216 @@ export default function CustomerPassHubClient({
                     {locale === "ar"
                       ? "تثبيت البطاقة على الشاشة الرئيسية"
                       : locale === "fr"
-                        ? "Installer sur l'écran d'accueil"
-                        : "Instalar en la pantalla de inicio"}
+                        ? "Ajouter à l'écran d'accueil"
+                        : "Añadir a la pantalla de inicio"}
                   </h3>
                   <span className="text-[10px] text-[#5F655D] block">
-                    {merchant.name} (Android)
+                    {merchant.name} • {isIos ? "iPhone / iPad" : "Android"}
                   </span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAndroidInstallModalOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-[#FAF7F2] text-[#5F655D]"
+                aria-label="إغلاق"
+                className="w-11 h-11 rounded-xl hover:bg-[#FAF7F2] text-[#5F655D] flex items-center justify-center transition"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <p className="text-[11px] text-[#5F655D] leading-relaxed">
-                {locale === "ar"
-                  ? "لإضافة بطاقتك مباشرة إلى شاشة هاتفك والوصول إليها بنقرة واحدة كأي تطبيق:"
-                  : "Pour ajouter votre carte à l'écran d'accueil et y accéder en un clic :"}
-              </p>
+            {isIos ? (
+              <div className="space-y-3 text-xs">
+                {isIosNonSafari && (
+                  <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-2">
+                    <p className="text-[11px] font-bold leading-relaxed">
+                      {locale === "fr"
+                        ? "Vous ouvrez cette page hors de Safari. Copiez le lien et ouvrez-le dans Safari pour ajouter la carte et recevoir les notifications :"
+                        : locale === "es"
+                          ? "Estás fuera de Safari. Copia el enlace y ábrelo en Safari para añadir la tarjeta y recibir notificaciones:"
+                          : "أنت تفتح البطاقة حالياً خارج متصفح Safari. انسخ الرابط وافتحه في Safari لتتمكن من إضافتها للشاشة الرئيسية وتلقي الإشعارات:"}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(window.location.href);
+                          setCopiedPassLink(true);
+                          setTimeout(() => setCopiedPassLink(false), 2500);
+                        } catch {
+                          // fallback ignored
+                        }
+                      }}
+                      className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                    >
+                      {copiedPassLink ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>
+                            {locale === "fr"
+                              ? "Lien copié !"
+                              : locale === "es"
+                                ? "¡Enlace copiado!"
+                                : "تم نسخ الرابط بنجاح!"}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          <span>
+                            {locale === "fr"
+                              ? "Copier le lien pour Safari"
+                              : locale === "es"
+                                ? "Copiar enlace para Safari"
+                                : "📋 نسخ الرابط لفتحه في Safari"}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
 
-              {/* Step 1 */}
-              <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                  1
+                <p className="text-[11px] text-[#5F655D] leading-relaxed">
+                  {locale === "fr"
+                    ? "Pour ajouter votre carte sur iPhone et activer les alertes sur l'écran verrouillé :"
+                    : locale === "es"
+                      ? "Para añadir tu tarjeta en iPhone y activar alertas en la pantalla bloqueada:"
+                      : "لإضافة بطاقتك على شاشة الآيفون وتلقي إشعارات الأختام والعروض حتى والشاشة مقفلة:"}
+                </p>
+
+                {/* Step 1 iOS */}
+                <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                    1
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-[#173E30] block">
+                      {locale === "fr"
+                        ? "Appuyez sur Partager (Share ⎋)"
+                        : locale === "es"
+                          ? "Pulsa el botón Compartir (Share ⎋)"
+                          : "اضغط على زر المشاركة (Share ⎋)"}
+                    </span>
+                    <span className="text-[11px] text-[#5F655D] block">
+                      {locale === "fr"
+                        ? "En bas au centre de votre navigateur Safari."
+                        : locale === "es"
+                          ? "En la barra inferior de Safari."
+                          : "الموجود أسفل شاشة متصفح Safari."}
+                    </span>
+                  </div>
                 </div>
-                <div className="space-y-0.5">
-                  <span className="font-bold text-[#173E30] block">
-                    {locale === "ar"
-                      ? "اضغط على زر القائمة (⋮)"
-                      : "Appuyez sur le menu (⋮)"}
-                  </span>
-                  <span className="text-[11px] text-[#5F655D] block">
-                    {locale === "ar"
-                      ? "في الزاوية العليا لمتصفح Chrome أو Samsung Internet."
-                      : "En haut à droite de votre navigateur Chrome."}
-                  </span>
+
+                {/* Step 2 iOS */}
+                <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                    2
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-[#173E30] block">
+                      {locale === "fr"
+                        ? 'Choisissez "Sur l\'écran d\'accueil"'
+                        : locale === "es"
+                          ? 'Selecciona "Añadir a pantalla de inicio"'
+                          : 'اختر "إضافة إلى الشاشة الرئيسية" (Add to Home Screen)'}
+                    </span>
+                    <span className="text-[11px] text-[#5F655D] block">
+                      {locale === "fr"
+                        ? "Puis appuyez sur Ajouter en haut à droite."
+                        : locale === "es"
+                          ? "Luego pulsa Añadir arriba a la derecha."
+                          : 'ثم اضغط "إضافة" أعلى الشاشة.'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Step 3 iOS */}
+                <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                    3
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-[#173E30] block">
+                      {locale === "fr"
+                        ? "Ouvrez l'icône et activez les notifications 🔔"
+                        : locale === "es"
+                          ? "Abre el icono y activa las notificaciones 🔔"
+                          : "افتح أيقونة البطاقة وفعل الإشعارات بنقرة واحدة 🔔"}
+                    </span>
+                    <span className="text-[11px] text-[#5F655D] block">
+                      {locale === "fr"
+                        ? "Apple exige d'ouvrir l'icône de l'écran d'accueil pour recevoir les alertes."
+                        : locale === "es"
+                          ? "Apple requiere abrir la tarjeta desde el inicio para recibir alertas."
+                          : "سيظهر لك زر تفعيل الإشعارات فور فتح الأيقونة من الشاشة الرئيسية."}
+                    </span>
+                  </div>
                 </div>
               </div>
+            ) : (
+              <div className="space-y-3 text-xs">
+                <p className="text-[11px] text-[#5F655D] leading-relaxed">
+                  {locale === "fr"
+                    ? "Pour ajouter votre carte à l'écran d'accueil et recevoir les notifications :"
+                    : locale === "es"
+                      ? "Para añadir tu tarjeta a la pantalla de inicio y recibir notificaciones:"
+                      : "لإضافة بطاقتك مباشرة إلى شاشة هاتفك والوصول إليها بنقرة واحدة كأي تطبيق:"}
+                </p>
 
-              {/* Step 2 */}
-              <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                  2
+                {/* Step 1 Android */}
+                <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                    1
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-[#173E30] block">
+                      {locale === "fr"
+                        ? "Appuyez sur le menu (⋮)"
+                        : locale === "es"
+                          ? "Pulsa el menú (⋮)"
+                          : "اضغط على زر القائمة (⋮)"}
+                    </span>
+                    <span className="text-[11px] text-[#5F655D] block">
+                      {locale === "fr"
+                        ? "En haut à droite de votre navigateur Chrome."
+                        : locale === "es"
+                          ? "Arriba a la derecha en tu navegador Chrome."
+                          : "في الزاوية العليا لمتصفح Chrome أو Samsung Internet."}
+                    </span>
+                  </div>
                 </div>
-                <div className="space-y-0.5">
-                  <span className="font-bold text-[#173E30] block">
-                    {locale === "ar"
-                      ? 'اختر "إضافة إلى الشاشة الرئيسية" أو "تثبيت التطبيق"'
-                      : 'Choisissez "Ajouter à l\'écran d\'accueil" ou "Installer"'}
-                  </span>
-                  <span className="text-[11px] text-[#5F655D] block">
-                    {locale === "ar"
-                      ? `ستظهر أيقونة ${merchant.name} في شاشتك وتفتح بطاقتك مباشرة!`
-                      : `L'icône ${merchant.name} apparaîtra sur votre écran d'accueil !`}
-                  </span>
+
+                {/* Step 2 Android */}
+                <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                    2
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-[#173E30] block">
+                      {locale === "fr"
+                        ? 'Choisissez "Ajouter à l\'écran d\'accueil" ou "Installer"'
+                        : locale === "es"
+                          ? 'Selecciona "Añadir a pantalla de inicio" o "Instalar"'
+                          : 'اختر "إضافة إلى الشاشة الرئيسية" أو "تثبيت التطبيق"'}
+                    </span>
+                    <span className="text-[11px] text-[#5F655D] block">
+                      {locale === "fr"
+                        ? `L'icône ${merchant.name} apparaîtra sur votre écran d'accueil !`
+                        : locale === "es"
+                          ? `¡El icono de ${merchant.name} aparecerá en tu pantalla de inicio!`
+                          : `ستظهر أيقونة ${merchant.name} في شاشتك وتفتح بطاقتك مباشرة!`}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <button
               type="button"
               onClick={() => setIsAndroidInstallModalOpen(false)}
-              className="w-full py-2.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white font-bold text-xs shadow-sm transition cursor-pointer"
+              className="w-full min-h-[44px] py-2.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white font-bold text-xs shadow-sm transition cursor-pointer"
             >
-              {locale === "ar" ? "حسناً، فهمت" : "Compris"}
+              {locale === "fr" ? "Compris" : locale === "es" ? "Entendido" : "حسناً، فهمت"}
             </button>
           </div>
         </div>
