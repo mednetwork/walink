@@ -209,6 +209,7 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     autoReview: merchant.autoReview,
     autoRadar: merchant.autoRadar,
     autoNearReward: merchant.autoNearReward,
+    allowMultiStamps: Boolean(merchant.allowMultiStamps),
   };
 
   const serializedCustomers = isSessionValid

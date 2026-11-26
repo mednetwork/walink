@@ -18,6 +18,7 @@ export interface CachedMerchantPublic {
   minCashbackRedeem: number;
   currency: string;
   referralBonus: number;
+  allowMultiStamps: boolean;
   isActive: boolean;
 }
 
@@ -153,6 +154,7 @@ export async function getCachedMerchantPublicBySlug(
       minCashbackRedeem: true,
       currency: true,
       referralBonus: true,
+      allowMultiStamps: true,
       isActive: true,
     },
   });

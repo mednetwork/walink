@@ -13,6 +13,7 @@ import {
   AlertCircle,
   ExternalLink,
   Plus,
+  Minus,
   RefreshCw,
   Award,
   Users,
@@ -103,6 +104,7 @@ interface MerchantScannerModalProps {
   staffName?: string;
   userRole?: "OWNER" | "STAFF";
   branchName?: string;
+  allowMultiStamps?: boolean;
 }
 
 export default function MerchantScannerModal({
@@ -123,6 +125,7 @@ export default function MerchantScannerModal({
   staffName = "المدير",
   userRole = "OWNER",
   branchName,
+  allowMultiStamps = false,
 }: MerchantScannerModalProps) {
   const [activeTab, setActiveTab] = useState<"camera" | "manual">("camera");
   const [searchQuery, setSearchQuery] = useState("");
@@ -146,6 +149,8 @@ export default function MerchantScannerModal({
   );
 
   // Anti-Fraud Cooldown & Web NFC State
+  const [stampDelta, setStampDelta] = useState<number>(1);
+  const [stampCooldownMinutesLeft, setStampCooldownMinutesLeft] = useState<number>(0);
   const [cooldownWarning, setCooldownWarning] = useState<{
     minutesLeft: number;
     message: string;
@@ -193,26 +198,73 @@ export default function MerchantScannerModal({
     setSelectedCustomer(null);
     setCooldownWarning(null);
     setMessage(null);
+    setStampDelta(1);
+    setStampCooldownMinutesLeft(0);
     scanLockRef.current = false;
     onClose();
   }, [stopCamera, onClose]);
+
+  const fetchCustomerCooldown = useCallback(
+    async (customerId: string) => {
+      if (!allowMultiStamps) {
+        setStampCooldownMinutesLeft(0);
+        setStampDelta(1);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/m/${slug}/stamp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(8000),
+          body: JSON.stringify({
+            customerId,
+            action: "LOOKUP",
+            lang: locale,
+            staffName,
+            branchName,
+          }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const left = Number(data.stampCooldownMinutesLeft || 0);
+        const liveCustomer: CustomerSummary | undefined = data.customer;
+        if (liveCustomer) {
+          setSelectedCustomer(liveCustomer);
+        }
+        const availableStamps = liveCustomer?.stamps ?? 0;
+        setStampCooldownMinutesLeft(left > 0 ? left : 0);
+        if (left > 0) {
+          setStampDelta(availableStamps >= 1 ? -1 : 1);
+        } else {
+          setStampDelta(1);
+        }
+      } catch {
+        // Fallback to server-side validation on submit
+      }
+    },
+    [allowMultiStamps, slug, locale, staffName, branchName]
+  );
 
   const handleSelectCustomer = useCallback((c: CustomerSummary) => {
     stopCamera();
     setSelectedCustomer(c);
     setCooldownWarning(null);
     setMessage(null);
+    setStampDelta(1);
+    setStampCooldownMinutesLeft(0);
     const isCustCashback = c.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
     if (isCustCashback) {
       setPosTab("earn");
       setBillAmount("");
+    } else if (allowMultiStamps) {
+      void fetchCustomerCooldown(c.id);
     }
     setRedeemAmount(
       c.cashbackBalance && c.cashbackBalance > 0
         ? String(c.cashbackBalance)
         : ""
     );
-  }, [stopCamera, loyaltyMode]);
+  }, [stopCamera, loyaltyMode, allowMultiStamps, fetchCustomerCooldown]);
 
   // Unified API Action Executor with Anti-Fraud Cooldown Interception & Staff Attribution
   const executeStampRequest = useCallback(
@@ -233,7 +285,11 @@ export default function MerchantScannerModal({
               staffName ||
               (locale === "fr" ? "Gérant" : locale === "es" ? "Gerente" : "المدير"),
             branchName: branchName || undefined,
-            overrideCooldown: userRole === "OWNER" ? true : override,
+            overrideCooldown: allowMultiStamps
+              ? false
+              : userRole === "OWNER"
+              ? true
+              : override,
           }),
         });
 
@@ -241,6 +297,26 @@ export default function MerchantScannerModal({
 
         if (res.status === 429 && data.error === "COOLDOWN_ACTIVE") {
           stopCamera();
+          if (allowMultiStamps && selectedCustomer) {
+            const left = Number(data.minutesLeft || 30);
+            setStampCooldownMinutesLeft(left);
+            if ((selectedCustomer.stamps || 0) >= 1) {
+              setStampDelta(-1);
+            }
+            setMessage({
+              text:
+                data.message ||
+                (locale === "fr"
+                  ? "Tampon déjà ajouté. Veuillez patienter 30 min (vous pouvez déduire un tampon)."
+                  : locale === "es"
+                  ? "Sello añadido recientemente. Espere 30 min (puede restar un sello)."
+                  : "تم إضافة ختم مؤخراً، يرجى انتظار 30 دقيقة (يمكنك خصم ختم لتصحيح خطأ)."),
+              type: "error",
+            });
+            soundEngine.playAlert();
+            return;
+          }
+
           setCooldownWarning({
             minutesLeft: data.minutesLeft || 30,
             message:
@@ -267,8 +343,15 @@ export default function MerchantScannerModal({
           // Rule 1: Do NOT auto-close modal on LOOKUP! Keep open in POS Calculator mode
           const cust = data.customer;
           const isCustCashback = cust?.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
+          const cooldownLeft = Number(data.stampCooldownMinutesLeft || 0);
           stopCamera();
           setSelectedCustomer(cust);
+          setStampCooldownMinutesLeft(cooldownLeft > 0 ? cooldownLeft : 0);
+          if (cooldownLeft > 0) {
+            setStampDelta((cust?.stamps ?? 0) >= 1 ? -1 : 1);
+          } else {
+            setStampDelta(1);
+          }
           if (isCustCashback) {
             setPosTab("earn");
             setBillAmount("");
@@ -307,14 +390,15 @@ export default function MerchantScannerModal({
 
         // Construct rich OperationSuccessPayload for the 3-second celebratory modal
         let successPayload: ActionSuccessPayload | undefined = undefined;
-        if (payload.action === "STAMP") {
+        if (payload.action === "STAMP" || payload.action === "STAMP_ADJUST") {
           successPayload = {
             type: "STAMP",
             customerName: data.customer.name,
             memberCode: data.customer.memberCode,
             stamps: data.customer.stamps,
             stampsRequired,
-            isRewardEarned: data.customer.stamps >= stampsRequired,
+            isRewardEarned:
+              payload.action === "STAMP" && data.customer.stamps >= stampsRequired,
             rewardName,
           };
         } else if (payload.action === "CASHBACK_EARN") {
@@ -363,7 +447,7 @@ export default function MerchantScannerModal({
         setLoading(false);
       }
     },
-    [slug, locale, staffName, branchName, userRole, loyaltyMode, stopCamera, onActionComplete, handleModalClose, stampsRequired, rewardName, calculatedEarned, billAmount, currency]
+    [slug, locale, staffName, branchName, userRole, allowMultiStamps, selectedCustomer, loyaltyMode, stopCamera, onActionComplete, handleModalClose, stampsRequired, rewardName, calculatedEarned, billAmount, currency]
   );
 
   // Process decoded QR text: Direct Auto-Stamp on STAMPS or Instant Bill Calculator on CASHBACK
@@ -461,7 +545,14 @@ export default function MerchantScannerModal({
         }, 150);
       } else {
         // STAMPS loyalty program:
-        if (matched.stamps >= stampsRequired) {
+        if (allowMultiStamps) {
+          stopCamera();
+          setSelectedCustomer(matched);
+          setMessage(null);
+          setStampDelta(1);
+          soundEngine.playStampChime();
+          void fetchCustomerCooldown(matched.id);
+        } else if (matched.stamps >= stampsRequired) {
           // Card already completed and ready to redeem! Show redeem view
           stopCamera();
           setSelectedCustomer(matched);
@@ -477,7 +568,7 @@ export default function MerchantScannerModal({
         }
       }
     },
-    [customers, loyaltyMode, stampsRequired, slug, locale, staffName, branchName, stopCamera, executeStampRequest]
+    [customers, loyaltyMode, stampsRequired, allowMultiStamps, slug, locale, staffName, branchName, stopCamera, executeStampRequest, fetchCustomerCooldown]
   );
 
   // Real-Time Frame Scanner (Engine A: jsQR + Engine B: BarcodeDetector Boost)
@@ -649,6 +740,8 @@ export default function MerchantScannerModal({
     setSelectedCustomer(null);
     setCooldownWarning(null);
     setMessage(null);
+    setStampDelta(1);
+    setStampCooldownMinutesLeft(0);
     setBillAmount("");
     setRedeemAmount("");
     scanLockRef.current = false;
@@ -733,10 +826,14 @@ export default function MerchantScannerModal({
       stopCamera();
       setSelectedCustomer(initialCustomer);
       setMessage(null);
+      setStampDelta(1);
+      setStampCooldownMinutesLeft(0);
       const isCustCashback = initialCustomer.loyaltyType === "CASHBACK" || loyaltyMode === "CASHBACK";
       if (isCustCashback) {
         setPosTab("earn");
         setBillAmount("");
+      } else if (allowMultiStamps) {
+        void fetchCustomerCooldown(initialCustomer.id);
       }
       setRedeemAmount(
         initialCustomer.cashbackBalance && initialCustomer.cashbackBalance > 0
@@ -746,8 +843,10 @@ export default function MerchantScannerModal({
     } else if (!isOpen) {
       setSelectedCustomer(null);
       setMessage(null);
+      setStampDelta(1);
+      setStampCooldownMinutesLeft(0);
     }
-  }, [isOpen, initialCustomer, stopCamera, loyaltyMode]);
+  }, [isOpen, initialCustomer, stopCamera, loyaltyMode, allowMultiStamps, fetchCustomerCooldown]);
 
   // Auto-focus bill amount input when Cashback POS Calculator is active
   useEffect(() => {
@@ -779,6 +878,23 @@ export default function MerchantScannerModal({
       customerId: selectedCustomer.id,
       action,
     });
+  };
+
+  const handleConfirmControlledStamps = async () => {
+    if (!selectedCustomer) return;
+    if (stampDelta > 0) {
+      await executeStampRequest({
+        customerId: selectedCustomer.id,
+        action: "STAMP",
+        stampsCount: stampDelta,
+      });
+    } else if (stampDelta < 0) {
+      await executeStampRequest({
+        customerId: selectedCustomer.id,
+        action: "STAMP_ADJUST",
+        adjustDelta: stampDelta,
+      });
+    }
   };
 
   // Handle Cashback Earn
@@ -985,7 +1101,7 @@ export default function MerchantScannerModal({
               <span>{cooldownWarning.message}</span>
             </div>
             <div className="flex flex-col gap-2">
-              {userRole === "OWNER" && (
+              {userRole === "OWNER" && !allowMultiStamps && (
                 <button
                   type="button"
                   onClick={() => executeStampRequest(cooldownWarning.payload, true)}
@@ -1215,37 +1331,210 @@ export default function MerchantScannerModal({
             {!isCashback && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#5F655D] font-semibold">الأختام المجمّعة:</span>
+                  <span className="text-[#5F655D] font-semibold">
+                    {locale === "fr"
+                      ? "Tampons collectés :"
+                      : locale === "es"
+                      ? "Sellos acumulados:"
+                      : "الأختام المجمّعة:"}
+                  </span>
                   <span className="font-mono font-bold text-[#008069] text-sm">
                     {formatStamps(selectedCustomer.stamps)} / {stampsRequired}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={() => handleStampOrRedeem("STAMP")}
-                    className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>{t.merchant.addStampBtn}</span>
-                  </button>
+                {allowMultiStamps ? (
+                  (() => {
+                    const maxDeduct = Math.min(
+                      5,
+                      Math.floor(selectedCustomer.stamps || 0)
+                    );
+                    const isCooldownLocked = stampCooldownMinutesLeft > 0;
+                    const canStepMinus =
+                      stampDelta > 1 ||
+                      (stampDelta === 1 && maxDeduct >= 1) ||
+                      (stampDelta < 0 && stampDelta > -maxDeduct);
+                    const canStepPlus =
+                      stampDelta < -1 ||
+                      (stampDelta === -1 && !isCooldownLocked) ||
+                      (stampDelta >= 1 && stampDelta < 10 && !isCooldownLocked);
+                    const isSubmitDisabled =
+                      loading ||
+                      (stampDelta > 0 && isCooldownLocked) ||
+                      (stampDelta < 0 && maxDeduct < 1);
+                    const projectedStamps = Math.max(
+                      0,
+                      Number(((selectedCustomer.stamps || 0) + stampDelta).toFixed(1))
+                    );
 
-                  <button
-                    type="button"
-                    disabled={loading || selectedCustomer.stamps < stampsRequired}
-                    onClick={() => handleStampOrRedeem("REDEEM")}
-                    className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-30 ${
-                      selectedCustomer.stamps >= stampsRequired
-                        ? "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md animate-pulse"
-                        : "bg-[#FFFDF7] text-[#5F655D] border border-[#C8D1BE]"
-                    }`}
-                  >
-                    <Gift className="w-4 h-4" />
-                    <span>{t.merchant.redeemRewardBtn}</span>
-                  </button>
-                </div>
+                    const handleStepMinus = () => {
+                      if (stampDelta > 1) {
+                        setStampDelta((prev) => prev - 1);
+                      } else if (stampDelta === 1 && maxDeduct >= 1) {
+                        setStampDelta(-1);
+                      } else if (stampDelta < 0 && stampDelta > -maxDeduct) {
+                        setStampDelta((prev) => prev - 1);
+                      }
+                    };
+
+                    const handleStepPlus = () => {
+                      if (stampDelta < -1) {
+                        setStampDelta((prev) => prev + 1);
+                      } else if (stampDelta === -1 && !isCooldownLocked) {
+                        setStampDelta(1);
+                      } else if (stampDelta >= 1 && stampDelta < 10 && !isCooldownLocked) {
+                        setStampDelta((prev) => prev + 1);
+                      }
+                    };
+
+                    const absCount = Math.abs(stampDelta);
+                    const confirmLabel =
+                      stampDelta < 0
+                        ? locale === "fr"
+                          ? `Retirer ${absCount} tampon${absCount > 1 ? "s" : ""}`
+                          : locale === "es"
+                          ? `Restar ${absCount} sello${absCount > 1 ? "s" : ""}`
+                          : `خصم ${absCount} ${absCount === 1 ? "ختم" : "أختام"}`
+                        : locale === "fr"
+                        ? `Ajouter ${absCount} tampon${absCount > 1 ? "s" : ""}`
+                        : locale === "es"
+                        ? `Añadir ${absCount} sello${absCount > 1 ? "s" : ""}`
+                        : `إضافة ${absCount} ${absCount === 1 ? "ختم" : "أختام"}`;
+
+                    return (
+                      <div className="space-y-3">
+                        {isCooldownLocked && (
+                          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-[11px] font-bold flex items-start gap-2 leading-relaxed">
+                            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                            <span>
+                              {locale === "fr"
+                                ? `Ajout bloqué pendant ${stampCooldownMinutesLeft} min (règle 30 min) — vous pouvez retirer un tampon en cas d'erreur.`
+                                : locale === "es"
+                                ? `Adición bloqueada por ${stampCooldownMinutesLeft} min (regla 30 min) — puedes restar un sello si hubo error.`
+                                : `⏳ لا يمكن إضافة ختم آخر قبل ${stampCooldownMinutesLeft} دقيقة (قفل 30 دقيقة) — يمكنك خصم ختم لتصحيح خطأ.`}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* + / - Quantity Stepper Box */}
+                        <div className="p-2.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] flex items-center justify-between gap-2 shadow-sm">
+                          <button
+                            type="button"
+                            disabled={!canStepMinus || loading}
+                            onClick={handleStepMinus}
+                            aria-label={
+                              locale === "fr"
+                                ? "Diminuer le nombre de tampons"
+                                : locale === "es"
+                                ? "Disminuir sellos"
+                                : "إنقاص أو خصم ختم"
+                            }
+                            className="w-11 h-11 rounded-xl bg-[#FAF7F2] hover:bg-rose-50 hover:text-rose-700 border border-[#C8D1BE] text-[#173E30] flex items-center justify-center transition disabled:opacity-35 cursor-pointer shrink-0 active:scale-95"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+
+                          <div className="text-center flex-1 min-w-0">
+                            <div
+                              dir="ltr"
+                              className={`text-lg font-mono font-extrabold leading-tight ${
+                                stampDelta < 0 ? "text-rose-600" : "text-[#008069]"
+                              }`}
+                            >
+                              {stampDelta > 0 ? `+${stampDelta}` : stampDelta}
+                            </div>
+                            <div className="text-[10px] text-[#5F655D] font-semibold mt-0.5">
+                              {locale === "fr"
+                                ? "Nouveau solde :"
+                                : locale === "es"
+                                ? "Nuevo saldo:"
+                                : "الرصيد الجديد:"}{" "}
+                              <span dir="ltr" className="font-mono font-bold text-[#173E30]">
+                                {formatStamps(projectedStamps)} / {stampsRequired}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={!canStepPlus || loading}
+                            onClick={handleStepPlus}
+                            aria-label={
+                              locale === "fr"
+                                ? "Augmenter le nombre de tampons"
+                                : locale === "es"
+                                ? "Aumentar sellos"
+                                : "زيادة عدد الأختام"
+                            }
+                            className="w-11 h-11 rounded-xl bg-[#FAF7F2] hover:bg-emerald-50 hover:text-[#008069] border border-[#C8D1BE] text-[#173E30] flex items-center justify-center transition disabled:opacity-35 cursor-pointer shrink-0 active:scale-95"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            disabled={isSubmitDisabled}
+                            onClick={handleConfirmControlledStamps}
+                            className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-45 shadow-sm cursor-pointer min-h-[44px] ${
+                              stampDelta < 0
+                                ? "bg-rose-600 hover:bg-rose-700 text-white"
+                                : "bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white"
+                            }`}
+                          >
+                            {stampDelta < 0 ? (
+                              <Minus className="w-4 h-4" />
+                            ) : (
+                              <Plus className="w-4 h-4" />
+                            )}
+                            <span>{confirmLabel}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={loading || selectedCustomer.stamps < stampsRequired}
+                            onClick={() => handleStampOrRedeem("REDEEM")}
+                            className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-30 min-h-[44px] ${
+                              selectedCustomer.stamps >= stampsRequired
+                                ? "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md animate-pulse cursor-pointer"
+                                : "bg-[#FFFDF7] text-[#5F655D] border border-[#C8D1BE]"
+                            }`}
+                          >
+                            <Gift className="w-4 h-4" />
+                            <span>{t.merchant.redeemRewardBtn}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() => handleStampOrRedeem("STAMP")}
+                      className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>{t.merchant.addStampBtn}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={loading || selectedCustomer.stamps < stampsRequired}
+                      onClick={() => handleStampOrRedeem("REDEEM")}
+                      className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-30 ${
+                        selectedCustomer.stamps >= stampsRequired
+                          ? "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md animate-pulse"
+                          : "bg-[#FFFDF7] text-[#5F655D] border border-[#C8D1BE]"
+                      }`}
+                    >
+                      <Gift className="w-4 h-4" />
+                      <span>{t.merchant.redeemRewardBtn}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

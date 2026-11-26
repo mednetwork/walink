@@ -214,6 +214,7 @@ interface MerchantDashboardClientProps {
     autoReview: boolean;
     autoRadar: boolean;
     autoNearReward: boolean;
+    allowMultiStamps?: boolean;
   };
   initialAuthSession?: InitialAuthSession;
   initialCustomers: CustomerData[];
@@ -2984,16 +2985,44 @@ export default function MerchantDashboardClient({
                             <button
                               type="button"
                               disabled={stampingCustomerId === c.id}
-                              onClick={() => handleDirectStamp(c)}
+                              onClick={() =>
+                                merchant.allowMultiStamps
+                                  ? handleOpenCashbackModal(c)
+                                  : handleDirectStamp(c)
+                              }
                               className="px-3 py-1.5 rounded-xl bg-[#008069] hover:bg-[#00705a] text-white text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
-                              title={locale === "fr" ? "Ajouter un tampon directement" : locale === "es" ? "Agregar sello directamente" : "إضافة ختم مباشرة للزبون"}
+                              title={
+                                merchant.allowMultiStamps
+                                  ? locale === "fr"
+                                    ? "Gérer les tampons (+ / -)"
+                                    : locale === "es"
+                                    ? "Gestionar sellos (+ / -)"
+                                    : "التحكم في الأختام (+ / -)"
+                                  : locale === "fr"
+                                  ? "Ajouter un tampon directement"
+                                  : locale === "es"
+                                  ? "Agregar sello directamente"
+                                  : "إضافة ختم مباشرة للزبون"
+                              }
                             >
                               {stampingCustomerId === c.id ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               ) : (
                                 <Stamp className="w-3.5 h-3.5" />
                               )}
-                              <span>{locale === "fr" ? "+1 Tampon" : locale === "es" ? "+1 Sello" : "+1 ختم"}</span>
+                              <span>
+                                {merchant.allowMultiStamps
+                                  ? locale === "fr"
+                                    ? "+ / - Tampons"
+                                    : locale === "es"
+                                    ? "+ / - Sellos"
+                                    : "+ / - أختام"
+                                  : locale === "fr"
+                                  ? "+1 Tampon"
+                                  : locale === "es"
+                                  ? "+1 Sello"
+                                  : "+1 ختم"}
+                              </span>
                             </button>
                           </div>
                         )}
@@ -4378,6 +4407,7 @@ export default function MerchantDashboardClient({
         branchName={authRole === "BRANCH_STAFF" && liveAuthBranch ? liveAuthBranch.name : (isMultiBranch ? activeBranchName : undefined)}
         staffName={authRole === "BRANCH_STAFF" && liveAuthBranch ? liveAuthBranch.name : authStaffName || (merchant.name || "المدير")}
         userRole={isRestrictedStaff ? "STAFF" : "OWNER"}
+        allowMultiStamps={Boolean(merchant.allowMultiStamps)}
       />
 
       <StandPreviewModal

@@ -133,6 +133,7 @@ interface MerchantFormData {
   autoReview: boolean;
   autoRadar: boolean;
   autoNearReward: boolean;
+  allowMultiStamps: boolean;
   isActive: boolean;
 }
 
@@ -177,6 +178,7 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
     autoReview: initialData?.autoReview ?? true,
     autoRadar: initialData?.autoRadar ?? true,
     autoNearReward: initialData?.autoNearReward ?? false,
+    allowMultiStamps: initialData?.allowMultiStamps ?? false,
     isActive: initialData?.isActive ?? true,
   });
 
@@ -985,6 +987,45 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     إشعار فوري عند المرور بجانب المحل
                   </span>
                 </div>
+              </label>
+
+              <label
+                className={`sm:col-span-2 flex items-center justify-between gap-3 p-3.5 rounded-2xl border cursor-pointer transition min-h-[44px] ${
+                  formData.allowMultiStamps
+                    ? "bg-emerald-50 border-[#008069]/40 shadow-sm"
+                    : "bg-[#F0F2F5] border-[#E9EDEF] hover:bg-[#E9EDEF]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={formData.allowMultiStamps}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        allowMultiStamps: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 accent-[#008069] rounded cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-[#111B21] block">
+                      صلاحية التحكم في عدد الأختام (+ / -)
+                    </span>
+                    <span className="text-[10px] text-[#54656F]">
+                      عند التفعيل تظهر أزرار + و - في نافذة الأختام لإضافة أكثر من ختم دفعة واحدة أو خصم ختم لتصحيح خطأ، مع قفل الإضافة لمدة 30 دقيقة.
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold shrink-0 ${
+                    formData.allowMultiStamps
+                      ? "bg-[#008069] text-white"
+                      : "bg-white text-[#54656F] border border-[#D1D7DB]"
+                  }`}
+                >
+                  {formData.allowMultiStamps ? "مفعّل" : "معطّل"}
+                </span>
               </label>
             </div>
           </div>

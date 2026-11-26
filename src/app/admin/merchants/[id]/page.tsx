@@ -45,6 +45,7 @@ export default async function EditMerchantPage({ params }: EditMerchantPageProps
     autoReview: merchant.autoReview,
     autoRadar: merchant.autoRadar,
     autoNearReward: merchant.autoNearReward,
+    allowMultiStamps: Boolean(merchant.allowMultiStamps),
     isActive: merchant.isActive,
   };
 

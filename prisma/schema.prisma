@@ -49,6 +49,7 @@ model Merchant {
   autoReview      Boolean       @default(true)
   autoRadar       Boolean       @default(true)
   autoNearReward  Boolean       @default(false)
+  allowMultiStamps Boolean      @default(false)
   isActive        Boolean       @default(true)
   careExpiresAt   DateTime?
   createdAt       DateTime      @default(now())

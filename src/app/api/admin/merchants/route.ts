@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       autoReview = true,
       autoRadar = true,
       autoNearReward = false,
+      allowMultiStamps = false,
       isActive = true,
     } = body;
 
@@ -130,6 +131,7 @@ export async function POST(req: NextRequest) {
         autoReview: canUseRadarReviews ? Boolean(autoReview) : false,
         autoRadar: canUseRadarReviews ? Boolean(autoRadar) : false,
         autoNearReward: Boolean(autoNearReward),
+        allowMultiStamps: Boolean(allowMultiStamps),
         isActive: Boolean(isActive),
       },
     });

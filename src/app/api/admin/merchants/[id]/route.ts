@@ -93,6 +93,7 @@ export async function PATCH(
       "autoReview",
       "autoRadar",
       "autoNearReward",
+      "allowMultiStamps",
       "isActive",
       "staffMembers",
       "cooldownMinutes",
@@ -121,7 +122,11 @@ export async function PATCH(
           updateData[key] = Number(body[key]);
         } else if (key === "latitude" || key === "longitude") {
           updateData[key] = body[key] !== null ? parseFloat(String(body[key])) : null;
-        } else if (key.startsWith("auto") || key === "isActive") {
+        } else if (
+          key.startsWith("auto") ||
+          key === "isActive" ||
+          key === "allowMultiStamps"
+        ) {
           updateData[key] = Boolean(body[key]);
         } else {
           updateData[key] = body[key];

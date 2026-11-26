@@ -226,6 +226,8 @@ export async function POST(
       customerId,
       identifier,
       action = "STAMP",
+      stampsCount,
+      adjustDelta,
       billAmount,
       redeemAmount,
       staffName = "المدير",
@@ -261,6 +263,7 @@ export async function POST(
         termsText: true,
         plan: true,
         autoReview: true,
+        allowMultiStamps: true,
         isActive: true,
         cooldownMinutes: true,
         vipVisitsThreshold: true,
@@ -405,6 +408,40 @@ export async function POST(
         ? merchant.cashbackRate + (merchant.vipCashbackBonus || 5)
         : merchant.cashbackRate;
 
+      let stampCooldownMinutesLeft = 0;
+      if (merchant.allowMultiStamps) {
+        const recentLookupTxs = await prisma.transaction.findMany({
+          where: {
+            merchantId: merchant.id,
+            customerId: customer.id,
+            type: { in: ["STAMP_ADDED", "CASHBACK_EARNED"] },
+            staffName: { not: "النظام" },
+          },
+          select: {
+            type: true,
+            branchName: true,
+            staffName: true,
+            note: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        });
+        const lastPhysical = recentLookupTxs.find((row) =>
+          isPhysicalCounterVisit(row)
+        );
+        if (lastPhysical) {
+          const diffMs = now.getTime() - new Date(lastPhysical.createdAt).getTime();
+          const cooldownMs = enforcedCooldownMinutes * 60 * 1000;
+          if (diffMs < cooldownMs) {
+            stampCooldownMinutesLeft = Math.max(
+              1,
+              Math.ceil((cooldownMs - diffMs) / 60000)
+            );
+          }
+        }
+      }
+
       return NextResponse.json({
         success: true,
         action: "LOOKUP",
@@ -412,6 +449,8 @@ export async function POST(
         isVip: isVipCustomer,
         effectiveCashbackRate,
         loyaltyMode: merchant.loyaltyMode,
+        allowMultiStamps: Boolean(merchant.allowMultiStamps),
+        stampCooldownMinutesLeft,
         remainingCredits: merchant.credits,
       });
     }
@@ -441,7 +480,39 @@ export async function POST(
       });
     }
 
-    // Pre-validate static numeric inputs before entering InnoDB transaction lock
+    // Pre-validate static numeric inputs and permissions before entering InnoDB transaction lock
+    const rawStampCount = stampsCount !== undefined ? Number(stampsCount) : 1;
+    if (action === "STAMP") {
+      if (!Number.isInteger(rawStampCount) || rawStampCount < 1 || rawStampCount > 10) {
+        return NextResponse.json(
+          { error: "عدد الأختام يجب أن يكون رقماً صحيحاً بين 1 و 10" },
+          { status: 400 }
+        );
+      }
+      if (rawStampCount !== 1 && !merchant.allowMultiStamps) {
+        return NextResponse.json(
+          { error: "صلاحية إضافة أكثر من ختم غير مفعّلة لهذا المتجر" },
+          { status: 403 }
+        );
+      }
+    }
+
+    const rawAdjustDelta = Number(adjustDelta);
+    if (action === "STAMP_ADJUST") {
+      if (!merchant.allowMultiStamps) {
+        return NextResponse.json(
+          { error: "صلاحية التحكم وتعديل الأختام غير مفعّلة لهذا المتجر" },
+          { status: 403 }
+        );
+      }
+      if (!Number.isInteger(rawAdjustDelta) || rawAdjustDelta >= 0 || rawAdjustDelta < -5) {
+        return NextResponse.json(
+          { error: "قيمة خصم الأختام يجب أن تكون عدداً صحيحاً بين -1 و -5" },
+          { status: 400 }
+        );
+      }
+    }
+
     if (action === "CASHBACK_EARN") {
       const bill = Number(billAmount || 0);
       if (isNaN(bill) || bill <= 0) {
@@ -480,7 +551,13 @@ export async function POST(
       }
 
       // Cross-branch 30-min anti-fraud cooldown check INSIDE the FOR UPDATE lock (eliminates Write Skew)
-      if ((action === "STAMP" || action === "CASHBACK_EARN") && !isOwnerSession) {
+      // When allowMultiStamps is enabled, STAMP cooldown applies strictly even for Owner (while STAMP_ADJUST stays permitted)
+      const shouldCheckCooldown =
+        action === "STAMP"
+          ? Boolean(merchant.allowMultiStamps) || !isOwnerSession
+          : action === "CASHBACK_EARN" && !isOwnerSession;
+
+      if (shouldCheckCooldown) {
         const recentPhysicalTxs = await tx.transaction.findMany({
           where: {
             merchantId: merchant.id,
@@ -513,16 +590,22 @@ export async function POST(
             if (lang === "fr") {
               const elapsedText = minsAgo < 1 ? "à l'instant" : `il y a ${minsAgo} min`;
               const branchText = lastBranchLabel ? ` (succursale : ${lastBranchLabel})` : "";
-              cooldownMsg = `⏳ Alerte : Cette carte a déjà reçu un tampon/cashback ${elapsedText}${branchText}. Règle de protection (${enforcedCooldownMinutes} min) : veuillez patienter encore ${minutesLeft} min.`;
+              cooldownMsg = merchant.allowMultiStamps && action === "STAMP"
+                ? `⏳ Tampon déjà ajouté ${elapsedText}${branchText}. Impossible d'ajouter avant ${minutesLeft} min (vous pouvez déduire un tampon en cas d'erreur).`
+                : `⏳ Alerte : Cette carte a déjà reçu un tampon/cashback ${elapsedText}${branchText}. Règle de protection (${enforcedCooldownMinutes} min) : veuillez patienter encore ${minutesLeft} min.`;
             } else if (lang === "es") {
               const elapsedText = minsAgo < 1 ? "hace un momento" : `hace ${minsAgo} min`;
               const branchText = lastBranchLabel ? ` (sucursal: ${lastBranchLabel})` : "";
-              cooldownMsg = `⏳ Aviso: Esta tarjeta ya recibió un sello/cashback ${elapsedText}${branchText}. Regla de protección (${enforcedCooldownMinutes} min): espere ${minutesLeft} min restantes.`;
+              cooldownMsg = merchant.allowMultiStamps && action === "STAMP"
+                ? `⏳ Sello añadido ${elapsedText}${branchText}. No se puede añadir otro antes de ${minutesLeft} min (pero puedes restar un sello si hubo error).`
+                : `⏳ Aviso: Esta tarjeta ya recibió un sello/cashback ${elapsedText}${branchText}. Regla de protección (${enforcedCooldownMinutes} min): espere ${minutesLeft} min restantes.`;
             } else {
               const elapsedText =
                 minsAgo < 1 ? "منذ لحظات (أقل من دقيقة)" : `قبل ${minsAgo} دقيقة`;
               const branchText = lastBranchLabel ? ` في فرع (${lastBranchLabel})` : "";
-              cooldownMsg = `⏳ تنبيه: تم عمل ختم/عملية لهذا الزبون ${elapsedText}${branchText}. لا يمكن إضافة ختم جديد إلا بعد مرور ${enforcedCooldownMinutes} دقيقة (متبقي ${minutesLeft} دقيقة).`;
+              cooldownMsg = merchant.allowMultiStamps && action === "STAMP"
+                ? `⏳ تم إضافة ختم لهذا الزبون ${elapsedText}${branchText}. لا يمكن إضافة ختم آخر إلا بعد مرور ${enforcedCooldownMinutes} دقيقة (متبقي ${minutesLeft} دقيقة)، لكن يمكنك خصم ختم لتصحيح خطأ.`
+                : `⏳ تنبيه: تم عمل ختم/عملية لهذا الزبون ${elapsedText}${branchText}. لا يمكن إضافة ختم جديد إلا بعد مرور ${enforcedCooldownMinutes} دقيقة (متبقي ${minutesLeft} دقيقة).`;
             }
 
             throw new CooldownActiveError({
@@ -810,11 +893,83 @@ export async function POST(
         };
       }
 
+      // Action 4.5: STAMP_ADJUST (Negative deduction to fix mistake, exempt from cooldown/billing)
+      if (action === "STAMP_ADJUST") {
+        const currentStamps = roundStamps(lockedCustomer.stamps || 0);
+        const deductCount = Math.abs(rawAdjustDelta);
+        if (currentStamps < 1) {
+          throw new StampValidationError(
+            lang === "fr"
+              ? "Impossible de retirer un tampon : le solde actuel est insuffisant."
+              : lang === "es"
+              ? "No se puede restar un sello: el saldo actual es insuficiente."
+              : "لا يمكن خصم ختم لأن الرصيد الحالي أقل من ختم واحد.",
+            400
+          );
+        }
+        if (deductCount > currentStamps) {
+          throw new StampValidationError(
+            lang === "fr"
+              ? `Impossible de retirer ${deductCount} tampons : solde actuel (${formatStamps(currentStamps)}).`
+              : lang === "es"
+              ? `No se pueden restar ${deductCount} sellos: saldo actual (${formatStamps(currentStamps)}).`
+              : `لا يمكن خصم ${deductCount} أختام لأن الرصيد الحالي هو (${formatStamps(currentStamps)}).`,
+            400
+          );
+        }
+
+        const nextStamps = Math.max(0, roundStamps(currentStamps - deductCount));
+
+        const updatedCustomer = await tx.customer.update({
+          where: { id: lockedCustomer.id },
+          data: {
+            stamps: nextStamps,
+          },
+        });
+
+        const transaction = await tx.transaction.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: lockedCustomer.id,
+            type: "STAMP_ADJUSTED",
+            stampsDelta: -deductCount,
+            staffName: resolvedStaffName,
+            branchName: resolvedBranchName,
+            note: `تصحيح الرصيد: خصم ${deductCount} ${deductCount === 1 ? "ختم" : "أختام"}`,
+            createdAt: now,
+          },
+        });
+
+        const notification = await tx.notification.create({
+          data: {
+            merchantId: merchant.id,
+            customerId: lockedCustomer.id,
+            type: "STAMP",
+            title: merchant.name,
+            body: `تم تعديل رصيد الأختام (-${deductCount}). رصيدك الحالي: ${formatStamps(nextStamps)}/${merchant.stampsRequired}.`,
+            createdAt: now,
+          },
+        });
+
+        return {
+          kind: "STAMP_ADJUST" as const,
+          updatedCustomer,
+          transaction,
+          notification,
+          deductCount,
+          referrerPush: null,
+        };
+      }
+
       // Action 5: ADD STAMP (Default, computed from fresh lockedCustomer!)
       const isFirstActivation = lockedCustomer.isActivated === false;
-      const totalStampsAdded = 1;
+      const totalStampsAdded = rawStampCount;
       const maxRolloverCap = roundStamps(merchant.stampsRequired + 0.5);
-      const nextStamps = isFirstActivation
+      const nextStamps = merchant.allowMultiStamps
+        ? isFirstActivation
+          ? totalStampsAdded
+          : roundStamps((lockedCustomer.stamps || 0) + totalStampsAdded)
+        : isFirstActivation
         ? 1
         : Math.min(maxRolloverCap, roundStamps((lockedCustomer.stamps || 0) + totalStampsAdded));
       const isRewardUnlocked = nextStamps >= merchant.stampsRequired;
@@ -839,9 +994,14 @@ export async function POST(
           stampsDelta: totalStampsAdded,
           staffName: resolvedStaffName,
           branchName: resolvedBranchName,
-          note: isFirstActivation
-            ? "تفعيل البطاقة واستلام خِتم الزيارة الأول ☕️🎁"
-            : "ختم زيارة جديد ☕️",
+          note:
+            totalStampsAdded > 1
+              ? isFirstActivation
+                ? `تفعيل البطاقة + إضافة ${totalStampsAdded} أختام ☕️🎁`
+                : `إضافة ${totalStampsAdded} أختام دفعة واحدة ☕️`
+              : isFirstActivation
+              ? "تفعيل البطاقة واستلام خِتم الزيارة الأول ☕️🎁"
+              : "ختم زيارة جديد ☕️",
           createdAt: now,
         },
       });
@@ -855,9 +1015,13 @@ export async function POST(
           body: isFirstActivation
             ? isRewardUnlocked
               ? `🎉 مبروك! تم تفعيل بطاقتك واكتملت أختامك! مكافأة ${merchant.rewardName} جاهزة للاستلام.`
+              : totalStampsAdded > 1
+              ? `🎉 أهلاً بك! تم تفعيل بطاقتك وإضافة ${totalStampsAdded} أختام! متبقي لديك ${formatStamps(stampsLeft)} أختام للحصول على ${merchant.rewardName}.`
               : `🎉 أهلاً بك! تم تفعيل بطاقتك وإضافة خِتمك الأول! متبقي لديك ${formatStamps(stampsLeft)} أختام للحصول على ${merchant.rewardName}.`
             : isRewardUnlocked
             ? `🎉 مبروك! اكتملت أختامك! مكافأة ${merchant.rewardName} جاهزة للاستلام.`
+            : totalStampsAdded > 1
+            ? `تمت إضافة ${totalStampsAdded} أختام جديدة! متبقي لديك ${formatStamps(stampsLeft)} أختام للحصول على ${merchant.rewardName}.`
             : `تمت إضافة ختم جديد! متبقي لديك ${formatStamps(stampsLeft)} أختام للحصول على ${merchant.rewardName}.`,
           createdAt: now,
         },
@@ -909,6 +1073,7 @@ export async function POST(
         updatedCustomer,
         transaction,
         notification,
+        totalStampsAdded,
         isFirstActivation,
         isRewardUnlocked,
         referrerPush,
@@ -1011,26 +1176,60 @@ export async function POST(
       });
     }
 
+    if (txOutcome.kind === "STAMP_ADJUST") {
+      const formattedAdjustedStamps = formatStamps(txOutcome.updatedCustomer.stamps);
+      const adjustMsg =
+        lang === "fr"
+          ? `${txOutcome.deductCount} tampon(s) retiré(s) pour ${txOutcome.updatedCustomer.name} (${formattedAdjustedStamps}/${merchant.stampsRequired}).`
+          : lang === "es"
+          ? `Se restaron ${txOutcome.deductCount} sello(s) a ${txOutcome.updatedCustomer.name} (${formattedAdjustedStamps}/${merchant.stampsRequired}).`
+          : `تم خصم ${txOutcome.deductCount} ${txOutcome.deductCount === 1 ? "ختم" : "أختام"} من رصيد ${txOutcome.updatedCustomer.name} (${formattedAdjustedStamps}/${merchant.stampsRequired}).`;
+
+      return NextResponse.json({
+        success: true,
+        action: "STAMP_ADJUST",
+        deductCount: txOutcome.deductCount,
+        message: adjustMsg,
+        customer: txOutcome.updatedCustomer,
+        transaction: txOutcome.transaction,
+        notification: txOutcome.notification,
+        remainingCredits: merchant.credits,
+      });
+    }
+
     // STAMP response
     const formattedUpdatedStamps = formatStamps(txOutcome.updatedCustomer.stamps);
     const localizedStampReward = getLocalizedRewardName(merchant.rewardName, lang);
+    const addedCount = txOutcome.totalStampsAdded;
     let stampMsg = txOutcome.isFirstActivation
-      ? `🎉 تم تفعيل بطاقة ${txOutcome.updatedCustomer.name} وإضافة الختم الأول بنجاح (${formattedUpdatedStamps}/${merchant.stampsRequired})!`
+      ? addedCount > 1
+        ? `🎉 تم تفعيل بطاقة ${txOutcome.updatedCustomer.name} وإضافة ${addedCount} أختام بنجاح (${formattedUpdatedStamps}/${merchant.stampsRequired})!`
+        : `🎉 تم تفعيل بطاقة ${txOutcome.updatedCustomer.name} وإضافة الختم الأول بنجاح (${formattedUpdatedStamps}/${merchant.stampsRequired})!`
       : txOutcome.isRewardUnlocked
       ? `🎉 ممتاز! ${txOutcome.updatedCustomer.name} جمع كافة الأختام (${formattedUpdatedStamps}/${merchant.stampsRequired}) والمكافأة جاهزة!`
+      : addedCount > 1
+      ? `تمت إضافة ${addedCount} أختام لـ ${txOutcome.updatedCustomer.name} بنجاح (${formattedUpdatedStamps}/${merchant.stampsRequired}).`
       : `تمت إضافة ختم جديد لـ ${txOutcome.updatedCustomer.name} بنجاح (${formattedUpdatedStamps}/${merchant.stampsRequired}).`;
 
     if (lang === "fr") {
       stampMsg = txOutcome.isFirstActivation
-        ? `🎉 Carte de ${txOutcome.updatedCustomer.name} activée avec le premier tampon (${formattedUpdatedStamps}/${merchant.stampsRequired}) !`
+        ? addedCount > 1
+          ? `🎉 Carte de ${txOutcome.updatedCustomer.name} activée avec ${addedCount} tampons (${formattedUpdatedStamps}/${merchant.stampsRequired}) !`
+          : `🎉 Carte de ${txOutcome.updatedCustomer.name} activée avec le premier tampon (${formattedUpdatedStamps}/${merchant.stampsRequired}) !`
         : txOutcome.isRewardUnlocked
         ? `🎉 Excellent ! ${txOutcome.updatedCustomer.name} a complété tous les tampons (${formattedUpdatedStamps}/${merchant.stampsRequired}) et la récompense (${localizedStampReward}) est prête !`
+        : addedCount > 1
+        ? `${addedCount} tampons ajoutés pour ${txOutcome.updatedCustomer.name} avec succès (${formattedUpdatedStamps}/${merchant.stampsRequired}).`
         : `Nouveau tampon ajouté pour ${txOutcome.updatedCustomer.name} avec succès (${formattedUpdatedStamps}/${merchant.stampsRequired}).`;
     } else if (lang === "es") {
       stampMsg = txOutcome.isFirstActivation
-        ? `🎉 ¡Tarjeta de ${txOutcome.updatedCustomer.name} activada con el primer sello (${formattedUpdatedStamps}/${merchant.stampsRequired})!`
+        ? addedCount > 1
+          ? `🎉 ¡Tarjeta de ${txOutcome.updatedCustomer.name} activada con ${addedCount} sellos (${formattedUpdatedStamps}/${merchant.stampsRequired})!`
+          : `🎉 ¡Tarjeta de ${txOutcome.updatedCustomer.name} activada con el primer sello (${formattedUpdatedStamps}/${merchant.stampsRequired})!`
         : txOutcome.isRewardUnlocked
         ? `🎉 ¡Excelente! ${txOutcome.updatedCustomer.name} ha completado todos los sellos (${formattedUpdatedStamps}/${merchant.stampsRequired}) y el premio (${localizedStampReward}) está listo.`
+        : addedCount > 1
+        ? `Se añadieron ${addedCount} sellos para ${txOutcome.updatedCustomer.name} con éxito (${formattedUpdatedStamps}/${merchant.stampsRequired}).`
         : `Nuevo sello añadido para ${txOutcome.updatedCustomer.name} con éxito (${formattedUpdatedStamps}/${merchant.stampsRequired}).`;
     }
 

@@ -149,6 +149,7 @@ export async function GET(
         autoReview: merchant.autoReview,
         autoRadar: merchant.autoRadar,
         autoNearReward: merchant.autoNearReward,
+        allowMultiStamps: Boolean(merchant.allowMultiStamps),
         isActive: merchant.isActive,
       },
       customers: merchant.customers,
