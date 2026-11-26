@@ -72,32 +72,32 @@ export async function POST(
       return NextResponse.json({ error: msg, alreadyClaimed: true }, { status: 409 });
     }
 
-    const isCashback = customer.loyaltyType === "CASHBACK";
     const currency = merchant.currency || "DH";
     const now = new Date();
 
     const txResult = await prisma.$transaction(async (tx) => {
-      // Atomic single-claim lock: succeeds only once per customer card
-      const claimLock = await tx.customer.updateMany({
-        where: {
-          id: customer.id,
-          hasClaimedReviewReward: false,
-          isActivated: true,
-        },
-        data: {
-          hasClaimedReviewReward: true,
-        },
+      // Exclusive InnoDB row lock prevents concurrent double-clicks / dual tabs from double-claiming
+      await tx.$queryRaw`SELECT id FROM \`Customer\` WHERE id = ${customer.id} FOR UPDATE`;
+
+      const lockedCustomer = await tx.customer.findUnique({
+        where: { id: customer.id },
       });
 
-      if (claimLock.count === 0) {
+      if (
+        !lockedCustomer ||
+        lockedCustomer.hasClaimedReviewReward ||
+        lockedCustomer.isActivated === false
+      ) {
         throw new AlreadyClaimedError();
       }
 
-      if (isCashback) {
+      const lockedIsCashback = lockedCustomer.loyaltyType === "CASHBACK";
+
+      if (lockedIsCashback) {
         // Find lowest positive physical CASHBACK_EARNED amount ever credited to this card since creation
         const cashbackHistory = await tx.transaction.findMany({
           where: {
-            customerId: customer.id,
+            customerId: lockedCustomer.id,
             type: "CASHBACK_EARNED",
             cashbackDelta: { gt: 0 },
             staffName: { not: "النظام" },
@@ -132,8 +132,9 @@ export async function POST(
         }
 
         const updatedCustomer = await tx.customer.update({
-          where: { id: customer.id },
+          where: { id: lockedCustomer.id },
           data: {
+            hasClaimedReviewReward: true,
             cashbackBalance: { increment: rewardAmount },
             totalCashbackEarned: { increment: rewardAmount },
           },
@@ -142,7 +143,7 @@ export async function POST(
         const transaction = await tx.transaction.create({
           data: {
             merchantId: merchant.id,
-            customerId: customer.id,
+            customerId: lockedCustomer.id,
             type: "REVIEW_REWARD",
             stampsDelta: 0,
             cashbackDelta: rewardAmount,
@@ -162,7 +163,7 @@ export async function POST(
         const notification = await tx.notification.create({
           data: {
             merchantId: merchant.id,
-            customerId: customer.id,
+            customerId: lockedCustomer.id,
             type: "CASHBACK",
             title: merchant.name,
             body: notificationBody,
@@ -171,6 +172,7 @@ export async function POST(
         });
 
         return {
+          rewardType: "CASHBACK" as const,
           updatedCustomer,
           transaction,
           notification,
@@ -184,16 +186,17 @@ export async function POST(
       const maxRolloverCap = roundStamps(safeRequired + 0.5);
       const nextStamps = Math.min(
         maxRolloverCap,
-        roundStamps((customer.stamps || 0) + reviewStampBonus)
+        roundStamps((lockedCustomer.stamps || 0) + reviewStampBonus)
       );
       const actualDelta = Math.max(
         0,
-        roundStamps(nextStamps - (customer.stamps || 0))
+        roundStamps(nextStamps - (lockedCustomer.stamps || 0))
       );
 
       const updatedCustomer = await tx.customer.update({
-        where: { id: customer.id },
+        where: { id: lockedCustomer.id },
         data: {
+          hasClaimedReviewReward: true,
           stamps: nextStamps,
         },
       });
@@ -201,7 +204,7 @@ export async function POST(
       const transaction = await tx.transaction.create({
         data: {
           merchantId: merchant.id,
-          customerId: customer.id,
+          customerId: lockedCustomer.id,
           type: "REVIEW_REWARD",
           stampsDelta: actualDelta > 0 ? actualDelta : reviewStampBonus,
           staffName: "النظام",
@@ -221,7 +224,7 @@ export async function POST(
       const notification = await tx.notification.create({
         data: {
           merchantId: merchant.id,
-          customerId: customer.id,
+          customerId: lockedCustomer.id,
           type: nextStamps >= safeRequired ? "REWARD" : "STAMP",
           title: merchant.name,
           body: notificationBody,
@@ -230,6 +233,7 @@ export async function POST(
       });
 
       return {
+        rewardType: "STAMPS" as const,
         updatedCustomer,
         transaction,
         notification,
@@ -237,7 +241,7 @@ export async function POST(
       };
     });
 
-    // Asynchronously push real-time wallet updates to Apple & Google Wallet
+    // Asynchronously push real-time wallet updates strictly AFTER transaction commits
     pushGoogleWalletUpdate(
       txResult.updatedCustomer,
       merchant,
@@ -253,7 +257,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      rewardType: isCashback ? "CASHBACK" : "STAMPS",
+      rewardType: txResult.rewardType,
       rewardValue: txResult.rewardValue,
       message: txResult.notification.body,
       customer: {

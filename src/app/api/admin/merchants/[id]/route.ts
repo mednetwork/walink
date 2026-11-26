@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hasRadarAndReviewsFeature, normalizeMerchantPlan } from "@/lib/pricing";
+import { invalidateMerchantCache } from "@/lib/cache";
 
 export async function GET(
   req: NextRequest,
@@ -128,19 +129,24 @@ export async function PATCH(
       }
     }
 
+    const existingMerchant = await prisma.merchant.findUnique({
+      where: { id },
+      select: { slug: true, plan: true, maxBranches: true },
+    });
+
+    if (!existingMerchant) {
+      return NextResponse.json({ error: "المحل غير موجود" }, { status: 404 });
+    }
+
     if ("plan" in updateData || "maxBranches" in updateData) {
-      const existing = await prisma.merchant.findUnique({
-        where: { id },
-        select: { plan: true, maxBranches: true },
-      });
       const candidatePlan =
         typeof updateData.plan === "string"
           ? updateData.plan
-          : existing?.plan || "GROWTH";
+          : existingMerchant.plan || "GROWTH";
       const candidateBranches =
         typeof updateData.maxBranches === "number"
           ? updateData.maxBranches
-          : existing?.maxBranches || 1;
+          : existingMerchant.maxBranches || 1;
       const normalized = normalizeMerchantPlan(candidatePlan, candidateBranches);
       updateData.plan = normalized;
       if (normalized === "STARTER") {
@@ -163,6 +169,9 @@ export async function PATCH(
       data: updateData,
     });
 
+    invalidateMerchantCache(existingMerchant.slug);
+    invalidateMerchantCache(updated.slug);
+
     return NextResponse.json(updated);
   } catch (error: unknown) {
     console.error("Error updating merchant:", error);
@@ -178,9 +187,12 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    await prisma.merchant.delete({
+    const deleted = await prisma.merchant.delete({
       where: { id },
+      select: { slug: true },
     });
+
+    invalidateMerchantCache(deleted.slug);
 
     return NextResponse.json({ success: true, message: "تم حذف المحل بنجاح" });
   } catch (error: unknown) {

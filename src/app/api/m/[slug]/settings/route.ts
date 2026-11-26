@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getStoreSessionFromCookies } from "@/lib/auth";
 import { hasRadarAndReviewsFeature } from "@/lib/pricing";
+import { invalidateMerchantCache } from "@/lib/cache";
 
 export async function PATCH(
   req: NextRequest,
@@ -262,6 +263,9 @@ export async function PATCH(
         autoNearReward: true,
       },
     });
+
+    invalidateMerchantCache(slug);
+    invalidateMerchantCache(updated.slug);
 
     return NextResponse.json({
       success: true,

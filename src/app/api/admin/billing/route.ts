@@ -63,22 +63,6 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const existing = await prisma.merchantInvoice.findUnique({
-      where: {
-        merchantId_month: {
-          merchantId: merchant.id,
-          month,
-        },
-      },
-    });
-
-    const nextStatus =
-      body.status === "PAID" || body.status === "UNPAID"
-        ? body.status
-        : existing?.status === "PAID"
-        ? "PAID"
-        : "UNPAID";
-
     const safeBranches = Math.max(1, merchant.maxBranches || 1);
     const normalizedPlan = normalizeMerchantPlan(merchant.plan, safeBranches);
     const liveSubscriptionFee = computeMonthlySubscriptionFee(
@@ -86,79 +70,102 @@ export async function PATCH(req: NextRequest) {
       safeBranches
     );
 
-    const pointAgg = await prisma.pointUsage.aggregate({
-      where: {
-        merchantId: merchant.id,
-        billingMonth: month,
-      },
-      _sum: { points: true },
-    });
-    const livePointsUsed = pointAgg._sum.points ?? 0;
-    const livePointsFee = computePointsFee(livePointsUsed);
+    const updatedInvoice = await prisma.$transaction(async (tx) => {
+      // Lock the Merchant row exclusively to serialize concurrent invoice updates for the same period
+      await tx.$queryRaw`SELECT id FROM \`Merchant\` WHERE id = ${merchant.id} FOR UPDATE`;
 
-    const resolvedInstallationFee =
-      typeof body.installationFee === "number" && !isNaN(body.installationFee)
-        ? Math.max(0, Number(body.installationFee))
-        : existing
-        ? existing.installationFee
-        : createdMonth === month
-        ? INSTALLATION_FEE_MAD
-        : 0;
+      const [existing, pointAgg] = await Promise.all([
+        tx.merchantInvoice.findUnique({
+          where: {
+            merchantId_month: {
+              merchantId: merchant.id,
+              month,
+            },
+          },
+        }),
+        tx.pointUsage.aggregate({
+          where: {
+            merchantId: merchant.id,
+            billingMonth: month,
+          },
+          _sum: { points: true },
+        }),
+      ]);
 
-    const subscriptionFee =
-      existing && existing.status === "PAID" && nextStatus === "PAID"
-        ? existing.subscriptionFee
-        : liveSubscriptionFee;
-    const pointsUsed =
-      existing && existing.status === "PAID" && nextStatus === "PAID"
-        ? existing.pointsUsed
-        : livePointsUsed;
-    const pointsFee =
-      existing && existing.status === "PAID" && nextStatus === "PAID"
-        ? existing.pointsFee
-        : livePointsFee;
-    const totalAmount = Number(
-      (subscriptionFee + resolvedInstallationFee + pointsFee).toFixed(2)
-    );
+      const nextStatus =
+        body.status === "PAID" || body.status === "UNPAID"
+          ? body.status
+          : existing?.status === "PAID"
+          ? "PAID"
+          : "UNPAID";
 
-    const updatedInvoice = await prisma.merchantInvoice.upsert({
-      where: {
-        merchantId_month: {
+      const livePointsUsed = pointAgg._sum.points ?? 0;
+      const livePointsFee = computePointsFee(livePointsUsed);
+
+      const resolvedInstallationFee =
+        typeof body.installationFee === "number" && !isNaN(body.installationFee)
+          ? Math.max(0, Number(body.installationFee))
+          : existing
+          ? existing.installationFee
+          : createdMonth === month
+          ? INSTALLATION_FEE_MAD
+          : 0;
+
+      const subscriptionFee =
+        existing && existing.status === "PAID" && nextStatus === "PAID"
+          ? existing.subscriptionFee
+          : liveSubscriptionFee;
+      const pointsUsed =
+        existing && existing.status === "PAID" && nextStatus === "PAID"
+          ? existing.pointsUsed
+          : livePointsUsed;
+      const pointsFee =
+        existing && existing.status === "PAID" && nextStatus === "PAID"
+          ? existing.pointsFee
+          : livePointsFee;
+      const totalAmount = Number(
+        (subscriptionFee + resolvedInstallationFee + pointsFee).toFixed(2)
+      );
+
+      return tx.merchantInvoice.upsert({
+        where: {
+          merchantId_month: {
+            merchantId: merchant.id,
+            month,
+          },
+        },
+        create: {
           merchantId: merchant.id,
           month,
+          planSnapshot: normalizedPlan,
+          branchesSnapshot:
+            normalizedPlan === "MULTI" ? Math.max(2, safeBranches) : 1,
+          subscriptionFee,
+          installationFee: resolvedInstallationFee,
+          pointsUsed,
+          pointsFee,
+          totalAmount,
+          status: nextStatus,
+          paidAt: nextStatus === "PAID" ? new Date() : null,
+          notes: body.notes ?? null,
         },
-      },
-      create: {
-        merchantId: merchant.id,
-        month,
-        planSnapshot: normalizedPlan,
-        branchesSnapshot:
-          normalizedPlan === "MULTI" ? Math.max(2, safeBranches) : 1,
-        subscriptionFee,
-        installationFee: resolvedInstallationFee,
-        pointsUsed,
-        pointsFee,
-        totalAmount,
-        status: nextStatus,
-        paidAt: nextStatus === "PAID" ? new Date() : null,
-        notes: body.notes ?? null,
-      },
-      update: {
-        planSnapshot: normalizedPlan,
-        branchesSnapshot:
-          normalizedPlan === "MULTI" ? Math.max(2, safeBranches) : 1,
-        subscriptionFee,
-        installationFee: resolvedInstallationFee,
-        pointsUsed,
-        pointsFee,
-        totalAmount,
-        status: nextStatus,
-        paidAt:
-          nextStatus === "PAID"
-            ? existing?.paidAt || new Date()
-            : null,
-        ...(body.notes !== undefined ? { notes: body.notes } : {}),
-      },
+        update: {
+          planSnapshot: normalizedPlan,
+          branchesSnapshot:
+            normalizedPlan === "MULTI" ? Math.max(2, safeBranches) : 1,
+          subscriptionFee,
+          installationFee: resolvedInstallationFee,
+          pointsUsed,
+          pointsFee,
+          totalAmount,
+          status: nextStatus,
+          paidAt:
+            nextStatus === "PAID"
+              ? existing?.paidAt || new Date()
+              : null,
+          ...(body.notes !== undefined ? { notes: body.notes } : {}),
+        },
+      });
     });
 
     const refreshed = await buildBillingRows(month);

@@ -1,7 +1,7 @@
 import React from "react";
 import { Metadata } from "next";
 import { AlertTriangle } from "lucide-react";
-import prisma from "@/lib/prisma";
+import { getCachedMerchantPublicBySlug } from "@/lib/cache";
 import JoinFormClient from "@/components/JoinFormClient";
 
 interface JoinPageProps {
@@ -14,10 +14,7 @@ export async function generateMetadata({
   params,
 }: JoinPageProps): Promise<Metadata> {
   const { slug } = params;
-  const merchant = await prisma.merchant.findUnique({
-    where: { slug },
-    select: { name: true, city: true, rewardName: true },
-  });
+  const merchant = await getCachedMerchantPublicBySlug(slug);
 
   if (!merchant) {
     return {
@@ -34,26 +31,7 @@ export async function generateMetadata({
 export default async function CustomerJoinPage({ params }: JoinPageProps) {
   const { slug } = params;
 
-  const merchant = await prisma.merchant.findUnique({
-    where: { slug },
-    select: {
-      name: true,
-      slug: true,
-      niche: true,
-      city: true,
-      logoIcon: true,
-      primaryColor: true,
-      bgGradient: true,
-      stampsRequired: true,
-      rewardName: true,
-      customerPrefix: true,
-      loyaltyMode: true,
-      cashbackRate: true,
-      welcomeCashback: true,
-      currency: true,
-      isActive: true,
-    },
-  });
+  const merchant = await getCachedMerchantPublicBySlug(slug);
 
   if (!merchant || !merchant.isActive) {
     return (

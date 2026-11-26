@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { normalizeMoroccanPhone, isValidMoroccanPhone } from "@/lib/utils";
+import { getCachedMerchantPublicBySlug } from "@/lib/cache";
 
 function maskPhone(phone: string): string {
   const clean = phone.replace(/\D/g, "");
@@ -42,21 +43,7 @@ export async function POST(
       );
     }
 
-    const merchant = await prisma.merchant.findUnique({
-      where: { slug },
-      select: {
-        id: true,
-        name: true,
-        isActive: true,
-        loyaltyMode: true,
-        welcomeCashback: true,
-        currency: true,
-        cashbackRate: true,
-        stampsRequired: true,
-        rewardName: true,
-        referralBonus: true,
-      },
-    });
+    const merchant = await getCachedMerchantPublicBySlug(slug);
 
     if (!merchant) {
       return NextResponse.json(
@@ -93,7 +80,124 @@ export async function POST(
     });
 
     if (existingCustomer) {
-      // 1. Check if account recovery is locked out due to failed attempts
+      const providedPin =
+        typeof securityPin === "string" ? securityPin.trim() : "";
+
+      if (providedPin.length > 0) {
+        // Atomic row-locked PIN check prevents parallel brute-force bypasses (Write Skew)
+        const pinResult = await prisma.$transaction(async (tx) => {
+          await tx.$queryRaw`SELECT id FROM \`Customer\` WHERE id = ${existingCustomer.id} FOR UPDATE`;
+
+          const locked = await tx.customer.findUnique({
+            where: { id: existingCustomer.id },
+            select: {
+              id: true,
+              securityPin: true,
+              memberCode: true,
+              failedPinAttempts: true,
+              pinLockedUntil: true,
+              passSerial: true,
+            },
+          });
+
+          if (!locked) {
+            return { status: "NOT_FOUND" as const };
+          }
+
+          if (locked.pinLockedUntil && new Date(locked.pinLockedUntil) > new Date()) {
+            const diffMs = new Date(locked.pinLockedUntil).getTime() - Date.now();
+            return {
+              status: "LOCKED" as const,
+              pinLockedUntil: locked.pinLockedUntil.toISOString(),
+              minsRemaining: Math.max(1, Math.ceil(diffMs / 60000)),
+            };
+          }
+
+          const isMatch =
+            providedPin === locked.securityPin || providedPin === locked.memberCode;
+
+          if (isMatch) {
+            await tx.customer.update({
+              where: { id: locked.id },
+              data: {
+                failedPinAttempts: 0,
+                pinLockedUntil: null,
+              },
+            });
+            return { status: "MATCH" as const, passSerial: locked.passSerial };
+          }
+
+          const newFailed = (locked.failedPinAttempts || 0) + 1;
+          const isNowLocked = newFailed >= 5;
+          const lockTimestamp = isNowLocked
+            ? new Date(Date.now() + 15 * 60 * 1000)
+            : null;
+
+          await tx.customer.update({
+            where: { id: locked.id },
+            data: {
+              failedPinAttempts: newFailed,
+              pinLockedUntil: lockTimestamp,
+            },
+          });
+
+          return {
+            status: isNowLocked ? ("NEW_LOCK" as const) : ("WRONG" as const),
+            attemptsRemaining: Math.max(0, 5 - newFailed),
+            pinLockedUntil: lockTimestamp?.toISOString(),
+          };
+        });
+
+        if (pinResult.status === "LOCKED") {
+          return NextResponse.json(
+            {
+              existing: true,
+              locked: true,
+              pinLockedUntil: pinResult.pinLockedUntil,
+              minsRemaining: pinResult.minsRemaining,
+              error: `تم قفل محاولات الاسترجاع مؤقتاً لمدة ${pinResult.minsRemaining} دقيقة لحماية الحساب. يرجى مراجعة الكاشير في المتجر لإلغاء القفل فوراً.`,
+            },
+            { status: 423 }
+          );
+        }
+
+        if (pinResult.status === "MATCH") {
+          return NextResponse.json({
+            existing: true,
+            passSerial: pinResult.passSerial,
+            message: "مرحباً بعودتك! تم تأكيد هويتك واسترجاع بطاقتك بنجاح.",
+          });
+        }
+
+        if (pinResult.status === "NEW_LOCK") {
+          return NextResponse.json(
+            {
+              existing: true,
+              locked: true,
+              attemptsRemaining: 0,
+              pinLockedUntil: pinResult.pinLockedUntil,
+              minsRemaining: 15,
+              error:
+                "تم إدخال رمز الأمان 5 مرات بشكل خاطئ. تم قفل الحساب مؤقتاً لمدة 15 دقيقة لحمايته. يمكنك طلب المساعدة من الكاشير في المحل.",
+            },
+            { status: 423 }
+          );
+        }
+
+        if (pinResult.status === "WRONG") {
+          return NextResponse.json(
+            {
+              existing: true,
+              requiresPin: true,
+              attemptsRemaining: pinResult.attemptsRemaining,
+              error: `رمز الأمان غير صحيح. تبقى لك ${pinResult.attemptsRemaining} محاولات قبل القفل المؤقت.`,
+            },
+            { status: 401 }
+          );
+        }
+      }
+
+      // Check lock status for empty-PIN preflight
       if (
         existingCustomer.pinLockedUntil &&
         new Date(existingCustomer.pinLockedUntil) > new Date()
@@ -111,74 +215,6 @@ export async function POST(
           },
           { status: 423 }
         );
-      }
-
-      // 2. If caller provided securityPin, verify it
-      const providedPin =
-        typeof securityPin === "string" ? securityPin.trim() : "";
-
-      if (providedPin.length > 0) {
-        const isMatch =
-          providedPin === existingCustomer.securityPin ||
-          providedPin === existingCustomer.memberCode;
-
-        if (isMatch) {
-          // Reset lockout on successful PIN verification
-          await prisma.customer.update({
-            where: { id: existingCustomer.id },
-            data: {
-              failedPinAttempts: 0,
-              pinLockedUntil: null,
-            },
-          });
-
-          return NextResponse.json({
-            existing: true,
-            passSerial: existingCustomer.passSerial,
-            message: "مرحباً بعودتك! تم تأكيد هويتك واسترجاع بطاقتك بنجاح.",
-          });
-        } else {
-          // Wrong PIN entered
-          const newFailed = (existingCustomer.failedPinAttempts || 0) + 1;
-          const isNowLocked = newFailed >= 5;
-          const lockTimestamp = isNowLocked
-            ? new Date(Date.now() + 15 * 60 * 1000)
-            : null;
-
-          await prisma.customer.update({
-            where: { id: existingCustomer.id },
-            data: {
-              failedPinAttempts: newFailed,
-              pinLockedUntil: lockTimestamp,
-            },
-          });
-
-          const attemptsRemaining = Math.max(0, 5 - newFailed);
-          if (isNowLocked) {
-            return NextResponse.json(
-              {
-                existing: true,
-                locked: true,
-                attemptsRemaining: 0,
-                pinLockedUntil: lockTimestamp?.toISOString(),
-                minsRemaining: 15,
-                error:
-                  "تم إدخال رمز الأمان 5 مرات بشكل خاطئ. تم قفل الحساب مؤقتاً لمدة 15 دقيقة لحمايته. يمكنك طلب المساعدة من الكاشير في المحل.",
-              },
-              { status: 423 }
-            );
-          }
-
-          return NextResponse.json(
-            {
-              existing: true,
-              requiresPin: true,
-              attemptsRemaining,
-              error: `رمز الأمان غير صحيح. تبقى لك ${attemptsRemaining} محاولات قبل القفل المؤقت.`,
-            },
-            { status: 401 }
-          );
-        }
       }
 
       // 3. If caller did not provide securityPin, prompt for it with privacy masking
@@ -274,40 +310,44 @@ export async function POST(
     const initialStamps = isCashback ? 0 : isReferred ? 0 : 1;
     const initialCashback = isReferred ? 0 : welcomeBonus;
 
-    const newCustomer = await prisma.customer.create({
-      data: {
-        merchantId: merchant.id,
-        name: name.trim(),
-        phone: normalizedPhone,
-        memberCode,
-        securityPin: customPin,
-        failedPinAttempts: 0,
-        loyaltyType: effectiveLoyaltyType,
-        stamps: initialStamps,
-        cashbackBalance: initialCashback,
-        totalCashbackEarned: initialCashback,
-        totalVisits: 0,
-        referredByCode: referrerCustomer ? referrerCustomer.memberCode : null,
-        isActivated: !isReferred,
-        walletType: "WEBPASS",
-      },
-    });
+    // Create new customer and initial CARD_CREATED transaction atomically
+    const newCustomer = await prisma.$transaction(async (tx) => {
+      const created = await tx.customer.create({
+        data: {
+          merchantId: merchant.id,
+          name: name.trim(),
+          phone: normalizedPhone,
+          memberCode,
+          securityPin: customPin,
+          failedPinAttempts: 0,
+          loyaltyType: effectiveLoyaltyType,
+          stamps: initialStamps,
+          cashbackBalance: initialCashback,
+          totalCashbackEarned: initialCashback,
+          totalVisits: 0,
+          referredByCode: referrerCustomer ? referrerCustomer.memberCode : null,
+          isActivated: !isReferred,
+          walletType: "WEBPASS",
+        },
+      });
 
-    // Create initial card created transaction
-    await prisma.transaction.create({
-      data: {
-        merchantId: merchant.id,
-        customerId: newCustomer.id,
-        type: "CARD_CREATED",
-        stampsDelta: initialStamps,
-        cashbackDelta: initialCashback,
-        staffName: "النظام",
-        note: isReferred
-          ? "إنشاء بطاقة عبر دعوة صديق (بانتظار التفعيل عند أول زيارة للمتجر) 🎁"
-          : isCashback
-          ? `تفعيل بطاقة كاش باك + هدية ترحيبية ${welcomeBonus} ${merchant.currency}`
-          : "تفعيل بطاقة الأختام + أول ختم ترحيبي هدية 🎁",
-      },
+      await tx.transaction.create({
+        data: {
+          merchantId: merchant.id,
+          customerId: created.id,
+          type: "CARD_CREATED",
+          stampsDelta: initialStamps,
+          cashbackDelta: initialCashback,
+          staffName: "النظام",
+          note: isReferred
+            ? "إنشاء بطاقة عبر دعوة صديق (بانتظار التفعيل عند أول زيارة للمتجر) 🎁"
+            : isCashback
+            ? `تفعيل بطاقة كاش باك + هدية ترحيبية ${welcomeBonus} ${merchant.currency}`
+            : "تفعيل بطاقة الأختام + أول ختم ترحيبي هدية 🎁",
+        },
+      });
+
+      return created;
     });
 
     return NextResponse.json(

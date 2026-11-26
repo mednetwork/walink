@@ -13,6 +13,7 @@ import {
   scopeMetricsToBranch,
 } from "@/lib/metrics";
 import { formatBillingMonth } from "@/lib/pricing";
+import { getCachedMerchantPublicBySlug } from "@/lib/cache";
 import MerchantDashboardClient from "@/components/MerchantDashboardClient";
 
 export const viewport: Viewport = {
@@ -34,10 +35,7 @@ export async function generateMetadata({
   params,
 }: MerchantPageProps): Promise<Metadata> {
   const { slug } = params;
-  const merchant = await prisma.merchant.findUnique({
-    where: { slug },
-    select: { name: true, city: true },
-  });
+  const merchant = await getCachedMerchantPublicBySlug(slug);
 
   if (!merchant) {
     return {

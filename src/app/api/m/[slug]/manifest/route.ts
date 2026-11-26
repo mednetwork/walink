@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { getCachedMerchantPublicBySlug } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -42,14 +42,7 @@ export async function GET(
   try {
     const { slug } = params;
 
-    const merchant = await prisma.merchant.findUnique({
-      where: { slug },
-      select: {
-        name: true,
-        city: true,
-        primaryColor: true,
-      },
-    });
+    const merchant = await getCachedMerchantPublicBySlug(slug);
 
     if (!merchant) {
       return NextResponse.json({ error: "Merchant not found" }, { status: 404 });

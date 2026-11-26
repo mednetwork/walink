@@ -86,20 +86,6 @@ export async function PATCH(req: NextRequest) {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "") || `shop-${Date.now().toString().slice(-4)}`;
 
-      // Batch-check existing slugs matching baseSlug prefix in 1 query (no sequential while loop)
-      const matchingSlugs = await prisma.merchant.findMany({
-        where: { slug: { startsWith: baseSlug } },
-        select: { slug: true },
-      });
-      const existingSlugSet = new Set(matchingSlugs.map((m) => m.slug));
-
-      let uniqueSlug = baseSlug;
-      let counter = 1;
-      while (existingSlugSet.has(uniqueSlug)) {
-        uniqueSlug = `${baseSlug}-${counter}`;
-        counter++;
-      }
-
       // Determine niche defaults
       let primaryColor = "#10B981";
       let rewardName = "قهوة فابور";
@@ -145,66 +131,95 @@ export async function PATCH(req: NextRequest) {
 
       const planUpper = (lead.plan || "growth").toUpperCase();
 
-      // Create Merchant
-      const merchant = await prisma.merchant.create({
-        data: {
-          slug: uniqueSlug,
-          name: lead.shopName,
-          niche: lead.niche,
-          city: lead.city,
-          phone: lead.phone || "0600000000",
-          primaryColor,
-          stampsRequired: 5,
-          rewardName,
-          customerPrefix,
-          credits: 0,
-          plan: planUpper === "MULTI" ? "MULTI" : planUpper === "STARTER" ? "STARTER" : "GROWTH",
-          maxBranches: planUpper === "MULTI" ? 2 : 1,
-          pinCode: "1234",
-          isActive: true,
-          autoWinback: true,
-          autoNearReward: true,
-          autoRadar: planUpper !== "STARTER",
-          autoReview: planUpper !== "STARTER",
-          radarMessage: `راك قريب من ${lead.shopName}! الكارط ديالك واجدة 🎁`,
-        },
-      });
+      const conversion = await prisma.$transaction(async (tx) => {
+        // Atomic check-and-lock: only one concurrent CONVERT succeeds
+        const lock = await tx.lead.updateMany({
+          where: { id: lead.id, status: { not: "CONVERTED" } },
+          data: { status: "CONVERTED" },
+        });
+        if (lock.count === 0) {
+          return null;
+        }
 
-      // Create a demo customer with 1 welcome stamp
-      const random4Digit = Math.floor(1000 + Math.random() * 9000).toString();
-      const passSerial = `pass-${uniqueSlug}-${random4Digit}`;
-      await prisma.customer.create({
-        data: {
-          merchantId: merchant.id,
-          name: "كريم بناني",
-          phone: "0661234567",
-          memberCode: random4Digit,
-          passSerial,
-          stamps: 1,
-          totalVisits: 1,
-          walletType: "WEBPASS",
-          transactions: {
-            create: {
-              merchantId: merchant.id,
-              type: "CARD_CREATED",
-              stampsDelta: 1,
-              note: "تسجيل أولي + طابع الترحيب هدية",
+        const matchingSlugs = await tx.merchant.findMany({
+          where: { slug: { startsWith: baseSlug } },
+          select: { slug: true },
+        });
+        const existingSlugSet = new Set(matchingSlugs.map((m) => m.slug));
+
+        let uniqueSlug = baseSlug;
+        let counter = 1;
+        while (existingSlugSet.has(uniqueSlug)) {
+          uniqueSlug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+
+        const merchant = await tx.merchant.create({
+          data: {
+            slug: uniqueSlug,
+            name: lead.shopName,
+            niche: lead.niche,
+            city: lead.city,
+            phone: lead.phone || "0600000000",
+            primaryColor,
+            stampsRequired: 5,
+            rewardName,
+            customerPrefix,
+            credits: 0,
+            plan: planUpper === "MULTI" ? "MULTI" : planUpper === "STARTER" ? "STARTER" : "GROWTH",
+            maxBranches: planUpper === "MULTI" ? 2 : 1,
+            pinCode: "1234",
+            isActive: true,
+            autoWinback: true,
+            autoNearReward: true,
+            autoRadar: planUpper !== "STARTER",
+            autoReview: planUpper !== "STARTER",
+            radarMessage: `راك قريب من ${lead.shopName}! الكارط ديالك واجدة 🎁`,
+          },
+        });
+
+        const random4Digit = Math.floor(1000 + Math.random() * 9000).toString();
+        const passSerial = `pass-${uniqueSlug}-${random4Digit}`;
+        await tx.customer.create({
+          data: {
+            merchantId: merchant.id,
+            name: "كريم بناني",
+            phone: "0661234567",
+            memberCode: random4Digit,
+            passSerial,
+            stamps: 1,
+            totalVisits: 1,
+            walletType: "WEBPASS",
+            transactions: {
+              create: {
+                merchantId: merchant.id,
+                type: "CARD_CREATED",
+                stampsDelta: 1,
+                note: "تسجيل أولي + طابع الترحيب هدية",
+              },
             },
           },
-        },
+        });
+
+        const updatedLead = await tx.lead.findUnique({
+          where: { id: lead.id },
+        });
+
+        return { merchant, updatedLead };
       });
 
-      // Mark Lead as CONVERTED
-      const updatedLead = await prisma.lead.update({
-        where: { id: lead.id },
-        data: { status: "CONVERTED" },
-      });
+      if (!conversion) {
+        return NextResponse.json(
+          { ok: false, error: "تم تحويل هذا الطلب مسبقاً" },
+          { status: 409 }
+        );
+      }
 
       return NextResponse.json({
         ok: true,
-        message: `تم تحويل الطلب إلى محل مفعّل بنجاح: ${merchant.name}`,
-        lead: updatedLead,
-        merchant,
+        message: `تم تحويل الطلب إلى محل مفعّل بنجاح: ${conversion.merchant.name}`,
+        lead: conversion.updatedLead,
+        merchant: conversion.merchant,
       });
     }
 

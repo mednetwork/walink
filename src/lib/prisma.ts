@@ -1,8 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+declare global {
+  // eslint-disable-next-line no-var
+  var __walinkPrismaClient: PrismaClient | undefined;
+}
 
 /**
  * Resolves the optimal database connection string.
@@ -28,12 +29,13 @@ function getDatabaseUrl(): string | undefined {
 const dbUrl = getDatabaseUrl();
 
 export const prisma =
-  globalForPrisma.prisma ??
+  globalThis.__walinkPrismaClient ??
   new PrismaClient({
     datasources: dbUrl ? { db: { url: dbUrl } } : undefined,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+// Persist singleton across hot reloads in dev AND across module chunks in production Node.js
+globalThis.__walinkPrismaClient = prisma;
 
 export default prisma;
