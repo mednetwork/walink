@@ -60,6 +60,9 @@ model Merchant {
   notifications   Notification[]
   pointUsages     PointUsage[]
   invoices        MerchantInvoice[]
+
+  @@index([isActive, createdAt])
+  @@index([createdAt])
 }
 
 model PointUsage {
@@ -131,6 +134,10 @@ model Customer {
   notifications     Notification[]
 
   @@index([merchantId])
+  @@index([merchantId, memberCode])
+  @@index([merchantId, lastVisitAt])
+  @@index([merchantId, createdAt])
+  @@index([updatedAt])
   @@unique([merchantId, phone])
 }
 
@@ -150,6 +157,8 @@ model Transaction {
   createdAt     DateTime  @default(now())
 
   @@index([merchantId, createdAt])
+  @@index([customerId, createdAt])
+  @@index([customerId, type, cashbackDelta])
 }
 
 model Campaign {
@@ -182,6 +191,8 @@ model Notification {
 
   @@index([customerId, createdAt])
   @@index([merchantId, createdAt])
+  @@index([type])
+  @@index([createdAt])
 }
 
 model Lead {
@@ -195,4 +206,7 @@ model Lead {
   usedDemo    Boolean   @default(false)
   status      String    @default("NEW") // NEW, CONTACTED, CONVERTED
   createdAt   DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([status, createdAt])
 }
