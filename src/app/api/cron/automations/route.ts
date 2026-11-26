@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
+import {
+  dispatchBatchLockScreenPushes,
+  type UnifiedPushJob,
+} from "@/lib/push-dispatcher";
 import { formatBillingMonth } from "@/lib/pricing";
-import { chunkArray, runWithBoundedConcurrency } from "@/lib/utils";
+import { chunkArray } from "@/lib/utils";
 
 const BULK_INSERT_CHUNK_SIZE = 250;
 
@@ -86,12 +89,8 @@ async function handleCron(req: NextRequest) {
       creditsUsed: number;
     }> = [];
 
-    const walletPushJobs: Array<{
-      customer: (typeof merchants)[number]["customers"][number];
-      merchant: (typeof merchants)[number];
-      title: string;
-      body: string;
-    }> = [];
+    const walletPushJobs: UnifiedPushJob[] = [];
+    const notifiedCustomerIds = new Set<string>();
 
     for (const merchant of merchants) {
       let merchantWinbacks = 0;
@@ -126,11 +125,13 @@ async function handleCron(req: NextRequest) {
             actionUrl: `/pass/${customer.passSerial}`,
           });
 
+          notifiedCustomerIds.add(customer.id);
           walletPushJobs.push({
             customer,
             merchant,
             title: notifTitle,
             body: notifBody,
+            tag: `winback-${merchant.id}`,
           });
 
           merchantWinbacks++;
@@ -170,13 +171,24 @@ async function handleCron(req: NextRequest) {
         }
 
         for (const customer of nearCustomers) {
+          const nearTitle = `${merchant.name} • باقي ليك غير طابع واحد! ☕`;
+          const nearBody = `باقي ليك غير طابع واحد على ${merchant.rewardName} فـ ${merchant.name}! دوز كمل الكارط ديالك اليوم.`;
           notificationsToCreate.push({
             merchantId: merchant.id,
             customerId: customer.id,
             type: "NEAR_REWARD",
-            title: "باقي ليك غير طابع واحد! ☕",
-            body: `باقي ليك غير طابع واحد على ${merchant.rewardName} فـ ${merchant.name}! دوز كمل الكارط ديالك اليوم.`,
+            title: nearTitle,
+            body: nearBody,
             actionUrl: `/pass/${customer.passSerial}`,
+          });
+
+          notifiedCustomerIds.add(customer.id);
+          walletPushJobs.push({
+            customer,
+            merchant,
+            title: nearTitle,
+            body: nearBody,
+            tag: `near-${merchant.id}`,
           });
 
           merchantNearRewards++;
@@ -202,9 +214,16 @@ async function handleCron(req: NextRequest) {
       pointUsagesToCreate.length > 0 ||
       campaignsToCreate.length > 0
     ) {
+      const updatedCustomerIdList = Array.from(notifiedCustomerIds);
       await prisma.$transaction(async (tx) => {
         for (const notifChunk of chunkArray(notificationsToCreate, BULK_INSERT_CHUNK_SIZE)) {
           await tx.notification.createMany({ data: notifChunk });
+        }
+        for (const idChunk of chunkArray(updatedCustomerIdList, BULK_INSERT_CHUNK_SIZE)) {
+          await tx.customer.updateMany({
+            where: { id: { in: idChunk } },
+            data: { updatedAt: now },
+          });
         }
         if (pointUsagesToCreate.length > 0) {
           await tx.pointUsage.createMany({ data: pointUsagesToCreate });
@@ -215,16 +234,9 @@ async function handleCron(req: NextRequest) {
       });
     }
 
-    // Dispatch Google Wallet notifications with bounded concurrency (10 at a time)
+    // Dispatch Google Wallet, Apple Wallet APNs & Web Push strictly post-commit
     if (walletPushJobs.length > 0) {
-      await runWithBoundedConcurrency(walletPushJobs, 10, async (job) => {
-        await pushGoogleWalletUpdate(
-          job.customer,
-          job.merchant,
-          job.title,
-          job.body
-        );
-      });
+      await dispatchBatchLockScreenPushes(walletPushJobs, 10);
     }
 
     return NextResponse.json({

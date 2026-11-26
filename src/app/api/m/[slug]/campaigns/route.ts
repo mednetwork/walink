@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
-import { sendApplePassUpdate } from "@/lib/apple-wallet";
+import { dispatchBatchLockScreenPushes } from "@/lib/push-dispatcher";
 import { getStoreSessionFromCookies } from "@/lib/auth";
 import { formatBillingMonth } from "@/lib/pricing";
-import { runWithBoundedConcurrency } from "@/lib/utils";
 
 export async function POST(
   req: NextRequest,
@@ -102,26 +100,34 @@ export async function POST(
                 merchantId: merchant.id,
                 customerId: c.id,
                 type: "PROMO",
-                title: merchant.name,
+                title: notificationTitle,
                 body: trimmedMessage,
                 createdAt: now,
               })),
+            }),
+            // Bump updatedAt inside transaction so Apple Wallet passesUpdatedSince & Last-Modified sync the new promo
+            prisma.customer.updateMany({
+              where: {
+                id: { in: customersToNotify.map((c) => c.id) },
+              },
+              data: { updatedAt: now },
             }),
           ]
         : []),
     ]);
 
-    // Dispatch Google & Apple Wallet lock-screen pushes with bounded concurrency (chunks of 10)
+    // Dispatch Google Wallet + Apple Wallet APNs + Cryptographic Web Push strictly post-commit
     if (customersToNotify.length > 0) {
-      void runWithBoundedConcurrency(customersToNotify, 10, async (c) => {
-        const pushTasks: Array<Promise<unknown>> = [
-          pushGoogleWalletUpdate(c, merchant, notificationTitle, trimmedMessage),
-        ];
-        if (c.applePushToken) {
-          pushTasks.push(sendApplePassUpdate(c.applePushToken));
-        }
-        await Promise.allSettled(pushTasks);
-      });
+      void dispatchBatchLockScreenPushes(
+        customersToNotify.map((c) => ({
+          customer: c,
+          merchant,
+          title: notificationTitle,
+          body: trimmedMessage,
+          tag: `promo-${campaign.id}`,
+        })),
+        10
+      );
     }
 
     return NextResponse.json({

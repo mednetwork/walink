@@ -230,3 +230,9 @@ model QrStand {
   @@index([batchLabel, createdAt])
   @@index([createdAt])
 }
+
+model SystemSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}

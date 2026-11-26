@@ -709,19 +709,91 @@ export default function CustomerPassHubClient({
   const prevCampaignIdRef = useRef<string | null>(getInitialCampaignId());
   const lastKnownNotificationIdRef = useRef<string | null>(getInitialNotificationId());
 
-  // Register PWA Service Worker on mount
+  const urlBase64ToUint8Array = useCallback((base64String: string): ArrayBuffer => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const bytes = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; i += 1) {
+      bytes[i] = rawData.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }, []);
+
+  const subscribeToCryptographicWebPush = useCallback(async (): Promise<boolean> => {
+    if (
+      typeof window === "undefined" ||
+      !("serviceWorker" in navigator) ||
+      !("PushManager" in window)
+    ) {
+      return false;
+    }
+
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (!reg?.pushManager) return false;
+
+      let subscription = await reg.pushManager.getSubscription();
+      if (!subscription) {
+        const keyRes = await fetch(
+          `/api/pass/${encodeURIComponent(customer.passSerial)}/subscribe`,
+          { signal: AbortSignal.timeout(8000) }
+        );
+        if (!keyRes.ok) return false;
+        const keyData = (await keyRes.json()) as { vapidPublicKey?: string };
+        if (!keyData.vapidPublicKey) return false;
+
+        subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(keyData.vapidPublicKey),
+        });
+      }
+
+      if (!subscription) return false;
+
+      const subRes = await fetch(
+        `/api/pass/${encodeURIComponent(customer.passSerial)}/subscribe`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(8000),
+          body: JSON.stringify({
+            pushSubscription: subscription.toJSON(),
+            walletType:
+              customer.walletType === "APPLE" || customer.walletType === "GOOGLE"
+                ? customer.walletType
+                : "WEBPASS",
+          }),
+        }
+      );
+
+      return subRes.ok;
+    } catch (err) {
+      console.warn("Web Push subscription setup skipped:", err);
+      return false;
+    }
+  }, [customer.passSerial, customer.walletType, urlBase64ToUint8Array]);
+
+  // Register PWA Service Worker on mount & silently upgrade granted users to real Web Push
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
         .then((reg) => {
           console.log("Service Worker registered successfully:", reg.scope);
+          if (
+            "Notification" in window &&
+            Notification.permission === "granted" &&
+            !customer.pushSubscription?.trim().startsWith("{")
+          ) {
+            void subscribeToCryptographicWebPush();
+          }
         })
         .catch((err) => {
           console.warn("Service Worker registration warning:", err);
         });
     }
-  }, []);
+  }, [customer.pushSubscription, subscribeToCryptographicWebPush]);
 
   // Trigger floating iOS 18 glass notification banner + Native OS notification sync (Background only)
   const showBanner = useCallback(
@@ -790,15 +862,18 @@ export default function CustomerPassHubClient({
         setNotificationsEnabled(true);
         setShowStandalonePushPrompt(false);
 
-        await fetch(`/api/pass/${customer.passSerial}/subscribe`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(8000),
-          body: JSON.stringify({
-            pushSubscription: "browser-active",
-            walletType: "WEBPASS",
-          }),
-        });
+        const upgraded = await subscribeToCryptographicWebPush();
+        if (!upgraded) {
+          await fetch(`/api/pass/${encodeURIComponent(customer.passSerial)}/subscribe`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(8000),
+            body: JSON.stringify({
+              pushSubscription: "browser-active",
+              walletType: "WEBPASS",
+            }),
+          });
+        }
 
         if (!silent) {
           showBanner({
@@ -814,7 +889,7 @@ export default function CustomerPassHubClient({
     } catch (err) {
       console.error("Notification permission error:", err);
     }
-  }, [customer.passSerial, showBanner, t]);
+  }, [customer.passSerial, showBanner, subscribeToCryptographicWebPush, t]);
 
   // One-time passive user-interaction listener for automatic notification opt-in on first touch/tap
   useEffect(() => {

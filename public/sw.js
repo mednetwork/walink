@@ -1,7 +1,7 @@
-// Walink PWA Service Worker (walink.ma)
-const CACHE_NAME = "walink-v2";
+// Walink PWA Service Worker (walink.ma & wclient.walink.ma)
+const CACHE_NAME = "walink-v3";
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
@@ -18,73 +18,112 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Handle Background Push Notifications
+// Handle Background Web Push Notifications (WhatsApp / Native App style on lock screen)
 self.addEventListener("push", (event) => {
   let data = {
     title: "Walink • والينك",
-    body: "إشعار جديد على بطاقة الوفاء ديالك",
-    icon: "/favicon.ico",
-    url: "/",
+    body: "لديك عرض أو تحديث جديد على بطاقة الوفاء الخاصة بك",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: "walink-promo",
+    renotify: true,
+    dir: "rtl",
+    lang: "ar",
+    url: "",
   };
 
   if (event.data) {
     try {
-      data = { ...data, ...event.data.json() };
+      const parsed = event.data.json();
+      if (parsed && typeof parsed === "object") {
+        data = { ...data, ...parsed };
+      }
     } catch {
-      data.body = event.data.text();
+      const txt = event.data.text();
+      if (txt) data.body = txt;
     }
   }
 
   const options = {
     body: data.body,
-    icon: data.icon || "/favicon.ico",
-    badge: "/favicon.ico",
-    dir: "rtl",
-    lang: "ar",
-    vibrate: [100, 50, 100],
+    icon: data.icon || "/icon-192.png",
+    badge: data.badge || "/icon-192.png",
+    tag: data.tag || "walink-promo",
+    renotify: data.renotify !== false,
+    dir: data.dir || "rtl",
+    lang: data.lang || "ar",
+    vibrate: [120, 60, 120],
     data: {
-      url: data.url || "/",
+      url: data.url && data.url !== "/" ? data.url : "",
     },
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
-// Handle Notification Click Action (Deep-link to pass or Google Maps)
+// Open exact customer pass URL (/pass/[serial]) cleanly — never "/" (Stealth 404 on wclient)
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || "/";
+  const rawUrl = event.notification.data?.url;
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      let targetUrl = "";
+      if (typeof rawUrl === "string" && rawUrl && rawUrl !== "/") {
+        try {
+          targetUrl = new URL(rawUrl, self.location.origin).href;
+        } catch {
+          targetUrl = "";
+        }
+      }
+
+      if (targetUrl) {
+        for (const client of clientList) {
+          if (client.url === targetUrl && "focus" in client) {
+            return client.focus();
+          }
+        }
+        const targetPath = new URL(targetUrl).pathname;
+        for (const client of clientList) {
+          try {
+            if (new URL(client.url).pathname === targetPath && "focus" in client) {
+              return client.focus();
+            }
+          } catch (urlErr) {
+            console.warn("[SW] Ignored unparseable client URL:", urlErr);
+          }
+        }
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
+        }
+      }
+
+      // Fallback if URL omitted: focus any open /pass/ tab rather than opening "/"
       for (const client of clientList) {
-        if (client.url.includes(targetUrl) && "focus" in client) {
+        if (client.url.includes("/pass/") && "focus" in client) {
           return client.focus();
         }
       }
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(targetUrl);
-      }
+      return undefined;
     })
   );
 });
 
-// Bridge message from active web pass page
+// Bridge message from active web pass page when document becomes hidden
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SHOW_NOTIFICATION") {
-    const { title, body, icon, url, dir, lang } = event.data;
+    const { title, body, icon, url, dir, lang, tag } = event.data;
     const options = {
       body: body || "",
-      icon: icon || "/favicon.ico",
-      badge: "/favicon.ico",
+      icon: icon || "/icon-192.png",
+      badge: "/icon-192.png",
       dir: dir || (lang === "ar" ? "rtl" : "ltr"),
       lang: lang || "ar",
-      tag: "walink-pass-alert",
-      renotify: false,
-      data: { url: url || "/" },
+      tag: tag || "walink-pass-alert",
+      renotify: true,
+      data: { url: url && url !== "/" ? url : "" },
     };
 
     self.registration.showNotification(title || "Walink", options);
   }
 });
-

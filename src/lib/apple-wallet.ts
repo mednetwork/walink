@@ -33,6 +33,11 @@ export interface CustomerPassData {
   isActivated?: boolean | null;
   applePushToken?: string | null;
   updatedAt?: Date | string | null;
+  latestPromoMessage?: {
+    title: string;
+    body: string;
+    createdAt?: Date | string | null;
+  } | null;
 }
 
 export interface MerchantPassData {
@@ -677,7 +682,41 @@ export async function generateApplePass(
     textAlignment: "PKTextAlignmentRight",
   });
 
-  // 5. Back Fields (Rich Back-of-Pass Details + Lock-Screen Update Fallback)
+  // 5. Back Fields (Rich Back-of-Pass Details + Lock-Screen Update & Promo Triggers)
+  const promoTitleLabel =
+    locale === "fr"
+      ? "Dernière offre"
+      : locale === "es"
+      ? "Última oferta"
+      : "آخر عرض وتنبيه";
+  let promoValueText =
+    locale === "fr"
+      ? "Aucune offre active pour le moment."
+      : locale === "es"
+      ? "Sin ofertas activas por el momento."
+      : "لا توجد عروض ترويجية جديدة حالياً.";
+
+  if (customer.latestPromoMessage?.body) {
+    const cleanTitle = (customer.latestPromoMessage.title || "").trim();
+    const promoPrefix =
+      cleanTitle && cleanTitle !== merchant.name ? `${cleanTitle}: ` : "";
+    const rawDate = customer.latestPromoMessage.createdAt
+      ? new Date(customer.latestPromoMessage.createdAt)
+      : null;
+    const timeStampTag =
+      rawDate && !isNaN(rawDate.getTime())
+        ? ` (${rawDate.toISOString().slice(11, 16)})`
+        : "";
+    promoValueText = `${promoPrefix}${customer.latestPromoMessage.body.trim()}${timeStampTag}`;
+  }
+
+  pass.backFields.push({
+    key: "latest_promo_message",
+    label: promoTitleLabel,
+    value: promoValueText,
+    changeMessage: "📢 %@",
+  });
+
   pass.backFields.push({
     key: "latest_update",
     label: isCashback ? passStrings.totalSavedLabel : passStrings.progressLabel,

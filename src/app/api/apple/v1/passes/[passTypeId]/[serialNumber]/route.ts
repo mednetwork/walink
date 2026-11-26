@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { generateApplePass } from "@/lib/apple-wallet";
 
 // Epoch bumped when visual strip.png pass assets change so installed passes always refresh
-const PASS_ASSETS_VERSION_MS = new Date("2026-11-26T05:40:00Z").getTime();
+const PASS_ASSETS_VERSION_MS = new Date("2026-11-26T06:40:00Z").getTime();
 
 export async function GET(
   req: NextRequest,
@@ -21,12 +21,22 @@ export async function GET(
     const authHeader = req.headers.get("authorization");
     const ifModifiedSince = req.headers.get("if-modified-since");
 
-    const customer = await prisma.customer.findUnique({
-      where: { passSerial: serialNumber },
-      include: {
-        merchant: true,
-      },
-    });
+    const [customer, latestPromo] = await Promise.all([
+      prisma.customer.findUnique({
+        where: { passSerial: serialNumber },
+        include: {
+          merchant: true,
+        },
+      }),
+      prisma.notification.findFirst({
+        where: {
+          customer: { passSerial: serialNumber },
+          type: { in: ["PROMO", "WINBACK", "NEAR_REWARD", "BIRTHDAY"] },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { title: true, body: true, createdAt: true },
+      }),
+    ]);
 
     if (!customer) {
       return NextResponse.json({ error: "Pass not found" }, { status: 404 });
@@ -44,12 +54,16 @@ export async function GET(
 
     const { merchant } = customer;
 
-    // Check If-Modified-Since header against customer, merchant, and template epoch
+    // Check If-Modified-Since header against customer, merchant, latest promo, and template epoch
     const customerUpdatedMs = new Date(customer.updatedAt).getTime();
     const merchantUpdatedMs = new Date(merchant.updatedAt).getTime();
+    const latestPromoMs = latestPromo?.createdAt
+      ? new Date(latestPromo.createdAt).getTime()
+      : 0;
     const effectiveModifiedMs = Math.max(
       Number.isFinite(customerUpdatedMs) ? customerUpdatedMs : 0,
       Number.isFinite(merchantUpdatedMs) ? merchantUpdatedMs : 0,
+      Number.isFinite(latestPromoMs) ? latestPromoMs : 0,
       PASS_ASSETS_VERSION_MS
     );
 
@@ -60,8 +74,15 @@ export async function GET(
       }
     }
 
-    // Generate signed .pkpass binary buffer
-    const pkpassBuffer = await generateApplePass(customer, merchant, "ar");
+    // Generate signed .pkpass binary buffer including latest promo alert for Lock-Screen changeMessage
+    const pkpassBuffer = await generateApplePass(
+      {
+        ...customer,
+        latestPromoMessage: latestPromo,
+      },
+      merchant,
+      "ar"
+    );
 
     return new NextResponse(new Uint8Array(pkpassBuffer), {
       status: 200,

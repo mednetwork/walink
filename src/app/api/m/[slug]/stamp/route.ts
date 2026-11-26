@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Customer, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { normalizeMoroccanPhone, roundStamps, formatStamps } from "@/lib/utils";
-import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
-import { sendApplePassUpdate } from "@/lib/apple-wallet";
+import { dispatchCustomerLockScreenPush } from "@/lib/push-dispatcher";
 import { getLocalizedRewardName } from "@/lib/i18n/rewards";
 import { Locale } from "@/lib/i18n/translations";
 import { getStoreSessionFromCookies } from "@/lib/auth";
@@ -1081,31 +1080,27 @@ export async function POST(
     });
 
     // =========================================================================
-    // Strictly AFTER transaction commits: dispatch async Apple & Google Wallet pushes
+    // Strictly AFTER transaction commits: dispatch async Apple, Google & Web Push updates
     // =========================================================================
-    pushGoogleWalletUpdate(
-      txOutcome.updatedCustomer,
+    void dispatchCustomerLockScreenPush({
+      customer: txOutcome.updatedCustomer,
       merchant,
-      merchant.name,
-      txOutcome.notification.body
-    ).catch((err) => console.warn("[GoogleWallet] push error:", err));
-
-    if (txOutcome.updatedCustomer.applePushToken) {
-      sendApplePassUpdate(txOutcome.updatedCustomer.applePushToken).catch((err) =>
-        console.warn("[AppleWallet] push error:", err)
-      );
-    }
+      title: merchant.name,
+      body: txOutcome.notification.body,
+      tag: `stamp-${txOutcome.transaction.id}`,
+      locale: lang,
+    }).catch((err) => console.warn("[PushDispatcher] stamp dispatch error:", err));
 
     if (txOutcome.referrerPush) {
       const { updatedReferrer, title: refTitle, body: refBody } = txOutcome.referrerPush;
-      if (updatedReferrer.applePushToken) {
-        sendApplePassUpdate(updatedReferrer.applePushToken).catch((err) =>
-          console.warn("[AppleWallet] Push error to referrer:", err)
-        );
-      }
-      pushGoogleWalletUpdate(updatedReferrer, merchant, refTitle, refBody).catch((err) =>
-        console.warn("[GoogleWallet] Push error to referrer:", err)
-      );
+      void dispatchCustomerLockScreenPush({
+        customer: updatedReferrer,
+        merchant,
+        title: refTitle,
+        body: refBody,
+        tag: `referral-${updatedReferrer.id}`,
+        locale: lang,
+      }).catch((err) => console.warn("[PushDispatcher] referrer dispatch error:", err));
     }
 
     if (txOutcome.kind === "CASHBACK_EARN") {
