@@ -84,6 +84,7 @@ export async function middleware(req: NextRequest) {
     const isAllowedAdminPath =
       pathname === "/" ||
       pathname === "/login" ||
+      pathname === "/billing" ||
       pathname.startsWith("/admin") ||
       pathname.startsWith("/api/admin") ||
       pathname.startsWith("/api/cron");
