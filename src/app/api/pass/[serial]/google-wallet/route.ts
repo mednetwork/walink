@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { generateGoogleWalletSaveUrl } from "@/lib/google-wallet";
+import {
+  generateGoogleWalletSaveUrl,
+  syncGoogleWalletPassOnSave,
+} from "@/lib/google-wallet";
 
 export async function GET(
   req: NextRequest,
@@ -44,6 +47,13 @@ export async function GET(
         where: { id: customer.id },
         data: { walletType: "GOOGLE" },
       });
+    }
+
+    // Also sync existing saved Google Wallet class/object immediately so visual heroImage updates without waiting
+    if (customer.walletType === "GOOGLE" || shouldActivate) {
+      await syncGoogleWalletPassOnSave(customer, merchant, locale).catch((err) =>
+        console.warn("[GoogleWalletRoute] Non-blocking sync warning:", err)
+      );
     }
 
     const result = generateGoogleWalletSaveUrl(

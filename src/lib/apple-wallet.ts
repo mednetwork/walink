@@ -4,6 +4,7 @@ import crypto from "crypto";
 import http2 from "http2";
 import { PKPass } from "passkit-generator";
 import { formatStamps, roundStamps } from "@/lib/utils";
+import { renderStampsStripPng } from "@/lib/stamps-png";
 
 export interface AppleWalletConfig {
   isConfigured: boolean;
@@ -38,6 +39,8 @@ export interface MerchantPassData {
   id: string;
   slug: string;
   name: string;
+  niche?: string | null;
+  logoIcon?: string | null;
   city?: string | null;
   phone?: string | null;
   primaryColor?: string | null;
@@ -47,6 +50,7 @@ export interface MerchantPassData {
   rewardName: string;
   loyaltyMode?: string | null;
   cashbackRate?: number | null;
+  vipVisitsThreshold?: number | null;
   vipCashbackBonus?: number | null;
   currency?: string | null;
   latitude?: number | null;
@@ -264,7 +268,7 @@ export async function generateApplePass(
     );
   }
 
-  const assets = getPassAssets();
+  const baseAssets = getPassAssets();
   const isCashback = customer.loyaltyType === "CASHBACK";
   const currency = merchant.currency || "DH";
   const bgColor = hexToRgb(merchant.primaryColor || "#5b3519");
@@ -277,6 +281,24 @@ export async function generateApplePass(
   const isStampsFull = !isCashback && !isUnactivated && currentStamps >= stampsRequired;
   const stampsRemaining = Math.max(0, roundStamps(stampsRequired - currentStamps));
   const formattedRemaining = formatStamps(stampsRemaining);
+
+  const assets: Record<string, Buffer> = { ...baseAssets };
+  if (!isCashback) {
+    const stripOptions = {
+      primaryColor: merchant.primaryColor,
+      stamps: currentStamps,
+      stampsRequired,
+      isCashback: false,
+      isVip: Boolean(customer.isVip),
+      isActivated: !isUnactivated,
+      totalVisits: customer.totalVisits || 0,
+      vipVisitsThreshold: merchant.vipVisitsThreshold || 10,
+      iconOrNiche: merchant.logoIcon || merchant.niche,
+    };
+    assets["strip.png"] = renderStampsStripPng({ ...stripOptions, width: 375, height: 144 });
+    assets["strip@2x.png"] = renderStampsStripPng({ ...stripOptions, width: 750, height: 288 });
+    assets["strip@3x.png"] = renderStampsStripPng({ ...stripOptions, width: 1125, height: 432 });
+  }
 
   let stampsProgressDisplay = `${formattedStamps} / ${stampsRequired}`;
   if (isUnactivated) {
@@ -550,21 +572,30 @@ export async function generateApplePass(
 
   pass.type = ["store", "Card"].join("") as "storeCard";
 
-  // 1. Header Fields (Top Right Corner)
+  // 1. Header Fields (Top Right Corner + Lock-Screen Update Alert)
   pass.headerFields.push({
     key: "program_header",
     label: passStrings.headerLabel,
     value: passStrings.headerValue,
     textAlignment: "PKTextAlignmentRight",
+    changeMessage: isCashback
+      ? passStrings.changeMsg
+      : locale === "fr"
+      ? "Vos tampons : %@"
+      : locale === "es"
+      ? "Tus sellos: %@"
+      : "تم تحديث رصيد الأختام: %@",
   });
 
-  // 2. Primary Fields (Giant Center Text on Card Background with Lock-Screen Alert!)
-  pass.primaryFields.push({
-    key: isCashback ? "cashback_balance" : "reward_name",
-    label: passStrings.primaryLabel,
-    value: passStrings.primaryValue,
-    changeMessage: passStrings.changeMsg,
-  });
+  // 2. Primary Fields: ONLY used on CASHBACK passes so STAMPS strip.png renders unobstructed
+  if (isCashback) {
+    pass.primaryFields.push({
+      key: "cashback_balance",
+      label: passStrings.primaryLabel,
+      value: passStrings.primaryValue,
+      changeMessage: passStrings.changeMsg,
+    });
+  }
 
   // 3. Secondary Fields (3 Clean High-Contrast Columns Guaranteed Visible Above Barcode)
   if (isCashback) {
@@ -604,9 +635,9 @@ export async function generateApplePass(
     });
 
     pass.secondaryFields.push({
-      key: "stamps_progress",
-      label: passStrings.progressLabel,
-      value: stampsProgressDisplay,
+      key: "reward_name",
+      label: passStrings.primaryLabel,
+      value: passStrings.primaryValue,
       textAlignment: "PKTextAlignmentCenter",
     });
 
@@ -646,7 +677,16 @@ export async function generateApplePass(
     textAlignment: "PKTextAlignmentRight",
   });
 
-  // 5. Back Fields (Rich Back-of-Pass Details)
+  // 5. Back Fields (Rich Back-of-Pass Details + Lock-Screen Update Fallback)
+  pass.backFields.push({
+    key: "latest_update",
+    label: isCashback ? passStrings.totalSavedLabel : passStrings.progressLabel,
+    value: isCashback
+      ? `${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
+      : stampsProgressDisplay,
+    changeMessage: isCashback ? passStrings.changeMsg : "%@",
+  });
+
   pass.backFields.push({
     key: "offer_details",
     label: passStrings.offerLabel,

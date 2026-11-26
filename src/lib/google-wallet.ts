@@ -233,6 +233,26 @@ export function buildLoyaltyClass(
     },
     hexBackgroundColor: hexColor,
     reviewStatus: "UNDER_REVIEW", // Enables instant creation via JWT save link
+    classTemplateInfo: {
+      cardTemplateOverride: {
+        cardRowTemplateInfos: [
+          {
+            twoItems: {
+              startItem: {
+                firstValue: {
+                  fields: [{ fieldPath: "object.loyaltyPoints" }],
+                },
+              },
+              endItem: {
+                firstValue: {
+                  fields: [{ fieldPath: "object.secondaryLoyaltyPoints" }],
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
     locations: locationsList,
     linksModuleData: linksList.length > 0 ? { uris: linksList } : undefined,
   };
@@ -401,17 +421,18 @@ export function buildLoyaltyObject(
     });
   }
 
-  // Dynamic Visual Stamps Strip PNG (1032x336 heroImage) with strict cache-busting query params
+  // Dynamic Visual Stamps Strip PNG (1032x336 heroImage) with explicit .png path & cache-busting params
   const heroRequired = Math.max(1, merchant.stampsRequired || 5);
   const heroStamps = isUnactivated
     ? 0
     : Math.max(0, Math.min(heroRequired, roundStamps(customer.stamps || 0)));
   const formattedHeroStamps = formatStamps(heroStamps);
+  const cleanHeroColor = (merchant.primaryColor || "008069").replace(/^#/, "").trim();
   const heroImageUrl = `https://wclient.walink.ma/api/pass/${encodeURIComponent(
     customer.passSerial
-  )}/stamps-image?s=${formattedHeroStamps}&t=${heroRequired}&a=${isUnactivated ? 0 : 1}&vip=${
-    customer.isVip ? 1 : 0
-  }&v=${Date.now()}`;
+  )}/strip.png?s=${formattedHeroStamps}&t=${heroRequired}&c=${encodeURIComponent(
+    cleanHeroColor
+  )}&a=${isUnactivated ? 0 : 1}&vip=${customer.isVip ? 1 : 0}&v=${Date.now()}`;
 
   const heroImage = {
     kind: "walletobjects#image",
@@ -557,6 +578,115 @@ async function getGoogleWalletAccessToken(
   return data.access_token;
 }
 
+async function patchGoogleWalletClassAndObject(
+  accessToken: string,
+  customer: CustomerPassModel,
+  merchant: MerchantPassModel,
+  locale: string
+): Promise<{ objectStatus: number; error?: string }> {
+  const { issuerId } = getGoogleWalletConfig();
+  const classId = `${issuerId}.merchant_${sanitizeResourceId(merchant.slug)}`;
+  const objectId = `${issuerId}.pass_${sanitizeResourceId(customer.passSerial)}`;
+
+  const loyaltyClass = buildLoyaltyClass(merchant, locale);
+  const loyaltyObject = buildLoyaltyObject(customer, merchant, locale);
+
+  // Isolate LoyaltyClass PATCH so any template rejection never blocks LoyaltyObject.heroImage update
+  try {
+    const classPatchRes = await fetch(
+      `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass/${encodeURIComponent(
+        classId
+      )}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(5000),
+        body: JSON.stringify({
+          hexBackgroundColor: loyaltyClass.hexBackgroundColor,
+          classTemplateInfo: loyaltyClass.classTemplateInfo,
+          programLogo: loyaltyClass.programLogo,
+          linksModuleData: loyaltyClass.linksModuleData,
+        }),
+      }
+    );
+    if (!classPatchRes.ok && classPatchRes.status !== 404) {
+      const classErr = await classPatchRes.text();
+      console.warn(`[GoogleWallet] PATCH class warning (${classPatchRes.status}):`, classErr);
+    }
+  } catch (classErr: unknown) {
+    console.warn("[GoogleWallet] PATCH class exception (ignored):", classErr);
+  }
+
+  // Always PATCH LoyaltyObject with fresh heroImage & points
+  const patchRes = await fetch(
+    `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${encodeURIComponent(
+      objectId
+    )}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      signal: AbortSignal.timeout(5000),
+      body: JSON.stringify({
+        loyaltyPoints: loyaltyObject.loyaltyPoints,
+        secondaryLoyaltyPoints: loyaltyObject.secondaryLoyaltyPoints,
+        heroImage: loyaltyObject.heroImage,
+        textModulesData: loyaltyObject.textModulesData,
+      }),
+    }
+  );
+
+  if (!patchRes.ok) {
+    const errText = await patchRes.text();
+    if (patchRes.status === 404) {
+      return { objectStatus: 404, error: "Pass not yet saved in Google Wallet" };
+    }
+    console.warn(`[GoogleWallet] PATCH object warning (${patchRes.status}):`, errText);
+    return { objectStatus: patchRes.status, error: errText };
+  }
+
+  return { objectStatus: 200 };
+}
+
+/**
+ * Ensures an existing Google Wallet class & object are silently updated before re-opening Save URL.
+ */
+export async function syncGoogleWalletPassOnSave(
+  customer: CustomerPassModel,
+  merchant: MerchantPassModel,
+  locale: string = "ar"
+): Promise<{ success: boolean; error?: string }> {
+  const config = getGoogleWalletConfig();
+  if (!config.isConfigured) {
+    return { success: false, error: "Google Wallet is not configured in .env" };
+  }
+  try {
+    const accessToken = await getGoogleWalletAccessToken(
+      config.clientEmail,
+      config.privateKey
+    );
+    const result = await patchGoogleWalletClassAndObject(
+      accessToken,
+      customer,
+      merchant,
+      locale
+    );
+    if (result.objectStatus === 404) {
+      return { success: false, error: result.error };
+    }
+    return { success: result.objectStatus === 200, error: result.error };
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.warn("[GoogleWallet] syncGoogleWalletPassOnSave warning:", msg);
+    return { success: false, error: msg };
+  }
+}
+
 /**
  * Pushes real-time updates and lock-screen push notifications (TEXT_AND_NOTIFY) to Android devices.
  * Non-blocking: failures are logged without disrupting customer checkout.
@@ -581,35 +711,14 @@ export async function pushGoogleWalletUpdate(
       config.privateKey
     );
 
-    const loyaltyObject = buildLoyaltyObject(customer, merchant, locale);
-
-    // 1. PATCH the object state on Google servers
-    const patchRes = await fetch(
-      `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${encodeURIComponent(
-        objectId
-      )}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          loyaltyPoints: loyaltyObject.loyaltyPoints,
-          secondaryLoyaltyPoints: loyaltyObject.secondaryLoyaltyPoints,
-          heroImage: loyaltyObject.heroImage,
-          textModulesData: loyaltyObject.textModulesData,
-        }),
-      }
+    const patchResult = await patchGoogleWalletClassAndObject(
+      accessToken,
+      customer,
+      merchant,
+      locale
     );
-
-    if (!patchRes.ok) {
-      const errText = await patchRes.text();
-      // If object not found yet (user hasn't saved to wallet yet), that's normal
-      if (patchRes.status === 404) {
-        return { success: false, error: "Pass not yet saved in Google Wallet" };
-      }
-      console.warn(`[GoogleWallet] PATCH object warning (${patchRes.status}):`, errText);
+    if (patchResult.objectStatus === 404) {
+      return { success: false, error: patchResult.error };
     }
 
     // 2. If notification message requested, send TEXT_AND_NOTIFY lock-screen notification
@@ -624,6 +733,7 @@ export async function pushGoogleWalletUpdate(
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
+          signal: AbortSignal.timeout(5000),
           body: JSON.stringify({
             message: {
               header: notificationHeader,

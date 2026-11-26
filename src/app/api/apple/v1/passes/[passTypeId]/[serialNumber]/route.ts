@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateApplePass } from "@/lib/apple-wallet";
 
+// Epoch bumped when visual strip.png pass assets change so installed passes always refresh
+const PASS_ASSETS_VERSION_MS = new Date("2026-11-26T05:40:00Z").getTime();
+
 export async function GET(
   req: NextRequest,
   {
@@ -39,16 +42,23 @@ export async function GET(
       }
     }
 
-    // Check If-Modified-Since header per Apple PassKit Web Service specification
+    const { merchant } = customer;
+
+    // Check If-Modified-Since header against customer, merchant, and template epoch
+    const customerUpdatedMs = new Date(customer.updatedAt).getTime();
+    const merchantUpdatedMs = new Date(merchant.updatedAt).getTime();
+    const effectiveModifiedMs = Math.max(
+      Number.isFinite(customerUpdatedMs) ? customerUpdatedMs : 0,
+      Number.isFinite(merchantUpdatedMs) ? merchantUpdatedMs : 0,
+      PASS_ASSETS_VERSION_MS
+    );
+
     if (ifModifiedSince) {
       const clientModifiedTime = new Date(ifModifiedSince).getTime();
-      const lastModifiedTime = new Date(customer.updatedAt).getTime();
-      if (!isNaN(clientModifiedTime) && lastModifiedTime <= clientModifiedTime) {
+      if (!isNaN(clientModifiedTime) && effectiveModifiedMs <= clientModifiedTime) {
         return new NextResponse(null, { status: 304 });
       }
     }
-
-    const { merchant } = customer;
 
     // Generate signed .pkpass binary buffer
     const pkpassBuffer = await generateApplePass(customer, merchant, "ar");
@@ -57,7 +67,7 @@ export async function GET(
       status: 200,
       headers: {
         "Content-Type": "application/vnd.apple.pkpass",
-        "Last-Modified": customer.updatedAt.toUTCString(),
+        "Last-Modified": new Date(effectiveModifiedMs).toUTCString(),
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });
