@@ -26,19 +26,32 @@ export async function POST(
     const urlRef = req.nextUrl?.searchParams?.get("ref") || null;
     const rawRef = body.ref || body.refCode || urlRef;
     const ref = typeof rawRef === "string" ? rawRef.trim() : null;
-    const { name, phone, loyaltyType: requestedLoyaltyType, securityPin } = body;
+    const { name, phone, loyaltyType: requestedLoyaltyType, securityPin, lang: rawLang } = body;
+    const lang = rawLang === "fr" || rawLang === "es" ? rawLang : "ar";
 
     if (!phone || typeof phone !== "string") {
+      const missingPhoneMsg =
+        lang === "fr"
+          ? "Veuillez saisir votre numéro de téléphone"
+          : lang === "es"
+          ? "Por favor introduce tu número de teléfono"
+          : "يرجى إدخال رقم الهاتف";
       return NextResponse.json(
-        { error: "يرجى إدخال رقم الهاتف" },
+        { error: missingPhoneMsg },
         { status: 400 }
       );
     }
 
     const normalizedPhone = normalizeMoroccanPhone(phone);
     if (!isValidMoroccanPhone(normalizedPhone)) {
+      const invalidPhoneMsg =
+        lang === "fr"
+          ? "Numéro invalide : veuillez saisir un numéro marocain à 10 chiffres (ex: 0612345678)"
+          : lang === "es"
+          ? "Número no válido: introduce un número marroquí de 10 dígitos (ej: 0612345678)"
+          : "رقم الهاتف غير صحيح. يجب أن يتكون من 10 أرقام مغربية (مثلاً: 0612345678)";
       return NextResponse.json(
-        { error: "رقم الهاتف غير صحيح. يرجى إدخال رقم هاتف صالح (مثلاً: 0612345678)" },
+        { error: invalidPhoneMsg },
         { status: 400 }
       );
     }

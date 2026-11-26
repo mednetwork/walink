@@ -16,7 +16,11 @@ import {
   X,
 } from "lucide-react";
 import WalletPassPreview from "@/components/WalletPassPreview";
-import { isValidMoroccanPhone } from "@/lib/utils";
+import {
+  formatPhoneInputValue,
+  isValidMoroccanPhone,
+  normalizeMoroccanPhone,
+} from "@/lib/utils";
 import { Locale, translations } from "@/lib/i18n/translations";
 import { detectPhoneLocale } from "@/lib/i18n/context";
 import { getPassUrl } from "@/lib/urls";
@@ -146,6 +150,22 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
       return;
     }
 
+    const normalizedPhone = normalizeMoroccanPhone(phone);
+    setPhone(normalizedPhone);
+
+    if (!isValidMoroccanPhone(normalizedPhone)) {
+      setPinModal((prev) => ({
+        ...prev,
+        errorMsg:
+          locale === "ar"
+            ? "يرجى إدخال رقم هاتف مغربي صحيح يتكون من 10 أرقام (مثال: 0612345678)"
+            : locale === "fr"
+            ? "Veuillez saisir un numéro marocain valide à 10 chiffres (ex: 0612345678)"
+            : "Introduce un número marroquí válido de 10 dígitos (ej: 0612345678)",
+      }));
+      return;
+    }
+
     setVerifyingPin(true);
     setPinModal((prev) => ({ ...prev, errorMsg: null }));
 
@@ -154,8 +174,9 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phone: phone.trim(),
+          phone: normalizedPhone,
           securityPin: pinCode.trim(),
+          lang: locale,
         }),
       });
 
@@ -225,13 +246,16 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
       return;
     }
 
-    if (!isValidMoroccanPhone(phone)) {
+    const normalizedPhone = normalizeMoroccanPhone(phone);
+    setPhone(normalizedPhone);
+
+    if (!isValidMoroccanPhone(normalizedPhone)) {
       setError(
         locale === "ar"
-          ? "رقم الهاتف غير صحيح (مثال: 0612345678 أو +212612345678)"
+          ? "رقم الهاتف غير صحيح: يجب أن يتكون من 10 أرقام مغربية (مثال: 0612345678 أو +212 6 12 34 56 78)"
           : locale === "fr"
-          ? "Numéro de téléphone marocain invalide (ex: 0612345678)"
-          : "Número de teléfono marroquí no válido (ej: 0612345678)"
+          ? "Numéro invalide : il doit comporter exactement 10 chiffres (ex: 0612345678 ou +212 6 12 34 56 78)"
+          : "Número no válido: debe tener exactamente 10 dígitos (ej: 0612345678 o +212 6 12 34 56 78)"
       );
       return;
     }
@@ -244,11 +268,12 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          phone: phone.trim(),
+          phone: normalizedPhone,
           loyaltyType: selectedLoyaltyType,
           ref: refCode || undefined,
           refCode: refCode || undefined,
           securityPin: customPin.trim() || undefined,
+          lang: locale,
         }),
       });
 
@@ -477,13 +502,15 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               <input
                 type="tel"
                 inputMode="tel"
-                pattern="[0-9]*"
+                dir="ltr"
+                maxLength={22}
                 autoComplete="tel"
                 required
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(formatPhoneInputValue(e.target.value))}
+                onBlur={() => setPhone((prev) => normalizeMoroccanPhone(prev))}
                 placeholder={t.onboarding.phonePlaceholder}
-                className="w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-2 border-[#DCE0D4] hover:border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-base font-mono font-medium"
+                className={`w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-2 border-[#DCE0D4] hover:border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-base font-mono font-medium ${isRTL ? "text-right" : "text-left"}`}
               />
               <Smartphone className={`w-4 h-4 text-[#8696A0] absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 pointer-events-none`} />
             </div>

@@ -5,22 +5,68 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const EASTERN_ARABIC_DIGITS = /[٠-٩]/g;
+const PERSIAN_DIGITS = /[۰-۹]/g;
+const INVISIBLE_BIDI_AND_SEPARATORS = /[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF\u00A0\s\-().]/g;
+
+function normalizeAsciiAndStripSeparators(raw: string): string {
+  return raw
+    .replace(EASTERN_ARABIC_DIGITS, (ch) => String(ch.charCodeAt(0) - 0x0660))
+    .replace(PERSIAN_DIGITS, (ch) => String(ch.charCodeAt(0) - 0x06f0))
+    .replace(INVISIBLE_BIDI_AND_SEPARATORS, "");
+}
+
 /**
- * Normalizes Moroccan mobile phone numbers into standard format: 06XXXXXXXX or 07XXXXXXXX
+ * Formats live phone input while preserving partial "+212" / "00212" typing,
+ * immediately stripping spaces/invisible bidi marks, replacing +212/00212/212 with 0,
+ * and capping normalized local numbers at 10 digits.
+ */
+export function formatPhoneInputValue(raw: string): string {
+  if (!raw) return "";
+  const compact = normalizeAsciiAndStripSeparators(raw);
+  const hasLeadingPlus = compact.startsWith("+");
+  const digitsOnly = compact.replace(/\D/g, "");
+  let formatted = hasLeadingPlus ? `+${digitsOnly}` : digitsOnly;
+
+  // Replace completed international Moroccan prefix (+2120 / +212 / 002120 / 00212 / 2120 / 212) with 0
+  if (/^\+?00212/.test(formatted)) {
+    const rest = formatted.replace(/^\+?002120?/, "");
+    return `0${rest}`.slice(0, 10);
+  }
+  if (/^\+212/.test(formatted)) {
+    const rest = formatted.replace(/^\+2120?/, "");
+    return `0${rest}`.slice(0, 10);
+  }
+  if (/^212/.test(formatted)) {
+    const rest = formatted.replace(/^2120?/, "");
+    return `0${rest}`.slice(0, 10);
+  }
+
+  // Allow partial "+21" or "0021" prefix while typing until the "2" completes the prefix
+  if (/^\+(?:2(?:1)?)?$/.test(formatted) || /^00(?:2(?:1)?)?$/.test(formatted)) {
+    return formatted;
+  }
+
+  return digitsOnly.slice(0, 10);
+}
+
+/**
+ * Normalizes Moroccan mobile phone numbers into strict 10-digit local format: 0[567]XXXXXXXX
  */
 export function normalizeMoroccanPhone(phone: string): string {
   if (!phone) return "";
-  let digits = phone.replace(/\D/g, "");
+  let digits = normalizeAsciiAndStripSeparators(phone).replace(/\D/g, "");
 
-  // International 212 prefix handling
-  if (digits.startsWith("00212")) {
-    digits = digits.slice(5);
+  // International +212 / 00212 / 212 prefix handling (also handles +212 06...)
+  if (digits.startsWith("002120")) {
+    digits = "0" + digits.slice(6);
+  } else if (digits.startsWith("00212")) {
+    digits = "0" + digits.slice(5);
+  } else if (digits.startsWith("2120")) {
+    digits = "0" + digits.slice(4);
   } else if (digits.startsWith("212")) {
-    digits = digits.slice(3);
-  }
-
-  // Prepend 0 if 9 digits (e.g. 6XXXXXXXX -> 06XXXXXXXX)
-  if (digits.length === 9 && (digits.startsWith("6") || digits.startsWith("7") || digits.startsWith("5"))) {
+    digits = "0" + digits.slice(3);
+  } else if (digits.length === 9 && /^[567]/.test(digits)) {
     digits = "0" + digits;
   }
 
@@ -29,7 +75,7 @@ export function normalizeMoroccanPhone(phone: string): string {
 
 export function isValidMoroccanPhone(phone: string): boolean {
   const normalized = normalizeMoroccanPhone(phone);
-  return /^(06|07|05)\d{8}$/.test(normalized);
+  return normalized.length === 10 && /^0[567]\d{8}$/.test(normalized);
 }
 
 export function formatMoroccanPhone(phone?: string | null): string {
