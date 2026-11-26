@@ -7,6 +7,7 @@ import { getLocalizedRewardName } from "@/lib/i18n/rewards";
 import { Locale } from "@/lib/i18n/translations";
 import { getStoreSessionFromCookies } from "@/lib/auth";
 import { isPhysicalCounterVisit } from "@/lib/metrics";
+import { formatBillingMonth, hasRadarAndReviewsFeature } from "@/lib/pricing";
 
 /**
  * Processes deferred referral reward when a referred customer completes their first store visit.
@@ -214,6 +215,7 @@ export async function POST(
         instagramUrl: true,
         phone: true,
         termsText: true,
+        plan: true,
         autoReview: true,
         isActive: true,
         cooldownMinutes: true,
@@ -471,28 +473,9 @@ export async function POST(
       });
     }
 
-    // Protection: Verify merchant has at least 1 credit for transaction actions
-    const isCreditDeductibleAction =
-      action === "STAMP" ||
-      action === "REDEEM" ||
-      action === "CASHBACK_EARN" ||
-      action === "CASHBACK_REDEEM";
-
-    if (isCreditDeductibleAction && (merchant.credits ?? 0) < 1) {
-      return NextResponse.json(
-        {
-          error:
-            lang === "fr"
-              ? "Solde de crédits épuisé (0 crédit). Veuillez recharger vos crédits pour continuer."
-              : lang === "es"
-              ? "Saldo de créditos agotado (0 créditos). Por favor recargue créditos para continuar."
-              : "رصيد نقاط المتجر غير كافٍ (0 نقطة). يرجى شحن الرصيد للاستمرار في مسح البطاقات.",
-          creditsExhausted: true,
-          currentCredits: merchant.credits ?? 0,
-        },
-        { status: 402 }
-      );
-    }
+    const billingMonth = formatBillingMonth(now);
+    const canSendReview =
+      Boolean(merchant.autoReview) && hasRadarAndReviewsFeature(merchant.plan);
 
     // Action 2: CASHBACK_EARN (Add cashback from purchase bill)
     if (action === "CASHBACK_EARN") {
@@ -551,10 +534,13 @@ export async function POST(
             createdAt: now,
           },
         }),
-        prisma.merchant.update({
-          where: { id: merchant.id },
-          data: { credits: { decrement: 1 } },
-          select: { credits: true },
+        prisma.pointUsage.create({
+          data: {
+            merchantId: merchant.id,
+            points: 1,
+            source: "CASHBACK_EARN",
+            billingMonth,
+          },
         }),
       ]);
 
@@ -611,7 +597,7 @@ export async function POST(
         customer: updatedCustomer,
         transaction,
         notification,
-        remainingCredits: updatedMerchant.credits,
+        remainingCredits: merchant.credits,
       });
     }
 
@@ -644,7 +630,7 @@ export async function POST(
 
       const remainingBal = Number((currentBal - toRedeem).toFixed(2));
 
-      const [updatedCustomer, transaction, notification, updatedMerchant] = await prisma.$transaction([
+      const [updatedCustomer, transaction, notification] = await prisma.$transaction([
         prisma.customer.update({
           where: { id: customer.id },
           data: {
@@ -675,14 +661,17 @@ export async function POST(
             createdAt: now,
           },
         }),
-        prisma.merchant.update({
-          where: { id: merchant.id },
-          data: { credits: { decrement: 1 } },
-          select: { credits: true },
+        prisma.pointUsage.create({
+          data: {
+            merchantId: merchant.id,
+            points: 1,
+            source: "CASHBACK_REDEEM",
+            billingMonth,
+          },
         }),
       ]);
 
-      if (merchant.autoReview) {
+      if (canSendReview) {
         await prisma.notification.create({
           data: {
             merchantId: merchant.id,
@@ -725,7 +714,7 @@ export async function POST(
         customer: updatedCustomer,
         transaction,
         notification,
-        remainingCredits: updatedMerchant.credits,
+        remainingCredits: merchant.credits,
       });
     }
 
@@ -733,7 +722,7 @@ export async function POST(
     if (action === "REDEEM") {
       const newStamps = Math.max(0, customer.stamps - merchant.stampsRequired);
 
-      const [updatedCustomer, transaction, notification, updatedMerchant] = await prisma.$transaction([
+      const [updatedCustomer, transaction, notification] = await prisma.$transaction([
         prisma.customer.update({
           where: { id: customer.id },
           data: {
@@ -764,14 +753,17 @@ export async function POST(
             createdAt: now,
           },
         }),
-        prisma.merchant.update({
-          where: { id: merchant.id },
-          data: { credits: { decrement: 1 } },
-          select: { credits: true },
+        prisma.pointUsage.create({
+          data: {
+            merchantId: merchant.id,
+            points: 1,
+            source: "REDEEM",
+            billingMonth,
+          },
         }),
       ]);
 
-      if (merchant.autoReview) {
+      if (canSendReview) {
         await prisma.notification.create({
           data: {
             merchantId: merchant.id,
@@ -814,7 +806,7 @@ export async function POST(
         customer: updatedCustomer,
         transaction,
         notification,
-        remainingCredits: updatedMerchant.credits,
+        remainingCredits: merchant.credits,
       });
     }
 
@@ -825,7 +817,7 @@ export async function POST(
     const isRewardUnlocked = nextStamps >= merchant.stampsRequired;
     const stampsLeft = Math.max(0, merchant.stampsRequired - nextStamps);
 
-    const [updatedCustomer, transaction, notification, updatedMerchant] = await prisma.$transaction([
+    const [updatedCustomer, transaction, notification] = await prisma.$transaction([
       prisma.customer.update({
         where: { id: customer.id },
         data: {
@@ -866,10 +858,13 @@ export async function POST(
           createdAt: now,
         },
       }),
-      prisma.merchant.update({
-        where: { id: merchant.id },
-        data: { credits: { decrement: 1 } },
-        select: { credits: true },
+      prisma.pointUsage.create({
+        data: {
+          merchantId: merchant.id,
+          points: 1,
+          source: "STAMP",
+          billingMonth,
+        },
       }),
     ]);
 
@@ -886,7 +881,7 @@ export async function POST(
       });
     }
 
-    if (isRewardUnlocked && merchant.autoReview) {
+    if (isRewardUnlocked && canSendReview) {
       await prisma.notification.create({
         data: {
           merchantId: merchant.id,
@@ -948,7 +943,7 @@ export async function POST(
       customer: updatedCustomer,
       transaction,
       notification,
-      remainingCredits: updatedMerchant.credits,
+      remainingCredits: merchant.credits,
     });
   } catch (error: unknown) {
     console.error("Error processing stamp/cashback action:", error);

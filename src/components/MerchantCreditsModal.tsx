@@ -1,14 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Coins, Zap, Check, MessageSquare } from "lucide-react";
-import { TOPUP_PACKAGES, CREDIT_PRICE_MAD } from "@/lib/constants";
+import React from "react";
+import { X, Coins, Receipt, Building2, Wrench } from "lucide-react";
+import {
+  POINT_PRICE_MAD,
+  INSTALLATION_FEE_MAD,
+  computeMonthlySubscriptionFee,
+  computePointsFee,
+} from "@/lib/pricing";
 import { Locale } from "@/lib/i18n/translations";
 
 interface MerchantCreditsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  credits: number;
+  monthlyPointsUsed: number;
+  plan?: string;
+  maxBranches?: number;
   merchantName: string;
   locale?: Locale;
 }
@@ -16,34 +23,25 @@ interface MerchantCreditsModalProps {
 export default function MerchantCreditsModal({
   isOpen,
   onClose,
-  credits,
+  monthlyPointsUsed,
+  plan = "GROWTH",
+  maxBranches = 1,
   merchantName,
   locale = "ar",
 }: MerchantCreditsModalProps) {
-  const [selectedPackage, setSelectedPackage] = useState<number>(1000);
-
   if (!isOpen) return null;
 
   const isRTL = locale === "ar";
-  const chosenPkg =
-    TOPUP_PACKAGES.find((p) => p.credits === selectedPackage) || TOPUP_PACKAGES[1];
-
-  const whatsappText =
-    locale === "fr"
-      ? `Bonjour Walink, je souhaite recharger le pack de ${chosenPkg.credits.toLocaleString()} crédits (${chosenPkg.price} DH) pour mon commerce ${merchantName}.`
-      : locale === "es"
-      ? `Hola Walink, deseo recargar el pack de ${chosenPkg.credits.toLocaleString()} créditos (${chosenPkg.price} DH) para mi negocio ${merchantName}.`
-      : `السلام عليكم Walink، بغيت نشحن باقة ${chosenPkg.credits.toLocaleString()} كريدي (${chosenPkg.price} درهم) لـ محل ${merchantName}.`;
-
-  const whatsappMessage = encodeURIComponent(whatsappText);
-  const dhEquivalent = (credits * CREDIT_PRICE_MAD).toFixed(1);
+  const pointsFee = computePointsFee(monthlyPointsUsed);
+  const subscriptionFee = computeMonthlySubscriptionFee(plan, maxBranches);
+  const estimatedMonthlyTotal = Number((subscriptionFee + pointsFee).toFixed(2));
 
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-sm bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl shadow-2xl p-5 sm:p-6 text-[#173E30] space-y-3.5">
+      <div className="relative w-full max-w-sm bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl shadow-2xl p-5 sm:p-6 text-[#173E30] space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4]">
           <div className="flex items-center gap-2">
@@ -53,10 +51,10 @@ export default function MerchantCreditsModal({
             <div>
               <h3 className="font-bold text-base text-[#173E30]">
                 {locale === "ar"
-                  ? "رصيد الكريدي والشحن"
+                  ? "استهلاك النقاط وفاتورة الشهر"
                   : locale === "fr"
-                  ? "Solde et Recharge Crédits"
-                  : "Saldo y Recarga de Créditos"}
+                  ? "Consommation & Facture Mensuelle"
+                  : "Consumo de Puntos y Factura"}
               </h3>
               <p className="text-[11px] text-[#5F655D]">{merchantName}</p>
             </div>
@@ -65,154 +63,112 @@ export default function MerchantCreditsModal({
             type="button"
             onClick={onClose}
             aria-label={locale === "ar" ? "إغلاق" : locale === "fr" ? "Fermer" : "Cerrar"}
-            className="p-1.5 rounded-xl hover:bg-[#FAF7F2] text-[#5F655D]"
+            className="p-1.5 rounded-xl hover:bg-[#FAF7F2] text-[#5F655D] cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Unified Rate Badge */}
-        <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950 text-xs flex items-center justify-between">
-          <div className="flex items-center gap-1.5 font-bold text-amber-800">
-            <Zap className="w-4 h-4 text-amber-600 fill-amber-600" />
-            <span>
-              {locale === "ar"
-                ? "سعر موحد:"
-                : locale === "fr"
-                ? "Tarif fixe :"
-                : "Tarifa fija:"}
-            </span>
-          </div>
-          <span className="font-mono font-bold text-[11px] bg-amber-500 text-slate-950 px-2 py-0.5 rounded-lg shadow-sm">
+        {/* Postpaid Point Rate Notice */}
+        <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950 text-xs flex items-center justify-between">
+          <span className="font-bold text-amber-800">
             {locale === "ar"
-              ? "1 كريدي = 0.10 درهم (10 = 1 DH)"
+              ? "تعريفة النقاط (آخر الشهر):"
               : locale === "fr"
-              ? "1 crédit = 0,10 DH (10 = 1 DH)"
-              : "1 crédito = 0,10 DH (10 = 1 DH)"}
+              ? "Tarif points (fin de mois) :"
+              : "Tarifa puntos (fin de mes):"}
+          </span>
+          <span className="font-mono font-bold text-[11px] bg-amber-500 text-slate-950 px-2.5 py-0.5 rounded-lg shadow-sm">
+            1 = {POINT_PRICE_MAD.toFixed(1)} DH
           </span>
         </div>
 
-        {/* Current Balance */}
-        <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-center justify-between">
-          <span className="text-xs text-[#5F655D] font-semibold">
-            {locale === "ar"
-              ? "رصيدك المتاح حالياً:"
-              : locale === "fr"
-              ? "Votre solde disponible :"
-              : "Su saldo disponible:"}
-          </span>
-          <div className="text-right">
-            <span className="text-base font-bold text-amber-600 font-mono block">
-              {credits.toLocaleString()}{" "}
-              <span className="text-xs font-semibold">
-                {locale === "ar" ? "كريدي" : locale === "fr" ? "crédits" : "créditos"}
+        {/* Current Month Points Usage */}
+        <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-[#5F655D] font-semibold">
+              {locale === "ar"
+                ? "نقاط الشهر الحالي:"
+                : locale === "fr"
+                ? "Points consommés ce mois :"
+                : "Puntos consumidos este mes:"}
+            </span>
+            <div className="text-end">
+              <span className="text-lg font-black text-amber-600 font-mono block">
+                {monthlyPointsUsed.toLocaleString()}{" "}
+                <span className="text-xs font-semibold">
+                  {locale === "ar" ? "نقطة" : locale === "fr" ? "pts" : "pts"}
+                </span>
+              </span>
+              <span className="text-[11px] text-[#5F655D] font-mono font-bold">
+                = {pointsFee.toFixed(2)} DH
+              </span>
+            </div>
+          </div>
+
+          <div className="h-px bg-[#DCE0D4]" />
+
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[#5F655D] flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-[#008069]" />
+              <span>
+                {locale === "ar"
+                  ? "الاشتراك الشهري:"
+                  : locale === "fr"
+                  ? "Abonnement mensuel :"
+                  : "Suscripción mensual:"}
               </span>
             </span>
-            <span className="text-[10px] text-[#5F655D] font-mono font-semibold">
-              ≈ {dhEquivalent} DH
+            <span className="font-mono font-bold text-[#173E30]">
+              {subscriptionFee} DH
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[#5F655D] flex items-center gap-1.5">
+              <Receipt className="w-3.5 h-3.5 text-[#008069]" />
+              <span>
+                {locale === "ar"
+                  ? "التقدير الشهري الحالي:"
+                  : locale === "fr"
+                  ? "Estimation mensuelle :"
+                  : "Total estimado del mes:"}
+              </span>
+            </span>
+            <span className="font-mono font-black text-sm text-[#008069]">
+              {estimatedMonthlyTotal.toFixed(2)} DH
             </span>
           </div>
         </div>
 
-        {/* Info */}
-        <p className="text-[11px] text-[#5F655D] leading-relaxed">
-          {locale === "ar"
-            ? "يُستخدم الكريدي في إضافة الطوابع، استبدال الجوائز، معاملات الكاش باك، وإرسال العروض الترويجية لزبائنك."
-            : locale === "fr"
-            ? "Le crédit sert pour les tampons, récompenses, cashback, et les campagnes de fidélisation/relance."
-            : "El crédito se utiliza para sellos, premios, cashback y campañas de fidelización/reactivación."}
-        </p>
-
-        {/* Pricing Packs (Selectable) */}
-        <div className="space-y-2">
-          <label className="text-[11px] font-bold text-[#173E30] block">
-            {locale === "ar"
-              ? "اختر باقة الشحن المطلوبة:"
-              : locale === "fr"
-              ? "Choisissez un pack de recharge :"
-              : "Elija un pack de recarga:"}
-          </label>
-          <div className="space-y-1.5">
-            {TOPUP_PACKAGES.map((pkg) => {
-              const isSelected = selectedPackage === pkg.credits;
-              return (
-                <button
-                  key={pkg.credits}
-                  type="button"
-                  onClick={() => setSelectedPackage(pkg.credits)}
-                  className={`w-full p-2.5 rounded-xl border text-right transition flex items-center justify-between text-xs cursor-pointer ${
-                    isSelected
-                      ? "bg-amber-500/10 border-amber-400 text-amber-950 ring-1 ring-amber-400/50 shadow-sm"
-                      : "bg-[#FAF7F2] border-[#DCE0D4] hover:bg-[#E8EDE3] text-[#173E30]"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                        isSelected
-                          ? "border-amber-600 bg-amber-600 text-white"
-                          : "border-[#C8D1BE] bg-[#FFFDF7]"
-                      }`}
-                    >
-                      {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                    </div>
-                    <div>
-                      <span className="font-bold text-[#173E30] block">{pkg.label}</span>
-                      <span className="text-[10px] text-[#5F655D]">
-                        {pkg.credits.toLocaleString()}{" "}
-                        {locale === "ar"
-                          ? "عملية أو إشعار"
-                          : locale === "fr"
-                          ? "opérations ou notifs"
-                          : "operaciones o avisos"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    {pkg.popular && (
-                      <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-300">
-                        {locale === "ar"
-                          ? "الأكثر طلباً"
-                          : locale === "fr"
-                          ? "Populaire"
-                          : "Popular"}
-                      </span>
-                    )}
-                    <span className="font-bold text-amber-600 font-mono text-sm">
-                      {pkg.price} DH
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Action: WhatsApp Reload */}
-        <div className="pt-1.5 space-y-2">
-          <a
-            href={`https://wa.me/212600000000?text=${whatsappMessage}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-[#008069]/20 transition cursor-pointer"
-          >
-            <MessageSquare className="w-4 h-4" />
+        {/* Info Note */}
+        <div className="p-3 rounded-2xl bg-[#008069]/5 border border-[#008069]/20 text-[11px] text-[#5F655D] leading-relaxed space-y-1">
+          <p className="font-semibold text-[#173E30] flex items-center gap-1.5">
+            <Wrench className="w-3.5 h-3.5 text-[#008069]" />
             <span>
               {locale === "ar"
-                ? `طلب باقة (${chosenPkg.price} درهم) عبر واتساب`
+                ? "نظام الدفع الشهري الآجل (بدون تعبئة مسبقة)"
                 : locale === "fr"
-                ? `Commander (${chosenPkg.price} DH) via WhatsApp`
-                : `Pedir pack (${chosenPkg.price} DH) por WhatsApp`}
+                ? "Facturation mensuelle sans prépaiement"
+                : "Facturación mensual sin prepago"}
             </span>
-          </a>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#E8EDE3] text-[#5F655D] text-xs font-semibold border border-[#C8D1BE] transition cursor-pointer"
-          >
-            {locale === "ar" ? "إغلاق" : locale === "fr" ? "Fermer" : "Cerrar"}
-          </button>
+          </p>
+          <p>
+            {locale === "ar"
+              ? `لا يتوقف مسح البطاقات أبداً. يتم احتساب كل ختم أو إشعار نقطة واحدة (${POINT_PRICE_MAD} درهم) وتُضاف إلى الاشتراك الشهري عند التسديد آخر الشهر (إضافة إلى ${INSTALLATION_FEE_MAD} درهم للتثبيت أول شهر فقط).`
+              : locale === "fr"
+              ? `Aucune interruption de service. Chaque tampon ou campagne est comptabilisé à ${POINT_PRICE_MAD} DH/point et réglé en fin de mois avec votre abonnement.`
+              : `Sin interrupciones. Cada sello o campaña se registra a ${POINT_PRICE_MAD} DH/punto para liquidación a fin de mes.`}
+          </p>
         </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full py-2.5 rounded-full bg-[#008069] hover:bg-[#075E54] text-white font-bold text-xs transition cursor-pointer shadow-sm"
+        >
+          {locale === "ar" ? "إغلاق" : locale === "fr" ? "Fermer" : "Cerrar"}
+        </button>
       </div>
     </div>
   );

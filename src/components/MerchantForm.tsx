@@ -52,6 +52,11 @@ import {
   Star,
 } from "lucide-react";
 import { NICHE_PRESETS, PLANS_INFO } from "@/lib/constants";
+import {
+  computeMonthlySubscriptionFee,
+  INSTALLATION_FEE_MAD,
+  POINT_PRICE_MAD,
+} from "@/lib/pricing";
 import WalletPassPreview from "@/components/WalletPassPreview";
 import StandPreviewModal from "@/components/StandPreviewModal";
 
@@ -685,12 +690,22 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
             </div>
           </div>
 
-          {/* Section 4: Plan & Initial Credits */}
+          {/* Section 4: Monthly Plan, Branch Pricing & Postpaid Points */}
           <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-[#111B21] pb-2 border-b border-[#E9EDEF] flex items-center gap-2">
-              <Coins className="w-4 h-4 text-amber-500" />
-              <span>4. باقة الاشتراك ورصيد الكريدي</span>
-            </h3>
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#E9EDEF]">
+              <h3 className="text-sm font-bold text-[#111B21] flex items-center gap-2">
+                <Coins className="w-4 h-4 text-amber-500" />
+                <span>4. باقة الاشتراك الشهري وإدارة الفروع</span>
+              </h3>
+              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                <span className="text-[11px] font-bold text-emerald-900">
+                  الاشتراك الشهري المحسوب:
+                </span>
+                <span className="text-xs font-black font-mono text-[#008069]">
+                  {computeMonthlySubscriptionFee(formData.plan, formData.maxBranches)} DH / شهر
+                </span>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {Object.values(PLANS_INFO).map((plan) => {
@@ -700,12 +715,33 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                     key={plan.name}
                     type="button"
                     onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        plan: plan.name,
-                        credits: isEdit ? prev.credits : plan.credits,
-                        maxBranches: plan.name === "MULTI" && (prev.maxBranches ?? 1) <= 1 ? 3 : prev.maxBranches,
-                      }))
+                      setFormData((prev) => {
+                        if (plan.name === "STARTER") {
+                          return {
+                            ...prev,
+                            plan: "STARTER",
+                            maxBranches: 1,
+                            autoRadar: false,
+                            autoReview: false,
+                          };
+                        }
+                        if (plan.name === "MULTI") {
+                          return {
+                            ...prev,
+                            plan: "MULTI",
+                            maxBranches: Math.max(2, prev.maxBranches || 2),
+                            autoRadar: true,
+                            autoReview: true,
+                          };
+                        }
+                        return {
+                          ...prev,
+                          plan: "GROWTH",
+                          maxBranches: 1,
+                          autoRadar: true,
+                          autoReview: true,
+                        };
+                      })
                     }
                     className={`p-4 rounded-2xl border text-right transition ${
                       isSelected
@@ -720,55 +756,74 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                       </span>
                     </div>
                     <span className="text-[11px] text-[#54656F] block">
-                      {plan.label} • {plan.credits} كريدي
+                      {plan.label}
                     </span>
                   </button>
                 );
               })}
             </div>
 
+            {formData.plan === "STARTER" && (
+              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-semibold">
+                تنبيه باقة 149 درهم: هذه الباقة لا تشمل رادار 100 متر على شاشات القفل ولا محرك تقييمات Google Maps.
+              </div>
+            )}
+
             <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-[#111B21] mb-1.5 block">
-                  رصيد الكريدي الأولي (Initial Credits)
-                </label>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={formData.credits}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      credits: parseInt(e.target.value, 10) || 0,
-                    })
-                  }
-                  className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-amber-700 font-mono font-bold focus:outline-none focus:border-amber-400 focus:bg-white"
-                />
-              </div>
-
-              <div>
                 <label className="text-xs font-semibold text-[#111B21] mb-1.5 flex items-center justify-between">
-                  <span>الحد الأقصى للفروع (maxBranches) *</span>
-                  <span className="text-[10px] text-[#008069] font-bold">كوطا الفروع المسموح بها</span>
+                  <span>عدد الفروع المسموح بها (maxBranches) *</span>
+                  <span className="text-[10px] text-[#008069] font-bold">
+                    +100 درهم لكل فرع إضافي
+                  </span>
                 </label>
                 <input
                   type="number"
                   inputMode="numeric"
-                  min="1"
+                  min={formData.plan === "MULTI" ? 2 : 1}
                   max="50"
                   value={formData.maxBranches}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      maxBranches: Math.max(1, parseInt(e.target.value, 10) || 1),
-                    })
-                  }
+                  onChange={(e) => {
+                    const nextBranches = Math.max(1, parseInt(e.target.value, 10) || 1);
+                    setFormData((prev) => ({
+                      ...prev,
+                      maxBranches: nextBranches,
+                      plan:
+                        nextBranches > 1
+                          ? "MULTI"
+                          : prev.plan === "STARTER"
+                          ? "STARTER"
+                          : "GROWTH",
+                      ...(nextBranches > 1 ? { autoRadar: true, autoReview: true } : {}),
+                    }));
+                  }}
                   className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3.5 py-2.5 text-xs text-[#008069] font-mono font-bold focus:outline-none focus:border-[#008069] focus:bg-white"
                 />
                 <p className="text-[10px] text-[#54656F] mt-1">
-                  العدد الأقصى للفروع التي يمكن لصاحب المتجر إنشاؤها عبر لوحة تحكمه (افتراضي 1، أو 3 لباقة MULTI).
+                  يتغير الاشتراك الشهري تلقائياً (1 فرع = 199 درهم أو 149 للأساسية | فرعان = 299 درهم | 3 فروع = 399 درهم...).
                 </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#F0F2F5] border border-[#D1D7DB] space-y-1 text-xs">
+                <span className="font-bold text-[#111B21] block">ملخص الفوترة الشهرية:</span>
+                <div className="flex justify-between text-[11px] text-[#54656F]">
+                  <span>الاشتراك الشهري:</span>
+                  <span className="font-mono font-bold text-[#008069]">
+                    {computeMonthlySubscriptionFee(formData.plan, formData.maxBranches)} DH
+                  </span>
+                </div>
+                <div className="flex justify-between text-[11px] text-[#54656F]">
+                  <span>ثمن التثبيت (أول شهر فقط):</span>
+                  <span className="font-mono font-bold text-[#111B21]">
+                    {INSTALLATION_FEE_MAD} DH
+                  </span>
+                </div>
+                <div className="flex justify-between text-[11px] text-[#54656F]">
+                  <span>احتساب النقاط (آخر الشهر):</span>
+                  <span className="font-mono font-bold text-amber-700">
+                    {POINT_PRICE_MAD} DH / نقطة
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -880,18 +935,25 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] cursor-pointer hover:bg-[#E9EDEF] transition">
+              <label
+                className={`flex items-center gap-3 p-3 rounded-2xl border transition ${
+                  formData.plan === "STARTER"
+                    ? "bg-[#F0F2F5]/60 border-[#E9EDEF] opacity-60 cursor-not-allowed"
+                    : "bg-[#F0F2F5] border-[#E9EDEF] cursor-pointer hover:bg-[#E9EDEF]"
+                }`}
+              >
                 <input
                   type="checkbox"
-                  checked={formData.autoReview}
+                  disabled={formData.plan === "STARTER"}
+                  checked={formData.plan === "STARTER" ? false : formData.autoReview}
                   onChange={(e) =>
                     setFormData({ ...formData, autoReview: e.target.checked })
                   }
-                  className="w-4 h-4 accent-[#008069] rounded cursor-pointer"
+                  className="w-4 h-4 accent-[#008069] rounded cursor-pointer disabled:cursor-not-allowed"
                 />
                 <div>
                   <span className="text-xs font-bold text-[#111B21] block">
-                    مراجعات جوجل الآلية
+                    مراجعات جوجل الآلية {formData.plan === "STARTER" ? "(مقفول في باقة 149 DH)" : ""}
                   </span>
                   <span className="text-[10px] text-[#54656F]">
                     طلب تقييم Google Maps بعد الزيارة الثالثة
@@ -899,18 +961,25 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] cursor-pointer hover:bg-[#E9EDEF] transition">
+              <label
+                className={`flex items-center gap-3 p-3 rounded-2xl border transition ${
+                  formData.plan === "STARTER"
+                    ? "bg-[#F0F2F5]/60 border-[#E9EDEF] opacity-60 cursor-not-allowed"
+                    : "bg-[#F0F2F5] border-[#E9EDEF] cursor-pointer hover:bg-[#E9EDEF]"
+                }`}
+              >
                 <input
                   type="checkbox"
-                  checked={formData.autoRadar}
+                  disabled={formData.plan === "STARTER"}
+                  checked={formData.plan === "STARTER" ? false : formData.autoRadar}
                   onChange={(e) =>
                     setFormData({ ...formData, autoRadar: e.target.checked })
                   }
-                  className="w-4 h-4 accent-[#008069] rounded cursor-pointer"
+                  className="w-4 h-4 accent-[#008069] rounded cursor-pointer disabled:cursor-not-allowed"
                 />
                 <div>
                   <span className="text-xs font-bold text-[#111B21] block">
-                    رادار الجيوفنسينغ
+                    رادار الجيوفنسينغ {formData.plan === "STARTER" ? "(مقفول في باقة 149 DH)" : ""}
                   </span>
                   <span className="text-[10px] text-[#54656F]">
                     إشعار فوري عند المرور بجانب المحل

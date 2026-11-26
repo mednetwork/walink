@@ -12,6 +12,7 @@ import {
   computeMerchantMetrics,
   scopeMetricsToBranch,
 } from "@/lib/metrics";
+import { formatBillingMonth } from "@/lib/pricing";
 import MerchantDashboardClient from "@/components/MerchantDashboardClient";
 
 export const viewport: Viewport = {
@@ -161,6 +162,19 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
       ? scopeMetricsToBranch(computedMetrics, matchedBranch, now)
       : computedMetrics;
 
+  const currentBillingMonth = formatBillingMonth(now);
+  const pointUsageAgg =
+    isSessionValid && sessionRole === "OWNER"
+      ? await prisma.pointUsage.aggregate({
+          where: {
+            merchantId: merchant.id,
+            billingMonth: currentBillingMonth,
+          },
+          _sum: { points: true },
+        })
+      : null;
+  const monthlyPointsUsed = pointUsageAgg?._sum.points ?? 0;
+
   // Serialize dates for Client Component (never send raw owner PIN or unauthorized data)
   const serializedMerchant = {
     id: merchant.id,
@@ -178,6 +192,7 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     plan: merchant.plan,
     maxBranches: merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1),
     credits: merchant.credits,
+    monthlyPointsUsed,
     loyaltyMode: merchant.loyaltyMode,
     cashbackRate: merchant.cashbackRate,
     welcomeCashback: merchant.welcomeCashback,

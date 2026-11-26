@@ -26,6 +26,7 @@ export default async function AdminDashboardPage() {
       radarMessage: string;
       googleMapsUrl: string | null;
       plan: string;
+      maxBranches: number;
       credits: number;
       isActive: boolean;
       createdAt: Date;

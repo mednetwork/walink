@@ -9,6 +9,7 @@ import {
   computeMerchantMetrics,
   scopeMetricsToBranch,
 } from "@/lib/metrics";
+import { formatBillingMonth } from "@/lib/pricing";
 
 export async function GET(
   req: NextRequest,
@@ -100,6 +101,19 @@ export async function GET(
           )
         : merchant.transactions;
 
+    const currentBillingMonth = formatBillingMonth(now);
+    const pointAgg =
+      session.role === "OWNER"
+        ? await prisma.pointUsage.aggregate({
+            where: {
+              merchantId: merchant.id,
+              billingMonth: currentBillingMonth,
+            },
+            _sum: { points: true },
+          })
+        : null;
+    const monthlyPointsUsed = pointAgg?._sum.points ?? 0;
+
     return NextResponse.json({
       merchant: {
         id: merchant.id,
@@ -129,6 +143,7 @@ export async function GET(
         maxBranches: merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1),
         branches: JSON.stringify(scopedBranches),
         credits: merchant.credits,
+        monthlyPointsUsed,
         autoWinback: merchant.autoWinback,
         autoReview: merchant.autoReview,
         autoRadar: merchant.autoRadar,

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
 import { sendApplePassUpdate } from "@/lib/apple-wallet";
 import { getStoreSessionFromCookies } from "@/lib/auth";
+import { formatBillingMonth } from "@/lib/pricing";
 
 export async function POST(
   req: NextRequest,
@@ -70,18 +71,7 @@ export async function POST(
 
     // Minimum target count for demo test
     const targetCount = Math.max(1, actualCount);
-
-    if (merchant.credits < targetCount) {
-      return NextResponse.json(
-        {
-          error: "INSUFFICIENT_CREDITS",
-          message: `رصيد الكريدي غير كافٍ. يتطلب الإرسال ${targetCount} كريدي بينما رصيدك الحالي هو ${merchant.credits}.`,
-          requiredCredits: targetCount,
-          currentCredits: merchant.credits,
-        },
-        { status: 400 }
-      );
-    }
+    const billingMonth = formatBillingMonth(now);
 
     // Identify target customers to generate individual notifications
     const targetCustomers = merchant.customers.filter((c) => {
@@ -93,14 +83,15 @@ export async function POST(
 
     const customersToNotify = targetCustomers.length > 0 ? targetCustomers : merchant.customers.slice(0, 1);
 
-    // Atomic transaction: deduct credits, create campaign record, and push notifications
-    const [updatedMerchant, campaign] = await prisma.$transaction([
-      prisma.merchant.update({
-        where: { id: merchant.id },
+    // Atomic postpaid transaction: record point usage for month-end billing & create campaign
+    const [, campaign] = await prisma.$transaction([
+      prisma.pointUsage.create({
         data: {
-          credits: { decrement: targetCount },
+          merchantId: merchant.id,
+          points: targetCount,
+          source: "CAMPAIGN",
+          billingMonth,
         },
-        select: { credits: true },
       }),
       prisma.campaign.create({
         data: {
@@ -145,8 +136,9 @@ export async function POST(
     return NextResponse.json({
       success: true,
       campaign,
-      remainingCredits: updatedMerchant.credits,
-      message: `تم إرسال العرض بنجاح إلى ${targetCount} زبون! خصم ${targetCount} كريدي.`,
+      remainingCredits: merchant.credits,
+      pointsLogged: targetCount,
+      message: `تم إرسال العرض بنجاح إلى ${targetCount} زبون! احتساب ${targetCount} نقطة في فاتورة آخر الشهر.`,
     });
   } catch (error: unknown) {
     console.error("Error creating campaign:", error);

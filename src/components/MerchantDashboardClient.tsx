@@ -195,6 +195,7 @@ interface MerchantDashboardClientProps {
     plan: string;
     maxBranches?: number;
     credits: number;
+    monthlyPointsUsed?: number;
     loyaltyMode?: string;
     cashbackRate?: number;
     welcomeCashback?: number;
@@ -438,12 +439,16 @@ export default function MerchantDashboardClient({
         if (Array.isArray(data.transactions)) {
           setTransactions(data.transactions);
         }
-        if (data.merchant && typeof data.merchant.credits === "number") {
-          setMerchant((prev) =>
-            prev.credits !== data.merchant.credits
-              ? { ...prev, credits: data.merchant.credits }
-              : prev
-          );
+        if (data.merchant) {
+          setMerchant((prev) => ({
+            ...prev,
+            ...(typeof data.merchant.credits === "number"
+              ? { credits: data.merchant.credits }
+              : {}),
+            ...(typeof data.merchant.monthlyPointsUsed === "number"
+              ? { monthlyPointsUsed: data.merchant.monthlyPointsUsed }
+              : {}),
+          }));
         }
         if (data.merchant?.branches) {
           try {
@@ -1755,14 +1760,9 @@ export default function MerchantDashboardClient({
     effectiveSelectedBranchId,
   ]);
 
-  // Direct 1-Click Customer Loyalty Actions (Phase 53)
+  // Direct 1-Click Customer Loyalty Actions (Phase 53 - Postpaid Point Usage)
   const handleDirectStamp = async (c: CustomerData) => {
     if (stampingCustomerId) return;
-    if (merchant.credits <= 0) {
-      soundEngine.playAlert();
-      setIsCreditsOpen(true);
-      return;
-    }
 
     setStampingCustomerId(c.id);
     try {
@@ -1781,12 +1781,6 @@ export default function MerchantDashboardClient({
       });
 
       const data = await res.json();
-
-      if (res.status === 402 || data.error === "OUT_OF_CREDITS") {
-        soundEngine.playAlert();
-        setIsCreditsOpen(true);
-        return;
-      }
 
       if (res.status === 429 && data.error === "COOLDOWN_ACTIVE") {
         soundEngine.playAlert();
@@ -1845,11 +1839,6 @@ export default function MerchantDashboardClient({
 
   const handleDirectRedeem = async (c: CustomerData) => {
     if (stampingCustomerId) return;
-    if (merchant.credits <= 0) {
-      soundEngine.playAlert();
-      setIsCreditsOpen(true);
-      return;
-    }
 
     setStampingCustomerId(c.id);
     try {
@@ -1868,12 +1857,6 @@ export default function MerchantDashboardClient({
       });
 
       const data = await res.json();
-
-      if (res.status === 402 || data.error === "OUT_OF_CREDITS") {
-        soundEngine.playAlert();
-        setIsCreditsOpen(true);
-        return;
-      }
 
       if (!res.ok) {
         throw new Error(data.error || (locale === "fr" ? "Échec de la remise du cadeau" : locale === "es" ? "Error al canjear regalo" : "فشل تسليم المكافأة"));
@@ -2466,27 +2449,24 @@ export default function MerchantDashboardClient({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Live Credits Counter Pill */}
-            <button
-              type="button"
-              onClick={() => setIsCreditsOpen(true)}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-mono text-xs font-bold transition shadow-sm ${merchant.credits <= 20
-                ? "bg-amber-500/25 border border-amber-400 text-amber-200 ring-2 ring-amber-400/50 animate-pulse"
-                : "bg-white/15 hover:bg-white/25 border border-white/20 text-amber-300"
-                }`}
-              title={
-                merchant.credits <= 20
-                  ? locale === "ar"
-                    ? "رصيد النقاط منخفض! اضغط للشحن"
+            {/* Owner-Only Monthly Postpaid Points Pill */}
+            {isOwner && (
+              <button
+                type="button"
+                onClick={() => setIsCreditsOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-xl font-mono text-xs font-bold transition shadow-sm bg-white/15 hover:bg-white/25 border border-white/20 text-amber-300 cursor-pointer"
+                title={
+                  locale === "ar"
+                    ? "استهلاك النقاط هذا الشهر (تُحتسب آخر الشهر بـ 0.1 درهم/نقطة)"
                     : locale === "fr"
-                      ? "Crédits faibles ! Cliquez pour recharger"
-                      : "¡Créditos bajos! Haga clic para recargar"
-                  : undefined
-              }
-            >
-              <Coins className="w-3.5 h-3.5" />
-              <span>{merchant.credits}</span>
-            </button>
+                      ? "Points consommés ce mois (facturation fin de mois)"
+                      : "Puntos consumidos este mes (facturación mensual)"
+                }
+              >
+                <Coins className="w-3.5 h-3.5" />
+                <span>{merchant.monthlyPointsUsed ?? 0}</span>
+              </button>
+            )}
 
             {/* Stand QR Button */}
             <button
@@ -3540,13 +3520,13 @@ export default function MerchantDashboardClient({
               </div>
             </div>
 
-            {/* Cost Summary Row */}
+            {/* Cost Summary Row (Postpaid) */}
             <div className="p-3 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm flex items-center justify-between text-xs">
               <span className="text-[#5F655D]">
-                غادي يتخصم: <strong className="text-amber-600 font-mono font-bold">{costCredits}</strong> كريدي
+                استهلاك الحملة: <strong className="text-amber-600 font-mono font-bold">{costCredits}</strong> نقطة
               </span>
-              <span className="text-[#5F655D]">
-                يبقى ليك: <strong className="text-[#008069] font-mono font-bold">{Math.max(0, remainingCredits)}</strong> كريدي
+              <span className="text-[#5F655D] font-mono font-bold">
+                {(costCredits * 0.1).toFixed(2)} DH (آخر الشهر)
               </span>
             </div>
 
@@ -3560,7 +3540,7 @@ export default function MerchantDashboardClient({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                disabled={sendingPromo || merchant.credits < costCredits}
+                disabled={sendingPromo}
                 onClick={handleSendCampaign}
                 className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-[#008069]/20 transition disabled:opacity-50"
               >
@@ -4156,31 +4136,31 @@ export default function MerchantDashboardClient({
                     {
                       key: "autoWinback" as const,
                       title: "رجوع الغابرين",
-                      badge: "بالكريدي",
+                      badge: "0.1 DH / نقطة",
                       message: `توحشناك! دوز هاد السيمانة لـ ${merchant.name} وعندك طابع هدية`,
                       active: automations.autoWinback,
-                      locked: merchant.plan === "STARTER",
+                      locked: false,
                     },
                     {
                       key: "autoReview" as const,
                       title: "تقييمات Google",
-                      badge: "فابور ديما",
+                      badge: "متوفر من 199 DH+",
                       message: `شكراً على الزيارة! عجباتك الخدمة؟ خلي لينا رأيك ف Google`,
-                      active: automations.autoReview,
+                      active: merchant.plan === "STARTER" ? false : automations.autoReview,
                       locked: merchant.plan === "STARTER",
                     },
                     {
                       key: "autoRadar" as const,
                       title: "تذكير 100 ميترو",
-                      badge: "فابور ديما",
+                      badge: "متوفر من 199 DH+",
                       message: `راك قريب من ${merchant.name}، الكارط ديالك واجدة`,
-                      active: automations.autoRadar,
+                      active: merchant.plan === "STARTER" ? false : automations.autoRadar,
                       locked: merchant.plan === "STARTER",
                     },
                     {
                       key: "autoNearReward" as const,
                       title: "الكادو قريب",
-                      badge: "فابور ديما",
+                      badge: "مشمول",
                       message: `باقي ليك غير طابع واحد على ${merchant.rewardName}`,
                       active: automations.autoNearReward,
                       locked: false,
@@ -4398,13 +4378,17 @@ export default function MerchantDashboardClient({
         merchant={merchant}
       />
 
-      <MerchantCreditsModal
-        isOpen={isCreditsOpen}
-        onClose={() => setIsCreditsOpen(false)}
-        credits={merchant.credits}
-        merchantName={merchant.name}
-        locale={locale}
-      />
+      {isOwner && (
+        <MerchantCreditsModal
+          isOpen={isCreditsOpen}
+          onClose={() => setIsCreditsOpen(false)}
+          monthlyPointsUsed={merchant.monthlyPointsUsed ?? 0}
+          plan={merchant.plan}
+          maxBranches={merchant.maxBranches}
+          merchantName={merchant.name}
+          locale={locale}
+        />
+      )}
 
       <LockScreenPeekModal
         isOpen={peekNotification.isOpen}
@@ -5121,23 +5105,25 @@ export default function MerchantDashboardClient({
                   {locale === "ar" ? "أدوات سريعة" : "Outils rapides"}
                 </p>
 
-                {/* Credits recharge */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuDrawerOpen(false);
-                    setIsCreditsOpen(true);
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Coins className="w-4 h-4 text-amber-500" />
-                    <span>{locale === "ar" ? "رصيد العمليات" : "Solde de crédits"}</span>
-                  </div>
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
-                    {merchant.credits}
-                  </span>
-                </button>
+                {/* Owner-only Postpaid Points Usage Drawer Row */}
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuDrawerOpen(false);
+                      setIsCreditsOpen(true);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Coins className="w-4 h-4 text-amber-500" />
+                      <span>{locale === "ar" ? "استهلاك النقاط هذا الشهر" : locale === "fr" ? "Points du mois" : "Puntos del mes"}</span>
+                    </div>
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
+                      {merchant.monthlyPointsUsed ?? 0}
+                    </span>
+                  </button>
+                )}
 
                 {/* Counter Stand QR */}
                 <button

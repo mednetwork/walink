@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { pushGoogleWalletUpdate } from "@/lib/google-wallet";
+import { formatBillingMonth } from "@/lib/pricing";
 
 export async function GET(req: NextRequest) {
   return handleCron(req);
@@ -77,16 +78,6 @@ async function handleCron(req: NextRequest) {
         }
 
         for (const customer of quietCustomers) {
-          // Check if merchant has available credits
-          const currentMerchant = await prisma.merchant.findUnique({
-            where: { id: merchant.id },
-            select: { credits: true },
-          });
-
-          if (!currentMerchant || currentMerchant.credits < 1) {
-            break; // No credits left for win-back broadcast
-          }
-
           // Create Notification
           const notif = await prisma.notification.create({
             data: {
@@ -107,10 +98,14 @@ async function handleCron(req: NextRequest) {
             notif.body
           ).catch(() => {});
 
-          // Deduct 1 credit
-          await prisma.merchant.update({
-            where: { id: merchant.id },
-            data: { credits: { decrement: 1 } },
+          // Record postpaid point usage for month-end billing
+          await prisma.pointUsage.create({
+            data: {
+              merchantId: merchant.id,
+              points: 1,
+              source: "WINBACK",
+              billingMonth: formatBillingMonth(),
+            },
           });
 
           merchantWinbacks++;

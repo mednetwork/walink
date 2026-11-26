@@ -204,7 +204,7 @@ export default function MarketingLandingClient() {
     id: string;
     title: string;
     price: string;
-  }>({ id: "growth", title: "Growth (الأكثر طلباً)", price: "2,400" });
+  }>({ id: "growth", title: "المتجر العادي (199 DH/شهر)", price: "199 DH/شهر + 300 DH تثبيت" });
   const [checkoutCity, setCheckoutCity] = useState<string>("الدار البيضاء");
   const [checkoutPhone, setCheckoutPhone] = useState<string>("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState<boolean>(false);
@@ -420,8 +420,8 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
 
   // ROI calculations
   const monthlyRevenueGain = Math.round(lostCustomersCount * averageSpend * 2.5);
-  const planCost = 2400; // Growth plan
-  const paybackMonths = Math.max(1, Math.ceil(planCost / Math.max(100, monthlyRevenueGain)));
+  const planCost = 199; // Standard monthly plan
+  const paybackMonths = Math.max(1, Math.ceil((planCost + 300) / Math.max(100, monthlyRevenueGain)));
 
   const faqs = [
     {
@@ -433,8 +433,8 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
       a: "Apple Wallet و Google Wallet مدمجين مباشرة مع نظام تحديد المواقع الجغرافي (GPS) الأصلي ديال الهاتف. ملي كيدوز الكليان فـ محيط 100 متر من المحل، التيليفون كيشعل راسو وكيطلع إشعار القرب فـ شاشة القفل تلقائياً.",
     },
     {
-      q: "شنو كيوقع إيلا التاجر سالاو ليه نقط الكريدي؟",
-      a: "يُستخدم الكريدي لإضافة الطوابع والهدايا أو إرسال حملات البروموسيون واسترجاع الغابرين، وثمن شحن الكريدي موحد واقتصادي بزاف: 0.1 درهم لكل كريدي (500 كريدي بـ 50 درهم فقط وبدون اشتراك شهري).",
+      q: "شنو كيشمل ثمن التثبيت لأول مرة (300 درهم)؟",
+      a: "رسوم التثبيت 300 درهم كتدفع مرة وحدة فقط عند التفعيل الأول، وكتشمل تصميم بطاقة محلك بهويتك، إعداد النظام بالكامل، وتجهيز ستاند الكاونتر الذكي (NFC + QR).",
     },
     {
       q: "شنو هو الستاند الذكي اللي كيوصل مع الباك؟",
@@ -799,8 +799,8 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
                     onClick={() => {
                       setSelectedPlan({
                         id: "growth",
-                        title: "Growth (الأكثر طلباً)",
-                        price: "2,400",
+                        title: "المتجر العادي (199 DH/شهر)",
+                        price: "199 DH/شهر + 300 DH تثبيت",
                       });
                       setIsCheckoutOpen(true);
                     }}
@@ -1356,8 +1356,8 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-[#080C14] border border-white/10 flex items-center justify-between text-xs">
-                  <span className="text-white/60">تكلفة الإرسال:</span>
-                  <span className="text-emerald-400 font-mono font-bold">1 كريدي لكل زبون (أرخص 10 مرات من SMS)</span>
+                  <span className="text-white/60">الوصول المباشر:</span>
+                  <span className="text-emerald-400 font-mono font-bold">إشعار فوري مباشرة على شاشة القفل</span>
                 </div>
               </div>
             </div>
@@ -1393,11 +1393,11 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
               </thead>
               <tbody className="divide-y divide-white/5 text-white/80">
                 <tr className="hover:bg-white/[0.02]">
-                  <td className="py-3.5 font-bold text-white">الثمن الإجمالي فـ 3 سنوات</td>
+                  <td className="py-3.5 font-bold text-white">الثمن والتكلفة</td>
                   <td className="py-3.5">~ 4,500 DH (طباعة متكررة)</td>
                   <td className="py-3.5 font-mono text-rose-400">14,400 DH (400 DH/شهر)</td>
                   <td className="py-3.5 font-bold text-emerald-400 font-mono text-sm">
-                    3,180 DH (مرة وحدة + كير)
+                    ابتداءً من 149 DH/شهر + 300 DH تثبيت
                   </td>
                 </tr>
                 <tr className="hover:bg-white/[0.02]">
@@ -1454,11 +1454,11 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
 
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-emerald-400 font-semibold">منظومة Walink (باك Growth لمرة واحدة + Walink Care)</span>
-                  <span className="font-mono text-emerald-400 font-bold">3,180 درهم</span>
+                  <span className="text-emerald-400 font-semibold">منظومة Walink (المتجر العادي شامل الرادار والتقييمات)</span>
+                  <span className="font-mono text-emerald-400 font-bold">199 DH / شهر</span>
                 </div>
                 <div className="w-full h-4 rounded-full bg-white/5 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full w-[22%]" />
+                  <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full w-[35%]" />
                 </div>
               </div>
             </div>
@@ -1557,41 +1557,45 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
               <span>الأثمنة الشفافة • Transparent Pricing</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
-              استثمار لمرة واحدة، وبلا اشتراك شهري
+              أثمنة شهرية واضحة وبسيطة
             </h2>
             <p className="text-sm text-white/60">
-              كتخلص مرة واحدة فقط، والستاند والكارط كيبقاو ديالك مدى الحياة.
+              اختر الباقة المناسبة لمتجرك، مع رسوم تثبيت لمرة واحدة فقط (300 درهم تشمل الإعداد الكامل والستاند الذكي).
             </p>
           </div>
 
-          {/* Urgency Banner */}
+          {/* Installation Banner */}
           <div className="max-w-2xl mx-auto p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs text-center flex items-center justify-center gap-2 shadow-lg">
             <Zap className="w-4 h-4 text-amber-400 flex-shrink-0 animate-pulse" />
             <span>
-              <strong>الطلب مرتفع هاد السيمانة:</strong> طلب دابا وتوجد ليك الكارط والستاند فـ 48 ساعة فقط.
+              <strong>ثمن التثبيت لأول مرة: 300 درهم فقط</strong> — يشمل تصميم البطاقة، برمجة الإعدادات، وستاند الكاونتر (NFC + QR).
             </span>
           </div>
 
           {/* 3 Pricing Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-            {/* Plan 1: Starter */}
+            {/* Plan 1: Starter (149 DH/mo) */}
             <div className="glass-panel p-6 rounded-3xl border border-white/10 flex flex-col justify-between space-y-6 text-right">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-lg text-white">Starter</h3>
+                  <h3 className="font-bold text-lg text-white">الباقة الأساسية</h3>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/70">
-                    -24% تخفيض
+                    متجر واحد
                   </span>
                 </div>
 
                 <p className="text-xs text-white/60 leading-relaxed">
-                  مثالي للمحلات الصغيرة التي ترغب في تجربة بطاقة الوفاء الرقمية لأول مرة.
+                  مثالية للمحلات التي تريد بطاقة وفاء رقمية بدون رادار 100 متر أو محرك تقييمات Google Maps.
                 </p>
 
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white font-mono">1,900</span>
-                  <span className="text-xs text-white/60">درهم</span>
-                  <span className="text-xs text-white/40 line-through font-mono">2,500 DH</span>
+                <div className="space-y-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-white font-mono">149</span>
+                    <span className="text-xs text-white/60">درهم / شهر</span>
+                  </div>
+                  <span className="text-[11px] text-amber-300 font-semibold block">
+                    + 300 درهم للتثبيت أول مرة
+                  </span>
                 </div>
 
                 <ul className="space-y-2.5 text-xs text-white/80 pt-2 border-t border-white/10">
@@ -1605,15 +1609,13 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>إشعارات الطوابع والمكافآت مجانية ديماً</span>
+                    <span>لوحة تحكم التاجر بالكاميرا ونظام الأختام والكاش باك</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>لوحة تحكم التاجر الأساسية بالكاميرا</span>
+                  <li className="flex items-center gap-2 text-white/45 line-through">
+                    <span>بدون رادار 100 متر الذكي على شاشات القفل</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>200 نقطة كريدي هدية</span>
+                  <li className="flex items-center gap-2 text-white/45 line-through">
+                    <span>بدون محرك زيادة تقييمات Google Maps بخمس نجوم</span>
                   </li>
                 </ul>
               </div>
@@ -1621,18 +1623,17 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedPlan({ id: "starter", title: "Starter", price: "1,900" });
+                  setSelectedPlan({ id: "starter", title: "الباقة الأساسية (149 DH/شهر)", price: "149 DH/شهر + 300 DH تثبيت" });
                   setIsCheckoutOpen(true);
                 }}
                 className="w-full py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition"
               >
-                طلب باقة Starter
+                اختيار باقة 149 درهم/شهر
               </button>
             </div>
 
-            {/* Plan 2: Growth (Best Value) */}
+            {/* Plan 2: Standard / Growth (199 DH/mo) */}
             <div className="glass-panel p-6 sm:p-7 rounded-3xl border-2 border-emerald-500 bg-gradient-to-b from-emerald-500/[0.08] to-transparent shadow-2xl shadow-emerald-500/15 flex flex-col justify-between space-y-6 text-right relative">
-              {/* Most Popular Badge */}
               <div className="absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 font-black text-[11px] shadow-md flex items-center gap-1">
                 <Star className="w-3.5 h-3.5 fill-slate-950" />
                 <span>الأكثر طلباً ومبيعاً ⭐</span>
@@ -1640,49 +1641,42 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-xl text-white">Growth</h3>
+                  <h3 className="font-bold text-xl text-white">المتجر العادي</h3>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
-                    -25% تخفيض
+                    كامل المميزات
                   </span>
                 </div>
 
                 <p className="text-xs text-white/70 leading-relaxed">
-                  الحل المتكامل للنمو: رادار 100م، مراجعات Google Maps، واسترجاع الغابرين التلقائي.
+                  الحل المتكامل لمتجر واحد: رادار 100م على شاشات القفل، محرك تقييمات Google Maps، واسترجاع الزبناء.
                 </p>
 
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-emerald-400 font-mono">2,400</span>
-                  <span className="text-xs text-white/60">درهم</span>
-                  <span className="text-xs text-white/40 line-through font-mono">3,200 DH</span>
-                  <span className="text-[10px] text-emerald-400 block -mt-1 font-semibold">
-                    (أقل من 7 دراهم فالنهار لعام كامل!)
+                <div className="space-y-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-black text-emerald-400 font-mono">199</span>
+                    <span className="text-xs text-white/60">درهم / شهر</span>
+                  </div>
+                  <span className="text-[11px] text-amber-300 font-semibold block">
+                    + 300 درهم للتثبيت أول مرة
                   </span>
                 </div>
 
                 <ul className="space-y-2.5 text-xs text-white/90 pt-2 border-t border-white/10">
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span><strong>كل مميزات باقة Starter</strong></span>
+                    <span><strong>كل مميزات الباقة الأساسية</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span><strong>رادار القرب 100 ميترو الجغرافي (GPS)</strong></span>
+                    <span><strong>رادار القرب 100 متر الذكي على شاشات القفل</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span><strong>أتمتة مراجعات خرائط Google Maps</strong></span>
+                    <span><strong>محرك زيادة تقييمات Google Maps بخمس نجوم</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span><strong>استرجاع الغابرين بعد 15 يوماً أوتوماتيك</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>حملات البروموسيون بكليكة وحدة (Broadcast)</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span><strong>1,000 نقطة كريدي هدية</strong></span>
+                    <span><strong>استرجاع الزبناء الغائبين وحملات العروض</strong></span>
                   </li>
                 </ul>
               </div>
@@ -1690,51 +1684,52 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedPlan({ id: "growth", title: "Growth (الأكثر طلباً)", price: "2,400" });
+                  setSelectedPlan({ id: "growth", title: "المتجر العادي (199 DH/شهر)", price: "199 DH/شهر + 300 DH تثبيت" });
                   setIsCheckoutOpen(true);
                 }}
                 className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                <span>طلب باقة Growth دابا 🚀</span>
+                <span>اختيار باقة 199 درهم/شهر 🚀</span>
               </button>
             </div>
 
-            {/* Plan 3: Multi-Branch */}
+            {/* Plan 3: Multi-Branch (Starting from 299 DH/mo) */}
             <div className="glass-panel p-6 rounded-3xl border border-white/10 flex flex-col justify-between space-y-6 text-right">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-lg text-white">Multi-Branch</h3>
+                  <h3 className="font-bold text-lg text-white">متجر الفروع</h3>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/70">
-                    -25% تخفيض
+                    +100 DH / فرع
                   </span>
                 </div>
 
                 <p className="text-xs text-white/60 leading-relaxed">
-                  مخصص للمحلات والماركات التي تمتلك فرعين أو أكثر مع ربط سحابي موحد.
+                  مخصص للمحلات التي تمتلك فرعين أو أكثر: 199 درهم أساسي + 100 درهم لكل فرع إضافي.
                 </p>
 
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white font-mono">4,900</span>
-                  <span className="text-xs text-white/60">درهم</span>
-                  <span className="text-xs text-white/40 line-through font-mono">6,500 DH</span>
+                <div className="space-y-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs text-white/70">ابتداءً من</span>
+                    <span className="text-3xl font-black text-white font-mono">299</span>
+                    <span className="text-xs text-white/60">درهم / شهر</span>
+                  </div>
+                  <span className="text-[11px] text-amber-300 font-semibold block">
+                    + 300 درهم للتثبيت أول مرة
+                  </span>
                 </div>
 
                 <ul className="space-y-2.5 text-xs text-white/80 pt-2 border-t border-white/10">
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>كل مميزات باقة Growth لـ 3 فروع</span>
+                    <span>كل مميزات المتجر العادي (الرادار + التقييمات)</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>3 ستاندات أكريليك ذكية بـ NFC + QR</span>
+                    <span>199 درهم للفرع الرئيسي + 100 درهم لكل فرع إضافي</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>لوحة تحكم مركزية لجميع الفروع والموظفين</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>3,000 نقطة كريدي هدية</span>
+                    <span>حساب مستقل لكل كاشير ومقارنة أداء الفروع</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
@@ -1746,35 +1741,35 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedPlan({ id: "multi", title: "Multi-Branch", price: "4,900" });
+                  setSelectedPlan({ id: "multi", title: "متجر الفروع (من 299 DH/شهر)", price: "من 299 DH/شهر + 300 DH تثبيت" });
                   setIsCheckoutOpen(true);
                 }}
                 className="w-full py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition"
               >
-                طلب باقة Multi-Branch
+                اختيار باقة الفروع (299+ درهم)
               </button>
             </div>
           </div>
 
-          {/* Credits & Walink Care Explanation */}
+          {/* Setup & Multi-Branch Explanation (No Points/Credits Mentioned) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-right">
             <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2.5">
               <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-                <Coins className="w-4 h-4" />
-                <span>كيفاش خدام الكريدي فـ Walink؟</span>
+                <Zap className="w-4 h-4" />
+                <span>ثمن التثبيت لأول مرة (300 درهم)</span>
               </div>
               <p className="text-xs text-white/60 leading-relaxed">
-                الكريدي كيتستعمل لإضافة الطوابع والهدايا ومعاملات الكاش باك أو إرسال حملات البروموسيون الجماعية واسترجاع الغابرين. وثمن شحن الكريدي موحد وثابت: 0.1 درهم لكل كريدي (500 كريدي = 50 درهم، 1,000 كريدي = 100 درهم، 2,500 كريدي = 250 درهم).
+                رسوم التثبيت 300 درهم تُدفع لمرة واحدة فقط عند البداية، وتشمل تصميم بطاقة الولاء الخاصة بمحلك، تهيئة نظام الأختام أو الكاش باك، وستاند الكاونتر الذكي (NFC + QR).
               </p>
             </div>
 
             <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-2.5">
               <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
                 <ShieldCheck className="w-4 h-4" />
-                <span>خدمة Walink Care السنوية</span>
+                <span>تسعيرة واضحة حسب الفروع</span>
               </div>
               <p className="text-xs text-white/60 leading-relaxed">
-                العام الأول مشمول مجاناً في ثمن الباقة. ابتداءً من العام الثاني، هناك اشتراك رمزي اختياري بـ 390 درهم فالعام فقط لتغطية استضافة خوادم Apple و Google Wallet والنسخ الاحتياطي السحابي المستمر.
+                للمتاجر ذات الفروع المتعددة، الاشتراك الشهري هو 199 درهم للفرع الأول ويُضاف 100 درهم لكل فرع إضافي (فرعان = 299 درهم، 3 فروع = 399 درهم).
               </p>
             </div>
           </div>
@@ -1955,14 +1950,14 @@ ${checkoutPhone ? `📞 رقم الهاتف: ${checkoutPhone}` : ""}
       {/* Sticky Mobile CTA Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 p-3 bg-[#0B0F17]/95 backdrop-blur-xl border-t border-white/10 flex items-center justify-between gap-3">
         <div className="text-right">
-          <span className="text-[10px] text-white/50 block">باك Growth المتكامل</span>
-          <span className="text-base font-black text-emerald-400 font-mono">2,400 DH</span>
+          <span className="text-[10px] text-white/50 block">المتجر العادي (+ 300 DH تثبيت)</span>
+          <span className="text-base font-black text-emerald-400 font-mono">199 DH / شهر</span>
         </div>
 
         <button
           type="button"
           onClick={() => {
-            setSelectedPlan({ id: "growth", title: "Growth (الأكثر طلباً)", price: "2,400" });
+            setSelectedPlan({ id: "growth", title: "المتجر العادي (199 DH/شهر)", price: "199 DH/شهر + 300 DH تثبيت" });
             setIsCheckoutOpen(true);
           }}
           className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg"

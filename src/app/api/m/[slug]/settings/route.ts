@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getStoreSessionFromCookies } from "@/lib/auth";
+import { hasRadarAndReviewsFeature } from "@/lib/pricing";
 
 export async function PATCH(
   req: NextRequest,
@@ -215,6 +216,20 @@ export async function PATCH(
           if (mainBranch.city) updateData.city = mainBranch.city;
         }
       }
+    }
+
+    const existingMerchantPlan = await prisma.merchant.findUnique({
+      where: { slug },
+      select: { plan: true },
+    });
+
+    if (!existingMerchantPlan) {
+      return NextResponse.json({ error: "المحل التجاري غير موجود" }, { status: 404 });
+    }
+
+    if (!hasRadarAndReviewsFeature(existingMerchantPlan.plan)) {
+      updateData.autoRadar = false;
+      updateData.autoReview = false;
     }
 
     const updated = await prisma.merchant.update({

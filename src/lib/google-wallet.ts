@@ -90,6 +90,8 @@ export interface MerchantPassModel {
   niche?: string | null;
   logoIcon?: string | null;
   primaryColor?: string | null;
+  plan?: string | null;
+  autoRadar?: boolean | null;
   currency?: string | null;
   stampsRequired: number;
   rewardName: string;
@@ -144,9 +146,10 @@ export function buildLoyaltyClass(
     hexColor = "#008069";
   }
 
-  // Parse Multi-Zone Geofencing Locations (up to 10 points)
+  // Parse Multi-Zone Geofencing Locations (up to 10 points) — gated on STARTER (149 DH)
+  const canUseRadar = merchant.plan !== "STARTER" && merchant.autoRadar !== false;
   const locationsList: Array<{ kind: string; latitude: number; longitude: number }> = [];
-  if (merchant.latitude && merchant.longitude) {
+  if (canUseRadar && merchant.latitude && merchant.longitude) {
     locationsList.push({
       kind: "walletobjects#latLongPoint",
       latitude: Number(merchant.latitude),
@@ -155,7 +158,7 @@ export function buildLoyaltyClass(
   }
 
   try {
-    if (merchant.radarZones) {
+    if (canUseRadar && merchant.radarZones) {
       const parsed = JSON.parse(merchant.radarZones);
       if (Array.isArray(parsed)) {
         for (const zone of parsed) {

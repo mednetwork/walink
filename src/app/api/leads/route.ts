@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       city = "الدار البيضاء",
       phone = "",
       plan = "growth",
-      price = "2,400",
+      price = "199 DH/شهر + 300 DH تثبيت",
       usedDemo = false,
     } = body;
 
@@ -137,8 +137,6 @@ export async function PATCH(req: NextRequest) {
       }
 
       const planUpper = (lead.plan || "growth").toUpperCase();
-      const credits =
-        planUpper === "STARTER" ? 200 : planUpper === "MULTI" ? 3000 : 1000;
 
       // Create Merchant
       const merchant = await prisma.merchant.create({
@@ -152,14 +150,15 @@ export async function PATCH(req: NextRequest) {
           stampsRequired: 5,
           rewardName,
           customerPrefix,
-          credits,
+          credits: 0,
           plan: planUpper === "MULTI" ? "MULTI" : planUpper === "STARTER" ? "STARTER" : "GROWTH",
+          maxBranches: planUpper === "MULTI" ? 2 : 1,
           pinCode: "1234",
           isActive: true,
           autoWinback: true,
           autoNearReward: true,
-          autoRadar: true,
-          autoReview: true,
+          autoRadar: planUpper !== "STARTER",
+          autoReview: planUpper !== "STARTER",
           radarMessage: `راك قريب من ${lead.shopName}! الكارط ديالك واجدة 🎁`,
         },
       });

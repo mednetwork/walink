@@ -40,6 +40,8 @@ export interface MerchantPassData {
   city?: string | null;
   phone?: string | null;
   primaryColor?: string | null;
+  plan?: string | null;
+  autoRadar?: boolean | null;
   stampsRequired: number;
   rewardName: string;
   loyaltyMode?: string | null;
@@ -467,7 +469,8 @@ export async function generateApplePass(
         : "La carte de fidélité est strictement personnelle. Les récompenses et soldes ne sont pas échangeables contre des espèces. Valable dans tous les points de vente participants."),
   };
 
-  // Build Geofencing Locations (up to 10 zones)
+  // Build Geofencing Locations (up to 10 zones) — locked on STARTER (149 DH) or if autoRadar disabled
+  const canUseRadar = merchant.plan !== "STARTER" && merchant.autoRadar !== false;
   const locations: Array<{
     latitude: number;
     longitude: number;
@@ -475,7 +478,7 @@ export async function generateApplePass(
     maxDistance?: number;
   }> = [];
 
-  if (merchant.latitude && merchant.longitude) {
+  if (canUseRadar && merchant.latitude && merchant.longitude) {
     locations.push({
       latitude: merchant.latitude,
       longitude: merchant.longitude,
@@ -490,7 +493,7 @@ export async function generateApplePass(
     });
   }
 
-  if (merchant.radarZones) {
+  if (canUseRadar && merchant.radarZones) {
     try {
       const parsed = JSON.parse(merchant.radarZones);
       if (Array.isArray(parsed)) {

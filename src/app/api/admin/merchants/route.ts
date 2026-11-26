@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { hasRadarAndReviewsFeature, normalizeMerchantPlan } from "@/lib/pricing";
 
 export async function GET() {
   try {
@@ -95,6 +96,10 @@ export async function POST(req: NextRequest) {
       generatedSlug = `${generatedSlug}-${Math.floor(100 + Math.random() * 900)}`;
     }
 
+    const resolvedBranches = Math.max(1, Number(maxBranches) || 1);
+    const resolvedPlan = normalizeMerchantPlan(plan, resolvedBranches);
+    const canUseRadarReviews = hasRadarAndReviewsFeature(resolvedPlan);
+
     const merchant = await prisma.merchant.create({
       data: {
         name: name.trim(),
@@ -118,12 +123,12 @@ export async function POST(req: NextRequest) {
         longitude: longitude ? parseFloat(String(longitude)) : null,
         radarMessage,
         googleMapsUrl,
-        plan,
-        maxBranches: Math.max(1, Number(maxBranches) || 1),
+        plan: resolvedPlan,
+        maxBranches: resolvedPlan === "STARTER" ? 1 : resolvedBranches,
         credits: Number(credits) || 0,
         autoWinback: Boolean(autoWinback),
-        autoReview: Boolean(autoReview),
-        autoRadar: Boolean(autoRadar),
+        autoReview: canUseRadarReviews ? Boolean(autoReview) : false,
+        autoRadar: canUseRadarReviews ? Boolean(autoRadar) : false,
         autoNearReward: Boolean(autoNearReward),
         isActive: Boolean(isActive),
       },

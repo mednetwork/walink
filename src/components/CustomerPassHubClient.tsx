@@ -90,6 +90,7 @@ interface MerchantData {
   menuUrl?: string | null;
   instagramUrl?: string | null;
   termsText?: string;
+  plan?: string;
   autoReview: boolean;
   autoRadar: boolean;
   autoWinback: boolean;
@@ -1523,8 +1524,9 @@ export default function CustomerPassHubClient({
           />
         </div>
 
-        {/* Google Maps 5-Star Review Prompt (Conditional) */}
-        {merchant.autoReview &&
+        {/* Google Maps 5-Star Review Prompt (Conditional, gated on STARTER 149 DH) */}
+        {merchant.plan !== "STARTER" &&
+          merchant.autoReview &&
           (isRewardReady || customer.rewardsRedeemed > 0) && (
             <div
               className={`p-4 rounded-2xl border border-amber-200 bg-white space-y-2 shadow-sm ${isRTL ? "text-right" : "text-left"

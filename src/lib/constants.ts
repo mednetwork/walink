@@ -93,36 +93,40 @@ export const NICHE_PRESETS: Record<string, NichePreset> = {
 export const PLANS_INFO = {
   STARTER: {
     name: "STARTER",
-    label: "انطلاقة",
-    price: "1,900 درهم",
-    period: "سنوياً",
-    credits: 200,
-    badge: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    label: "الأساسية (بدون رادار/تقييمات)",
+    price: "149 درهم",
+    monthlyAmount: 149,
+    period: "شهرياً",
+    credits: 0,
+    badge: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   },
   GROWTH: {
     name: "GROWTH",
-    label: "نمو متقدم",
-    price: "2,400 درهم",
-    period: "سنوياً",
-    credits: 1000,
-    badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    label: "المتجر العادي (كامل المميزات)",
+    price: "199 درهم",
+    monthlyAmount: 199,
+    period: "شهرياً",
+    credits: 0,
+    badge: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
   },
   MULTI: {
     name: "MULTI",
-    label: "فروع متعددة",
-    price: "4,900 درهم",
-    period: "سنوياً",
-    credits: 3000,
-    badge: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    label: "فروع متعددة (199 + 100/فرع)",
+    price: "ابتداءً من 299 درهم",
+    monthlyAmount: 299,
+    period: "شهرياً",
+    credits: 0,
+    badge: "bg-purple-500/10 text-purple-700 border-purple-500/20",
   },
 };
 
-export const CREDIT_PRICE_MAD = 0.1; // 1 Credit = 0.10 DH (10 Credits = 1 DH)
+export const CREDIT_PRICE_MAD = 0.1; // 1 Point = 0.10 DH billed postpaid at month end
+export const INSTALLATION_FEE_MAD = 300; // One-time first-month installation fee
 
 export const TOPUP_PACKAGES = [
-  { credits: 500, price: 50, label: "+500 كريدي", popular: false },
-  { credits: 1000, price: 100, label: "+1,000 كريدي", popular: true },
-  { credits: 2500, price: 250, label: "+2,500 كريدي", popular: false },
-  { credits: 5000, price: 500, label: "+5,000 كريدي", popular: false },
+  { credits: 500, price: 50, label: "+500 نقطة", popular: false },
+  { credits: 1000, price: 100, label: "+1,000 نقطة", popular: true },
+  { credits: 2500, price: 250, label: "+2,500 نقطة", popular: false },
+  { credits: 5000, price: 500, label: "+5,000 نقطة", popular: false },
 ];
 

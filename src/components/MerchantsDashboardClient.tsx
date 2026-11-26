@@ -28,6 +28,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { NICHE_PRESETS, PLANS_INFO } from "@/lib/constants";
+import { computeMonthlySubscriptionFee } from "@/lib/pricing";
 import StandPreviewModal from "@/components/StandPreviewModal";
 import TopupModal from "@/components/TopupModal";
 import { useI18n } from "@/lib/i18n/context";
@@ -51,6 +52,7 @@ interface MerchantData {
   radarMessage: string;
   googleMapsUrl: string | null;
   plan: string;
+  maxBranches?: number;
   credits: number;
   isActive: boolean;
   samplePassSerial?: string | null;
@@ -466,6 +468,9 @@ export default function MerchantsDashboardClient({
                   <div className="flex flex-wrap items-center gap-2 mb-4">
                     {getNicheBadge(merchant.niche)}
                     {getPlanBadge(merchant.plan)}
+                    <span className="text-[11px] font-mono font-bold text-[#008069] bg-[#008069]/10 px-2 py-0.5 rounded-lg border border-[#008069]/20">
+                      {computeMonthlySubscriptionFee(merchant.plan, merchant.maxBranches ?? 1)} DH/شهر
+                    </span>
                     <span className="text-[11px] font-mono text-[#54656F] bg-[#F0F2F5] px-2 py-0.5 rounded-lg border border-[#E9EDEF]">
                       {d.pinLabel} {merchant.pinCode}
                     </span>

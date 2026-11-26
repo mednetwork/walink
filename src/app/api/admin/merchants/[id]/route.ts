@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { hasRadarAndReviewsFeature, normalizeMerchantPlan } from "@/lib/pricing";
 
 export async function GET(
   req: NextRequest,
@@ -106,10 +107,11 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {};
     for (const key of allowedFields) {
       if (key in body) {
-        if (
+        if (key === "maxBranches") {
+          updateData.maxBranches = Math.max(1, Number(body[key]) || 1);
+        } else if (
           key === "stampsRequired" ||
           key === "credits" ||
-          key === "maxBranches" ||
           key === "cooldownMinutes" ||
           key === "vipVisitsThreshold" ||
           key === "vipCashbackBonus" ||
@@ -123,6 +125,36 @@ export async function PATCH(
         } else {
           updateData[key] = body[key];
         }
+      }
+    }
+
+    if ("plan" in updateData || "maxBranches" in updateData) {
+      const existing = await prisma.merchant.findUnique({
+        where: { id },
+        select: { plan: true, maxBranches: true },
+      });
+      const candidatePlan =
+        typeof updateData.plan === "string"
+          ? updateData.plan
+          : existing?.plan || "GROWTH";
+      const candidateBranches =
+        typeof updateData.maxBranches === "number"
+          ? updateData.maxBranches
+          : existing?.maxBranches || 1;
+      const normalized = normalizeMerchantPlan(candidatePlan, candidateBranches);
+      updateData.plan = normalized;
+      if (normalized === "STARTER") {
+        updateData.maxBranches = 1;
+        updateData.autoRadar = false;
+        updateData.autoReview = false;
+      } else if (normalized === "MULTI") {
+        updateData.maxBranches = Math.max(2, candidateBranches);
+      } else {
+        updateData.maxBranches = 1;
+      }
+      if (!hasRadarAndReviewsFeature(normalized)) {
+        updateData.autoRadar = false;
+        updateData.autoReview = false;
       }
     }
 

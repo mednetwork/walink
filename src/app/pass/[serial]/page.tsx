@@ -141,6 +141,7 @@ export default async function CustomerPassPage({ params }: PassPageProps) {
     longitude: customer.merchant.longitude,
     radarMessage: customer.merchant.radarMessage,
     googleMapsUrl: customer.merchant.googleMapsUrl,
+    plan: customer.merchant.plan,
     autoReview: customer.merchant.autoReview,
     autoRadar: customer.merchant.autoRadar,
     autoWinback: customer.merchant.autoWinback,

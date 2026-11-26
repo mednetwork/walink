@@ -58,6 +58,42 @@ model Merchant {
   transactions    Transaction[]
   campaigns       Campaign[]
   notifications   Notification[]
+  pointUsages     PointUsage[]
+  invoices        MerchantInvoice[]
+}
+
+model PointUsage {
+  id           String   @id @default(cuid())
+  merchantId   String
+  merchant     Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  points       Int      @default(1)
+  source       String   // STAMP, REDEEM, CASHBACK_EARN, CASHBACK_REDEEM, CAMPAIGN, WINBACK
+  billingMonth String   // Format: "YYYY-MM"
+  createdAt    DateTime @default(now())
+
+  @@index([merchantId, billingMonth])
+}
+
+model MerchantInvoice {
+  id               String    @id @default(cuid())
+  merchantId       String
+  merchant         Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  month            String    // Format: "YYYY-MM"
+  planSnapshot     String    @default("GROWTH")
+  branchesSnapshot Int       @default(1)
+  subscriptionFee  Float     @default(199)
+  installationFee  Float     @default(0)
+  pointsUsed       Int       @default(0)
+  pointsFee        Float     @default(0)
+  totalAmount      Float     @default(199)
+  status           String    @default("UNPAID") // UNPAID | PAID
+  paidAt           DateTime?
+  notes            String?   @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([merchantId, month])
+  @@index([month, status])
 }
 
 model Customer {

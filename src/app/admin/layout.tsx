@@ -8,6 +8,7 @@ import {
   Menu,
   PlusCircle,
   LayoutDashboard,
+  Receipt,
   Sparkles,
   Target,
   ExternalLink,
@@ -88,6 +89,12 @@ export default function AdminLayout({
       label: s.navHome,
       icon: LayoutDashboard,
       active: pathname === "/admin",
+    },
+    {
+      href: "/admin/billing",
+      label: "الفوترة",
+      icon: Receipt,
+      active: pathname === "/admin/billing",
     },
     {
       href: "/admin/automations",

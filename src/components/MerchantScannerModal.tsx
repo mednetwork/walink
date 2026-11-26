@@ -132,7 +132,6 @@ export default function MerchantScannerModal({
     text: string;
     type: "success" | "error";
   } | null>(null);
-  const [creditsExhausted, setCreditsExhausted] = useState(false);
 
   // Cashback POS Calculator State
   const [posTab, setPosTab] = useState<"earn" | "redeem">("earn");
@@ -193,7 +192,6 @@ export default function MerchantScannerModal({
     setSelectedCustomer(null);
     setCooldownWarning(null);
     setMessage(null);
-    setCreditsExhausted(false);
     scanLockRef.current = false;
     onClose();
   }, [stopCamera, onClose]);
@@ -239,22 +237,6 @@ export default function MerchantScannerModal({
         });
 
         const data = await res.json();
-
-        if (res.status === 402 || data.creditsExhausted) {
-          setCreditsExhausted(true);
-          setMessage({
-            text:
-              data.error ||
-              (locale === "ar"
-                ? "رصيد نقاط المتجر نفذ تماماً (0 نقطة). يرجى شحن الرصيد للمتابعة."
-                : locale === "fr"
-                ? "Solde de crédits épuisé (0 crédit). Veuillez recharger vos crédits."
-                : "Saldo de créditos agotado (0 créditos). Por favor recargue créditos."),
-            type: "error",
-          });
-          soundEngine.playAlert();
-          return;
-        }
 
         if (res.status === 429 && data.error === "COOLDOWN_ACTIVE") {
           stopCamera();
@@ -992,47 +974,7 @@ export default function MerchantScannerModal({
           </div>
         </div>
 
-        {/* Credits Exhausted Alert Card */}
-        {creditsExhausted && (
-          <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-amber-950 text-xs space-y-2.5 animate-in fade-in">
-            <div className="flex items-center gap-2 font-bold text-amber-900">
-              <Zap className="w-5 h-5 shrink-0 text-amber-600 animate-bounce" />
-              <span className="text-sm">
-                {locale === "ar"
-                  ? "رصيد نقاط المتجر نفذ تماماً (0 نقطة)"
-                  : locale === "fr"
-                  ? "Solde de crédits épuisé (0 crédit)"
-                  : "Saldo de créditos agotado (0 créditos)"}
-              </span>
-            </div>
-            <p className="text-xs text-amber-800 leading-relaxed">
-              {locale === "ar"
-                ? "لا يمكن إضافة طابع أو استبدال جوائز حتى يتم شحن رصيد النقاط. اشحن الآن لتفعيل العمليات فوراً."
-                : locale === "fr"
-                ? "Impossible d'ajouter des tampons ou valider des récompenses sans crédits. Rechargez maintenant."
-                : "No se pueden añadir sellos ni canjear recompensas sin créditos. Recargue ahora."}
-            </p>
-            {onOpenCredits && (
-              <button
-                type="button"
-                onClick={() => {
-                  handleModalClose();
-                  onOpenCredits();
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
-              >
-                <Zap className="w-4 h-4 fill-slate-950 text-slate-950" />
-                <span>
-                  {locale === "ar"
-                    ? "⚡ شحن رصيد النقاط الآن"
-                    : locale === "fr"
-                    ? "⚡ Recharger mes crédits maintenant"
-                    : "⚡ Recargar créditos ahora"}
-                </span>
-              </button>
-            )}
-          </div>
-        )}
+        {/* Anti-Fraud 30-Minute Cross-Branch Cooldown Warning Card (Cashiers Only) */}
 
         {/* Anti-Fraud Cooldown Warning Banner */}
         {cooldownWarning && (

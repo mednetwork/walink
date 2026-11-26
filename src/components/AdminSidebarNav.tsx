@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   ShieldCheck,
   LayoutDashboard,
+  Receipt,
   Sparkles,
   Target,
   PlusCircle,
@@ -31,7 +32,7 @@ export default function AdminSidebarNav({
 }: AdminSidebarNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { t, isRTL } = useI18n();
+  const { t, locale, isRTL } = useI18n();
 
   const handleLogout = async () => {
     try {
@@ -82,6 +83,13 @@ export default function AdminSidebarNav({
       description: s.dashboardDesc,
       icon: LayoutDashboard,
       active: pathname === "/admin",
+    },
+    {
+      href: "/admin/billing",
+      label: locale === "fr" ? "Facturation & Revenus" : locale === "es" ? "Facturación Mensual" : "الفوترة الشهرية",
+      description: locale === "fr" ? "Abonnements, installation & points" : locale === "es" ? "Suscripciones, instalación y puntos" : "الاشتراكات، التثبيت، ونقاط آخر الشهر",
+      icon: Receipt,
+      active: pathname === "/admin/billing",
     },
     {
       href: "/admin/automations",

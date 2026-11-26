@@ -84,9 +84,9 @@ const NICHES_META: Record<string, NicheMeta> = {
 };
 
 const PLANS_DATA: Record<string, { title: string; price: string; numPrice: number }> = {
-  starter: { title: "Starter", price: "1,500", numPrice: 1500 },
-  growth: { title: "Growth", price: "2,400", numPrice: 2400 },
-  multi: { title: "Multi-Branch", price: "3,900", numPrice: 3900 },
+  starter: { title: "Starter (149 DH/شهر)", price: "149 DH/شهر + 300 DH تثبيت", numPrice: 149 },
+  growth: { title: "المتجر العادي (199 DH/شهر)", price: "199 DH/شهر + 300 DH تثبيت", numPrice: 199 },
+  multi: { title: "الفروع المتعددة (299+ DH/شهر)", price: "من 299 DH/شهر + 300 DH تثبيت", numPrice: 299 },
 };
 
 export default function LandingPage() {
@@ -2907,19 +2907,21 @@ export default function LandingPage() {
                   <div className="bar-top">
                     <div className="bar-name">
                       <b>Walink</b>{" "}
-                      <span className="plan-badge">Growth Pack</span>
+                      <span className="plan-badge">Standard</span>
                     </div>
-                    <b className="bar-amount lat highlight">2,400 DH</b>
+                    <b className="bar-amount lat highlight">
+                      {locale === "fr" ? "199 DH/mois" : locale === "es" ? "199 DH/mes" : "199 DH/شهر"}
+                    </b>
                   </div>
                   <div className="bar-track">
-                    <div className="bar-fill good" style={{ width: "17%" }} />
+                    <div className="bar-fill good" style={{ width: "35%" }} />
                   </div>
                   <div className="bar-note good">
                     {locale === "fr"
-                      ? "Paiement unique à vie • Stand connecté inclus • 0 DH/mois"
+                      ? "Sans appli • Stand NFC/QR inclus • Installation unique 300 DH"
                       : locale === "es"
-                      ? "Pago único para siempre • Soporte inteligente incluido • 0 DH/mes"
-                      : "دفعة واحدة فقط لمدى الحياة • الستاند الذكي مشمول • 0 درهم/شهر"}
+                      ? "Sin app • Soporte NFC/QR incluido • Instalación única 300 DH"
+                      : "بدون تطبيقات • الستاند الذكي مشمول • التثبيت 300 درهم أول مرة فقط"}
                   </div>
                 </div>
               </div>
@@ -2932,10 +2934,10 @@ export default function LandingPage() {
                 </div>
                 <p className="savings-explanation">
                   {locale === "fr"
-                    ? "Payez une seule fois 2 400 DH et possédez votre propre système de fidélité à vie sans mensualités qui grugent votre marge."
+                    ? "Démarrez dès 149 DH/mois (ou 199 DH/mois avec Radar 100m et avis Google) + 300 DH d'installation unique la 1ère fois."
                     : locale === "es"
-                    ? "Paga una sola vez 2.400 DH y obtén tu sistema de fidelización de por vida sin cuotas mensuales que reduzcan tu beneficio."
-                    : "ادفع مرة واحدة 2,400 درهم وامتلك منصتك الخاصة لمدى الحياة، بدون اشتراكات أو عمولات تستنزف أرباح متجرك شهرياً."}
+                    ? "Empieza desde 149 DH/mes (o 199 DH/mes con Radar 100m y reseñas Google) + 300 DH de instalación inicial única."
+                    : "ابدأ باشتراك شهري ابتداءً من 149 درهم/شهر (أو 199 درهم للمتجر العادي كامل المميزات) + 300 درهم للتثبيت لأول مرة فقط."}
                 </p>
               </div>
             </div>
@@ -3055,7 +3057,7 @@ export default function LandingPage() {
           </div>
 
           <div className="plans">
-            {/* Starter Plan */}
+            {/* Starter Plan (149 DH/mo) */}
             <div className="surface plan" data-plan="starter">
               <div className="pn">
                 <svg className="ic">
@@ -3065,14 +3067,12 @@ export default function LandingPage() {
               </div>
               <div className="was">
                 <span className="launch">
-                  {locale === "fr" ? "Promo" : locale === "es" ? "Promo" : "عرض"}
+                  {locale === "fr" ? "+ 300 DH installation (1ère fois)" : locale === "es" ? "+ 300 DH instalación (1ª vez)" : "+ 300 درهم تثبيت (أول مرة)"}
                 </span>
-                <s className="lat">2,200 DH</s>
-                <span className="disc">-30%</span>
               </div>
               <div className="pp">
-                <b className="lat">1,500</b>
-                <span>DH</span>
+                <b className="lat">149</b>
+                <span>{locale === "fr" ? "DH / mois" : locale === "es" ? "DH / mes" : "DH / شهر"}</span>
               </div>
               <div className="per">{t.pricing.starterDesc}</div>
               <ul>
@@ -3119,7 +3119,7 @@ export default function LandingPage() {
               </button>
             </div>
 
-            {/* Growth Plan (Most Popular) */}
+            {/* Standard Plan (199 DH/mo - Most Popular) */}
             <div className="surface plan pop" data-plan="growth">
               <div className="ribbon">{t.pricing.popularBadge}</div>
               <div className="pn" style={{ color: "var(--em2)" }}>
@@ -3130,23 +3130,21 @@ export default function LandingPage() {
               </div>
               <div className="was">
                 <span className="launch">
-                  {locale === "fr" ? "Promo" : locale === "es" ? "Promo" : "عرض"}
+                  {locale === "fr" ? "+ 300 DH installation (1ère fois)" : locale === "es" ? "+ 300 DH instalación (1ª vez)" : "+ 300 درهم تثبيت (أول مرة)"}
                 </span>
-                <s className="lat">3,200 DH</s>
-                <span className="disc">-25%</span>
               </div>
               <div className="pp">
-                <b className="lat">2,400</b>
-                <span>DH</span>
+                <b className="lat">199</b>
+                <span>{locale === "fr" ? "DH / mois" : locale === "es" ? "DH / mes" : "DH / شهر"}</span>
               </div>
               <div className="per">{t.pricing.growthDesc}</div>
               <ul>
                 <li className="all">
                   {locale === "fr"
-                    ? "Tout le pack Starter, plus :"
+                    ? "Tout le pack Essentiel, plus :"
                     : locale === "es"
-                    ? "Todo el pack Starter, más:"
-                    : "كل مميزات Starter، بالإضافة إلى:"}
+                    ? "Todo el plan Esencial, más:"
+                    : "كل مميزات الباقة الأساسية، بالإضافة إلى:"}
                 </li>
                 <li>
                   <svg className="ic">
@@ -3188,7 +3186,7 @@ export default function LandingPage() {
               </button>
             </div>
 
-            {/* Multi-Branch Plan */}
+            {/* Multi-Branch Plan (Starting from 299 DH/mo = 199 + 100/branch) */}
             <div className="surface plan" data-plan="multi">
               <div className="pn">
                 <svg className="ic">
@@ -3198,23 +3196,21 @@ export default function LandingPage() {
               </div>
               <div className="was">
                 <span className="launch">
-                  {locale === "fr" ? "Promo" : locale === "es" ? "Promo" : "عرض"}
+                  {locale === "fr" ? "+ 300 DH installation (1ère fois)" : locale === "es" ? "+ 300 DH instalación (1ª vez)" : "+ 300 درهم تثبيت (أول مرة)"}
                 </span>
-                <s className="lat">5,500 DH</s>
-                <span className="disc">-30%</span>
               </div>
               <div className="pp">
-                <b className="lat">3,900</b>
-                <span>DH</span>
+                <b className="lat">299+</b>
+                <span>{locale === "fr" ? "DH / mois" : locale === "es" ? "DH / mes" : "DH / شهر"}</span>
               </div>
               <div className="per">{t.pricing.multiDesc}</div>
               <ul>
                 <li className="all">
                   {locale === "fr"
-                    ? "Tout le pack Growth, plus :"
+                    ? "Tout le pack Standard, plus :"
                     : locale === "es"
-                    ? "Todo el pack Growth, más:"
-                    : "كل مميزات Growth، بالإضافة إلى:"}
+                    ? "Todo el plan Estándar, más:"
+                    : "كل مميزات المتجر العادي، بالإضافة إلى:"}
                 </li>
                 <li>
                   <svg className="ic">
@@ -3242,36 +3238,22 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Credits & Care Explainers */}
+          {/* Setup Fee & Multi-Branch Explainers (No Credits/Points Mentioned) */}
           <div className="explain">
             <div className="surface">
               <h3>
                 <svg className="ic">
-                  <use href="#i-coins" />
+                  <use href="#i-bolt" />
                 </svg>
                 <span>{t.pricing.creditsTitle}</span>
               </h3>
               <p>{t.pricing.creditsDesc}</p>
-              <div className="topups">
-                <div>
-                  <b className="lat">500</b>
-                  <small>50 DH</small>
-                </div>
-                <div>
-                  <b className="lat">1,000</b>
-                  <small>100 DH</small>
-                </div>
-                <div>
-                  <b className="lat">2,500</b>
-                  <small>250 DH</small>
-                </div>
-              </div>
             </div>
 
             <div className="surface">
               <h3>
                 <svg className="ic">
-                  <use href="#i-shield" />
+                  <use href="#i-store" />
                 </svg>
                 <span>{t.pricing.careTitle}</span>
               </h3>
@@ -3428,7 +3410,7 @@ export default function LandingPage() {
       <div className={`mbar ${showMbar ? "show" : ""}`} id="mbar">
         <p>
           {t.pricing.growthTitle} {t.pricing.popularBadge}
-          <b className="lat">2,400 DH</b>
+          <b className="lat">199 DH/{locale === "fr" ? "mois" : locale === "es" ? "mes" : "شهر"}</b>
         </p>
         <button
           type="button"
@@ -3511,7 +3493,7 @@ export default function LandingPage() {
               </button>
             </div>
             <span className="lat" id="mPlanPrice">
-              {PLANS_DATA[modalPlan]?.price} DH
+              {PLANS_DATA[modalPlan]?.price}
             </span>
           </div>
 
