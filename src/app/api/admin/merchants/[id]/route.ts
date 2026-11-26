@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hasRadarAndReviewsFeature, normalizeMerchantPlan } from "@/lib/pricing";
-import { invalidateMerchantCache } from "@/lib/cache";
+import { invalidateMerchantCache, standByCodeCache } from "@/lib/cache";
 
 export async function GET(
   req: NextRequest,
@@ -171,6 +171,7 @@ export async function PATCH(
 
     invalidateMerchantCache(existingMerchant.slug);
     invalidateMerchantCache(updated.slug);
+    standByCodeCache.clear();
 
     return NextResponse.json(updated);
   } catch (error: unknown) {
@@ -193,6 +194,7 @@ export async function DELETE(
     });
 
     invalidateMerchantCache(deleted.slug);
+    standByCodeCache.clear();
 
     return NextResponse.json({ success: true, message: "تم حذف المحل بنجاح" });
   } catch (error: unknown) {

@@ -85,6 +85,7 @@ export async function middleware(req: NextRequest) {
       pathname === "/" ||
       pathname === "/login" ||
       pathname === "/billing" ||
+      pathname === "/stands" ||
       pathname.startsWith("/admin") ||
       pathname.startsWith("/api/admin") ||
       pathname.startsWith("/api/cron");
@@ -197,7 +198,8 @@ export async function middleware(req: NextRequest) {
 
     const isAllowedJoinPath =
       pathname.startsWith("/join/") ||
-      pathname.startsWith("/api/join/");
+      pathname.startsWith("/api/join/") ||
+      pathname.startsWith("/s/");
 
     if (!isAllowedJoinPath) {
       return stealth404(req);

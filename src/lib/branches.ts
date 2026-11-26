@@ -31,6 +31,25 @@ interface BranchSourceMerchant {
 }
 
 /**
+ * Parse merchant branches JSON array safely.
+ */
+export function parseBranchesJson(
+  rawBranches?: string | null
+): StoredBranchItem[] {
+  if (!rawBranches) return [];
+  try {
+    const parsed: unknown = JSON.parse(rawBranches);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is StoredBranchItem =>
+        Boolean(item && typeof item === "object" && "id" in item && "name" in item)
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Parse merchant branches JSON and synthesize a default main branch for multi-branch stores when empty.
  */
 export function resolveEffectiveBranches(
@@ -39,18 +58,9 @@ export function resolveEffectiveBranches(
   const isMultiBranch =
     merchant.plan === "MULTI" || (merchant.maxBranches ?? 1) > 1;
 
-  if (merchant.branches) {
-    try {
-      const parsed: unknown = JSON.parse(merchant.branches);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.filter(
-          (item): item is StoredBranchItem =>
-            Boolean(item && typeof item === "object" && "id" in item && "name" in item)
-        );
-      }
-    } catch {
-      // Fallback to default below if malformed JSON
-    }
+  const parsedBranches = parseBranchesJson(merchant.branches);
+  if (parsedBranches.length > 0) {
+    return parsedBranches;
   }
 
   if (isMultiBranch) {

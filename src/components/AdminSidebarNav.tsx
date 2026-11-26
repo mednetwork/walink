@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   LayoutDashboard,
   Receipt,
+  QrCode,
   Sparkles,
   Target,
   PlusCircle,
@@ -90,6 +91,13 @@ export default function AdminSidebarNav({
       description: locale === "fr" ? "Abonnements, installation & points" : locale === "es" ? "Suscripciones, instalación y puntos" : "الاشتراكات، التثبيت، ونقاط آخر الشهر",
       icon: Receipt,
       active: pathname === "/admin/billing",
+    },
+    {
+      href: "/admin/stands",
+      label: locale === "fr" ? "Stands QR Pré-imprimés" : locale === "es" ? "Stands QR Preimpresos" : "ستاندات QR الميدانية",
+      description: locale === "fr" ? "Génération, impression & liaison" : locale === "es" ? "Generación, impresión y enlace" : "طباعة مسبقة وربط فوري بالمتاجر",
+      icon: QrCode,
+      active: pathname === "/admin/stands",
     },
     {
       href: "/admin/automations",

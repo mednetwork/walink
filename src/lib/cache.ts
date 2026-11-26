@@ -166,3 +166,72 @@ export function invalidateMerchantCache(slug?: string | null): void {
   if (!slug || typeof slug !== "string") return;
   merchantPublicCache.delete(`merchant:${slug.trim().toLowerCase()}`);
 }
+
+export interface CachedStandRedirect {
+  code: string;
+  merchantId: string | null;
+  merchantSlug: string | null;
+  merchantName: string | null;
+  merchantIsActive: boolean;
+  branchName: string | null;
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __walinkStandByCodeCache: LRUTTLCache<CachedStandRedirect | null> | undefined;
+}
+
+export const standByCodeCache =
+  globalThis.__walinkStandByCodeCache ??
+  new LRUTTLCache<CachedStandRedirect | null>({
+    maxSize: 500,
+    defaultTtlMs: 60_000,
+  });
+
+globalThis.__walinkStandByCodeCache = standByCodeCache;
+
+export async function getCachedStandByCode(
+  rawCode: string
+): Promise<CachedStandRedirect | null> {
+  const normalizedCode = rawCode.trim().toUpperCase();
+  const cacheKey = `stand:${normalizedCode}`;
+  const cached = standByCodeCache.get(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const stand = await prisma.qrStand.findUnique({
+    where: { code: normalizedCode },
+    select: {
+      code: true,
+      merchantId: true,
+      branchName: true,
+      merchant: {
+        select: {
+          slug: true,
+          name: true,
+          isActive: true,
+        },
+      },
+    },
+  });
+
+  const mapped: CachedStandRedirect | null = stand
+    ? {
+        code: stand.code,
+        merchantId: stand.merchantId,
+        merchantSlug: stand.merchant?.slug ?? null,
+        merchantName: stand.merchant?.name ?? null,
+        merchantIsActive: Boolean(stand.merchant?.isActive),
+        branchName: stand.branchName,
+      }
+    : null;
+
+  standByCodeCache.set(cacheKey, mapped, mapped ? 60_000 : 15_000);
+  return mapped;
+}
+
+export function invalidateStandCache(code?: string | null): void {
+  if (!code || typeof code !== "string") return;
+  standByCodeCache.delete(`stand:${code.trim().toUpperCase()}`);
+}

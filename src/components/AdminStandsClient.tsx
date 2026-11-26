@@ -1,0 +1,917 @@
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
+import QRCode from "qrcode";
+import {
+  QrCode,
+  Plus,
+  Search,
+  Printer,
+  Download,
+  Link2,
+  Unlink,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+  Copy,
+  Check,
+  FileSpreadsheet,
+  Store,
+  Activity,
+  X,
+} from "lucide-react";
+import { getStandUrl } from "@/lib/urls";
+import { parseBranchesJson } from "@/lib/branches";
+
+export interface StandMerchantOption {
+  id: string;
+  name: string;
+  slug: string;
+  city: string;
+  isActive: boolean;
+  branches: string | null;
+}
+
+export interface QrStandDto {
+  id: string;
+  code: string;
+  merchantId: string | null;
+  branchName: string | null;
+  batchLabel: string | null;
+  scanCount: number;
+  lastScannedAt: string | null;
+  assignedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  merchant: StandMerchantOption | null;
+}
+
+interface AdminStandsClientProps {
+  initialStands: QrStandDto[];
+  initialMerchants: StandMerchantOption[];
+}
+
+function escapeCsvCell(raw: string): string {
+  const safe = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+  return `"${safe.replace(/"/g, '""')}"`;
+}
+
+export default function AdminStandsClient({
+  initialStands,
+  initialMerchants,
+}: AdminStandsClientProps) {
+  const [stands, setStands] = useState<QrStandDto[]>(initialStands);
+  const [merchants] = useState<StandMerchantOption[]>(initialMerchants);
+  const [qrPreviews, setQrPreviews] = useState<Record<string, string>>({});
+
+  // Batch generator state
+  const [prefix, setPrefix] = useState("WLK");
+  const [batchCount, setBatchCount] = useState<number>(20);
+  const [batchLabel, setBatchLabel] = useState("");
+  const [generating, setGenerating] = useState(false);
+
+  // Filter & feedback state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterMode, setFilterMode] = useState<"ALL" | "UNASSIGNED" | "ASSIGNED">("ALL");
+  const [selectedBatchFilter, setSelectedBatchFilter] = useState<string>("ALL");
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // Draft merchant/branch selection per stand ID
+  const [draftAssignments, setDraftAssignments] = useState<
+    Record<string, { merchantId: string; branchName: string }>
+  >({});
+  const [busyStandId, setBusyStandId] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+
+  const summary = useMemo(() => {
+    const total = stands.length;
+    const assigned = stands.filter((s) => Boolean(s.merchantId)).length;
+    const unassigned = total - assigned;
+    const totalScans = stands.reduce((sum, s) => sum + (s.scanCount || 0), 0);
+    return { total, assigned, unassigned, totalScans };
+  }, [stands]);
+
+  const batchOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of stands) {
+      if (s.batchLabel && s.batchLabel.trim()) {
+        set.add(s.batchLabel.trim());
+      }
+    }
+    return Array.from(set);
+  }, [stands]);
+
+  const filteredStands = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return stands.filter((s) => {
+      if (filterMode === "ASSIGNED" && !s.merchantId) return false;
+      if (filterMode === "UNASSIGNED" && Boolean(s.merchantId)) return false;
+      if (
+        selectedBatchFilter !== "ALL" &&
+        (s.batchLabel || "").trim() !== selectedBatchFilter
+      ) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        s.code.toLowerCase().includes(q) ||
+        (s.batchLabel || "").toLowerCase().includes(q) ||
+        (s.merchant?.name || "").toLowerCase().includes(q) ||
+        (s.merchant?.slug || "").toLowerCase().includes(q) ||
+        (s.merchant?.city || "").toLowerCase().includes(q) ||
+        (s.branchName || "").toLowerCase().includes(q)
+      );
+    });
+  }, [stands, filterMode, selectedBatchFilter, searchQuery]);
+
+  // Generate crisp High-EC QR previews for visible stands
+  useEffect(() => {
+    let cancelled = false;
+    const missing = filteredStands.filter((s) => !qrPreviews[s.code]);
+    if (missing.length === 0) return;
+
+    (async () => {
+      const nextEntries: Array<[string, string]> = [];
+      for (const s of missing) {
+        try {
+          const url = getStandUrl(s.code);
+          const dataUrl = await QRCode.toDataURL(url, {
+            width: 320,
+            margin: 2,
+            errorCorrectionLevel: "H",
+            color: {
+              dark: "#173E30",
+              light: "#FFFFFF",
+            },
+          });
+          nextEntries.push([s.code, dataUrl]);
+        } catch (err) {
+          console.warn("QR generation warning:", err);
+        }
+      }
+      if (!cancelled && nextEntries.length > 0) {
+        setQrPreviews((prev) => {
+          const updated = { ...prev };
+          for (const [code, dataUrl] of nextEntries) {
+            updated[code] = dataUrl;
+          }
+          return updated;
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filteredStands, qrPreviews]);
+
+  const handleGenerateBatch = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFeedback(null);
+    setGenerating(true);
+
+    try {
+      const res = await fetch("/api/admin/stands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prefix,
+          count: batchCount,
+          batchLabel: batchLabel.trim() || null,
+        }),
+        signal: AbortSignal.timeout(12000),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "تعذر توليد دفعة الستاندات");
+      }
+
+      if (Array.isArray(data.stands)) {
+        setStands((prev) => [...data.stands, ...prev]);
+      }
+      setBatchLabel("");
+      setFeedback({ type: "success", text: data.message || "تم التوليد بنجاح" });
+    } catch (err: unknown) {
+      setFeedback({
+        type: "error",
+        text: err instanceof Error ? err.message : "خطأ أثناء توليد الدفعة",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleAssignStand = async (stand: QrStandDto, unassign = false) => {
+    setFeedback(null);
+    setBusyStandId(stand.id);
+
+    const draft = draftAssignments[stand.id] ?? {
+      merchantId: stand.merchantId || "",
+      branchName: stand.branchName || "",
+    };
+
+    try {
+      const res = await fetch("/api/admin/stands", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: stand.id,
+          merchantId: unassign ? null : draft.merchantId || null,
+          branchName: unassign ? null : draft.branchName || null,
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "تعذر تحديث ربط الستاند");
+      }
+
+      if (data.stand) {
+        setStands((prev) =>
+          prev.map((item) => (item.id === stand.id ? data.stand : item))
+        );
+        if (unassign) {
+          setDraftAssignments((prev) => ({
+            ...prev,
+            [stand.id]: { merchantId: "", branchName: "" },
+          }));
+        }
+      }
+      setFeedback({ type: "success", text: data.message });
+    } catch (err: unknown) {
+      setFeedback({
+        type: "error",
+        text: err instanceof Error ? err.message : "تعذر تحديث الستاند",
+      });
+    } finally {
+      setBusyStandId(null);
+    }
+  };
+
+  const handleDeleteStand = async (stand: QrStandDto) => {
+    setFeedback(null);
+    setBusyStandId(stand.id);
+    try {
+      const res = await fetch(`/api/admin/stands?id=${encodeURIComponent(stand.id)}`, { method: "DELETE", signal: AbortSignal.timeout(10000) });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "تعذر حذف الستاند");
+      }
+      setStands((prev) => prev.filter((item) => item.id !== stand.id));
+      setFeedback({ type: "success", text: data.message });
+    } catch (err: unknown) {
+      setFeedback({
+        type: "error",
+        text: err instanceof Error ? err.message : "تعذر الحذف",
+      });
+    } finally {
+      setBusyStandId(null);
+    }
+  };
+
+  const handleDownloadHighResPng = async (code: string) => {
+    try {
+      const dataUrl = await QRCode.toDataURL(getStandUrl(code), {
+        width: 1024,
+        margin: 2,
+        errorCorrectionLevel: "H",
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      });
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `walink-stand-${code}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("PNG export failed:", err);
+    }
+  };
+
+  const handleDownloadSvg = async (code: string) => {
+    try {
+      const svgString = await QRCode.toString(getStandUrl(code), {
+        type: "svg",
+        margin: 2,
+        errorCorrectionLevel: "H",
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      });
+      const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `walink-stand-${code}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("SVG export failed:", err);
+    }
+  };
+
+  const handleExportCsvForPrintShop = () => {
+    const header = ["code", "url", "batchLabel", "status", "merchantName"].join(",");
+    const lines = filteredStands.map((s) =>
+      [
+        escapeCsvCell(s.code),
+        escapeCsvCell(getStandUrl(s.code)),
+        escapeCsvCell(s.batchLabel || ""),
+        escapeCsvCell(s.merchantId ? "ASSIGNED" : "READY_FOR_SALE"),
+        escapeCsvCell(s.merchant?.name || ""),
+      ].join(",")
+    );
+    const csvContent = "\uFEFF" + [header, ...lines].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `walink-qr-stands-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  const handleCopyUrl = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(getStandUrl(code));
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 1800);
+    } catch (err) {
+      console.warn("Clipboard failed:", err);
+    }
+  };
+
+  return (
+    <div dir="rtl" className="space-y-6">
+      {/* Header & Main Actions */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 print:hidden">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#173E30] flex items-center gap-2.5">
+            <span className="w-10 h-10 rounded-2xl bg-[#008069] text-white flex items-center justify-center shadow-sm">
+              <QrCode className="w-5 h-5" />
+            </span>
+            <span>ستاندات الكاونتر المطبوعة مسبقاً (Dynamic QR)</span>
+          </h1>
+          <p className="text-xs text-[#5F655D] mt-1">
+            اطبع دفعات QR مسبقاً قبل النزول للميدان، ثم اربط كل ستاند بمتجر المشتري في ثوانٍ دون إعادة طباعة.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportCsvForPrintShop}
+            disabled={filteredStands.length === 0}
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#FAF7F2] border border-[#DCE0D4] text-[#173E30] text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px]"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-[#008069]" />
+            <span>📥 تصدير CSV للمطبعة / Canva</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowPrintModal(true)}
+            disabled={filteredStands.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px]"
+          >
+            <Printer className="w-4 h-4" />
+            <span>🖨️ طباعة ورقة الأكواد ({filteredStands.length})</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 print:hidden">
+        <div className="p-4 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm">
+          <span className="text-[11px] font-semibold text-[#5F655D] block">
+            إجمالي الستاندات المطبوعة
+          </span>
+          <span className="text-2xl font-extrabold font-mono text-[#173E30] mt-1 block">
+            {summary.total}
+          </span>
+        </div>
+        <div className="p-4 rounded-2xl bg-[#FFFDF7] border border-amber-200 shadow-sm">
+          <span className="text-[11px] font-semibold text-amber-800 block">
+            متاح للبيع (غير مربوط)
+          </span>
+          <span className="text-2xl font-extrabold font-mono text-amber-600 mt-1 block">
+            {summary.unassigned}
+          </span>
+        </div>
+        <div className="p-4 rounded-2xl bg-[#FFFDF7] border border-[#A7F3D0] shadow-sm">
+          <span className="text-[11px] font-semibold text-[#008069] block">
+            مربوط ونشط عند التجار
+          </span>
+          <span className="text-2xl font-extrabold font-mono text-[#008069] mt-1 block">
+            {summary.assigned}
+          </span>
+        </div>
+        <div className="p-4 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm">
+          <span className="text-[11px] font-semibold text-[#5F655D] block">
+            إجمالي مسوحات الزبائن
+          </span>
+          <span className="text-2xl font-extrabold font-mono text-[#173E30] mt-1 flex items-center gap-1.5">
+            <Activity className="w-5 h-5 text-[#008069]" />
+            <span>{summary.totalScans}</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Feedback Toast */}
+      {feedback && (
+        <div
+          role="alert"
+          className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center justify-between gap-2 print:hidden ${
+            feedback.type === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+              : "bg-red-50 border-red-200 text-red-900"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {feedback.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            )}
+            <span>{feedback.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFeedback(null)}
+            aria-label="إغلاق التنبيه"
+            className="p-1 rounded-lg hover:bg-black/5"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Batch Generator Form */}
+      <form
+        onSubmit={handleGenerateBatch}
+        className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-4 print:hidden"
+      >
+        <div className="flex items-center gap-2 text-sm font-bold text-[#173E30]">
+          <Plus className="w-4 h-4 text-[#008069]" />
+          <span>توليد دفعة ستاندات جديدة للطباعة</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div>
+            <label
+              htmlFor="stand-prefix"
+              className="text-[11px] font-bold text-[#5F655D] block mb-1"
+            >
+              بادئة الكود (مثال: WLK)
+            </label>
+            <input
+              id="stand-prefix"
+              type="text"
+              value={prefix}
+              maxLength={6}
+              onChange={(e) => setPrefix(e.target.value.toUpperCase())}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#C8D1BE] text-sm font-mono font-bold text-[#173E30] focus:outline-none focus:border-[#008069]"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="stand-count"
+              className="text-[11px] font-bold text-[#5F655D] block mb-1"
+            >
+              عدد الستاندات (1–200)
+            </label>
+            <input
+              id="stand-count"
+              type="number"
+              min={1}
+              max={200}
+              value={batchCount}
+              onChange={(e) => setBatchCount(Math.max(1, Math.min(200, Number(e.target.value) || 1)))}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#C8D1BE] text-sm font-mono font-bold text-[#173E30] focus:outline-none focus:border-[#008069]"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="stand-batch-label"
+              className="text-[11px] font-bold text-[#5F655D] block mb-1"
+            >
+              اسم الدفعة (اختياري للفرز)
+            </label>
+            <input
+              id="stand-batch-label"
+              type="text"
+              value={batchLabel}
+              placeholder="مثال: دفعة كازا - نوفمبر"
+              onChange={(e) => setBatchLabel(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#C8D1BE] text-xs font-medium text-[#173E30] focus:outline-none focus:border-[#008069]"
+            />
+          </div>
+
+          <div className="flex items-end">
+            <button
+              type="submit"
+              disabled={generating}
+              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[44px]"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{generating ? "جاري التوليد..." : "توليد الأكواد الآن"}</span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      {/* Search & Filter Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between print:hidden">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-[#5F655D] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="search"
+            aria-label="ابحث بكود الستاند أو اسم المتجر أو المدينة"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="بحث بالكود (WLK-001) أو المتجر أو الدفعة..."
+            className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-white border border-[#DCE0D4] text-xs text-[#173E30] focus:outline-none focus:border-[#008069]"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              { id: "ALL", label: "الكل" },
+              { id: "UNASSIGNED", label: "متاح للبيع" },
+              { id: "ASSIGNED", label: "مربوط بمتجر" },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setFilterMode(tab.id)}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer min-h-[44px] ${
+                filterMode === tab.id
+                  ? "bg-[#008069] text-white shadow-sm"
+                  : "bg-white text-[#5F655D] border border-[#DCE0D4] hover:text-[#173E30]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+
+          {batchOptions.length > 0 && (
+            <select
+              aria-label="تصفية حسب الدفعة"
+              value={selectedBatchFilter}
+              onChange={(e) => setSelectedBatchFilter(e.target.value)}
+              className="px-3 py-2 rounded-xl bg-white border border-[#DCE0D4] text-xs font-semibold text-[#173E30] focus:outline-none focus:border-[#008069] min-h-[44px]"
+            >
+              <option value="ALL">كل الدفعات</option>
+              {batchOptions.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      </div>
+
+      {/* Stands Grid */}
+      {filteredStands.length === 0 ? (
+        <div className="p-10 rounded-3xl bg-[#FFFDF7] border border-[#DCE0D4] text-center space-y-2 print:hidden">
+          <QrCode className="w-10 h-10 text-[#008069]/40 mx-auto" />
+          <h2 className="text-sm font-bold text-[#173E30]">
+            لا توجد ستاندات مطابقة حالياً
+          </h2>
+          <p className="text-xs text-[#5F655D]">
+            قم بتوليد دفعة جديدة من الأعلى لتجهيز أكواد QR للطباعة.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 print:hidden">
+          {filteredStands.map((stand) => {
+            const draft = draftAssignments[stand.id] ?? {
+              merchantId: stand.merchantId || "",
+              branchName: stand.branchName || "",
+            };
+            const selectedMerchantObj = merchants.find(
+              (m) => m.id === draft.merchantId
+            );
+            const branchOptions = selectedMerchantObj?.branches
+              ? parseBranchesJson(selectedMerchantObj.branches)
+              : [];
+            const standUrl = getStandUrl(stand.code);
+            const isBusy = busyStandId === stand.id;
+            const qrImg = qrPreviews[stand.code];
+
+            return (
+              <div
+                key={stand.id}
+                className={`p-4 rounded-3xl bg-[#FFFDF7] border shadow-sm space-y-3.5 ${
+                  stand.merchantId
+                    ? "border-[#A7F3D0]"
+                    : "border-[#DCE0D4]"
+                }`}
+              >
+                {/* Top Stand Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        dir="ltr"
+                        className="font-mono font-extrabold text-base text-[#173E30]"
+                      >
+                        {stand.code}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          stand.merchantId
+                            ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                            : "bg-amber-100 text-amber-800 border border-amber-200"
+                        }`}
+                      >
+                        {stand.merchantId ? "مربوط ومفعل" : "متاح للبيع"}
+                      </span>
+                    </div>
+                    {stand.batchLabel && (
+                      <span className="text-[10px] text-[#5F655D] block mt-0.5">
+                        الدفعة: {stand.batchLabel}
+                      </span>
+                    )}
+                  </div>
+
+                  <span className="text-[11px] font-mono font-bold text-[#008069] bg-[#E8F5E9] px-2.5 py-1 rounded-xl">
+                    {stand.scanCount} مسح
+                  </span>
+                </div>
+
+                {/* QR Preview & Quick Downloads */}
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-white border border-[#DCE0D4]">
+                  <div className="w-24 h-24 rounded-xl bg-white border border-[#DCE0D4] flex items-center justify-center shrink-0 overflow-hidden p-1">
+                    {qrImg ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={qrImg}
+                        alt={`QR Stand ${stand.code}`}
+                        width={96}
+                        height={96}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <QrCode className="w-8 h-8 text-[#008069]/30 animate-pulse" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-center gap-1">
+                      <span
+                        dir="ltr"
+                        className="text-[10px] font-mono text-[#5F655D] truncate block flex-1"
+                      >
+                        {standUrl}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyUrl(stand.code)}
+                        aria-label={`نسخ رابط ${stand.code}`}
+                        className="p-1.5 rounded-lg hover:bg-[#FAF7F2] text-[#008069]"
+                      >
+                        {copiedCode === stand.code ? (
+                          <Check className="w-3.5 h-3.5" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      <a
+                        href={standUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`فتح رابط ${stand.code}`}
+                        className="p-1.5 rounded-lg hover:bg-[#FAF7F2] text-[#5F655D]"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadHighResPng(stand.code)}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#C8D1BE] text-[10px] font-bold text-[#173E30] flex items-center gap-1 cursor-pointer"
+                      >
+                        <Download className="w-3 h-3 text-[#008069]" />
+                        <span>PNG 1024px</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadSvg(stand.code)}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#C8D1BE] text-[10px] font-bold text-[#173E30] flex items-center gap-1 cursor-pointer"
+                      >
+                        <Download className="w-3 h-3 text-[#008069]" />
+                        <span>SVG فيكتور</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1-Click Store Assignment */}
+                <div className="space-y-2 pt-1">
+                  {stand.merchant && (
+                    <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] flex items-center justify-between gap-2">
+                      <span className="font-bold text-emerald-900 flex items-center gap-1.5 truncate">
+                        <Store className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="truncate">
+                          {stand.merchant.name} ({stand.merchant.city})
+                          {stand.branchName ? ` • ${stand.branchName}` : ""}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`stand-merchant-${stand.id}`}
+                      className="text-[11px] font-bold text-[#5F655D] block"
+                    >
+                      ربط بمتجر العميل:
+                    </label>
+                    <select
+                      id={`stand-merchant-${stand.id}`}
+                      value={draft.merchantId}
+                      onChange={(e) =>
+                        setDraftAssignments((prev) => ({
+                          ...prev,
+                          [stand.id]: {
+                            merchantId: e.target.value,
+                            branchName: "",
+                          },
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#C8D1BE] text-xs font-semibold text-[#173E30] focus:outline-none focus:border-[#008069]"
+                    >
+                      <option value="">-- اختر متجراً للربط --</option>
+                      {merchants.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} ({m.city}) — /{m.slug}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {branchOptions.length > 0 && (
+                    <div>
+                      <label
+                        htmlFor={`stand-branch-${stand.id}`}
+                        className="text-[11px] font-bold text-[#5F655D] block mb-1"
+                      >
+                        الفرع المخصص (اختياري):
+                      </label>
+                      <select
+                        id={`stand-branch-${stand.id}`}
+                        value={draft.branchName}
+                        onChange={(e) =>
+                          setDraftAssignments((prev) => ({
+                            ...prev,
+                            [stand.id]: {
+                              ...draft,
+                              branchName: e.target.value,
+                            },
+                          }))
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-[#C8D1BE] text-xs font-semibold text-[#173E30] focus:outline-none focus:border-[#008069]"
+                      >
+                        <option value="">المتجر كامل (بدون تحديد فرع)</option>
+                        {branchOptions.map((b) => (
+                          <option key={b.id} value={b.name}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      disabled={isBusy || !draft.merchantId}
+                      onClick={() => handleAssignStand(stand, false)}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-45 min-h-[44px]"
+                    >
+                      <Link2 className="w-3.5 h-3.5" />
+                      <span>
+                        {stand.merchantId ? "تحديث الربط" : "ربط الآن"}
+                      </span>
+                    </button>
+
+                    {stand.merchantId ? (
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => handleAssignStand(stand, true)}
+                        className="py-2.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-45 min-h-[44px]"
+                        title="فك الربط وإعادة الاستخدام"
+                      >
+                        <Unlink className="w-3.5 h-3.5" />
+                        <span>فك</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => handleDeleteStand(stand)}
+                        aria-label={`حذف الستاند ${stand.code}`}
+                        className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 cursor-pointer disabled:opacity-45 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Printable A4 Sheet Modal */}
+      {showPrintModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-4 print:static print:bg-white print:p-0">
+          <div className="max-w-5xl mx-auto bg-white rounded-3xl p-6 space-y-5 print:rounded-none print:p-0 print:shadow-none">
+            <div className="flex items-center justify-between border-b border-[#DCE0D4] pb-4 print:hidden">
+              <div>
+                <h2 className="text-base font-extrabold text-[#173E30]">
+                  🖨️ ورقة طباعة ستاندات QR ({filteredStands.length} ستاند)
+                </h2>
+                <p className="text-xs text-[#5F655D]">
+                  مضبوطة بمستوى تصحيح أخطاء عالٍ (Error Correction H) للمتانة على ستاندات الأكريليك وPVC.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[44px]"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>طباعة / حفظ PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPrintModal(false)}
+                  aria-label="إغلاق نافذة الطباعة"
+                  className="p-2.5 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] text-[#173E30] min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 print:grid-cols-3 gap-4">
+              {filteredStands.map((stand) => (
+                <div
+                  key={stand.id}
+                  className="p-4 rounded-2xl border-2 border-dashed border-[#C8D1BE] flex flex-col items-center justify-center text-center space-y-2 break-inside-avoid"
+                >
+                  <span className="text-[11px] font-bold text-[#008069]">
+                    امسح الكود واحصل على بطاقة الوفاء 🎁
+                  </span>
+                  <div className="w-40 h-40 p-1 bg-white flex items-center justify-center">
+                    {qrPreviews[stand.code] && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={qrPreviews[stand.code]}
+                        alt={`Print QR ${stand.code}`}
+                        width={160}
+                        height={160}
+                        className="w-full h-full object-contain"
+                      />
+                    )}
+                  </div>
+                  <div
+                    dir="ltr"
+                    className="px-3 py-1 rounded-lg bg-[#173E30] text-white font-mono font-extrabold text-sm tracking-widest"
+                  >
+                    {stand.code}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

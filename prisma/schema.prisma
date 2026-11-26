@@ -60,6 +60,7 @@ model Merchant {
   notifications   Notification[]
   pointUsages     PointUsage[]
   invoices        MerchantInvoice[]
+  qrStands        QrStand[]
 
   @@index([isActive, createdAt])
   @@index([createdAt])
@@ -209,4 +210,22 @@ model Lead {
 
   @@index([createdAt])
   @@index([status, createdAt])
+}
+
+model QrStand {
+  id            String    @id @default(cuid())
+  code          String    @unique // Uppercase pre-printed serial e.g. "WLK-001"
+  merchantId    String?
+  merchant      Merchant? @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+  branchName    String?
+  batchLabel    String?
+  scanCount     Int       @default(0)
+  lastScannedAt DateTime?
+  assignedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([merchantId])
+  @@index([batchLabel, createdAt])
+  @@index([createdAt])
 }

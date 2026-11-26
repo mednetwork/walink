@@ -48,6 +48,23 @@ export function getJoinUrl(slug: string, ref?: string | null): string {
 }
 
 /**
+ * Returns the pre-printed dynamic QR counter stand URL (wjoin.walink.ma/s/CODE)
+ */
+export function getStandUrl(code: string): string {
+  const cleanCode = encodeURIComponent(code.trim().toUpperCase());
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname.toLowerCase();
+    if (host.includes("walink.ma")) {
+      return `https://wjoin.walink.ma/s/${cleanCode}`;
+    }
+    return `${window.location.origin}/s/${cleanCode}`;
+  }
+  return isProduction()
+    ? `https://wjoin.walink.ma/s/${cleanCode}`
+    : `/s/${cleanCode}`;
+}
+
+/**
  * Returns the customer digital pass URL
  */
 export function getPassUrl(serial: string, lang?: string | null): string {
