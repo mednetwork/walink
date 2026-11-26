@@ -577,19 +577,22 @@ export async function generateApplePass(
 
   pass.type = ["store", "Card"].join("") as "storeCard";
 
-  // 1. Header Fields (Top Right Corner + Lock-Screen Update Alert)
+  // 1. Header Fields (Top Right Corner — Lock-Screen trigger ONLY for STAMPS)
   pass.headerFields.push({
     key: "program_header",
     label: passStrings.headerLabel,
     value: passStrings.headerValue,
     textAlignment: "PKTextAlignmentRight",
-    changeMessage: isCashback
-      ? passStrings.changeMsg
-      : locale === "fr"
-      ? "Vos tampons : %@"
-      : locale === "es"
-      ? "Tus sellos: %@"
-      : "تم تحديث رصيد الأختام: %@",
+    ...(isCashback
+      ? {}
+      : {
+          changeMessage:
+            locale === "fr"
+              ? "Vos tampons : %@"
+              : locale === "es"
+              ? "Tus sellos: %@"
+              : "تم تحديث رصيد الأختام: %@",
+        }),
   });
 
   // 2. Primary Fields: ONLY used on CASHBACK passes so STAMPS strip.png renders unobstructed
@@ -651,12 +654,6 @@ export async function generateApplePass(
       label: passStrings.statusLabel,
       value: passStrings.statusValue,
       textAlignment: "PKTextAlignmentRight",
-      changeMessage:
-        locale === "ar"
-          ? "حالة البطاقة: %@"
-          : locale === "fr"
-          ? "Statut : %@"
-          : "Estado: %@",
     });
   }
 
@@ -682,7 +679,7 @@ export async function generateApplePass(
     textAlignment: "PKTextAlignmentRight",
   });
 
-  // 5. Back Fields (Rich Back-of-Pass Details + Lock-Screen Update & Promo Triggers)
+  // 5. Back Fields (Rich Back-of-Pass Details + Single Dedicated Promo Trigger)
   const promoTitleLabel =
     locale === "fr"
       ? "Dernière offre"
@@ -691,10 +688,10 @@ export async function generateApplePass(
       : "آخر عرض وتنبيه";
   let promoValueText =
     locale === "fr"
-      ? "Aucune offre active pour le moment."
+      ? "Découvrez nos offres exclusives ici"
       : locale === "es"
-      ? "Sin ofertas activas por el momento."
-      : "لا توجد عروض ترويجية جديدة حالياً.";
+      ? "Descubre nuestras ofertas exclusivas aquí"
+      : "ترقّب عروضنا الحصرية هنا";
 
   if (customer.latestPromoMessage?.body) {
     const cleanTitle = (customer.latestPromoMessage.title || "").trim();
@@ -705,7 +702,7 @@ export async function generateApplePass(
       : null;
     const timeStampTag =
       rawDate && !isNaN(rawDate.getTime())
-        ? ` (${rawDate.toISOString().slice(11, 16)})`
+        ? ` (${rawDate.toISOString().slice(11, 19)})`
         : "";
     promoValueText = `${promoPrefix}${customer.latestPromoMessage.body.trim()}${timeStampTag}`;
   }
@@ -715,15 +712,6 @@ export async function generateApplePass(
     label: promoTitleLabel,
     value: promoValueText,
     changeMessage: "📢 %@",
-  });
-
-  pass.backFields.push({
-    key: "latest_update",
-    label: isCashback ? passStrings.totalSavedLabel : passStrings.progressLabel,
-    value: isCashback
-      ? `${Number(customer.cashbackBalance || 0).toFixed(2)} ${currency}`
-      : stampsProgressDisplay,
-    changeMessage: isCashback ? passStrings.changeMsg : "%@",
   });
 
   pass.backFields.push({
