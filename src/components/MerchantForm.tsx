@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import QRCode from "qrcode";
 import {
   Store,
   MapPin,
@@ -15,9 +16,12 @@ import {
   ChevronRight,
   Save,
   Check,
+  CheckCircle2,
   AlertCircle,
   Eye,
   QrCode,
+  Search,
+  Link2,
   Coffee,
   Scissors,
   Utensils,
@@ -57,6 +61,7 @@ import {
   INSTALLATION_FEE_MAD,
   POINT_PRICE_MAD,
 } from "@/lib/pricing";
+import { getStandUrl } from "@/lib/urls";
 import WalletPassPreview from "@/components/WalletPassPreview";
 import StandPreviewModal from "@/components/StandPreviewModal";
 
@@ -137,12 +142,35 @@ interface MerchantFormData {
   isActive: boolean;
 }
 
+export interface AvailableQrStandOption {
+  id: string;
+  code: string;
+  batchLabel: string | null;
+  createdAt: string;
+}
+
+export interface LinkedQrStandInfo {
+  id: string;
+  code: string;
+  branchName: string | null;
+  batchLabel: string | null;
+  scanCount: number;
+  assignedAt: string | null;
+}
+
 interface MerchantFormProps {
   initialData?: Partial<MerchantFormData>;
   isEdit?: boolean;
+  availableStands?: AvailableQrStandOption[];
+  linkedStands?: LinkedQrStandInfo[];
 }
 
-export default function MerchantForm({ initialData, isEdit = false }: MerchantFormProps) {
+export default function MerchantForm({
+  initialData,
+  isEdit = false,
+  availableStands = [],
+  linkedStands = [],
+}: MerchantFormProps) {
   const router = useRouter();
 
   const [formData, setFormData] = useState<MerchantFormData>({
@@ -187,6 +215,56 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
   const [isStandModalOpen, setIsStandModalOpen] = useState<boolean>(false);
   const [previewStamps, setPreviewStamps] = useState<number>(3);
   const [previewLoyaltyType, setPreviewLoyaltyType] = useState<"STAMPS" | "CASHBACK">("STAMPS");
+  const [standMode, setStandMode] = useState<"AUTO" | "PREGENERATED">("AUTO");
+  const [selectedStandId, setSelectedStandId] = useState<string>("");
+  const [standBranchName, setStandBranchName] = useState<string>("");
+  const [standSearchQuery, setStandSearchQuery] = useState<string>("");
+  const [selectedStandQrUrl, setSelectedStandQrUrl] = useState<string>("");
+
+  const selectedStand = useMemo(
+    () => availableStands.find((stand) => stand.id === selectedStandId) || null,
+    [availableStands, selectedStandId]
+  );
+
+  const filteredAvailableStands = useMemo(() => {
+    const q = standSearchQuery.trim().toLowerCase();
+    if (!q) return availableStands;
+    return availableStands.filter(
+      (stand) =>
+        stand.code.toLowerCase().includes(q) ||
+        (stand.batchLabel || "").toLowerCase().includes(q)
+    );
+  }, [availableStands, standSearchQuery]);
+
+  useEffect(() => {
+    if (standMode !== "PREGENERATED" || !selectedStand) {
+      setSelectedStandQrUrl("");
+      return;
+    }
+
+    let cancelled = false;
+    QRCode.toDataURL(getStandUrl(selectedStand.code), {
+      width: 240,
+      margin: 1,
+      errorCorrectionLevel: "H",
+      color: {
+        dark: "#161514",
+        light: "#FFFFFF",
+      },
+    })
+      .then((dataUrl) => {
+        if (!cancelled) {
+          setSelectedStandQrUrl(dataUrl);
+        }
+      })
+      .catch((err) => {
+        console.warn("Stand QR preview generation warning:", err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [standMode, selectedStand]);
 
   // Auto-slug generator on name change if not manually edited in create mode
   const handleNameChange = (val: string) => {
@@ -243,10 +321,25 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
         : `/api/admin/merchants`;
       const method = isEdit ? "PATCH" : "POST";
 
+      const payload = isEdit
+        ? formData
+        : {
+            ...formData,
+            standId:
+              standMode === "PREGENERATED" && selectedStandId
+                ? selectedStandId
+                : null,
+            standBranchName:
+              standMode === "PREGENERATED" && selectedStandId
+                ? standBranchName.trim() || null
+                : null,
+          };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(8000),
       });
 
       if (!res.ok) {
@@ -270,12 +363,12 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
   return (
     <div className="space-y-6">
       {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-xs text-white/50">
-        <Link href="/admin" className="hover:text-sky-400 transition">
+      <div className="flex items-center gap-2 text-xs text-[#161514]/65">
+        <Link href="/admin" className="hover:text-[#DA5004] transition font-medium">
           لوحة الإدارة
         </Link>
         <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-        <span className="text-white font-medium">
+        <span className="text-[#161514] font-semibold">
           {isEdit ? `تعديل محل: ${formData.name}` : "إضافة محل تجاري جديد"}
         </span>
       </div>
@@ -1032,6 +1125,303 @@ export default function MerchantForm({ initialData, isEdit = false }: MerchantFo
               </label>
             </div>
           </div>
+
+          {/* Section 7: Pre-Generated QR Stand Assignment (Create Mode) or Linked Stands Read-Only (Edit Mode) */}
+          {!isEdit ? (
+            <div className="bg-white p-6 rounded-3xl border border-[#161514]/10 shadow-sm space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#161514]/10">
+                <h3 className="text-sm font-bold text-[#161514] flex items-center gap-2">
+                  <QrCode className="w-4 h-4 text-[#DA5004]" />
+                  <span>7. كود الـ QR المولّد مسبقاً (اختياري)</span>
+                </h3>
+                <span className="px-2.5 py-1 rounded-full bg-[#EFEAE4] border border-[#161514]/10 text-[11px] font-bold text-[#161514] tabular-nums">
+                  {availableStands.length} ستاند جاهز
+                </span>
+              </div>
+
+              <p className="text-xs text-[#161514]/65 leading-relaxed">
+                يمكنك ربط ستاند مطبوع مسبقاً بهذا المتجر الآن، أو ترك الوضع التلقائي ليتم إنشاء كود الـ QR المباشر للمتجر كما هو معتاد.
+              </p>
+
+              {/* Mode Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStandMode("AUTO");
+                    setSelectedStandId("");
+                    setStandBranchName("");
+                  }}
+                  className={`min-h-[52px] p-3.5 rounded-2xl border text-start transition flex items-start gap-3 ${
+                    standMode === "AUTO"
+                      ? "bg-[#F85B04]/10 border-[#F85B04] text-[#161514] ring-1 ring-[#F85B04] shadow-sm"
+                      : "bg-[#EFEAE4] border-[#161514]/15 text-[#161514]/70 hover:bg-[#E5DFD7]"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      standMode === "AUTO"
+                        ? "bg-[#F85B04] text-white"
+                        : "bg-white text-[#161514]/65 border border-[#161514]/10"
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-[#161514] block">
+                      توليد QR جديد تلقائياً (الافتراضي)
+                    </span>
+                    <span className="text-[11px] text-[#161514]/65 block mt-0.5">
+                      يُنشئ رابط التسجيل المباشر (/join/slug) بدون ربط ستاند مسبق.
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setStandMode("PREGENERATED")}
+                  className={`min-h-[52px] p-3.5 rounded-2xl border text-start transition flex items-start gap-3 ${
+                    standMode === "PREGENERATED"
+                      ? "bg-[#F85B04]/10 border-[#F85B04] text-[#161514] ring-1 ring-[#F85B04] shadow-sm"
+                      : "bg-[#EFEAE4] border-[#161514]/15 text-[#161514]/70 hover:bg-[#E5DFD7]"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      standMode === "PREGENERATED"
+                        ? "bg-[#F85B04] text-white"
+                        : "bg-white text-[#161514]/65 border border-[#161514]/10"
+                    }`}
+                  >
+                    <Link2 className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-[#161514] block">
+                      اختيار QR مولّد مسبقاً من المخزون
+                    </span>
+                    <span className="text-[11px] text-[#161514]/65 block mt-0.5 tabular-nums">
+                      ربط فوري بأحد أكواد الستاند الجاهزة ({availableStands.length} متاح).
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {standMode === "PREGENERATED" && (
+                <div className="p-4 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 space-y-4">
+                  {availableStands.length === 0 ? (
+                    <div className="text-center py-4 space-y-3">
+                      <p className="text-xs font-semibold text-[#161514]">
+                        لا توجد أكواد QR غير مربوطة متاحة حالياً في المخزون.
+                      </p>
+                      <p className="text-[11px] text-[#161514]/65">
+                        يمكنك متابعة إنشاء المتجر بالـ QR التلقائي أو توليد دفعة ستاندات جديدة أولاً.
+                      </p>
+                      <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+                        <Link
+                          href="/admin/stands"
+                          className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#F85B04] hover:bg-[#DA5004] text-white text-xs font-bold transition shadow-sm"
+                        >
+                          <QrCode className="w-4 h-4" />
+                          <span>إدارة وتوليد ستاندات QR</span>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStandMode("AUTO");
+                            setSelectedStandId("");
+                          }}
+                          className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#161514]/15 text-[#161514] text-xs font-semibold hover:bg-[#E5DFD7] transition"
+                        >
+                          العودة للتوليد التلقائي
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label
+                          htmlFor="stand-search-input"
+                          className="text-xs font-semibold text-[#161514] mb-1.5 block"
+                        >
+                          ابحث بكود الستاند أو اسم الدفعة:
+                        </label>
+                        <div className="relative">
+                          <Search className="w-4 h-4 text-[#161514]/45 absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            id="stand-search-input"
+                            type="text"
+                            value={standSearchQuery}
+                            onChange={(e) => setStandSearchQuery(e.target.value)}
+                            placeholder="مثلاً: WLK-001 أو اسم الدفعة..."
+                            className="w-full min-h-[44px] bg-white border border-[#161514]/15 rounded-xl ps-10 pe-3.5 py-2 text-base sm:text-sm text-[#161514] placeholder-[#161514]/45 focus:outline-none focus:border-[#F85B04] transition"
+                          />
+                        </div>
+                      </div>
+
+                      {filteredAvailableStands.length === 0 ? (
+                        <p className="text-xs text-[#161514]/65 text-center py-3 bg-white rounded-xl border border-[#161514]/10">
+                          لا توجد نتائج مطابقة للبحث &quot;{standSearchQuery}&quot;.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto p-1">
+                          {filteredAvailableStands.map((stand) => {
+                            const isPicked = selectedStandId === stand.id;
+                            return (
+                              <button
+                                key={stand.id}
+                                type="button"
+                                onClick={() => setSelectedStandId(stand.id)}
+                                className={`min-h-[52px] p-3 rounded-xl border text-start transition flex flex-col justify-between gap-1 ${
+                                  isPicked
+                                    ? "bg-white border-[#F85B04] ring-2 ring-[#F85B04] shadow-sm"
+                                    : "bg-white/90 border-[#161514]/10 hover:border-[#F85B04]/50 hover:bg-white"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-1 w-full">
+                                  <span
+                                    dir="ltr"
+                                    className={`text-xs font-mono font-extrabold tabular-nums ${
+                                      isPicked ? "text-[#DA5004]" : "text-[#161514]"
+                                    }`}
+                                  >
+                                    {stand.code}
+                                  </span>
+                                  {isPicked && (
+                                    <CheckCircle2 className="w-4 h-4 text-[#F85B04] shrink-0" />
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-[#161514]/60 truncate w-full">
+                                  {stand.batchLabel || "ستاند جاهز للربط"}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {selectedStand ? (
+                        <div className="p-4 rounded-2xl bg-white border border-[#F85B04]/35 flex flex-col sm:flex-row items-center gap-4">
+                          {selectedStandQrUrl ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={selectedStandQrUrl}
+                              alt={`QR Code for ${selectedStand.code}`}
+                              width={88}
+                              height={88}
+                              className="w-[88px] h-[88px] rounded-xl border border-[#161514]/10 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-[88px] h-[88px] rounded-xl bg-[#EFEAE4] border border-[#161514]/10 flex items-center justify-center shrink-0">
+                              <QrCode className="w-7 h-7 text-[#DA5004]" />
+                            </div>
+                          )}
+
+                          <div className="flex-1 w-full space-y-2.5 text-start">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <span className="text-xs font-bold text-[#161514] block">
+                                  الستاند المحدد:{" "}
+                                  <span dir="ltr" className="font-mono text-[#DA5004] tabular-nums">
+                                    {selectedStand.code}
+                                  </span>
+                                </span>
+                                <span
+                                  dir="ltr"
+                                  className="text-[11px] font-mono text-[#161514]/60 break-all block mt-0.5"
+                                >
+                                  {getStandUrl(selectedStand.code)}
+                                </span>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setStandMode("AUTO");
+                                  setSelectedStandId("");
+                                  setStandBranchName("");
+                                }}
+                                className="min-h-[44px] px-3 py-1.5 rounded-xl bg-[#EFEAE4] hover:bg-[#E5DFD7] text-[#161514] text-[11px] font-semibold border border-[#161514]/10 transition"
+                              >
+                                إلغاء الاختيار (إنشاء QR جديد)
+                              </button>
+                            </div>
+
+                            <div>
+                              <label
+                                htmlFor="stand-branch-input"
+                                className="text-[11px] font-semibold text-[#161514] mb-1 block"
+                              >
+                                اسم الفرع أو نقطة الكاونتر (اختياري):
+                              </label>
+                              <input
+                                id="stand-branch-input"
+                                type="text"
+                                maxLength={80}
+                                value={standBranchName}
+                                onChange={(e) => setStandBranchName(e.target.value)}
+                                placeholder="مثلاً: الفرع الرئيسي - كاشير 1"
+                                className="w-full min-h-[44px] bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3.5 py-2 text-base sm:text-sm text-[#161514] placeholder-[#161514]/45 focus:outline-none focus:border-[#F85B04] focus:bg-white transition"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-[#DA5004] font-semibold">
+                          اختر أحد الأكواد أعلاه لربطه بالمتجر، أو ارجع للوضع التلقائي إذا أردت إنشاء QR جديد فقط.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white p-6 rounded-3xl border border-[#161514]/10 shadow-sm space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#161514]/10">
+                <h3 className="text-sm font-bold text-[#161514] flex items-center gap-2">
+                  <QrCode className="w-4 h-4 text-[#DA5004]" />
+                  <span>7. الستاندات المطبوعة المرتبطة بالمتجر</span>
+                </h3>
+                <Link
+                  href="/admin/stands"
+                  className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EFEAE4] hover:bg-[#E5DFD7] text-[#161514] text-xs font-semibold border border-[#161514]/10 transition"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-[#DA5004]" />
+                  <span>إدارة الستاندات</span>
+                </Link>
+              </div>
+
+              {linkedStands.length === 0 ? (
+                <p className="text-xs text-[#161514]/65">
+                  لا يوجد ستاند مطبوع مربوط بهذا المتجر حالياً — يعتمد المتجر على رابط الـ QR المباشر (<span dir="ltr" className="font-mono">/join/{formData.slug}</span>).
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {linkedStands.map((stand) => (
+                    <div
+                      key={stand.id}
+                      className="p-3 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <span
+                          dir="ltr"
+                          className="text-xs font-mono font-extrabold text-[#DA5004] tabular-nums block"
+                        >
+                          {stand.code}
+                        </span>
+                        <span className="text-[11px] text-[#161514]/65 truncate block">
+                          {stand.branchName || stand.batchLabel || "مرتبط بالمتجر"}
+                        </span>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-lg bg-white border border-[#161514]/10 text-[11px] font-mono font-bold text-[#161514] tabular-nums shrink-0">
+                        {stand.scanCount} مسح
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Submit Button */}
           <div className="flex items-center gap-4 pt-4">

@@ -14,11 +14,33 @@ export default async function EditMerchantPage({ params }: EditMerchantPageProps
 
   const merchant = await prisma.merchant.findUnique({
     where: { id },
+    include: {
+      qrStands: {
+        orderBy: { assignedAt: "desc" },
+        select: {
+          id: true,
+          code: true,
+          branchName: true,
+          batchLabel: true,
+          scanCount: true,
+          assignedAt: true,
+        },
+      },
+    },
   });
 
   if (!merchant) {
     notFound();
   }
+
+  const linkedStands = merchant.qrStands.map((stand) => ({
+    id: stand.id,
+    code: stand.code,
+    branchName: stand.branchName,
+    batchLabel: stand.batchLabel,
+    scanCount: stand.scanCount,
+    assignedAt: stand.assignedAt ? stand.assignedAt.toISOString() : null,
+  }));
 
   const initialData = {
     id: merchant.id,
@@ -52,15 +74,19 @@ export default async function EditMerchantPage({ params }: EditMerchantPageProps
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">
+        <h1 className="text-2xl font-bold text-[#161514] tracking-tight">
           تعديل بيانات المحل: {merchant.name}
         </h1>
-        <p className="text-xs text-white/60 mt-1">
+        <p className="text-xs text-[#161514]/65 mt-1">
           تعديل إعدادات البطاقة، الرصيد، أو قواعد الأتمتة للمحل
         </p>
       </div>
 
-      <MerchantForm initialData={initialData} isEdit={true} />
+      <MerchantForm
+        initialData={initialData}
+        isEdit={true}
+        linkedStands={linkedStands}
+      />
     </div>
   );
 }
