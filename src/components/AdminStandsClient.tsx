@@ -8,6 +8,8 @@ import {
   Search,
   Printer,
   Download,
+  FileImage,
+  Package,
   Link2,
   Unlink,
   Trash2,
@@ -23,6 +25,11 @@ import {
 } from "lucide-react";
 import { getStandUrl } from "@/lib/urls";
 import { parseBranchesJson } from "@/lib/branches";
+import {
+  generateBatchStandPostersZip,
+  renderStandPosterBlob,
+  renderStandPosterPreviewDataUrl,
+} from "@/lib/stand-poster";
 
 export interface StandMerchantOption {
   id: string;
@@ -87,6 +94,10 @@ export default function AdminStandsClient({
   const [busyStandId, setBusyStandId] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printSheetMode, setPrintSheetMode] = useState<"POSTER" | "COMPACT">("POSTER");
+  const [posterPreviews, setPosterPreviews] = useState<Record<string, string>>({});
+  const [downloadingPosterCode, setDownloadingPosterCode] = useState<string | null>(null);
+  const [zipProgress, setZipProgress] = useState<{ done: number; total: number } | null>(null);
 
   const summary = useMemo(() => {
     const total = stands.length;
@@ -169,6 +180,36 @@ export default function AdminStandsClient({
       cancelled = true;
     };
   }, [filteredStands, qrPreviews]);
+
+  // Generate print-sheet poster previews lazily when the Print/PDF modal is opened in POSTER mode
+  useEffect(() => {
+    if (!showPrintModal || printSheetMode !== "POSTER") return;
+
+    let cancelled = false;
+    const missing = filteredStands.filter((s) => !posterPreviews[s.code]);
+    if (missing.length === 0) return;
+
+    (async () => {
+      for (const s of missing) {
+        if (cancelled) break;
+        try {
+          const dataUrl = await renderStandPosterPreviewDataUrl(s.code);
+          if (!cancelled) {
+            setPosterPreviews((prev) => ({ ...prev, [s.code]: dataUrl }));
+          }
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, 0);
+          });
+        } catch (err) {
+          console.warn("Poster preview generation warning:", err);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showPrintModal, printSheetMode, filteredStands, posterPreviews]);
 
   const handleGenerateBatch = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -274,6 +315,72 @@ export default function AdminStandsClient({
     }
   };
 
+  const handleDownloadPosterPng = async (code: string) => {
+    setFeedback(null);
+    setDownloadingPosterCode(code);
+    let blobUrl: string | null = null;
+    try {
+      const blob = await renderStandPosterBlob(code);
+      blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `walink-poster-${code}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err: unknown) {
+      setFeedback({
+        type: "error",
+        text:
+          err instanceof Error
+            ? err.message
+            : "تعذر تجهيز بوستر الستاند للطباعة",
+      });
+    } finally {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+      setDownloadingPosterCode(null);
+    }
+  };
+
+  const handleDownloadBatchZip = async () => {
+    if (filteredStands.length === 0 || zipProgress) return;
+    setFeedback(null);
+    const codes = filteredStands.map((s) => s.code);
+    setZipProgress({ done: 0, total: codes.length });
+    let blobUrl: string | null = null;
+    try {
+      const zipBlob = await generateBatchStandPostersZip(codes, (done, total) => {
+        setZipProgress({ done, total });
+      });
+      blobUrl = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `walink-stand-posters-${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setFeedback({
+        type: "success",
+        text: `تم تجهيز وتنزيل ${codes.length} بوستر ستاند عالي الدقة في ملف ZIP بنجاح!`,
+      });
+    } catch (err: unknown) {
+      setFeedback({
+        type: "error",
+        text:
+          err instanceof Error
+            ? err.message
+            : "تعذر إنشاء أرشيف البوسترات للمطبعة",
+      });
+    } finally {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+      setZipProgress(null);
+    }
+  };
+
   const handleDownloadHighResPng = async (code: string) => {
     try {
       const dataUrl = await QRCode.toDataURL(getStandUrl(code), {
@@ -373,22 +480,36 @@ export default function AdminStandsClient({
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
+            onClick={handleDownloadBatchZip}
+            disabled={filteredStands.length === 0 || Boolean(zipProgress)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#161514] hover:bg-[#2A2826] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px] tabular-nums"
+          >
+            <Package className="w-4 h-4 text-[#F85B04]" />
+            <span>
+              {zipProgress
+                ? `جاري التجهيز (${zipProgress.done} / ${zipProgress.total})...`
+                : `تحميل الكل بوسترات ZIP (${filteredStands.length})`}
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleExportCsvForPrintShop}
             disabled={filteredStands.length === 0}
             className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#EFEAE4] border border-[#161514]/10 text-[#161514] text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px]"
           >
             <FileSpreadsheet className="w-4 h-4 text-[#DA5004]" />
-            <span>📥 تصدير CSV للمطبعة / Canva</span>
+            <span>تصدير CSV للمطبعة</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowPrintModal(true)}
             disabled={filteredStands.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px]"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px] tabular-nums"
           >
             <Printer className="w-4 h-4" />
-            <span>🖨️ طباعة ورقة الأكواد ({filteredStands.length})</span>
+            <span>طباعة / حفظ PDF ({filteredStands.length})</span>
           </button>
         </div>
       </div>
@@ -706,23 +827,39 @@ export default function AdminStandsClient({
                       </a>
                     </div>
 
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="space-y-1.5">
                       <button
                         type="button"
-                        onClick={() => handleDownloadHighResPng(stand.code)}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#EFEAE4] hover:bg-[#DCE0D4] border border-[#161514]/15 text-[10px] font-bold text-[#161514] flex items-center gap-1 cursor-pointer"
+                        disabled={downloadingPosterCode === stand.code}
+                        onClick={() => handleDownloadPosterPng(stand.code)}
+                        className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-50"
                       >
-                        <Download className="w-3 h-3 text-[#DA5004]" />
-                        <span>PNG 1024px</span>
+                        <FileImage className="w-3.5 h-3.5" />
+                        <span>
+                          {downloadingPosterCode === stand.code
+                            ? "جاري تجهيز البوستر..."
+                            : "تحميل بوستر المطبعة (PNG)"}
+                        </span>
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadSvg(stand.code)}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#EFEAE4] hover:bg-[#DCE0D4] border border-[#161514]/15 text-[10px] font-bold text-[#161514] flex items-center gap-1 cursor-pointer"
-                      >
-                        <Download className="w-3 h-3 text-[#DA5004]" />
-                        <span>SVG فيكتور</span>
-                      </button>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadHighResPng(stand.code)}
+                          className="flex-1 min-h-[36px] px-2.5 py-1.5 rounded-lg bg-[#EFEAE4] hover:bg-[#DCE0D4] border border-[#161514]/15 text-[10px] font-bold text-[#161514] flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Download className="w-3 h-3 text-[#DA5004]" />
+                          <span>QR صافي PNG</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadSvg(stand.code)}
+                          className="flex-1 min-h-[36px] px-2.5 py-1.5 rounded-lg bg-[#EFEAE4] hover:bg-[#DCE0D4] border border-[#161514]/15 text-[10px] font-bold text-[#161514] flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Download className="w-3 h-3 text-[#DA5004]" />
+                          <span>SVG فيكتور</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -848,18 +985,50 @@ export default function AdminStandsClient({
 
       {/* Printable A4 Sheet Modal */}
       {showPrintModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-4 print:static print:bg-white print:p-0">
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-4 print:static print:bg-white print:p-0"
+          style={{
+            printColorAdjust: "exact",
+            WebkitPrintColorAdjust: "exact",
+          }}
+        >
           <div className="max-w-5xl mx-auto bg-white rounded-3xl p-6 space-y-5 print:rounded-none print:p-0 print:shadow-none">
-            <div className="flex items-center justify-between border-b border-[#161514]/10 pb-4 print:hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#161514]/10 pb-4 print:hidden">
               <div>
-                <h2 className="text-base font-extrabold text-[#161514]">
-                  🖨️ ورقة طباعة ستاندات QR ({filteredStands.length} ستاند)
+                <h2 className="text-base font-extrabold text-[#161514] tabular-nums">
+                  ورقة طباعة ستاندات QR ({filteredStands.length} ستاند)
                 </h2>
                 <p className="text-xs text-[#161514]/65">
                   مضبوطة بمستوى تصحيح أخطاء عالٍ (Error Correction H) للمتانة على ستاندات الأكريليك وPVC.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex p-1 rounded-xl bg-[#EFEAE4] border border-[#161514]/10">
+                  <button
+                    type="button"
+                    onClick={() => setPrintSheetMode("POSTER")}
+                    className={`min-h-[44px] px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      printSheetMode === "POSTER"
+                        ? "bg-[#F85B04] text-white shadow-sm"
+                        : "text-[#161514]/70 hover:text-[#161514]"
+                    }`}
+                  >
+                    البوسترات الكاملة للمطبعة
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrintSheetMode("COMPACT")}
+                    className={`min-h-[44px] px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      printSheetMode === "COMPACT"
+                        ? "bg-[#161514] text-white shadow-sm"
+                        : "text-[#161514]/70 hover:text-[#161514]"
+                    }`}
+                  >
+                    أكواد QR المدمجة فقط
+                  </button>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => window.print()}
@@ -872,43 +1041,82 @@ export default function AdminStandsClient({
                   type="button"
                   onClick={() => setShowPrintModal(false)}
                   aria-label="إغلاق نافذة الطباعة"
-                  className="p-2.5 rounded-xl bg-[#EFEAE4] hover:bg-[#DCE0D4] text-[#161514] min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  className="p-2.5 rounded-xl bg-[#EFEAE4] hover:bg-[#DCE0D4] text-[#161514] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 print:grid-cols-3 gap-4">
-              {filteredStands.map((stand) => (
-                <div
-                  key={stand.id}
-                  className="p-4 rounded-2xl border-2 border-dashed border-[#161514]/15 flex flex-col items-center justify-center text-center space-y-2 break-inside-avoid"
-                >
-                  <span className="text-[11px] font-bold text-[#DA5004]">
-                    امسح الكود واحصل على بطاقة الوفاء 🎁
-                  </span>
-                  <div className="w-40 h-40 p-1 bg-white flex items-center justify-center">
-                    {qrPreviews[stand.code] && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={qrPreviews[stand.code]}
-                        alt={`Print QR ${stand.code}`}
-                        width={160}
-                        height={160}
-                        className="w-full h-full object-contain"
-                      />
-                    )}
-                  </div>
+            {printSheetMode === "POSTER" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 gap-5 print:gap-4">
+                {filteredStands.map((stand) => (
                   <div
-                    dir="ltr"
-                    className="px-3 py-1 rounded-lg bg-[#173E30] text-white font-mono font-extrabold text-sm tracking-widest"
+                    key={stand.id}
+                    className="p-2.5 rounded-2xl border border-dashed border-[#161514]/25 bg-white flex flex-col items-center gap-2 break-inside-avoid"
+                    style={{ breakInside: "avoid" }}
                   >
-                    {stand.code}
+                    <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-[#EFEAE4] flex items-center justify-center">
+                      {posterPreviews[stand.code] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={posterPreviews[stand.code]}
+                          alt={`Walink Poster ${stand.code}`}
+                          width={1024}
+                          height={1536}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 text-xs text-[#161514]/55 p-4 text-center">
+                          <QrCode className="w-8 h-8 text-[#F85B04]/50 animate-pulse" />
+                          <span>جاري تجهيز بوستر {stand.code}...</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="w-full flex items-center justify-between px-1 text-[11px] font-mono text-[#161514]/70 tabular-nums">
+                      <span dir="ltr" className="font-bold text-[#161514]">
+                        {stand.code}
+                      </span>
+                      <span className="truncate max-w-[160px] font-sans">
+                        {stand.merchant ? stand.merchant.name : stand.batchLabel || "جاهز للربط"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 print:grid-cols-3 gap-4">
+                {filteredStands.map((stand) => (
+                  <div
+                    key={stand.id}
+                    className="p-4 rounded-2xl border-2 border-dashed border-[#161514]/15 flex flex-col items-center justify-center text-center space-y-2 break-inside-avoid"
+                    style={{ breakInside: "avoid" }}
+                  >
+                    <span className="text-[11px] font-bold text-[#DA5004]">
+                      امسح الكود واحصل على بطاقة الوفاء
+                    </span>
+                    <div className="w-40 h-40 p-1 bg-white flex items-center justify-center">
+                      {qrPreviews[stand.code] && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={qrPreviews[stand.code]}
+                          alt={`Print QR ${stand.code}`}
+                          width={160}
+                          height={160}
+                          className="w-full h-full object-contain"
+                        />
+                      )}
+                    </div>
+                    <div
+                      dir="ltr"
+                      className="px-3 py-1 rounded-lg bg-[#161514] text-white font-mono font-extrabold text-sm tracking-widest tabular-nums"
+                    >
+                      {stand.code}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
