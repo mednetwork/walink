@@ -22,6 +22,9 @@ import {
   QrCode,
   Search,
   Link2,
+  LocateFixed,
+  Loader2,
+  Sparkles as WandIcon,
   Coffee,
   Scissors,
   Utensils,
@@ -62,6 +65,15 @@ import {
   POINT_PRICE_MAD,
 } from "@/lib/pricing";
 import { getStandUrl } from "@/lib/urls";
+import {
+  GOOGLE_PLACE_ID_FINDER_URL,
+  GOOGLE_REVIEW_URL_PREFIX,
+  buildGoogleReviewUrl,
+  extractCoordsFromMapsUrl,
+  extractPlaceIdFromInput,
+  extractPlaceIdFromUrl,
+  isShortGoogleMapsUrl,
+} from "@/lib/google-maps";
 import WalletPassPreview from "@/components/WalletPassPreview";
 import StandPreviewModal from "@/components/StandPreviewModal";
 
@@ -220,6 +232,229 @@ export default function MerchantForm({
   const [standBranchName, setStandBranchName] = useState<string>("");
   const [standSearchQuery, setStandSearchQuery] = useState<string>("");
   const [selectedStandQrUrl, setSelectedStandQrUrl] = useState<string>("");
+
+  const initialExtractedPlaceId = extractPlaceIdFromUrl(
+    initialData?.googleMapsUrl || ""
+  );
+  const [reviewLinkMode, setReviewLinkMode] = useState<"PLACE_ID" | "CUSTOM_URL">(
+    initialData?.googleMapsUrl?.trim() && !initialExtractedPlaceId
+      ? "CUSTOM_URL"
+      : "PLACE_ID"
+  );
+  const [placeIdInput, setPlaceIdInput] = useState<string>(
+    initialExtractedPlaceId
+  );
+  const [mapsExtractUrl, setMapsExtractUrl] = useState<string>("");
+  const [resolvingMaps, setResolvingMaps] = useState<boolean>(false);
+  const [detectingGps, setDetectingGps] = useState<boolean>(false);
+  const [mapsFeedback, setMapsFeedback] = useState<{
+    type: "success" | "error" | "info";
+    text: string;
+  } | null>(null);
+
+  const handlePlaceIdChange = (rawValue: string) => {
+    const cleanPlaceId = extractPlaceIdFromInput(rawValue);
+    setPlaceIdInput(cleanPlaceId);
+    setFormData((prev) => ({
+      ...prev,
+      googleMapsUrl: cleanPlaceId ? buildGoogleReviewUrl(cleanPlaceId) : "",
+    }));
+  };
+
+  const applyExtractedCoords = (
+    lat: number,
+    lng: number,
+    detectedPlaceId?: string | null,
+    successMsg?: string
+  ) => {
+    setFormData((prev) => {
+      const nextGoogleMapsUrl =
+        !prev.googleMapsUrl && detectedPlaceId
+          ? buildGoogleReviewUrl(detectedPlaceId)
+          : prev.googleMapsUrl;
+      return {
+        ...prev,
+        latitude: Number(lat.toFixed(6)),
+        longitude: Number(lng.toFixed(6)),
+        googleMapsUrl: nextGoogleMapsUrl,
+      };
+    });
+    if (detectedPlaceId && !placeIdInput) {
+      setPlaceIdInput(detectedPlaceId);
+      setReviewLinkMode("PLACE_ID");
+    }
+    setMapsFeedback({
+      type: "success",
+      text:
+        successMsg ||
+        `تم استخراج الإحداثيات بنجاح (${lat.toFixed(6)}, ${lng.toFixed(6)})`,
+    });
+  };
+
+  const handleExtractFromMapsUrl = async (
+    rawInputUrl: string,
+    forceServer = false
+  ) => {
+    const trimmed = rawInputUrl.trim();
+    if (!trimmed) {
+      if (forceServer) {
+        setMapsFeedback({
+          type: "error",
+          text: "يرجى لصق رابط المتجر من خرائط Google أولاً.",
+        });
+      }
+      return;
+    }
+
+    setMapsFeedback(null);
+
+    const localCoords = extractCoordsFromMapsUrl(trimmed);
+    const localPlaceId = extractPlaceIdFromUrl(trimmed);
+
+    if (localCoords) {
+      applyExtractedCoords(
+        localCoords.lat,
+        localCoords.lng,
+        localPlaceId || null
+      );
+      return;
+    }
+
+    if (!forceServer && !isShortGoogleMapsUrl(trimmed)) {
+      return;
+    }
+
+    setResolvingMaps(true);
+    try {
+      const res = await fetch("/api/admin/maps/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed }),
+        signal: AbortSignal.timeout(8000),
+      });
+      const data = (await res.json()) as {
+        lat?: number;
+        lng?: number;
+        placeId?: string | null;
+        error?: string;
+      };
+
+      if (!res.ok || typeof data.lat !== "number" || typeof data.lng !== "number") {
+        setMapsFeedback({
+          type: "error",
+          text:
+            data.error ||
+            "تعذر استخراج الإحداثيات من هذا الرابط. جرب رابطاً آخر أو استخدم GPS.",
+        });
+        return;
+      }
+
+      applyExtractedCoords(
+        data.lat,
+        data.lng,
+        data.placeId || localPlaceId || null,
+        `تم فك الرابط واستخراج الإحداثيات بنجاح (${data.lat.toFixed(6)}, ${data.lng.toFixed(6)})`
+      );
+    } catch (err: unknown) {
+      setMapsFeedback({
+        type: "error",
+        text:
+          err instanceof Error
+            ? "انتهت مهلة الاتصال أثناء قراءة الرابط، حاول مجدداً."
+            : "تعذر معالجة الرابط حالياً.",
+      });
+    } finally {
+      setResolvingMaps(false);
+    }
+  };
+
+  const handleResolveFromPlaceId = async () => {
+    const cleanId = extractPlaceIdFromInput(placeIdInput);
+    if (!cleanId) {
+      setMapsFeedback({
+        type: "error",
+        text: "أدخل معرف Place ID أولاً قبل محاولة جلب الإحداثيات.",
+      });
+      return;
+    }
+
+    setMapsFeedback(null);
+    setResolvingMaps(true);
+    try {
+      const res = await fetch("/api/admin/maps/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ placeId: cleanId }),
+        signal: AbortSignal.timeout(8000),
+      });
+      const data = (await res.json()) as {
+        lat?: number | null;
+        lng?: number | null;
+        needsApiKey?: boolean;
+        message?: string;
+        error?: string;
+      };
+
+      if (data.needsApiKey) {
+        setMapsFeedback({
+          type: "info",
+          text:
+            data.message ||
+            "جلب الإحداثيات من Place ID لوحده يتطلب مفتاح Google Places API. الصق رابط المتجر من خرائط Google في الأعلى للاستخراج الفوري مجاناً.",
+        });
+        return;
+      }
+
+      if (!res.ok || typeof data.lat !== "number" || typeof data.lng !== "number") {
+        setMapsFeedback({
+          type: "error",
+          text: data.error || "تعذر جلب الإحداثيات لهذا الـ Place ID.",
+        });
+        return;
+      }
+
+      applyExtractedCoords(data.lat, data.lng, cleanId);
+    } catch {
+      setMapsFeedback({
+        type: "error",
+        text: "تعذر الاتصال بالخادم لجلب الإحداثيات.",
+      });
+    } finally {
+      setResolvingMaps(false);
+    }
+  };
+
+  const handleDetectCurrentGps = () => {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      setMapsFeedback({
+        type: "error",
+        text: "المتصفح الحالي لا يدعم تحديد الموقع الجغرافي (GPS).",
+      });
+      return;
+    }
+
+    setMapsFeedback(null);
+    setDetectingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setDetectingGps(false);
+        applyExtractedCoords(
+          pos.coords.latitude,
+          pos.coords.longitude,
+          null,
+          `تم التقاط موقعك الحالي بنجاح (${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)})`
+        );
+      },
+      () => {
+        setDetectingGps(false);
+        setMapsFeedback({
+          type: "error",
+          text: "تعذر الوصول لموقعك. يرجى السماح بصلاحية الموقع أو لصق رابط خرائط Google.",
+        });
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
 
   const selectedStand = useMemo(
     () => availableStands.find((stand) => stand.id === selectedStandId) || null,
@@ -930,78 +1165,307 @@ export default function MerchantForm({
               <span>5. رادار المحيط (100m Radar) ومراجعات Google Maps</span>
             </h3>
 
+            {/* Smart Google Maps URL Coordinates Extractor & GPS */}
+            <div className="p-4 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label
+                  htmlFor="gmaps-extract-url"
+                  className="text-xs font-bold text-[#161514] flex items-center gap-1.5"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-[#DA5004]" />
+                  <span>استخراج الإحداثيات تلقائياً من رابط المتجر على Google Maps</span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={handleDetectCurrentGps}
+                  disabled={detectingGps}
+                  className="min-h-[44px] px-3 py-1.5 rounded-xl bg-white hover:bg-[#E5DFD7] border border-[#161514]/15 text-[#161514] text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                >
+                  {detectingGps ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#DA5004]" />
+                  ) : (
+                    <LocateFixed className="w-3.5 h-3.5 text-[#DA5004]" />
+                  )}
+                  <span>{detectingGps ? "جاري الالتقاط..." : "موقعي الآن (GPS)"}</span>
+                </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  id="gmaps-extract-url"
+                  type="url"
+                  value={mapsExtractUrl}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setMapsExtractUrl(val);
+                    void handleExtractFromMapsUrl(val, false);
+                  }}
+                  placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/place/..."
+                  className="flex-1 min-h-[44px] bg-white border border-[#161514]/15 rounded-xl px-3.5 py-2 text-base sm:text-sm text-[#161514] font-mono dir-ltr text-left placeholder-[#161514]/45 focus:outline-none focus:border-[#F85B04]"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleExtractFromMapsUrl(mapsExtractUrl, true)}
+                  disabled={resolvingMaps || !mapsExtractUrl.trim()}
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F85B04] hover:bg-[#DA5004] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0"
+                >
+                  {resolvingMaps ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <WandIcon className="w-4 h-4" />
+                  )}
+                  <span>{resolvingMaps ? "جاري الاستخراج..." : "استخراج الإحداثيات"}</span>
+                </button>
+              </div>
+
+              <p className="text-[11px] text-[#161514]/65 leading-relaxed">
+                انسخ رابط المتجر مباشرة من تطبيق خرائط Google (حتى الروابط المختصرة <span dir="ltr" className="font-mono font-semibold">maps.app.goo.gl</span>) وسيتم ملء خط العرض وخط الطول تلقائياً.
+              </p>
+
+              {mapsFeedback && (
+                <div
+                  role="status"
+                  className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 tabular-nums ${
+                    mapsFeedback.type === "success"
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                      : mapsFeedback.type === "info"
+                      ? "bg-amber-50 border-amber-200 text-amber-900"
+                      : "bg-red-50 border-red-200 text-red-900"
+                  }`}
+                >
+                  {mapsFeedback.type === "success" ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                  )}
+                  <span>{mapsFeedback.text}</span>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-[#161514] mb-1.5 block">
+                <label
+                  htmlFor="merchant-latitude"
+                  className="text-xs font-semibold text-[#161514] mb-1.5 block"
+                >
                   خط العرض (Latitude)
                 </label>
                 <input
+                  id="merchant-latitude"
                   type="number"
                   inputMode="decimal"
                   step="any"
                   value={formData.latitude ?? ""}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = e.target.value.trim();
+                    const parsed = val === "" ? null : parseFloat(val);
                     setFormData({
                       ...formData,
-                      latitude: parseFloat(e.target.value) || null,
-                    })
-                  }
+                      latitude:
+                        parsed !== null && Number.isFinite(parsed)
+                          ? parsed
+                          : null,
+                    });
+                  }}
                   placeholder="33.5731"
-                  className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#161514] font-mono focus:outline-none focus:border-[#F85B04] focus:bg-white"
+                  className="w-full min-h-[44px] bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3.5 py-2.5 text-base sm:text-sm text-[#161514] font-mono tabular-nums dir-ltr text-left focus:outline-none focus:border-[#F85B04] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#161514] mb-1.5 block">
+                <label
+                  htmlFor="merchant-longitude"
+                  className="text-xs font-semibold text-[#161514] mb-1.5 block"
+                >
                   خط الطول (Longitude)
                 </label>
                 <input
+                  id="merchant-longitude"
                   type="number"
                   inputMode="decimal"
                   step="any"
                   value={formData.longitude ?? ""}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = e.target.value.trim();
+                    const parsed = val === "" ? null : parseFloat(val);
                     setFormData({
                       ...formData,
-                      longitude: parseFloat(e.target.value) || null,
-                    })
-                  }
+                      longitude:
+                        parsed !== null && Number.isFinite(parsed)
+                          ? parsed
+                          : null,
+                    });
+                  }}
                   placeholder="-7.5898"
-                  className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#161514] font-mono focus:outline-none focus:border-[#F85B04] focus:bg-white"
+                  className="w-full min-h-[44px] bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3.5 py-2.5 text-base sm:text-sm text-[#161514] font-mono tabular-nums dir-ltr text-left focus:outline-none focus:border-[#F85B04] focus:bg-white"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-[#161514] mb-1.5 block">
+                <label
+                  htmlFor="merchant-radar-message"
+                  className="text-xs font-semibold text-[#161514] mb-1.5 block"
+                >
                   نص إشعار الرادار عند اقتراب الزبون بـ 100 متر (Apple Wallet للآيفون)
                 </label>
                 <textarea
+                  id="merchant-radar-message"
                   rows={2}
                   value={formData.radarMessage}
                   onChange={(e) =>
                     setFormData({ ...formData, radarMessage: e.target.value })
                   }
                   placeholder="راك دايز من حدانا! دوز مرحبا بيك..."
-                  className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#161514] focus:outline-none focus:border-[#F85B04] focus:bg-white"
+                  className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3.5 py-2.5 text-base sm:text-sm text-[#161514] focus:outline-none focus:border-[#F85B04] focus:bg-white"
                 />
                 <p className="text-[10px] text-[#161514]/65 mt-1">
                   ملاحظة: يظهر إشعار القرب 100 متر تلقائياً على شاشة قفل iPhone عبر Apple Wallet. Google Wallet على الأندرويد لا يدعم تنبيهات القرب الجغرافية.
                 </p>
               </div>
 
-              <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-[#161514] mb-1.5 block">
-                  رابط تقييمات خرائط جوجل (Google Maps Review Link)
-                </label>
-                <input
-                  type="url"
-                  value={formData.googleMapsUrl || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, googleMapsUrl: e.target.value })
-                  }
-                  placeholder="https://maps.google.com/?cid=..."
-                  className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#161514] font-mono dir-ltr text-left focus:outline-none focus:border-[#F85B04] focus:bg-white"
-                />
+              {/* Google Maps Review Link — Place ID First + Legacy Custom URL Toggle */}
+              <div className="sm:col-span-2 p-4 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label
+                      htmlFor={
+                        reviewLinkMode === "PLACE_ID"
+                          ? "merchant-place-id"
+                          : "merchant-custom-review-url"
+                      }
+                      className="text-xs font-bold text-[#161514]"
+                    >
+                      {reviewLinkMode === "PLACE_ID"
+                        ? "معرف المتجر لتقييمات جوجل (Google Place ID)"
+                        : "رابط تقييمات خرائط جوجل (رابط مخصص)"}
+                    </label>
+
+                    <a
+                      href={GOOGLE_PLACE_ID_FINDER_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-[#161514]/15 text-[11px] font-bold text-[#DA5004] hover:bg-[#F85B04]/10 transition"
+                    >
+                      <Search className="w-3 h-3" />
+                      <span>إيجاد Place ID</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (reviewLinkMode === "PLACE_ID") {
+                        setReviewLinkMode("CUSTOM_URL");
+                      } else {
+                        const extracted = extractPlaceIdFromUrl(
+                          formData.googleMapsUrl || ""
+                        );
+                        setPlaceIdInput(extracted);
+                        setFormData((prev) => ({
+                          ...prev,
+                          googleMapsUrl: extracted
+                            ? buildGoogleReviewUrl(extracted)
+                            : "",
+                        }));
+                        setReviewLinkMode("PLACE_ID");
+                      }
+                    }}
+                    className="min-h-[36px] px-2.5 py-1 rounded-lg bg-white border border-[#161514]/15 text-[11px] font-semibold text-[#161514]/75 hover:text-[#161514] transition cursor-pointer"
+                  >
+                    {reviewLinkMode === "PLACE_ID"
+                      ? "تبديل إلى رابط مخصص"
+                      : "استخدام Place ID فقط"}
+                  </button>
+                </div>
+
+                {reviewLinkMode === "PLACE_ID" ? (
+                  <div className="space-y-2.5">
+                    <div className="flex flex-col sm:flex-row items-stretch gap-2">
+                      <div
+                        dir="ltr"
+                        className="flex-1 flex items-center bg-white border border-[#161514]/15 rounded-xl overflow-hidden focus-within:border-[#F85B04]"
+                      >
+                        <span className="hidden md:inline-block px-3 py-2.5 bg-[#E5DFD7]/60 text-[11px] font-mono text-[#161514]/70 border-r border-[#161514]/10 select-all shrink-0">
+                          {GOOGLE_REVIEW_URL_PREFIX}
+                        </span>
+                        <input
+                          id="merchant-place-id"
+                          type="text"
+                          value={placeIdInput}
+                          onChange={(e) => handlePlaceIdChange(e.target.value)}
+                          placeholder="ChIJN1t_tDeuEmsRUsoyG83frY4"
+                          className="w-full min-h-[44px] bg-white px-3.5 py-2 text-base sm:text-sm text-[#161514] font-mono text-left placeholder-[#161514]/40 focus:outline-none"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => void handleResolveFromPlaceId()}
+                        disabled={resolvingMaps || !placeIdInput.trim()}
+                        className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#161514] hover:bg-[#2A2826] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-45 shrink-0"
+                      >
+                        <MapPin className="w-3.5 h-3.5 text-[#F85B04]" />
+                        <span>جلب الإحداثيات منه</span>
+                      </button>
+                    </div>
+
+                    {formData.googleMapsUrl ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-white border border-[#161514]/10">
+                        <span
+                          dir="ltr"
+                          className="text-[11px] font-mono text-[#161514]/75 break-all flex-1"
+                        >
+                          {formData.googleMapsUrl}
+                        </span>
+                        <a
+                          href={formData.googleMapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F85B04]/10 hover:bg-[#F85B04]/20 text-[#DA5004] text-[11px] font-bold shrink-0 transition"
+                        >
+                          <span>اختبار رابط التقييم</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-[#161514]/65">
+                        يكفي إدخال الـ <span dir="ltr" className="font-mono font-bold">placeid</span> فقط (أو لصق رابط التقييم كاملاً) وسيُركّب تلقائياً على:{" "}
+                        <span dir="ltr" className="font-mono text-[#DA5004]">
+                          {GOOGLE_REVIEW_URL_PREFIX}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <input
+                      id="merchant-custom-review-url"
+                      type="url"
+                      value={formData.googleMapsUrl || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, googleMapsUrl: e.target.value })
+                      }
+                      placeholder="https://maps.google.com/?cid=..."
+                      className="w-full min-h-[44px] bg-white border border-[#161514]/15 rounded-xl px-3.5 py-2.5 text-base sm:text-sm text-[#161514] font-mono dir-ltr text-left focus:outline-none focus:border-[#F85B04]"
+                    />
+                    {formData.googleMapsUrl && (
+                      <div className="flex justify-end">
+                        <a
+                          href={formData.googleMapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#161514]/15 text-[#DA5004] text-[11px] font-bold"
+                        >
+                          <span>اختبار الرابط الحالي</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
