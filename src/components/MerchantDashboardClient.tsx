@@ -3,6 +3,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { getJoinUrl, getPassUrl } from "@/lib/urls";
 import { isCasablancaPlaceholderCoords, isValidCoordinatePair } from "@/lib/radar";
+import {
+  extractCoordsFromMapsUrl,
+  isShortGoogleMapsUrl,
+} from "@/lib/google-maps";
 import { formatStamps } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -443,6 +447,13 @@ export default function MerchantDashboardClient({
           setTransactions(data.transactions);
         }
         if (data.merchant) {
+          const nextLat = data.merchant.latitude ?? undefined;
+          const nextLng = data.merchant.longitude ?? undefined;
+          const nextMapsUrl = data.merchant.googleMapsUrl || "";
+          const nextRadarMsg =
+            data.merchant.radarMessage ||
+            "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.";
+
           setMerchant((prev) => ({
             ...prev,
             ...(typeof data.merchant.credits === "number"
@@ -451,7 +462,18 @@ export default function MerchantDashboardClient({
             ...(typeof data.merchant.monthlyPointsUsed === "number"
               ? { monthlyPointsUsed: data.merchant.monthlyPointsUsed }
               : {}),
+            latitude: nextLat,
+            longitude: nextLng,
+            googleMapsUrl: nextMapsUrl,
+            radarMessage: nextRadarMsg,
           }));
+
+          if (!hasLocationUnsavedRef.current) {
+            setMerchantLatitude(nextLat ?? "");
+            setMerchantLongitude(nextLng ?? "");
+            setMerchantGoogleMapsUrl(nextMapsUrl);
+            setMerchantRadarMessage(nextRadarMsg);
+          }
         }
         if (data.merchant?.branches) {
           try {
@@ -1124,17 +1146,116 @@ export default function MerchantDashboardClient({
     );
   };
 
+  const resolveMapsUrlForTarget = async (
+    rawUrl: string,
+    target: "MAIN" | "BRANCH",
+    forceServer = false
+  ) => {
+    const trimmed = rawUrl.trim();
+    const setStatus = target === "MAIN" ? setGpsStatus : setBranchGpsStatus;
+    const setResolving =
+      target === "MAIN" ? setResolvingStoreMaps : setResolvingBranchMaps;
+
+    if (!trimmed) {
+      if (forceServer) {
+        setStatus({
+          type: "error",
+          msg:
+            locale === "fr"
+              ? "Veuillez d'abord coller le lien Google Maps de la boutique."
+              : locale === "es"
+                ? "Pega primero el enlace de Google Maps de la tienda."
+                : "يرجى لصق رابط المتجر من خرائط Google أولاً.",
+        });
+      }
+      return;
+    }
+
+    const applyResolvedCoords = (latVal: number, lngVal: number, viaServer: boolean) => {
+      const roundedLat = Number(latVal.toFixed(6));
+      const roundedLng = Number(lngVal.toFixed(6));
+      if (target === "MAIN") {
+        setMerchantLatitude(roundedLat);
+        setMerchantLongitude(roundedLng);
+      } else {
+        setBranchLatInput(roundedLat);
+        setBranchLngInput(roundedLng);
+      }
+      setStatus({
+        type: "success",
+        msg:
+          locale === "fr"
+            ? viaServer
+              ? `Lien décodé et coordonnées extraites (${roundedLat}, ${roundedLng})`
+              : `Coordonnées extraites automatiquement (${roundedLat}, ${roundedLng})`
+            : locale === "es"
+              ? viaServer
+                ? `Enlace resuelto y coordenadas extraídas (${roundedLat}, ${roundedLng})`
+                : `Coordenadas extraídas automáticamente (${roundedLat}, ${roundedLng})`
+              : viaServer
+                ? `تم فك الرابط واستخراج الإحداثيات بنجاح (${roundedLat}, ${roundedLng})`
+                : `تم استخراج الإحداثيات تلقائياً (${roundedLat}, ${roundedLng})`,
+      });
+    };
+
+    const localCoords = extractCoordsFromMapsUrl(trimmed);
+    if (localCoords) {
+      applyResolvedCoords(localCoords.lat, localCoords.lng, false);
+      return;
+    }
+
+    if (!forceServer && !isShortGoogleMapsUrl(trimmed)) {
+      return;
+    }
+
+    setResolving(true);
+    setStatus(null);
+    try {
+      const res = await fetch(`/api/m/${merchant.slug}/maps/resolve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed }),
+        signal: AbortSignal.timeout(8000),
+      });
+      const data = (await res.json()) as {
+        lat?: number | null;
+        lng?: number | null;
+        error?: string;
+      };
+
+      if (!res.ok || typeof data.lat !== "number" || typeof data.lng !== "number") {
+        setStatus({
+          type: "error",
+          msg:
+            data.error ||
+            (locale === "fr"
+              ? "Impossible d'extraire les coordonnées depuis ce lien Google Maps."
+              : locale === "es"
+                ? "No se pudieron extraer las coordenadas desde este enlace."
+                : "تعذر استخراج الإحداثيات من هذا الرابط، جرب رابطاً آخر أو استخدم GPS."),
+        });
+        return;
+      }
+
+      applyResolvedCoords(data.lat, data.lng, true);
+    } catch {
+      setStatus({
+        type: "error",
+        msg:
+          locale === "fr"
+            ? "Délai dépassé lors de la lecture du lien Google Maps."
+            : locale === "es"
+              ? "Tiempo agotado al resolver el enlace de Google Maps."
+              : "انتهت مهلة الاتصال أثناء قراءة الرابط، حاول مجدداً.",
+      });
+    } finally {
+      setResolving(false);
+    }
+  };
+
   const handleBranchGoogleMapsUrlChange = (url: string) => {
     setBranchGmapsInput(url);
-    const coords = extractCoordinatesFromGoogleMapsUrl(url);
-    if (coords) {
-      setBranchLatInput(coords.lat);
-      setBranchLngInput(coords.lng);
-      setBranchGpsStatus({
-        type: "success",
-        msg: `تم استخراج الإحداثيات تلقائياً (${coords.lat}, ${coords.lng})`,
-      });
-    }
+    void resolveMapsUrlForTarget(url, "BRANCH", false);
   };
 
   const liveAuthBranch = useMemo<BranchItem | null>(() => {
@@ -1201,6 +1322,9 @@ export default function MerchantDashboardClient({
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [storeMapsQuickUrl, setStoreMapsQuickUrl] = useState("");
+  const [resolvingStoreMaps, setResolvingStoreMaps] = useState(false);
+  const [resolvingBranchMaps, setResolvingBranchMaps] = useState(false);
 
   const [automations, setAutomations] = useState({
     autoWinback: merchant.autoWinback,
@@ -1209,44 +1333,25 @@ export default function MerchantDashboardClient({
     autoNearReward: merchant.autoNearReward,
   });
 
-  const hasUnsavedChanges =
-    merchantLoyaltyMode !== (merchant.loyaltyMode || "BOTH") ||
-    Number(merchantCashbackRate) !== Number(merchant.cashbackRate || 10) ||
+  const hasLocationUnsavedChanges =
     String(merchantLatitude) !== String(merchant.latitude ?? "") ||
     String(merchantLongitude) !== String(merchant.longitude ?? "") ||
     merchantGoogleMapsUrl !== (merchant.googleMapsUrl || "") ||
     merchantRadarMessage !== (merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.");
 
-  // Smart Coordinate Extraction from Google Maps URL
-  const extractCoordinatesFromGoogleMapsUrl = (url: string): { lat: number; lng: number } | null => {
-    if (!url) return null;
-    const atMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
-    const qMatch = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (qMatch) return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
-    const llMatch = url.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (llMatch) return { lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) };
-    const destMatch = url.match(/[?&]destination=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (destMatch) return { lat: parseFloat(destMatch[1]), lng: parseFloat(destMatch[2]) };
-    return null;
-  };
+  const hasLocationUnsavedRef = useRef<boolean>(false);
+  useEffect(() => {
+    hasLocationUnsavedRef.current = hasLocationUnsavedChanges;
+  }, [hasLocationUnsavedChanges]);
+
+  const hasUnsavedChanges =
+    merchantLoyaltyMode !== (merchant.loyaltyMode || "BOTH") ||
+    Number(merchantCashbackRate) !== Number(merchant.cashbackRate || 10) ||
+    hasLocationUnsavedChanges;
 
   const handleGoogleMapsUrlChange = (val: string) => {
     setMerchantGoogleMapsUrl(val);
-    const parsed = extractCoordinatesFromGoogleMapsUrl(val);
-    if (parsed) {
-      setMerchantLatitude(parsed.lat);
-      setMerchantLongitude(parsed.lng);
-      setGpsStatus({
-        type: "success",
-        msg:
-          locale === "fr"
-            ? "Coordonnées extraites du lien Google Maps !"
-            : locale === "es"
-              ? "¡Coordenadas extraídas del enlace de Google Maps!"
-              : "تم استخراج الإحداثيات تلقائياً من رابط خرائط Google بنجاح 🎯",
-      });
-    }
+    void resolveMapsUrlForTarget(val, "MAIN", false);
   };
 
   const handleDetectGps = () => {
@@ -1508,10 +1613,25 @@ export default function MerchantDashboardClient({
             setMetrics(storeData.metrics);
           }
           if (storeData.merchant) {
+            const nextLat = storeData.merchant.latitude ?? undefined;
+            const nextLng = storeData.merchant.longitude ?? undefined;
+            const nextMapsUrl = storeData.merchant.googleMapsUrl || "";
+            const nextRadarMsg =
+              storeData.merchant.radarMessage ||
+              "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.";
+
             setMerchant((prev) => ({
               ...prev,
               ...storeData.merchant,
+              latitude: nextLat,
+              longitude: nextLng,
+              googleMapsUrl: nextMapsUrl,
+              radarMessage: nextRadarMsg,
             }));
+            setMerchantLatitude(nextLat ?? "");
+            setMerchantLongitude(nextLng ?? "");
+            setMerchantGoogleMapsUrl(nextMapsUrl);
+            setMerchantRadarMessage(nextRadarMsg);
           }
         }
       } catch (hydrateErr) {
@@ -4047,29 +4167,108 @@ export default function MerchantDashboardClient({
                     </div>
                   )}
 
-                {/* Google Maps Link Input with Smart Coordinate Parser */}
+                {/* Smart Google Maps URL Quick Coordinates Extractor (preserves existing Place ID review link) */}
+                <div className="p-3 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 space-y-2">
+                  <label
+                    htmlFor="store-maps-quick-extract"
+                    className="text-[11px] font-bold text-[#161514] flex items-center gap-1.5"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-[#DA5004]" />
+                    <span>
+                      {locale === "fr"
+                        ? "Extraire les coordonnées depuis un lien Google Maps (incl. maps.app.goo.gl) :"
+                        : locale === "es"
+                          ? "Extraer coordenadas desde un enlace de Google Maps (incl. maps.app.goo.gl):"
+                          : "استخراج خط العرض والطول تلقائياً من رابط Google Maps (يدعم maps.app.goo.gl):"}
+                    </span>
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      id="store-maps-quick-extract"
+                      type="url"
+                      value={storeMapsQuickUrl}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setStoreMapsQuickUrl(val);
+                        void resolveMapsUrlForTarget(val, "MAIN", false);
+                      }}
+                      placeholder="https://maps.app.goo.gl/... / https://www.google.com/maps/..."
+                      className="flex-1 min-h-[44px] py-2 px-3 text-base sm:text-sm rounded-xl bg-white border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514] font-mono placeholder-[#161514]/45"
+                      dir="ltr"
+                    />
+                    <button
+                      type="button"
+                      disabled={resolvingStoreMaps || !storeMapsQuickUrl.trim()}
+                      onClick={() =>
+                        void resolveMapsUrlForTarget(storeMapsQuickUrl, "MAIN", true)
+                      }
+                      className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F85B04] hover:bg-[#DA5004] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      {resolvingStoreMaps ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5" />
+                      )}
+                      <span>
+                        {resolvingStoreMaps
+                          ? locale === "fr"
+                            ? "Extraction..."
+                            : locale === "es"
+                              ? "Extrayendo..."
+                              : "جاري الاستخراج..."
+                          : locale === "fr"
+                            ? "Extraire"
+                            : locale === "es"
+                              ? "Extraer"
+                              : "استخراج الإحداثيات"}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Google Maps Review / Store URL Input with Auto Coordinate Parser */}
                 <div className="space-y-1">
                   <label htmlFor="gmaps-url-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                     {t.demo.googleMapsUrl}:
                   </label>
-                  <div className="relative">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       id="gmaps-url-input"
                       type="url"
                       value={merchantGoogleMapsUrl}
                       onChange={(e) => handleGoogleMapsUrlChange(e.target.value)}
-                      placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
-                      className="w-full py-2 px-3 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514] placeholder-[#161514]/45"
+                      placeholder="https://maps.app.goo.gl/... / https://search.google.com/local/writereview?placeid=..."
+                      className="flex-1 min-h-[44px] py-2 px-3 text-base sm:text-sm rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514] font-mono placeholder-[#161514]/45"
                       dir="ltr"
                     />
+                    {isShortGoogleMapsUrl(merchantGoogleMapsUrl) && (
+                      <button
+                        type="button"
+                        disabled={resolvingStoreMaps}
+                        onClick={() =>
+                          void resolveMapsUrlForTarget(
+                            merchantGoogleMapsUrl,
+                            "MAIN",
+                            true
+                          )
+                        }
+                        className="min-h-[44px] px-3 py-2 rounded-xl bg-[#161514] hover:bg-[#2A2826] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0"
+                      >
+                        {resolvingStoreMaps ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <MapPin className="w-3.5 h-3.5 text-[#F85B04]" />
+                        )}
+                        <span>
+                          {locale === "fr"
+                            ? "Extraire GPS"
+                            : locale === "es"
+                              ? "Extraer GPS"
+                              : "جلب الإحداثيات"}
+                        </span>
+                      </button>
+                    )}
                   </div>
-                  <span className="text-[9px] text-[#161514]/65 block">
-                    {locale === "fr"
-                      ? "💡 Collez un lien Google Maps et les coordonnées GPS seront extraites automatiquement."
-                      : locale === "es"
-                        ? "💡 Pegue un enlace de Google Maps y las coordenadas GPS se extraerán automáticamente."
-                        : "💡 الصق رابط موقعك من Google Maps وسيتم استخراج الإحداثيات تلقائياً حتى لو كنت في المنزل."}
-                  </span>
                 </div>
 
                 {/* Coordinates Inputs: Latitude & Longitude */}
@@ -4086,7 +4285,7 @@ export default function MerchantDashboardClient({
                       value={merchantLatitude}
                       onChange={(e) => setMerchantLatitude(e.target.value)}
                       placeholder="33.5731"
-                      className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono text-[#161514]"
+                      className="w-full min-h-[44px] py-2 px-3 text-base sm:text-sm rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono tabular-nums text-[#161514]"
                       dir="ltr"
                     />
                   </div>
@@ -4102,7 +4301,7 @@ export default function MerchantDashboardClient({
                       value={merchantLongitude}
                       onChange={(e) => setMerchantLongitude(e.target.value)}
                       placeholder="-7.5898"
-                      className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono text-[#161514]"
+                      className="w-full min-h-[44px] py-2 px-3 text-base sm:text-sm rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono tabular-nums text-[#161514]"
                       dir="ltr"
                     />
                   </div>
@@ -4714,21 +4913,50 @@ export default function MerchantDashboardClient({
                     </a>
                   ) : null}
                 </div>
-                <input
-                  id="branch-gmaps-input"
-                  type="url"
-                  value={branchGmapsInput}
-                  onChange={(e) => handleBranchGoogleMapsUrlChange(e.target.value)}
-                  placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
-                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514] placeholder-[#161514]/45"
-                  dir="ltr"
-                />
-                <span className="text-[9px] text-[#161514]/65 block">
-                  💡 {locale === "fr"
-                    ? "Collez le lien Google Maps du point de vente pour extraire les coordonnées GPS automatiquement."
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    id="branch-gmaps-input"
+                    type="url"
+                    value={branchGmapsInput}
+                    onChange={(e) => handleBranchGoogleMapsUrlChange(e.target.value)}
+                    placeholder="https://maps.app.goo.gl/... / https://www.google.com/maps/..."
+                    className="flex-1 min-h-[44px] py-2 px-3 text-base sm:text-sm rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514] font-mono placeholder-[#161514]/45"
+                    dir="ltr"
+                  />
+                  <button
+                    type="button"
+                    disabled={resolvingBranchMaps || !branchGmapsInput.trim()}
+                    onClick={() =>
+                      void resolveMapsUrlForTarget(branchGmapsInput, "BRANCH", true)
+                    }
+                    className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F85B04] hover:bg-[#DA5004] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {resolvingBranchMaps ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    <span>
+                      {resolvingBranchMaps
+                        ? locale === "fr"
+                          ? "Extraction..."
+                          : locale === "es"
+                            ? "Extrayendo..."
+                            : "جاري الاستخراج..."
+                        : locale === "fr"
+                          ? "Extraire GPS"
+                          : locale === "es"
+                            ? "Extraer GPS"
+                            : "استخراج الإحداثيات"}
+                    </span>
+                  </button>
+                </div>
+                <span className="text-[10px] text-[#161514]/65 block">
+                  {locale === "fr"
+                    ? "Collez le lien Google Maps (même court maps.app.goo.gl) pour extraire les coordonnées GPS automatiquement."
                     : locale === "es"
-                      ? "Pegue el enlace de Google Maps de la sucursal para extraer las coordenadas automáticamente."
-                      : "الصق رابط Google Maps الخاص بالفرع وسيتم استخراج الإحداثيات تلقائياً."}
+                      ? "Pega el enlace de Google Maps (incluso maps.app.goo.gl) para extraer las coordenadas automáticamente."
+                      : "الصق رابط Google Maps الخاص بالفرع (يدعم maps.app.goo.gl) وسيتم استخراج الإحداثيات تلقائياً."}
                 </span>
               </div>
 
@@ -4745,7 +4973,7 @@ export default function MerchantDashboardClient({
                     inputMode="decimal"
                     value={branchLatInput}
                     onChange={(e) => setBranchLatInput(e.target.value)}
-                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono text-[#161514]"
+                    className="w-full min-h-[44px] py-2 px-3 text-base sm:text-sm rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono tabular-nums text-[#161514]"
                     dir="ltr"
                   />
                 </div>
@@ -4760,7 +4988,7 @@ export default function MerchantDashboardClient({
                     inputMode="decimal"
                     value={branchLngInput}
                     onChange={(e) => setBranchLngInput(e.target.value)}
-                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono text-[#161514]"
+                    className="w-full min-h-[44px] py-2 px-3 text-base sm:text-sm rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono tabular-nums text-[#161514]"
                     dir="ltr"
                   />
                 </div>

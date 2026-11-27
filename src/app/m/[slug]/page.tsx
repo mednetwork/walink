@@ -16,6 +16,8 @@ import { formatBillingMonth } from "@/lib/pricing";
 import { getCachedMerchantPublicBySlug } from "@/lib/cache";
 import MerchantDashboardClient from "@/components/MerchantDashboardClient";
 
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -198,8 +200,8 @@ export default async function MerchantDashboardPage({ params }: MerchantPageProp
     welcomeCashback: merchant.welcomeCashback,
     minCashbackRedeem: merchant.minCashbackRedeem,
     currency: merchant.currency,
-    latitude: merchant.latitude ?? 33.5731,
-    longitude: merchant.longitude ?? -7.5898,
+    latitude: merchant.latitude ?? undefined,
+    longitude: merchant.longitude ?? undefined,
     googleMapsUrl: merchant.googleMapsUrl || "",
     radarMessage: merchant.radarMessage || "أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة.",
     promoTemplates: isSessionValid ? merchant.promoTemplates || "[]" : "[]",
