@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ShieldCheck,
   Menu,
   PlusCircle,
   LayoutDashboard,
@@ -169,9 +168,14 @@ export default function AdminLayout({
             </button>
 
             <Link href="/admin" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#F85B04] flex items-center justify-center text-white shadow-sm font-bold">
-                <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-mark.png"
+                alt="Walink Logo"
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-xl object-contain shadow-sm"
+              />
               <span className="font-bold text-sm tracking-tight text-white">
                 walink<span className="text-[#FA7F3B]">.ma</span>
               </span>

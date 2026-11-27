@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Sparkles,
   Smartphone,
   Gift,
   Coins,
@@ -334,9 +333,14 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         {/* Top Header Badge & Language Pill */}
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F85B04]/10 border border-[#F85B04]/25 text-[#DA5004] text-xs font-bold tracking-tight shadow-xs">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[#F9742A] to-[#F85B04] flex items-center justify-center text-white flex-shrink-0 shadow-xs">
-              <Sparkles className="w-2.5 h-2.5" />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-mark.png"
+              alt="Walink"
+              width={20}
+              height={20}
+              className="w-5 h-5 rounded-md object-contain flex-shrink-0"
+            />
             <span dir="ltr" className="font-mono text-[13px] font-extrabold text-[#161514] tracking-tight">
               walink<span className="text-[#F85B04]">.ma</span>
             </span>

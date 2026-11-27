@@ -189,8 +189,8 @@ export function buildLoyaltyClass(
     });
   }
 
-  // Google Wallet requires public HTTPS logo
-  const logoUrl = "https://walink.ma/icon-512.png";
+  // Google Wallet requires public HTTPS logo (cache-busted for new brand logo)
+  const logoUrl = "https://walink.ma/icon-512.png?v=2";
 
   return {
     id: classId,

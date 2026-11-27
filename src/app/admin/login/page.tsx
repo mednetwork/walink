@@ -137,9 +137,14 @@ function LoginFormContent() {
             className="flex items-center gap-2.5 group transition-transform active:scale-95 min-h-[44px]"
             aria-label="Walink.ma Homepage"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F85B04] text-base font-black text-white shadow-[0_3px_0_#C14703] transition-transform group-hover:scale-105">
-              W
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-mark.png"
+              alt="Walink Logo"
+              width={36}
+              height={36}
+              className="w-9 h-9 rounded-xl object-contain shadow-sm transition-transform group-hover:scale-105"
+            />
 
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-xl tracking-tight text-white">
@@ -203,21 +208,16 @@ function LoginFormContent() {
           <div className="bg-white border border-[#161514]/10 border-t-4 border-t-[#F85B04] rounded-3xl p-7 sm:p-9 shadow-[0_12px_36px_-10px_rgba(22,21,20,0.12)] relative transition-all">
             {/* Brand Logo & Title Area */}
             <div className="text-center mb-7">
-              {/* Shield Icon Badge */}
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#F85B04] text-white shadow-[0_4px_0_#C14703] mb-4 ring-4 ring-[#F85B04]/15">
-                <svg
-                  className="w-7 h-7"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
+              {/* Full High-Contrast Wordmark Lockup on Pure White Card */}
+              <div className="flex justify-center mb-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-full.png"
+                  alt="Walink"
+                  width={184}
+                  height={60}
+                  className="h-14 w-auto object-contain"
+                />
               </div>
 
               {/* Title & Badge */}

@@ -64,8 +64,18 @@ export default async function StandRedirectPage({ params }: StandPageProps) {
       className="min-h-screen bg-[#EFEAE4] text-[#161514] flex flex-col justify-between p-4 sm:p-6 selection:bg-[#F85B04] selection:text-white"
     >
       <div className="my-auto w-full max-w-[430px] mx-auto bg-white rounded-3xl p-6 sm:p-8 border border-[#161514]/10 shadow-sm text-center space-y-5">
-        <div className="w-16 h-16 rounded-2xl bg-[#F85B04] text-white mx-auto flex items-center justify-center shadow-[0_4px_0_#C14703]">
-          <QrCode className="w-8 h-8" />
+        <div className="relative w-16 h-16 mx-auto">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-mark.png"
+            alt="Digital Loyalty Pass"
+            width={64}
+            height={64}
+            className="w-16 h-16 rounded-2xl object-contain shadow-[0_4px_0_#C14703]"
+          />
+          <span className="absolute -bottom-1.5 -end-1.5 w-7 h-7 rounded-xl bg-[#161514] text-white flex items-center justify-center border-2 border-white shadow-sm">
+            <QrCode className="w-3.5 h-3.5" aria-hidden="true" />
+          </span>
         </div>
 
         <div className="space-y-2">

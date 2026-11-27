@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ShieldCheck,
   LayoutDashboard,
   Receipt,
   QrCode,
@@ -159,9 +158,14 @@ export default function AdminSidebarNav({
           onClick={onClose}
           className="flex items-center gap-3 group"
         >
-          <div className="w-10 h-10 rounded-2xl bg-[#F85B04] flex items-center justify-center text-white font-bold shadow-[0_3px_0_#C14703] group-hover:scale-105 transition-transform duration-200 flex-shrink-0">
-            <ShieldCheck className="w-6 h-6 stroke-[2.5]" />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-mark.png"
+            alt="Walink Logo"
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-2xl object-contain shadow-sm group-hover:scale-105 transition-transform duration-200 flex-shrink-0"
+          />
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <span className="font-black text-lg text-white tracking-tight">

@@ -1,5 +1,5 @@
 // Walink PWA Service Worker (walink.ma & wclient.walink.ma)
-const CACHE_NAME = "walink-v3";
+const CACHE_NAME = "walink-v4";
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -23,8 +23,8 @@ self.addEventListener("push", (event) => {
   let data = {
     title: "Walink • والينك",
     body: "لديك عرض أو تحديث جديد على بطاقة الوفاء الخاصة بك",
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
+    icon: "/icon-192.png?v=2",
+    badge: "/icon-192.png?v=2",
     tag: "walink-promo",
     renotify: true,
     dir: "rtl",
@@ -46,8 +46,8 @@ self.addEventListener("push", (event) => {
 
   const options = {
     body: data.body,
-    icon: data.icon || "/icon-192.png",
-    badge: data.badge || "/icon-192.png",
+    icon: data.icon || "/icon-192.png?v=2",
+    badge: data.badge || "/icon-192.png?v=2",
     tag: data.tag || "walink-promo",
     renotify: data.renotify !== false,
     dir: data.dir || "rtl",

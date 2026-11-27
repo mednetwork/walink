@@ -147,7 +147,17 @@ export default function StandPreviewModal({
 
             {/* Footer Stand Platform Line */}
             <div className="mt-4 pt-3 border-t border-[#161514]/10 w-full flex items-center justify-between text-[10px] text-[#161514]/55 font-mono">
-              <span>walink.ma</span>
+              <span className="inline-flex items-center gap-1.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-mark.png"
+                  alt="Walink"
+                  width={16}
+                  height={16}
+                  className="w-4 h-4 rounded object-contain inline-block"
+                />
+                <span>walink.ma</span>
+              </span>
               <span>والينك</span>
             </div>
           </div>

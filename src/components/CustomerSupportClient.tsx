@@ -14,7 +14,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
-  Store,
   CreditCard,
   ExternalLink,
 } from "lucide-react";
@@ -270,9 +269,14 @@ ${message.trim()}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2.5 group min-h-[44px]">
-              <div className="w-9 h-9 rounded-2xl bg-[#F85B04] flex items-center justify-center text-white shadow-[0_3px_0_#C14703] group-hover:scale-105 transition-transform">
-                <Store className="w-5 h-5" />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-mark.png"
+                alt="Walink Logo"
+                width={36}
+                height={36}
+                className="w-9 h-9 rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform"
+              />
               <div className="flex flex-col">
                 <span className="font-bold text-base tracking-tight text-[#161514] flex items-center gap-1.5">
                   Walink <span className="text-xs px-1.5 py-0.5 rounded-md bg-[#F85B04]/10 text-[#DA5004] font-mono">SUPPORT</span>

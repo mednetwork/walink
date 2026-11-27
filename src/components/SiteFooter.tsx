@@ -27,9 +27,14 @@ export default function SiteFooter() {
               className="inline-flex items-center gap-2.5 text-white no-underline"
               aria-label="Walink.ma"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F85B04] text-lg font-black text-white shadow-sm">
-                W
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-mark.png"
+                alt="Walink Logo"
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-xl object-contain shadow-sm"
+              />
               <span className="text-lg font-extrabold tracking-tight text-white">
                 walink.ma
               </span>

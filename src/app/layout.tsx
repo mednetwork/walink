@@ -14,11 +14,28 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://walink.ma"),
   title: "Walink (والينك) | بطاقات الوفاء الرقمية للمحلات التجارية بالمغرب",
   description:
     "المنصة المغربية الأولى لبطاقات الوفاء الذكية عبر Apple Wallet و Google Wallet و Web Pass مع إشعارات الرادار والـ Geofencing ومراجعات خرائط جوجل.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico?v=2" },
+      { url: "/favicon-16x16.png?v=2", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png?v=2", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png?v=2", sizes: "180x180", type: "image/png" }],
+  },
+  openGraph: {
+    title: "Walink (والينك) | بطاقات الوفاء الرقمية بالمغرب",
+    description:
+      "بطاقة وفاء رقمية في Apple Wallet و Google Wallet بدون تطبيقات — بإشعارات شاشة القفل ورادار 100 متر.",
+    images: [{ url: "/og-image.png?v=2", width: 1200, height: 630, alt: "Walink Loyalty Platform" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Walink (والينك) | بطاقات الوفاء الرقمية بالمغرب",
+    images: ["/og-image.png?v=2"],
   },
 };
 

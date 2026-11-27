@@ -722,9 +722,14 @@ export default function LandingPage() {
             className="inline-flex min-h-[44px] items-center gap-2.5 text-white no-underline shrink-0"
             aria-label="Walink.ma"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#161514] text-base font-black text-white">
-              W
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-mark.png"
+              alt="Walink Logo"
+              width={36}
+              height={36}
+              className="h-9 w-9 rounded-xl bg-white p-0.5 object-contain shadow-sm"
+            />
             <b className="lat text-base font-extrabold tracking-tight text-white">
               walink<i className="not-italic text-white/75">.ma</i>
             </b>
