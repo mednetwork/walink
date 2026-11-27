@@ -351,3 +351,38 @@ label {
 .animate-shrink-progress {
   animation: shrink-progress 3s linear forwards;
 }
+
+
+/* ==========================================================================
+   Fidelix-Style Warm Coral & Cream Identity Overrides (Public Pages)
+   ========================================================================== */
+:root {
+  --coral: #F85B04;
+  --coral-dark: #C14703;
+  --coral-light: #FA7F3B;
+  --coral-text: #DA5004;
+  --coral-flame: #F9742A;
+  --ink: #161514;
+  --ink-soft: #2A2826;
+  --cream-page: #EFEAE4;
+  --public-cream: #EFEAE4;
+  --public-cream-deep: #E5DFD7;
+  --public-surface: #FFFFFF;
+  --public-ink: #161514;
+  --public-ink-muted: rgba(22, 21, 20, 0.65);
+  --public-border: rgba(22, 21, 20, 0.08);
+  --wa-emerald: #F85B04;
+  --wa-emerald-light: #FA7F3B;
+  --wa-emerald-dark: #C14703;
+}
+
+html {
+  overflow-x: clip;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

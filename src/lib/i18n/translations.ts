@@ -562,6 +562,140 @@ export interface TranslationDictionary {
     dateSample: string;
     timeNow: string;
   };
+  landing: {
+    navFeatures: string;
+    navSteps: string;
+    navPricing: string;
+    navFaq: string;
+    navDemo: string;
+    heroEyebrow: string;
+    heroTitle1: string;
+    heroTitleAccent: string;
+    heroTitle2: string;
+    heroSubtitle: string;
+    heroStorePlaceholder: string;
+    heroStartBtn: string;
+    heroDemoBtn: string;
+    heroTrustLine: string;
+    heroStickerLeft: string;
+    heroStickerRight: string;
+    painEyebrow: string;
+    painTitle: string;
+    painSubtitle: string;
+    beforeTitle: string;
+    before1: string;
+    before2: string;
+    before3: string;
+    before4: string;
+    afterTitle: string;
+    after1: string;
+    after2: string;
+    after3: string;
+    after4: string;
+    roiEyebrow: string;
+    roiTitle: string;
+    roiSubtitle: string;
+    roiClientsLabel: string;
+    roiTicketLabel: string;
+    roiRetentionLabel: string;
+    roiLiftLabel: string;
+    roiMonthlyGain: string;
+    roiYearlyGain: string;
+    roiCostLabel: string;
+    roiCostSub: string;
+    roiNetMonthly: string;
+    roiPaybackTag: string;
+    roiCta: string;
+    midEyebrow: string;
+    midTitle: string;
+    midPoint1Title: string;
+    midPoint1Desc: string;
+    midPoint2Title: string;
+    midPoint2Desc: string;
+    colEyebrow: string;
+    colTitle: string;
+    col1Kicker: string;
+    col1Heading: string;
+    col1Item1Title: string;
+    col1Item1Desc: string;
+    col1Item2Title: string;
+    col1Item2Desc: string;
+    col1Item3Title: string;
+    col1Item3Desc: string;
+    col1Item4Title: string;
+    col1Item4Desc: string;
+    col2Kicker: string;
+    col2Heading: string;
+    col2Item1Title: string;
+    col2Item1Desc: string;
+    col2Item2Title: string;
+    col2Item2Desc: string;
+    col2Item3Title: string;
+    col2Item3Desc: string;
+    col2Item4Title: string;
+    col2Item4Desc: string;
+    col3Kicker: string;
+    col3Heading: string;
+    col3Item1Title: string;
+    col3Item1Desc: string;
+    col3Item2Title: string;
+    col3Item2Desc: string;
+    col3Item3Title: string;
+    col3Item3Desc: string;
+    col3Item4Title: string;
+    col3Item4Desc: string;
+    stepsEyebrow: string;
+    stepsTitle: string;
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    step3Title: string;
+    step3Desc: string;
+    statsEyebrow: string;
+    statsTitle: string;
+    statsSubtitle: string;
+    stat1Val: string;
+    stat1Label: string;
+    stat1Source: string;
+    stat2Val: string;
+    stat2Label: string;
+    stat2Source: string;
+    stat3Val: string;
+    stat3Label: string;
+    stat3Source: string;
+    stat4Val: string;
+    stat4Label: string;
+    stat4Source: string;
+    testiEyebrow: string;
+    testiTitle: string;
+    testi1Quote: string;
+    testi1Author: string;
+    testi1Role: string;
+    testi2Quote: string;
+    testi2Author: string;
+    testi2Role: string;
+    testi3Quote: string;
+    testi3Author: string;
+    testi3Role: string;
+    testi4Quote: string;
+    testi4Author: string;
+    testi4Role: string;
+    testi5Quote: string;
+    testi5Author: string;
+    testi5Role: string;
+    pricingEyebrow: string;
+    pricingUnit: string;
+    pricingSetupTag: string;
+    pricingBranchCountLabel: string;
+    pricingBranchCalcNote: string;
+    faqEyebrow: string;
+    faq7Q: string;
+    faq7A: string;
+    faq8Q: string;
+    faq8A: string;
+    finalBtnSub: string;
+  };
 }
 
 export const translations: Record<Locale, TranslationDictionary> = {
@@ -1168,6 +1302,140 @@ export const translations: Record<Locale, TranslationDictionary> = {
       dateSample: "الأحد، 15 نوفمبر",
       timeNow: "الآن",
     },
+    landing: {
+      navFeatures: "المميزات",
+      navSteps: "كيف يعمل",
+      navPricing: "الأسعار",
+      navFaq: "الأسئلة",
+      navDemo: "جرّب الديمو",
+      heroEyebrow: "نظام الوفاء الذكي في المغرب 🇲🇦",
+      heroTitle1: "خلي زبناءك",
+      heroTitleAccent: "يرجعو ديما",
+      heroTitle2: "بإشعارات مباشرة على الهاتف",
+      heroSubtitle: "بطاقة وفاء رقمية في Apple Wallet و Google Wallet أو على الشاشة الرئيسية. بدون تحميل أي تطبيق — وبتنبيهات شاشة القفل ورادار القرب 100 متر.",
+      heroStorePlaceholder: "اسم متجرك (مثال: Café Atlas)",
+      heroStartBtn: "ابدأ مجاناً",
+      heroDemoBtn: "جرّب البطاقة الحية",
+      heroTrustLine: "جاهز في 48 ساعة • ستاند الكاونتر NFC + QR • يشتغل حتى مع رصيد *6",
+      heroStickerLeft: "Apple & Google Wallet",
+      heroStickerRight: "سكان سريع 3 ثوانٍ",
+      painEyebrow: "علاش الزبناء كينساوك؟",
+      painTitle: "البطاقات الورقية كتضيع والرسائل كتتنسى",
+      painSubtitle: "الفرق بين التسيير التقليدي وبين بطاقة وفاء ذكية كتبقى في جيب كل زبون.",
+      beforeTitle: "الوضع الحالي بلا Walink",
+      before1: "بطاقات الكرطون كتضيع أو كتتنسى في الدار وما كترجعش الزبون.",
+      before2: "تكلفة مستمرة في طباعة البطاقات بدون أي بيانات عن الزبناء.",
+      before3: "منشورات السوشيال ميديا كتضيع وسط الخوارزميات وما كتوصلش للكل.",
+      before4: "طرق التسويق التقليدية بحال الإيميل ما بقا كيفتحها حد.",
+      afterTitle: "النتيجة مع نظام Walink",
+      after1: "البطاقة كتنزل في Wallet ديال iPhone و Android أو الشاشة الرئيسية في 5 ثوانٍ.",
+      after2: "إشعارات فورية على شاشة القفل (Push + APNs) بدون إيميل ولا إزعاج.",
+      after3: "رادار 100 متر كيفكر الزبون أوتوماتيكياً فاش يدوز قريب من محلك.",
+      after4: "دعم كامل لزبناء باقة التواصل الاجتماعي (*6) عبر رابط الواتساب التلقائي.",
+      roiEyebrow: "احسبها بالورقة والستيلو",
+      roiTitle: "أرباح إضافية مضمونة لمتجرك",
+      roiSubtitle: "حرّك المؤشرات وشوف شحال كتجيب ليك باقة النمو (199 درهم/شهر) من عائد إضافي.",
+      roiClientsLabel: "عدد الزبناء فاليوم",
+      roiTicketLabel: "معدل السلة (درهم)",
+      roiRetentionLabel: "نسبة الزبناء اللي غادي يتسجلو",
+      roiLiftLabel: "الزيادة في الزيارات الشهرية",
+      roiMonthlyGain: "الدخل الإضافي الشهري المتوقع",
+      roiYearlyGain: "العائد الإضافي السنوي",
+      roiCostLabel: "استثمار Walink الشهري (باقة النمو)",
+      roiCostSub: "يشمل الرادار، محرك Google Maps، وإشعارات العروض",
+      roiNetMonthly: "صافي الربح الإضافي شهرياً",
+      roiPaybackTag: "مربوح مضمون من أول أسبوع",
+      roiCta: "فعل النظام فمحلك دابا",
+      midEyebrow: "خدمة مصممة للتجار فالمغرب",
+      midTitle: "سكان بسيط فالكاونتر... والنظام كيخدم بلاصتك",
+      midPoint1Title: "إشعارات على شاشة القفل (بلا إيميل)",
+      midPoint1Desc: "بعكس المنصات اللي كتعتمد على البريد الإلكتروني، Walink كيوصل إشعارات العروض، الأختام، والكاش باك مباشرة لشاشة القفل في iPhone و Android بنسبة مشاهدة كتفوق 90%.",
+      midPoint2Title: "حل تقني لزبناء الواتساب و *6",
+      midPoint2Desc: "الزبون اللي ما عندوش انترنت مفتوح في المحل كيقدر يتوصل ببطاقته أو تحديث الأختام عبر واتساب، والبطاقة كتشتغل مع الكاشير فالكاونتر بكل سلاسة.",
+      colEyebrow: "كلشي اللي محتاجاه تجارتك",
+      colTitle: "كل الأدوات باش تخلي زبناءك يرجعو",
+      col1Kicker: "الإشعارات الذكية",
+      col1Heading: "تنبيهات شاشة القفل 24/7",
+      col1Item1Title: "Apple Wallet و Google Wallet",
+      col1Item1Desc: "إشعارات أصلية من النظام مباشرة على شاشة القفل عند كل ختم أو عرض جديد.",
+      col1Item2Title: "تثبيت على الشاشة الرئيسية (Web Push)",
+      col1Item2Desc: "خيار بديل في المتصفح كيبعت إشعارات فورية حتى للأجهزة اللي ما فيهاش Wallet.",
+      col1Item3Title: "رادار القرب الجغرافي 100 متر",
+      col1Item3Desc: "يفيق شاشة هاتف الزبون فاش يقرب لمحلك ويعرض رسالة ترحيبية مخصصة.",
+      col1Item4Title: "استرجاع تلقائي للغائبين",
+      col1Item4Desc: "رسائل إشعارية ذكية كترجع الزبون إلى غاب 15 يوم بعرض أو ختم هدية.",
+      col2Kicker: "تجربة الكاونتر",
+      col2Heading: "سريعة، عملية، وبلا تطبيق",
+      col2Item1Title: "سكان QR في 3 ثوانٍ",
+      col2Item1Desc: "الكاشير كيمسح بطاقة الزبون بكاميرا الهاتف العادي أو الطابليت بدون أي أجهزة غالية.",
+      col2Item2Title: "نظام الأختام أو الكاش باك",
+      col2Item2Desc: "اختر بين جمع الأختام (مثلاً 6 زيارات = قهوة مجانية) أو استرداد نقدي بنسبة مئوية.",
+      col2Item3Title: "ستاند كاونتر NFC + QR فاخر",
+      col2Item3Desc: "ستاند أكريليك مخصص بهوية علامتك، غير يقرب الزبون هاتفو وتنفتح البطاقة فوراً.",
+      col2Item4Title: "رفع تقييمات Google Maps",
+      col2Item4Desc: "إشعار أوتوماتيكي بعد الزيارة كيشجع الزبون يخلي تقييم 5 نجوم فخريطة جوجل.",
+      col3Kicker: "لوحة التحكم",
+      col3Heading: "تحكم كامل في كل الفروع",
+      col3Item1Title: "لوحة مستقلة لكل متجر",
+      col3Item1Desc: "تبع عدد الزوار، المكافآت المسلمة، وقائمة الزبناء الأوفياء فـ الوقت الحقيقي.",
+      col3Item2Title: "حسابات خاصة بالكاشير (PIN)",
+      col3Item2Desc: "عطي كل موظف كود خاص بيه باش تراقب عمليات المسح وتمنع التكرار العشوائي.",
+      col3Item3Title: "إدارة الفروع المتعددة",
+      col3Item3Desc: "ربط أكثر من محل بنفس البطاقة مع إحصائيات مفصلة ومقارنة الأداء لكل فرع.",
+      col3Item4Title: "مشاركة تلقائية على واتساب (*6)",
+      col3Item4Desc: "نظام احتياطي كيسمح للزبون باستلام رابط بطاقته وحساب نقاطه حتى عبر الواتساب.",
+      stepsEyebrow: "ساهلة ماهلة",
+      stepsTitle: "طلق برنامج الولاء ديالك في 3 خطوات",
+      step1Title: "صمم بطاقتك واختر العرض",
+      step1Desc: "كندخلو اللوغو والألوان ديالك، ونحددو نظام الأختام أو الكاش باك اللي كيناسب متجرك.",
+      step2Title: "استلم ستاند الكاونتر في 48 ساعة",
+      step2Desc: "كنصيفطو ليك ستاند NFC + QR جاهز ومربوط بحساب التاجر ديالك لأي مدينة فالمغرب.",
+      step3Title: "سجّل الزبناء وابعت الإشعارات",
+      step3Desc: "كل زبون كيسكانيه كيدخل للنظام وتقدر تصيفط ليه إشعارات شاشة القفل فـ أي وقت.",
+      statsEyebrow: "أرقام حقيقية فالسوق",
+      statsTitle: "الوفاء كيزيد المداخيل بشكل ملموس",
+      statsSubtitle: "الاحتفاظ بالزبون الحالي أرخص وأربح بكتير من جلب زبون جديد.",
+      stat1Val: "5x",
+      stat1Label: "جلب زبون جديد أغلى 5 مرات من الاحتفاظ بالزبون الحالي",
+      stat1Source: "Harvard Business Review",
+      stat2Val: "+25-95%",
+      stat2Label: "زيادة نسبة الاحتفاظ بـ 5% كترفع الأرباح حتى لـ 95%",
+      stat2Source: "Bain & Company",
+      stat3Val: "62%",
+      stat3Label: "من زبناء المحلات كيجيو أكثر إلى كان عندهم برنامج وفاء بسيط",
+      stat3Source: "دراسات سلوك المستهلك",
+      stat4Val: "80/20",
+      stat4Label: "80% من المبيعات المستقبلية كيجيو من 20% من الزبناء الأوفياء",
+      stat4Source: "قاعدة باريتو للتجارة",
+      testiEyebrow: "آراء التجار",
+      testiTitle: "أصحاب مقاهي ومتاجر كيخدمو بـ Walink يومياً",
+      testi1Quote: "الزبناء عجبهم الحال حيت ما كيتيليشارجيو حتى تطبيق. غير كيمسحو QR فوق الطاولة والبطاقة كتبقى في الآيفون، والرادار فاش كيدوزو قدامنا كيردهم للمحل.",
+      testi1Author: "ياسين بناني",
+      testi1Role: "صاحب مقهى • الدار البيضاء",
+      testi2Quote: "من نهار بدينا كنعطيو الكاش باك والبطاقة في Google Wallet و Apple Wallet، معدل رجوع الكليان في الأسبوع زاد بزاف، وحتى تقييماتنا في Google Maps طلعات.",
+      testi2Author: "سلمى العلمي",
+      testi2Role: "صالون تجميل • الرباط",
+      testi3Quote: "أحسن حاجة هي الإشعارات المباشرة على الشاشة الرئيسية والواتساب. فاش درنا عرض نهاية الأسبوع وبعثنا Notification، جاونا 24 كليان فـ نفس النهار.",
+      testi3Author: "أمين التازي",
+      testi3Role: "مطعم برغر • مراكش",
+      testi4Quote: "كانو عندنا بطاقات الكرطون وكيتقطعو ديما. دابا عندي 2 فروع مربوطين بنفس النظام، وكل فرع عندو الكاشير ديالو بكود PIN الخاص.",
+      testi4Author: "كريم الادريسي",
+      testi4Role: "مخبزة وحلويات • طنجة",
+      testi5Quote: "حتى الناس اللي عندهم غير باقة *6 قدرنا نتعاونو معاهم عبر الواتساب والستاند ديال الكاونتر. خدمة الدعم كيجاوبو دغيا وواضحين.",
+      testi5Author: "نادية السوسي",
+      testi5Role: "محل عطور وتجميل • أكادير",
+      pricingEyebrow: "أثمنة واضحة بلا تعقيد",
+      pricingUnit: "درهم / شهر",
+      pricingSetupTag: "+ 300 درهم رسوم التثبيت والإعداد لمرة واحدة (تشمل التصميم وستاند NFC + QR)",
+      pricingBranchCountLabel: "عدد الفروع:",
+      pricingBranchCalcNote: "199 درهم للفرع الرئيسي + 100 درهم لكل فرع إضافي",
+      faqEyebrow: "كل الإجابات اللي كتقلب عليها",
+      faq7Q: "هل يشتغل النظام للزبناء اللي عندهم غير رصيد السوشيال ميديا (*6)؟",
+      faq7A: "نعم! بالإضافة إلى ستاند المحل الذي يدعم التسجيل السريع عند الدفع، يمكن إرسال رابط البطاقة للزبون عبر الواتساب ليفتحها ويتابع نقاطه وإشعاراته بمجرد الاتصال بالواي فاي أو الانترنت.",
+      faq8Q: "ما الفرق بين التثبيت في Wallet والتثبيت على الشاشة الرئيسية؟",
+      faq8A: "الزبون له كامل الحرية! في Apple Wallet و Google Wallet تظهر البطاقة مع رادار القرب 100م، وفي الشاشة الرئيسية (PWA) يتلقى الزبون إشعارات Web Push واضحة مباشرة على شاشة هاتفه حتى بعد فتح القفل.",
+      finalBtnSub: "بلا التزام طويل • دعم مباشر عبر واتساب • جاهز في 48 ساعة",
+    },
   },
 
   fr: {
@@ -1189,7 +1457,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
       badge: "Nouvelle génération de cartes de fidélité 🇲🇦",
       title1: "Fidélisez vos clients,",
       title2: "avec une carte digitale intelligente.",
-      desc: "Directement dans Apple Wallet et Google Wallet. Sans application à installer, sans abonnement mensuel. Cartes à tampons et cashback avec puce NFC et radar de proximité 100m sur iPhone.",
+      desc: "Directement dans Apple Wallet, Google Wallet ou sur l'écran d'accueil. Sans application à télécharger — avec notifications sur écran verrouillé, relances WhatsApp et radar de proximité 100m.",
       ctaPrimary: "Essayer la démo interactive",
       ctaSecondary: "Découvrir les offres",
       standBadge: "Présentoir comptoir NFC + QR",
@@ -1773,6 +2041,140 @@ export const translations: Record<Locale, TranslationDictionary> = {
       dateSample: "Dimanche 15 nov.",
       timeNow: "À l'instant",
     },
+    landing: {
+      navFeatures: "Fonctionnalités",
+      navSteps: "Étapes",
+      navPricing: "Tarifs",
+      navFaq: "FAQ",
+      navDemo: "Démo live",
+      heroEyebrow: "Fidélisation intelligente au Maroc 🇲🇦",
+      heroTitle1: "Faites revenir",
+      heroTitleAccent: "vos clients",
+      heroTitle2: "directement sur leur écran verrouillé",
+      heroSubtitle: "Carte de fidélité digitale dans Apple Wallet, Google Wallet ou en icône sur l'écran d'accueil. Zéro application à télécharger, notifications push instantanées et radar 100m.",
+      heroStorePlaceholder: "Nom de votre commerce (ex: Café Atlas)",
+      heroStartBtn: "Démarrer maintenant",
+      heroDemoBtn: "Tester la démo live",
+      heroTrustLine: "Prêt en 48h • Présentoir NFC + QR inclus • Compatible pass *6 WhatsApp",
+      heroStickerLeft: "Apple & Google Wallet",
+      heroStickerRight: "Scan 3 secondes",
+      painEyebrow: "Pourquoi vos clients oublient de revenir ?",
+      painTitle: "Les cartes en carton finissent à la poubelle",
+      painSubtitle: "Comparez les cartes papier classiques avec un système de fidélité vivant dans le téléphone de chaque client.",
+      beforeTitle: "Sans Walink aujourd'hui",
+      before1: "70% des cartes papier sont perdues, lavées ou oubliées à la maison.",
+      before2: "Aucune donnée sur qui revient ou qui s'éloigne depuis 15 jours.",
+      before3: "Les posts réseaux sociaux sont noyés dans l'algorithme sans atteindre vos habitués.",
+      before4: "Les emails promotionnels finissent ignorés ou en courrier indésirable.",
+      afterTitle: "Avec la solution Walink",
+      after1: "La carte s'installe en 5 secondes dans Apple/Google Wallet ou sur l'écran d'accueil.",
+      after2: "Notifications Push natives directement sur l'écran verrouillé (zéro email).",
+      after3: "Le radar GPS 100m réveille l'écran du client dès qu'il passe près de votre enseigne.",
+      after4: "Support hybride WhatsApp adapté même aux clients en forfait réseaux sociaux *6.",
+      roiEyebrow: "Faites le calcul",
+      roiTitle: "Des revenus supplémentaires mesurables",
+      roiSubtitle: "Ajustez les curseurs pour comparer le retour sur investissement face au forfait Standard à 199 DH/mois.",
+      roiClientsLabel: "Clients par jour",
+      roiTicketLabel: "Panier moyen (DH)",
+      roiRetentionLabel: "Taux d'inscription",
+      roiLiftLabel: "Visites gagnées par mois",
+      roiMonthlyGain: "Chiffre d'affaires additionnel / mois",
+      roiYearlyGain: "Gain annuel estimé",
+      roiCostLabel: "Investissement Walink (Standard)",
+      roiCostSub: "Radar 100m, avis Google et campagnes push inclus",
+      roiNetMonthly: "Bénéfice net estimé / mois",
+      roiPaybackTag: "Rentabilisé dès la 1ère semaine",
+      roiCta: "Lancer dans mon commerce",
+      midEyebrow: "Conçu pour le terrain marocain",
+      midTitle: "Un scan au comptoir... les notifications font le reste",
+      midPoint1Title: "100% Notifications Push, zéro email ignoré",
+      midPoint1Desc: "Walink n'utilise pas de newsletters par email. Vos tampons, offres et alertes arrivent en notification directe sur l'écran verrouillé iOS et Android avec un taux de visibilité maximal.",
+      midPoint2Title: "Pensé pour Wallet, PWA & clients *6",
+      midPoint2Desc: "Chaque client choisit Apple Wallet, Google Wallet ou l'installation sur l'écran d'accueil — avec envoi automatique sur WhatsApp pour rester connecté partout au Maroc.",
+      colEyebrow: "Tout ce qu'il faut",
+      colTitle: "Tous les outils pour faire revenir vos clients",
+      col1Kicker: "Notifications natives",
+      col1Heading: "Visible sur l'écran verrouillé",
+      col1Item1Title: "Apple Wallet & Google Wallet",
+      col1Item1Desc: "Cartes natives avec notifications push officielles à chaque tampon ou offre flash.",
+      col1Item2Title: "Écran d'accueil & Web Push",
+      col1Item2Desc: "Installation en 1 clic sur l'écran d'accueil pour recevoir vos alertes même hors Wallet.",
+      col1Item3Title: "Radar de proximité 100m",
+      col1Item3Desc: "Affiche votre message de bienvenue sur le smartphone quand le client passe devant chez vous.",
+      col1Item4Title: "Relance auto des clients inactifs",
+      col1Item4Desc: "Envoie une notification ciblée après 15 jours d'absence pour déclencher le retour.",
+      col2Kicker: "En caisse",
+      col2Heading: "Fluide, rapide, sans matériel",
+      col2Item1Title: "Scan QR en 3 secondes",
+      col2Item1Desc: "Votre caissier scanne avec n'importe quel smartphone ou tablette sans terminal coûteux.",
+      col2Item2Title: "Tampons ou Cashback flexible",
+      col2Item2Desc: "Configurez des visites gratuites (ex: 6e café offert) ou un pourcentage cashback cumulable.",
+      col2Item3Title: "Présentoir NFC + QR sur mesure",
+      col2Item3Desc: "Chevalet acrylique aux couleurs de votre marque livré prêt à poser sur votre comptoir.",
+      col2Item4Title: "Booster d'avis Google Maps",
+      col2Item4Desc: "Invite automatiquement vos clients satisfaits à laisser 5 étoiles après leur passage.",
+      col3Kicker: "Pilotage gérant",
+      col3Heading: "Contrôle total multi-équipes",
+      col3Item1Title: "Tableau de bord indépendant",
+      col3Item1Desc: "Suivez en temps réel vos scans, nouveaux membres et récompenses attribuées.",
+      col3Item2Title: "Codes PIN par caissier",
+      col3Item2Desc: "Traçabilité de chaque employé en caisse avec protection anti-doublon configurable.",
+      col3Item3Title: "Gestion Multi-Succursales",
+      col3Item3Desc: "Connectez plusieurs points de vente sur la même carte et comparez leurs performances.",
+      col3Item4Title: "Relais WhatsApp intelligent",
+      col3Item4Desc: "Envoi du lien de carte et suivi via WhatsApp pour accompagner chaque profil client.",
+      stepsEyebrow: "En toute simplicité",
+      stepsTitle: "Lancez votre programme en 3 étapes",
+      step1Title: "Personnalisez votre carte",
+      step1Desc: "Nous intégrons votre logo, vos couleurs et vos règles de tampons ou cashback en 48h.",
+      step2Title: "Recevez votre présentoir NFC + QR",
+      step2Desc: "Livraison gratuite partout au Maroc avec formation rapide pour votre équipe caisse.",
+      step3Title: "Scannez et notifiez vos clients",
+      step3Desc: "Chaque passage renforce votre base client et déclenche vos alertes écran verrouillé.",
+      statsEyebrow: "Preuves du secteur",
+      statsTitle: "La fidélisation multiplie la rentabilité",
+      statsSubtitle: "Faire revenir un client existant coûte bien moins cher que d'en conquérir un nouveau.",
+      stat1Val: "5x",
+      stat1Label: "Acquérir un nouveau client coûte 5× plus cher que d'en fidéliser un",
+      stat1Source: "Harvard Business Review",
+      stat2Val: "+25-95%",
+      stat2Label: "+5% de rétention peut augmenter les profits de 25% à 95%",
+      stat2Source: "Bain & Company",
+      stat3Val: "62%",
+      stat3Label: "Des consommateurs reviennent plus souvent grâce à une carte simple",
+      stat3Source: "Études retail locales",
+      stat4Val: "80/20",
+      stat4Label: "80% du chiffre d'affaires vient des 20% de clients les plus réguliers",
+      stat4Source: "Loi de Pareto",
+      testiEyebrow: "Ils utilisent Walink",
+      testiTitle: "Ce que disent les commerçants au Maroc",
+      testi1Quote: "Les clients adorent car il n'y a aucune appli à installer. Ils scannent au comptoir et le radar 100m les fait revenir quand ils passent dans le quartier.",
+      testi1Author: "Yassine Bennani",
+      testi1Role: "Gérant de Café • Casablanca",
+      testi2Quote: "Depuis que nous avons activé les notifications Apple & Google Wallet, nos clientes reviennent deux fois plus souvent sans avoir à envoyer d'emails ou de SMS coûteux.",
+      testi2Author: "Salma Alami",
+      testi2Role: "Institut de Beauté • Rabat",
+      testi3Quote: "Nous avons envoyé une notification push pour notre menu du week-end et 24 clients habituels sont venus le jour même.",
+      testi3Author: "Amine Tazi",
+      testi3Role: "Burger & Street Food • Marrakech",
+      testi4Quote: "Nos deux boulangeries partagent maintenant la même base client avec un accès caissier sécurisé par code PIN pour chaque équipe.",
+      testi4Author: "Karim Idrissi",
+      testi4Role: "Boulangerie Pâtisserie • Tanger",
+      testi5Quote: "Le support WhatsApp est ultra réactif et l'installation sur l'écran d'accueil permet à tous nos clients de voir leurs notifications instantanément.",
+      testi5Author: "Nadia Soussi",
+      testi5Role: "Parfumerie & Soins • Agadir",
+      pricingEyebrow: "Un tarif clair, par établissement",
+      pricingUnit: "DH / mois",
+      pricingSetupTag: "+ 300 DH d'installation unique (design sur mesure + présentoir NFC & QR inclus)",
+      pricingBranchCountLabel: "Succursales :",
+      pricingBranchCalcNote: "199 DH de base + 100 DH par succursale supplémentaire",
+      faqEyebrow: "Tout savoir avant de démarrer",
+      faq7Q: "Le système fonctionne-t-il pour les clients ayant un forfait réseaux sociaux (*6) ?",
+      faq7A: "Oui ! L'inscription se fait rapidement au comptoir et le lien de carte peut aussi être envoyé directement sur WhatsApp pour qu'ils retrouvent leur carte et leurs alertes à tout moment.",
+      faq8Q: "Quelle différence entre Wallet et l'installation sur l'écran d'accueil ?",
+      faq8A: "Vos clients ont le choix : Apple Wallet / Google Wallet intègrent la carte nativement avec radar 100m, et l'ajout sur l'écran d'accueil envoie des notifications Web Push persistantes sur l'écran.",
+      finalBtnSub: "Sans engagement long terme • Support WhatsApp • Opérationnel en 48h",
+    },
   },
 
   es: {
@@ -1794,7 +2196,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
       badge: "Nueva generación de fidelización comercial 🇲🇦",
       title1: "Haz que tus clientes vuelvan,",
       title2: "con una tarjeta digital inteligente.",
-      desc: "Directamente en Apple Wallet y Google Wallet. Sin descargas de apps, sin suscripciones mensuales. Tarjetas digitales de sellos y cashback con chip NFC y radar de proximidad 100m en iPhone.",
+      desc: "Directamente en Apple Wallet, Google Wallet o en la pantalla de inicio. Sin descargas de apps — con notificaciones en pantalla bloqueada, envíos WhatsApp y radar 100m.",
       ctaPrimary: "Probar la demo interactiva",
       ctaSecondary: "Ver planes y precios",
       standBadge: "Soporte de mostrador NFC + QR",
@@ -2377,6 +2779,140 @@ export const translations: Record<Locale, TranslationDictionary> = {
       closeBtn: "Cerrar vista previa",
       dateSample: "Domingo 15 nov.",
       timeNow: "Ahora",
+    },
+    landing: {
+      navFeatures: "Funciones",
+      navSteps: "Pasos",
+      navPricing: "Precios",
+      navFaq: "FAQ",
+      navDemo: "Probar demo",
+      heroEyebrow: "Fidelización inteligente en Marruecos 🇲🇦",
+      heroTitle1: "Haz que tus clientes",
+      heroTitleAccent: "vuelvan siempre",
+      heroTitle2: "con avisos en su pantalla de bloqueo",
+      heroSubtitle: "Tarjeta de fidelización en Apple Wallet, Google Wallet o en la pantalla de inicio. Sin descargas de apps, con notificaciones push directas y radar de proximidad 100m.",
+      heroStorePlaceholder: "Nombre de tu negocio (Ej: Café Atlas)",
+      heroStartBtn: "Empezar ahora",
+      heroDemoBtn: "Probar demo en vivo",
+      heroTrustLine: "Listo en 48h • Soporte NFC + QR incluido • Compatible con WhatsApp *6",
+      heroStickerLeft: "Apple & Google Wallet",
+      heroStickerRight: "Escaneo en 3 segundos",
+      painEyebrow: "¿Por qué no vuelven tus clientes?",
+      painTitle: "Las tarjetas de papel se pierden y nadie lee emails",
+      painSubtitle: "Compara el sistema tradicional de cartón con una tarjeta inteligente dentro del móvil del cliente.",
+      beforeTitle: "Sin Walink hoy en día",
+      before1: "El 70% de las tarjetas de cartón se pierden o se olvidan en casa.",
+      before2: "Sin control real de qué clientes habituales dejaron de venir.",
+      before3: "Las publicaciones en redes se ocultan tras algoritmos y no llegan.",
+      before4: "Los emails promocionales acaban ignorados o en la carpeta de spam.",
+      afterTitle: "Con la solución Walink",
+      after1: "Instalación en 5 segundos en Apple/Google Wallet o en pantalla de inicio.",
+      after2: "Notificaciones Push nativas en pantalla bloqueada (cero correos electrónicos).",
+      after3: "Radar GPS 100m que despierta su pantalla cuando pasan cerca de tu local.",
+      after4: "Soporte híbrido por WhatsApp pensado incluso para clientes con tarifa *6.",
+      roiEyebrow: "Haz las cuentas",
+      roiTitle: "Ingresos adicionales reales para tu negocio",
+      roiSubtitle: "Mueve los controles y compara el retorno frente al plan Estándar de 199 DH/mes.",
+      roiClientsLabel: "Clientes al día",
+      roiTicketLabel: "Ticket medio (DH)",
+      roiRetentionLabel: "Tasa de registro",
+      roiLiftLabel: "Visitas extra al mes",
+      roiMonthlyGain: "Ingresos extra mensuales estimados",
+      roiYearlyGain: "Impacto anual estimado",
+      roiCostLabel: "Inversión Walink (Estándar)",
+      roiCostSub: "Incluye radar 100m, reseñas Google y notificaciones push",
+      roiNetMonthly: "Beneficio neto mensual estimado",
+      roiPaybackTag: "Rentable desde la primera semana",
+      roiCta: "Activar en mi comercio",
+      midEyebrow: "Pensado para comercios locales",
+      midTitle: "Un escaneo en caja... las notificaciones hacen el trabajo",
+      midPoint1Title: "100% Notificaciones Push, sin emails",
+      midPoint1Desc: "Walink apuesta por avisos instantáneos en pantalla bloqueada (Apple Wallet, Google Wallet y Web Push) en lugar de emails que nadie abre.",
+      midPoint2Title: "Wallet, Pantalla de Inicio y WhatsApp *6",
+      midPoint2Desc: "Cada cliente elige su formato favorito y recibe enlace automático por WhatsApp para acceder siempre a sus sellos y ofertas.",
+      colEyebrow: "Todo lo que necesitas",
+      colTitle: "Todas las herramientas para que tus clientes vuelvan",
+      col1Kicker: "Notificaciones nativas",
+      col1Heading: "En su pantalla de bloqueo 24/7",
+      col1Item1Title: "Apple Wallet y Google Wallet",
+      col1Item1Desc: "Tarjetas oficiales con notificaciones instantáneas tras cada compra o promoción.",
+      col1Item2Title: "Pantalla de inicio (Web Push)",
+      col1Item2Desc: "Acceso directo con un toque que entrega notificaciones visibles incluso fuera de Wallet.",
+      col1Item3Title: "Radar de proximidad 100m",
+      col1Item3Desc: "Muestra un saludo automático cuando el cliente camina cerca de tu establecimiento.",
+      col1Item4Title: "Recuperación de inactivos",
+      col1Item4Desc: "Avisa automáticamente a quienes llevan 15 días sin volver con una ventaja especial.",
+      col2Kicker: "En mostrador",
+      col2Heading: "Rápido, práctico, sin apps",
+      col2Item1Title: "Escaneo QR en 3 segundos",
+      col2Item1Desc: "Tu cajero escanea desde cualquier móvil o tablet sin hardware costoso.",
+      col2Item2Title: "Sellos o Cashback a medida",
+      col2Item2Desc: "Premia visitas frecuentes o devuelve un porcentaje acumulable en saldo directo.",
+      col2Item3Title: "Soporte acrílico NFC + QR",
+      col2Item3Desc: "Exhibidor personalizado con tu logo para que el cliente se registre al instante.",
+      col2Item4Title: "Impulsor de reseñas Google Maps",
+      col2Item4Desc: "Invita con un clic a valorar tu local con 5 estrellas después de su visita.",
+      col3Kicker: "Control total",
+      col3Heading: "Gestión por sucursal y equipo",
+      col3Item1Title: "Panel propio del comercio",
+      col3Item1Desc: "Consulta visitas diarias, recompensas entregadas y clientes fieles al instante.",
+      col3Item2Title: "Cuentas PIN para cajeros",
+      col3Item2Desc: "Cada empleado tiene su código PIN personal con protección contra escaneos repetidos.",
+      col3Item3Title: "Control Multi-Sucursal",
+      col3Item3Desc: "Conecta varios locales bajo una sola tarjeta y compara resultados por sede.",
+      col3Item4Title: "Respaldo por WhatsApp",
+      col3Item4Desc: "Envío automático del pase por WhatsApp para que nadie pierda su tarjeta.",
+      stepsEyebrow: "Muy sencillo",
+      stepsTitle: "Ponlo en marcha en 3 pasos",
+      step1Title: "Diseñamos tu tarjeta y oferta",
+      step1Desc: "Adaptamos tu logotipo, colores y programa de sellos o cashback en menos de 48h.",
+      step2Title: "Recibe tu soporte NFC + QR",
+      step2Desc: "Envío gratuito a cualquier ciudad de Marruecos con sesión de formación rápida.",
+      step3Title: "Escanea y notifica sin límites",
+      step3Desc: "Cada visita suma clientes a tu base y activa avisos directos en pantalla bloqueada.",
+      statsEyebrow: "Datos comprobados",
+      statsTitle: "La recurrencia multiplica tus márgenes",
+      statsSubtitle: "Retener a un cliente actual es mucho más rentable que captar uno nuevo.",
+      stat1Val: "5x",
+      stat1Label: "Captar un cliente nuevo cuesta 5× más que fidelizar a uno actual",
+      stat1Source: "Harvard Business Review",
+      stat2Val: "+25-95%",
+      stat2Label: "Subir la retención un 5% puede elevar el beneficio entre 25% y 95%",
+      stat2Source: "Bain & Company",
+      stat3Val: "62%",
+      stat3Label: "De clientes visitan más seguido un local con tarjeta digital sencilla",
+      stat3Source: "Hábitos de consumo",
+      stat4Val: "80/20",
+      stat4Label: "El 80% de tus ingresos futuros proviene del 20% de clientes más fieles",
+      stat4Source: "Principio de Pareto",
+      testiEyebrow: "Opiniones reales",
+      testiTitle: "Comercios en Marruecos que confían en Walink",
+      testi1Quote: "A los clientes les encanta no tener que descargar ninguna app. Escanean en barra y el radar de 100m los hace volver cuando pasan cerca.",
+      testi1Author: "Yassine Bennani",
+      testi1Role: "Propietario de Café • Casablanca",
+      testi2Quote: "Desde que activamos las notificaciones en Apple y Google Wallet, las clientas repiten mucho más rápido sin depender de emails.",
+      testi2Author: "Salma Alami",
+      testi2Role: "Salón de Belleza • Rabat",
+      testi3Quote: "Enviamos una notificación push el viernes con nuestra promoción y vinieron 24 clientes habituales el mismo fin de semana.",
+      testi3Author: "Amine Tazi",
+      testi3Role: "Restaurante Burger • Marrakech",
+      testi4Quote: "Nuestras dos panaderías comparten la misma tarjeta y cada cajero trabaja con su PIN independiente.",
+      testi4Author: "Karim Idrissi",
+      testi4Role: "Panadería y Pastelería • Tánger",
+      testi5Quote: "El soporte por WhatsApp responde al momento y el acceso directo en pantalla de inicio funciona genial en todos los móviles.",
+      testi5Author: "Nadia Soussi",
+      testi5Role: "Perfumería y Cosmética • Agadir",
+      pricingEyebrow: "Un precio claro por local",
+      pricingUnit: "DH / mes",
+      pricingSetupTag: "+ 300 DH de instalación única (diseño personalizado + soporte NFC y QR incluido)",
+      pricingBranchCountLabel: "Sucursales:",
+      pricingBranchCalcNote: "199 DH base + 100 DH por cada sucursal adicional",
+      faqEyebrow: "Resolvemos todas tus dudas",
+      faq7Q: "¿Funciona para clientes que solo usan paquete de redes sociales (*6)?",
+      faq7A: "¡Sí! El registro en mostrador es rápido y además enviamos el enlace de la tarjeta por WhatsApp para que puedan consultar sus sellos y alertas en cuanto tengan conexión.",
+      faq8Q: "¿Qué diferencia hay entre Wallet y añadir a la pantalla de inicio?",
+      faq8A: "El cliente decide: Apple Wallet / Google Wallet integran radar 100m nativo, mientras que la instalación en pantalla de inicio envía notificaciones Web Push claras en el teléfono.",
+      finalBtnSub: "Sin permanencia • Soporte por WhatsApp • Listo en 48 horas",
     },
   },
 };

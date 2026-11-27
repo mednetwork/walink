@@ -6,6 +6,9 @@ import "./landing.css";
 import { useI18n } from "@/lib/i18n/context";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import SiteFooter from "@/components/SiteFooter";
+import LandingHeroCards from "@/components/LandingHeroCards";
+import LandingSections, { WaveDivider } from "@/components/LandingSections";
+import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 
 // Moroccan Cities Datalist
 const MOROCCAN_CITIES = [
@@ -98,9 +101,8 @@ export default function LandingPage() {
   const getAudioContext = () => {
     if (typeof window === "undefined") return null;
     if (!audioCtxRef.current) {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const winWithWebkit: Window & { webkitAudioContext?: typeof AudioContext } = window;
+      const AudioCtx = window.AudioContext || winWithWebkit.webkitAudioContext;
       if (AudioCtx) {
         audioCtxRef.current = new AudioCtx();
       }
@@ -184,6 +186,7 @@ export default function LandingPage() {
   // --- States ---
   const [currentNiche, setCurrentNiche] = useState<string>("cafe");
   const [shopInput, setShopInput] = useState<string>("Café Atlas");
+  const [heroStoreInput, setHeroStoreInput] = useState<string>("");
   const [demoLoyaltyType, setDemoLoyaltyType] = useState<"STAMPS" | "CASHBACK">("STAMPS");
   const [cashbackBalance, setCashbackBalance] = useState<number>(35.50);
   const [currentTab, setCurrentTab] = useState<"pass" | "dash">("pass");
@@ -508,6 +511,10 @@ export default function LandingPage() {
       await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal:
+          typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+            ? AbortSignal.timeout(8000)
+            : undefined,
         body: JSON.stringify({
           shopName: modalShop.trim(),
           niche: modalNiche,
@@ -701,291 +708,159 @@ export default function LandingPage() {
         </defs>
       </svg>
 
-      {/* Header */}
-      <header className={`hdr ${isScrolled ? "solid" : ""}`} id="hdr">
-        <div className="wrap">
-          <Link href="/" className="logo" aria-label="Walink Home">
-            <svg viewBox="0 0 32 32">
-              <use href="#mark" />
-            </svg>
-            <b className="lat">
-              walink<i>.ma</i>
+      {/* Floating Pill Navbar */}
+      <header className="fixed top-3 inset-x-0 z-50 px-3 sm:px-6" id="hdr">
+        <div
+          className={`mx-auto flex max-w-6xl items-center justify-between gap-3 rounded-full border px-4 py-2 transition-colors duration-200 backdrop-blur-md ${
+            isScrolled
+              ? "border-white/15 bg-[#161514]/92 text-white shadow-float"
+              : "border-white/25 bg-[#F85B04]/90 text-white shadow-lg"
+          }`}
+        >
+          <Link
+            href="/"
+            className="inline-flex min-h-[44px] items-center gap-2.5 text-white no-underline shrink-0"
+            aria-label="Walink.ma"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#161514] text-base font-black text-white">
+              W
+            </span>
+            <b className="lat text-base font-extrabold tracking-tight text-white">
+              walink<i className="not-italic text-white/75">.ma</i>
             </b>
-            <span>{t.brand.arabicName}</span>
           </Link>
-          <nav className="nav">
-            <a href="#demo">{t.nav.demo}</a>
-            <a href="#how">{t.nav.howItWorks}</a>
-            <a href="#pricing">{t.nav.pricing}</a>
-            <a href="#faq">{t.nav.faq}</a>
-            <Link href="/support">{t.footer.supportLink}</Link>
-          </nav>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <LanguageSwitcher size="sm" />
-            <a href="#pricing" className="btn btn-em">
-              <span>{t.nav.startNow}</span>
-              <svg className="ic">
-                <use href="#i-bolt" />
-              </svg>
+
+          <nav
+            aria-label={locale === "fr" ? "Navigation principale" : locale === "es" ? "Navegación principal" : "التنقل الرئيسي"}
+            className="hidden lg:flex items-center gap-6 text-sm font-bold text-white/90"
+          >
+            <a href="#features" className="py-2 transition hover:text-white">
+              {t.landing.navFeatures}
             </a>
+            <a href="#steps" className="py-2 transition hover:text-white">
+              {t.landing.navSteps}
+            </a>
+            <a href="#demo" className="py-2 transition hover:text-white">
+              {t.landing.navDemo}
+            </a>
+            <a href="#pricing" className="py-2 transition hover:text-white">
+              {t.landing.navPricing}
+            </a>
+            <a href="#faq" className="py-2 transition hover:text-white">
+              {t.landing.navFaq}
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <LanguageSwitcher size="sm" variant="dark" />
+            <button
+              type="button"
+              onClick={() => {
+                setModalPlan("growth");
+                setModalShop(heroStoreInput.trim() || shopInput || "Café Atlas");
+                setIsModalOpen(true);
+              }}
+              className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs sm:text-sm font-extrabold text-[#161514] transition hover:bg-[#EFEAE4]"
+            >
+              <span>{t.nav.startNow}</span>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="hero">
-        <div className="wrap">
-          <div>
-            <div className="live">
-              <span className="dot" />
-              <span>
-                <b>{t.hero.badge}</b>
-              </span>
-            </div>
-            <h1>
-              {t.hero.title1}
-              <span className="l2">{t.hero.title2}</span>
-            </h1>
-            <p className="sub">{t.hero.desc}</p>
-            <div className="feat">
-              <span>
-                <svg className="ic">
-                  <use href="#i-pin" />
-                </svg>
-                {t.engines.radarTitle}
-              </span>
-              <span>
-                <svg className="ic">
-                  <use href="#i-star" />
-                </svg>
-                {t.engines.reviewsTitle}
-              </span>
-              <span>
-                <svg className="ic">
-                  <use href="#i-back" />
-                </svg>
-                {t.engines.winbackTitle}
-              </span>
-            </div>
-            <div className="cta-row">
-              <a href="#demo" className="btn btn-em">
-                <svg className="ic">
-                  <use href="#i-play" />
-                </svg>
-                <span>{t.hero.ctaPrimary}</span>
-              </a>
-              <a href="#pricing" className="btn btn-ghost">
-                <span>{t.hero.ctaSecondary}</span>
-                <span className="lat">→</span>
-              </a>
-            </div>
-            <div className="facts">
-              <span>
-                <svg className="ic">
-                  <use href="#i-check" />
-                </svg>
-                {locale === "fr"
-                  ? "Paiement unique"
-                  : locale === "es"
-                  ? "Pago único"
-                  : "دفع لمرة واحدة"}
-              </span>
-              <span>
-                <svg className="ic">
-                  <use href="#i-check" />
-                </svg>
-                {locale === "fr"
-                  ? "Prêt en 48 heures"
-                  : locale === "es"
-                  ? "Listo en 48 horas"
-                  : "جاهز في 48 ساعة"}
-              </span>
-              <span>
-                <svg className="ic">
-                  <use href="#i-check" />
-                </svg>
-                {locale === "fr"
-                  ? "Livraison gratuite"
-                  : locale === "es"
-                  ? "Envío gratuito"
-                  : "توصيل مجاني لمتجرك"}
-              </span>
+      {/* 1. Vibrant Coral Hero Section */}
+      <div className="relative bg-[#F85B04]">
+        <section className="relative overflow-hidden pt-28 pb-12 text-white md:pt-36 md:pb-16">
+          <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 sm:px-6 lg:grid-cols-12">
+            {/* Hero Copy & Live Store Name Form */}
+            <div className="lg:col-span-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-3.5 py-1.5 text-xs font-extrabold text-white backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5 text-white" aria-hidden="true" />
+                <span>{t.landing.heroEyebrow}</span>
+              </div>
+
+              <h1 className="mt-5 text-4xl font-extrabold uppercase leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                {t.landing.heroTitle1}{" "}
+                <span className="inline-block rounded-2xl bg-[#161514] px-3 py-0.5 text-[#FA7F3B]">
+                  {t.landing.heroTitleAccent}
+                </span>{" "}
+                {t.landing.heroTitle2}
+              </h1>
+
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-white/90 sm:text-lg">
+                {t.landing.heroSubtitle}
+              </p>
+
+              {/* Interactive Store Name Preview Input + CTA */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setModalPlan("growth");
+                  setModalShop(heroStoreInput.trim() || shopInput || "Café Atlas");
+                  setIsModalOpen(true);
+                }}
+                className="mt-7 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center"
+              >
+                <label htmlFor="hero-store-input" className="sr-only">
+                  {t.landing.heroStorePlaceholder}
+                </label>
+                <input
+                  id="hero-store-input"
+                  type="text"
+                  value={heroStoreInput}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setHeroStoreInput(val);
+                    if (val.trim()) {
+                      setShopInput(val);
+                    } else {
+                      setShopInput("Café Atlas");
+                    }
+                  }}
+                  placeholder={t.landing.heroStorePlaceholder}
+                  className="min-h-[52px] flex-1 rounded-2xl border border-white/25 bg-white px-4 py-3 text-base font-bold text-[#161514] placeholder:text-[#161514]/45 focus:border-[#161514] focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="shadow-sticker inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#161514] px-7 py-3.5 text-base font-extrabold text-white transition hover:bg-[#2A2826]"
+                >
+                  <span>{t.landing.heroStartBtn}</span>
+                  {dir === "rtl" ? (
+                    <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-bold text-white/85">
+                <a
+                  href="#demo"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 underline decoration-white/45 underline-offset-4 transition hover:text-white"
+                >
+                  <span>{t.landing.heroDemoBtn}</span>
+                </a>
+                <span className="hidden sm:inline text-white/40">•</span>
+                <span>{t.landing.heroTrustLine}</span>
+              </div>
             </div>
 
-            {/* Enterprise Ecosystem Trust Bar */}
-            <div className="trust-bar" aria-label="Ecosystem Compatibility">
-              <div className="trust-badge">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.9.04-2 .6-2.65 1.36-.56.65-1.06 1.7-1 2.76 1.01.08 2.03-.51 2.64-1.25z"/>
-                </svg>
-                <span>{t.enterprise.worksWithApple}</span>
-              </div>
-              <div className="trust-badge">
-                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-                  <path d="M21.35 11.1H12v3.16h5.36c-.23 1.25-.94 2.31-2 3.02v2.51h3.24c1.9-1.75 2.99-4.32 2.99-7.39 0-.44-.04-.87-.1-1.3z" fill="#4285F4"/>
-                  <path d="M12 21c2.7 0 4.97-.9 6.62-2.43l-3.24-2.51c-.9.6-2.05.96-3.38.96-2.6 0-4.81-1.76-5.6-4.12H3.06v2.59C4.7 18.77 8.08 21 12 21z" fill="#34A853"/>
-                  <path d="M6.4 12.9c-.2-.6-.31-1.24-.31-1.9s.11-1.3.31-1.9V6.51H3.06C2.39 7.84 2 9.37 2 11s.39 3.16 1.06 4.49l3.34-2.59z" fill="#FBBC05"/>
-                  <path d="M12 5.08c1.47 0 2.79.5 3.82 1.49l2.87-2.87C16.96 2.06 14.7 1 12 1 8.08 1 4.7 3.23 3.06 6.51l3.34 2.59C7.19 6.74 9.4 5.08 12 5.08z" fill="#EA4335"/>
-                </svg>
-                <span>{t.enterprise.googleWalletCertified}</span>
-              </div>
-              <div className="trust-badge">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" aria-hidden="true">
-                  <path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/>
-                  <path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/>
-                  <path d="M12.91 4.1a15.91 15.91 0 0 1 0 15.8"/>
-                  <path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>
-                </svg>
-                <span>{t.enterprise.nfcForumStandard}</span>
-              </div>
-              <div className="trust-badge">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" aria-hidden="true">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  <path d="m9 12 2 2 4-4"/>
-                </svg>
-                <span>{t.enterprise.bankGradeSecurity}</span>
-              </div>
+            {/* Hero 3-Card Wallet Fan */}
+            <div className="lg:col-span-5">
+              <LandingHeroCards
+                storeName={heroStoreInput || shopInput}
+                stickerLeft={t.landing.heroStickerLeft}
+                stickerRight={t.landing.heroStickerRight}
+                dir={dir}
+                locale={locale}
+              />
             </div>
           </div>
+        </section>
 
-          {/* 3D Visual: iPhone Lockscreen + Counter Stand */}
-          <div className="hv">
-            <div className="shadow" />
-            <div className="phone">
-              <div className="bezel">
-                <div className="screen">
-                  <div className="island" />
-                  <div className="sbar">
-                    <span>9:41</span>
-                    <div className="r">
-                      <svg viewBox="0 0 16 12" fill="currentColor">
-                        <path d="M1 10h2V6H1v4zm4 0h2V4H5v6zm4 0h2V2H9v8zm4 0h2V0h-2v10z" />
-                      </svg>
-                      <div className="bat">
-                        <b />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="lock">
-                    <div className="date">
-                      {locale === "fr"
-                        ? "Jeudi 12 Novembre"
-                        : locale === "es"
-                        ? "Jueves 12 de Noviembre"
-                        : "الخميس، 12 نوفمبر"}
-                    </div>
-                    <div className="time">9:41</div>
-                    <div className="stack" id="heroStack">
-                      <div className="ntf fresh" key={heroCycleIdx}>
-                        <div
-                          className="ap"
-                          style={{
-                            background: heroNotifs[heroCycleIdx].ap,
-                          }}
-                        >
-                          <svg className="ic">
-                            <use href={`#${heroNotifs[heroCycleIdx].icon}`} />
-                          </svg>
-                        </div>
-                        <div className="nb">
-                          <div className="nh">
-                            <b>{heroNotifs[heroCycleIdx].title}</b>
-                            <small>
-                              {locale === "fr"
-                                ? "Maintenant"
-                                : locale === "es"
-                                ? "Ahora"
-                                : "الآن"}
-                            </small>
-                          </div>
-                          <div className="nt">{heroNotifs[heroCycleIdx].text}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="lp">
-                      <div
-                        className="pass compact"
-                        style={{
-                          background: activeMeta.grad,
-                          ["--pc" as string]: activeMeta.pc,
-                        }}
-                      >
-                        <div className="p-head">
-                          <div className="p-brand">
-                            <div className="p-logo">
-                              <svg className="ic">
-                                <use href={`#${activeMeta.icon}`} />
-                              </svg>
-                            </div>
-                            <b className="p-name">{shopInput}</b>
-                          </div>
-                          <div className="p-f p-hf">
-                            <small>{t.pass.stampsLabel}</small>
-                            <b className="lat">4 / 5</b>
-                          </div>
-                        </div>
-                        <div className="p-strip">
-                          {[1, 2, 3, 4].map((i) => (
-                            <div className="stp on" key={i}>
-                              <svg className="ic">
-                                <use href={`#${activeMeta.icon}`} />
-                              </svg>
-                            </div>
-                          ))}
-                          <div className="stp gift">
-                            <svg className="ic">
-                              <use href="#i-gift" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div className="p-row">
-                          <div className="p-f">
-                            <small>{t.pass.rewardLabel}</small>
-                            <b>{activeNicheInfo.reward}</b>
-                          </div>
-                          <div className="p-f p-hf">
-                            <small>{t.pass.memberCodeLabel}</small>
-                            <b className="lat">#4821</b>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="home" />
-                </div>
-              </div>
-            </div>
-
-            {/* Counter Stand */}
-            <div className="stand">
-              <div className="plate">
-                <div className="face">
-                  <div className="br">
-                    <svg viewBox="0 0 32 32">
-                      <use href="#mark" />
-                    </svg>
-                    <b>walink.ma</b>
-                  </div>
-                  <div className="qr" id="standQR">
-                    <svg viewBox="0 0 100 100" fill="#000">
-                      <path d="M10 10h30v30H10zm6 6v18h18V16zm4 4h10v10H20zM60 10h30v30H60zm6 6v18h18V16zm4 4h10v10H70zM10 60h30v30H10zm6 6v18h18V66zm4 4h10v10H20zM50 15h6v12h-6zM85 50h6v12h-6zM50 75h8v6h-8zM68 62h14v8H68zM52 52h10v10H52zm24 24h12v12H76zM60 84h8v6h-8zM85 75h6v6h-6z" />
-                    </svg>
-                  </div>
-                  <div className="cap">{t.hero.standDesc}</div>
-                  <div className="nfc">
-                    <svg className="ic">
-                      <use href="#i-nfc" />
-                    </svg>
-                    <span>NFC + QR</span>
-                  </div>
-                </div>
-              </div>
-              <div className="base" />
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Seamless SVG Wave into Cream Page */}
+        <WaveDivider fill="#EFEAE4" />
+      </div>
 
       {/* C. Interactive Live Demo */}
       <section className="sec" id="demo">
@@ -2262,1146 +2137,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* D. How It Works (#how) */}
-      <section className="sec" id="how">
-        <div className="wrap">
-          <div className="head c">
-            <h2 className="h2 silver">{t.nav.howItWorks}</h2>
-            <p className="lead">{t.hero.desc}</p>
-          </div>
-
-          <div className="steps">
-            <div className="surface step">
-              <div className="sn">
-                <i>1</i>
-                <svg className="ic">
-                  <use href="#i-scan" />
-                </svg>
-              </div>
-              <h3>{t.hero.standBadge}</h3>
-              <p>{t.hero.standDesc}</p>
-            </div>
-
-            <div className="surface step">
-              <div className="sn">
-                <i>2</i>
-                <svg className="ic">
-                  <use href="#i-wallet" />
-                </svg>
-              </div>
-              <h3>{t.pass.addToAppleWallet}</h3>
-              <p>
-                {locale === "fr"
-                  ? "S'ajoute directement à Apple Wallet ou Google Wallet sans installer aucune application."
-                  : locale === "es"
-                  ? "Se añade directamente a Apple Wallet o Google Wallet sin descargar ninguna aplicación."
-                  : "تُحفظ مباشرة في محفظة الهاتف الرقمية بدون الحاجة لتحميل أي تطبيق."}
-              </p>
-            </div>
-
-            <div className="surface step">
-              <div className="sn">
-                <i>3</i>
-                <svg className="ic">
-                  <use href="#i-bell" />
-                </svg>
-              </div>
-              <h3>{t.engines.radarTitle}</h3>
-              <p>{t.engines.radarDesc}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4 Engines Bento Grid (#engines) */}
-      <section className="sec" id="engines">
-        <div className="wrap">
-          <div className="head c">
-            <h2 className="h2 silver">{t.engines.sectionTitle}</h2>
-            <p className="lead">{t.engines.sectionSubtitle}</p>
-          </div>
-
-          <div className="bento bento-2x2">
-            {/* Engine 1: Radar 100m */}
-            <div className="surface eng eng-card">
-              <div className="et">
-                <span className="eng-icon">
-                  <svg className="ic">
-                    <use href="#i-pin" />
-                  </svg>
-                </span>
-                <div className="eng-head-info">
-                  <h3>{t.engines.radarTitle}</h3>
-                  <div className="tagline tag-gps">
-                    <svg className="ic">
-                      <use href="#i-wifioff" />
-                    </svg>
-                    <span>{t.engines.radarTag}</span>
-                  </div>
-                </div>
-              </div>
-              <p className="eng-desc">{t.engines.radarDesc}</p>
-
-              {/* Radar Visual Showcase */}
-              <div className="radar-showcase">
-                <div className="radar-map-mini">
-                  <div className="radar-grid-bg" />
-                  <div className="radar-concentric" />
-                  <div className="radar-sweep" />
-                  <span className="radar-dist-tag lat">
-                    {locale === "fr"
-                      ? "85m • À portée du commerce"
-                      : locale === "es"
-                      ? "85m • Dentro del alcance"
-                      : "85m • داخل نطاق المحل"}
-                  </span>
-                  <div className="radar-center-pin">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
-                    </svg>
-                  </div>
-                  <div className="radar-cust-dot" />
-                </div>
-
-                <div className="eng-notification">
-                  <div
-                    className="ap"
-                    style={{ background: "linear-gradient(135deg,#059669,#047857)" }}
-                  >
-                    <svg className="ic">
-                      <use href="#i-pin" />
-                    </svg>
-                  </div>
-                  <div className="nb">
-                    <div className="nh">
-                      <b>{t.engines.radarLockTitle}</b>
-                      <small>
-                        {locale === "fr"
-                          ? "Maintenant"
-                          : locale === "es"
-                          ? "Ahora"
-                          : "الآن"}
-                      </small>
-                    </div>
-                    <div className="nt">{t.engines.radarLockBody}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Engine 2: Google Reviews */}
-            <div className="surface eng eng-card">
-              <div className="et">
-                <span className="eng-icon" style={{ background: "#FEF3C7", color: "#D97706" }}>
-                  <svg className="ic" style={{ color: "#D97706" }}>
-                    <use href="#i-star" />
-                  </svg>
-                </span>
-                <div className="eng-head-info">
-                  <h3>{t.engines.reviewsTitle}</h3>
-                  <div className="tagline tag-review">
-                    <svg className="ic">
-                      <use href="#i-up" />
-                    </svg>
-                    <span>{t.engines.reviewsTag}</span>
-                  </div>
-                </div>
-              </div>
-              <p className="eng-desc">{t.engines.reviewsDesc}</p>
-
-              {/* Google Reviews Visual Showcase */}
-              <div className="google-showcase">
-                <div className="google-score-card">
-                  <div className="score-left">
-                    <b className="score-num lat">4.9</b>
-                    <div className="score-stars">★★★★★</div>
-                    <small className="score-count">
-                      {locale === "fr"
-                        ? "284 avis vérifiés sur Google Maps"
-                        : locale === "es"
-                        ? "284 reseñas verificadas en Google Maps"
-                        : "284 تقييم موثق على خرائط Google"}
-                    </small>
-                  </div>
-                  <div className="score-badge">
-                    <span className="score-pill">
-                      {locale === "fr"
-                        ? "Avant Walink : 3.8 ★"
-                        : locale === "es"
-                        ? "Antes de Walink: 3.8 ★"
-                        : "قبل Walink: 3.8 ★"}
-                    </span>
-                    <span className="score-arrow">➔</span>
-                    <span className="score-pill success">
-                      {locale === "fr"
-                        ? "Avec Walink : 4.9 ★"
-                        : locale === "es"
-                        ? "Con Walink: 4.9 ★"
-                        : "مع Walink: 4.9 ★"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="eng-notification">
-                  <div
-                    className="ap"
-                    style={{ background: "linear-gradient(135deg,#2563EB,#1D4ED8)" }}
-                  >
-                    <svg className="ic">
-                      <use href="#i-star" />
-                    </svg>
-                  </div>
-                  <div className="nb">
-                    <div className="nh">
-                      <b>{t.engines.reviewsLockTitle}</b>
-                      <small>
-                        {locale === "fr"
-                          ? "Maintenant"
-                          : locale === "es"
-                          ? "Ahora"
-                          : "الآن"}
-                      </small>
-                    </div>
-                    <div className="nt">{t.engines.reviewsLockBody}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Engine 3: 15-Day Winback */}
-            <div className="surface eng eng-card">
-              <div className="et">
-                <span className="eng-icon" style={{ background: "#FEE2E2", color: "#DC2626" }}>
-                  <svg className="ic" style={{ color: "#DC2626" }}>
-                    <use href="#i-back" />
-                  </svg>
-                </span>
-                <div className="eng-head-info">
-                  <h3>{t.engines.winbackTitle}</h3>
-                  <div className="tagline tag-winback">
-                    <svg className="ic">
-                      <use href="#i-bolt" />
-                    </svg>
-                    <span>{t.engines.winbackTag}</span>
-                  </div>
-                </div>
-              </div>
-              <p className="eng-desc">{t.engines.winbackDesc}</p>
-
-              {/* Retention Timeline Visual Showcase */}
-              <div className="timeline-showcase">
-                <div className="retention-flow">
-                  <div className="flow-step">
-                    <span className="f-day">
-                      {locale === "fr"
-                        ? "Jour 1"
-                        : locale === "es"
-                        ? "Día 1"
-                        : "اليوم 1"}
-                    </span>
-                    <b className="f-act">
-                      {locale === "fr"
-                        ? "Visite & achat"
-                        : locale === "es"
-                        ? "Visita y compra"
-                        : "زيارة وشراء"}
-                    </b>
-                  </div>
-                  <span className="flow-sep">➔</span>
-                  <div className="flow-step warn">
-                    <span className="f-day">
-                      {locale === "fr"
-                        ? "Jour 15"
-                        : locale === "es"
-                        ? "Día 15"
-                        : "اليوم 15"}
-                    </span>
-                    <b className="f-act">
-                      {locale === "fr"
-                        ? "Absence inattendue"
-                        : locale === "es"
-                        ? "Ausencia inusual"
-                        : "غياب غير معتاد"}
-                    </b>
-                  </div>
-                  <span className="flow-sep">➔</span>
-                  <div className="flow-step trigger">
-                    <span className="f-day">
-                      {locale === "fr"
-                        ? "Auto ⚡"
-                        : locale === "es"
-                        ? "Auto ⚡"
-                        : "آلياً ⚡"}
-                    </span>
-                    <b className="f-act">
-                      {locale === "fr"
-                        ? "Envoi offre"
-                        : locale === "es"
-                        ? "Envío oferta"
-                        : "إرسال عرض"}
-                    </b>
-                  </div>
-                  <span className="flow-sep">➔</span>
-                  <div className="flow-step success">
-                    <span className="f-day">
-                      {locale === "fr"
-                        ? "Jour 16"
-                        : locale === "es"
-                        ? "Día 16"
-                        : "اليوم 16"}
-                    </span>
-                    <b className="f-act">
-                      {locale === "fr"
-                        ? "Retour client 🎉"
-                        : locale === "es"
-                        ? "Cliente regresa 🎉"
-                        : "عودة الزبون 🎉"}
-                    </b>
-                  </div>
-                </div>
-
-                <div className="eng-notification">
-                  <div
-                    className="ap"
-                    style={{ background: "linear-gradient(135deg,#DC2626,#991B1B)" }}
-                  >
-                    <svg className="ic">
-                      <use href="#i-back" />
-                    </svg>
-                  </div>
-                  <div className="nb">
-                    <div className="nh">
-                      <b>{t.engines.winbackLockTitle}</b>
-                      <small>
-                        {locale === "fr"
-                          ? "Maintenant"
-                          : locale === "es"
-                          ? "Ahora"
-                          : "الآن"}
-                      </small>
-                    </div>
-                    <div className="nt">{t.engines.winbackLockBody}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Engine 4: Broadcast Promos */}
-            <div className="surface eng eng-card">
-              <div className="et">
-                <span className="eng-icon" style={{ background: "#EDE9FE", color: "#6D28D9" }}>
-                  <svg className="ic" style={{ color: "#6D28D9" }}>
-                    <use href="#i-mega" />
-                  </svg>
-                </span>
-                <div className="eng-head-info">
-                  <h3>{t.engines.pushTitle}</h3>
-                  <div className="tagline tag-push">
-                    <svg className="ic">
-                      <use href="#i-bolt" />
-                    </svg>
-                    <span>{t.engines.pushTag}</span>
-                  </div>
-                </div>
-              </div>
-              <p className="eng-desc">{t.engines.pushDesc}</p>
-
-              {/* Open Rate Comparison Bars Showcase */}
-              <div className="open-rate-showcase">
-                <div className="rates-container">
-                  <div className="rate-row">
-                    <span className="rate-lbl">Instagram Stories</span>
-                    <div className="rate-track">
-                      <div className="rate-fill" style={{ width: "8%", background: "#CBD5E1" }} />
-                    </div>
-                    <b className="rate-val lat">6%</b>
-                  </div>
-                  <div className="rate-row">
-                    <span className="rate-lbl">WhatsApp Messages</span>
-                    <div className="rate-track">
-                      <div className="rate-fill" style={{ width: "24%", background: "#94A3B8" }} />
-                    </div>
-                    <b className="rate-val lat">24%</b>
-                  </div>
-                  <div className="rate-row primary">
-                    <span className="rate-lbl">Walink Lockscreen</span>
-                    <div className="rate-track">
-                      <div className="rate-fill active" style={{ width: "92%" }} />
-                    </div>
-                    <b className="rate-val lat highlight">92% ⚡</b>
-                  </div>
-                </div>
-
-                <div className="eng-notification">
-                  <div
-                    className="ap"
-                    style={{ background: "linear-gradient(135deg,#4F46E5,#3730A3)" }}
-                  >
-                    <svg className="ic">
-                      <use href="#i-mega" />
-                    </svg>
-                  </div>
-                  <div className="nb">
-                    <div className="nh">
-                      <b>{t.engines.pushLockTitle}</b>
-                      <small>
-                        {locale === "fr"
-                          ? "Maintenant"
-                          : locale === "es"
-                          ? "Ahora"
-                          : "الآن"}
-                      </small>
-                    </div>
-                    <div className="nt">{t.engines.pushLockBody}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* E. Comparison Table & ROI (#compare) */}
-      <section className="sec" id="compare">
-        <div className="wrap">
-          <div className="head c">
-            <h2 className="h2 silver">{t.compare.title}</h2>
-            <p className="lead">{t.compare.subtitle}</p>
-          </div>
-
-          <div className="cmp-mobile-hint">
-            <svg className="ic">
-              <use href="#i-bolt" />
-            </svg>
-            <span>
-              {locale === "fr"
-                ? "← Faites défiler horizontalement pour comparer →"
-                : locale === "es"
-                ? "← Desliza horizontalmente para comparar →"
-                : "← اسحب أفقياً لمقارنة الميزات بالكامل →"}
-            </span>
-          </div>
-
-          <div className="surface cmp-wrap">
-            <table className="cmp">
-              <thead>
-                <tr>
-                  <th className="cmp-th-feat">{t.compare.colFeature}</th>
-                  <th>{t.compare.colPaper}</th>
-                  <th>{t.compare.colApp}</th>
-                  <th className="tp cmp-th-walink">
-                    <div className="cmp-th-badge">
-                      <span className="cmp-star">⭐</span>
-                      <span>{t.compare.colWalink}</span>
-                    </div>
-                    <small className="cmp-th-sub">
-                      {locale === "fr"
-                        ? "Solution recommandée"
-                        : locale === "es"
-                        ? "Solución recomendada"
-                        : "الحل الموصى به"}
-                    </small>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="cmp-feat-title">{t.compare.row1Feature}</td>
-                  <td>
-                    <span className="cmp-pill no">{t.compare.row1Paper}</span>
-                  </td>
-                  <td>
-                    <span className="cmp-pill warn">{t.compare.row1App}</span>
-                  </td>
-                  <td className="tp">
-                    <span className="cmp-pill yes">{t.compare.row1Walink}</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="cmp-feat-title">{t.compare.row2Feature}</td>
-                  <td>
-                    <span className="cmp-pill no">{t.compare.row2Paper}</span>
-                  </td>
-                  <td>
-                    <span className="cmp-pill warn">{t.compare.row2App}</span>
-                  </td>
-                  <td className="tp">
-                    <span className="cmp-pill yes">{t.compare.row2Walink}</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="cmp-feat-title">{t.compare.row3Feature}</td>
-                  <td>
-                    <span className="cmp-pill no">{t.compare.row3Paper}</span>
-                  </td>
-                  <td>
-                    <span className="cmp-pill warn">{t.compare.row3App}</span>
-                  </td>
-                  <td className="tp">
-                    <span className="cmp-pill yes">{t.compare.row3Walink}</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="cmp-feat-title">{t.compare.row4Feature}</td>
-                  <td>
-                    <span className="cmp-pill no">{t.compare.row4Paper}</span>
-                  </td>
-                  <td>
-                    <span className="cmp-pill warn">{t.compare.row4App}</span>
-                  </td>
-                  <td className="tp">
-                    <span className="cmp-pill yes">{t.compare.row4Walink}</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="cmp-feat-title">{t.compare.row5Feature}</td>
-                  <td>
-                    <span className="cmp-pill warn">{t.compare.row5Paper}</span>
-                  </td>
-                  <td>
-                    <span className="cmp-pill no">{t.compare.row5App}</span>
-                  </td>
-                  <td className="tp">
-                    <span className="cmp-pill yes">{t.compare.row5Walink}</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="roi">
-            {/* Card 1: Dynamic ROI Calculator & Extra Revenue */}
-            <div className="surface roi-card roi-calc-card">
-              <div className="roi-head">
-                <span className="roi-icon-badge calc-badge">
-                  <svg className="ic">
-                    <use href="#i-bolt" />
-                  </svg>
-                </span>
-                <div>
-                  <h3>{t.compare.roiTitle}</h3>
-                  <p className="lead">{t.compare.roiSubtitle}</p>
-                </div>
-              </div>
-
-              <div className="roi-sliders">
-                <div className="roi-slider-group">
-                  <label htmlFor="rCount">
-                    <span className="r-label">{t.compare.sliderVisitsLabel}</span>
-                    <b className="lat r-val-pill" id="vCount">
-                      {roiCount} {locale === "fr" ? "clients/jour" : locale === "es" ? "clientes/día" : "زبون/يوم"}
-                    </b>
-                  </label>
-                  <input
-                    type="range"
-                    id="rCount"
-                    min="1"
-                    max="50"
-                    value={roiCount}
-                    onChange={(e) => setRoiCount(Number(e.target.value))}
-                  />
-                  <div className="r-range-labels">
-                    <small>1</small>
-                    <small>25</small>
-                    <small>50+</small>
-                  </div>
-                </div>
-
-                <div className="roi-slider-group">
-                  <label htmlFor="rSpend">
-                    <span className="r-label">{t.compare.sliderTicketLabel}</span>
-                    <b className="lat r-val-pill" id="vSpend">
-                      {roiSpend} DH
-                    </b>
-                  </label>
-                  <input
-                    type="range"
-                    id="rSpend"
-                    min="10"
-                    max="300"
-                    step="5"
-                    value={roiSpend}
-                    onChange={(e) => setRoiSpend(Number(e.target.value))}
-                  />
-                  <div className="r-range-labels">
-                    <small>10 DH</small>
-                    <small>150 DH</small>
-                    <small>300+ DH</small>
-                  </div>
-                </div>
-              </div>
-
-              {/* Enhanced Profit Card */}
-              <div className="roi-profit-card" id="roiOut">
-                <div className="profit-primary-row">
-                  <div>
-                    <span className="profit-title">{t.compare.monthlyExtraRev}</span>
-                    <div className="profit-big lat">
-                      +{roiMonthlyGain.toLocaleString()} DH
-                      <small className="profit-unit">
-                        /{locale === "fr" ? "mois" : locale === "es" ? "mes" : "شهرياً"}
-                      </small>
-                    </div>
-                  </div>
-                  <div className="profit-annual">
-                    <span className="annual-tag">{t.compare.yearlyExtraRev}</span>
-                    <b className="lat annual-val">
-                      +{(roiMonthlyGain * 12).toLocaleString()} DH
-                    </b>
-                  </div>
-                </div>
-
-                <div className="payback-chip">
-                  <span className="payback-icon">⚡</span>
-                  <span>
-                    <b>{t.compare.paybackTime}</b>{" "}
-                    <span className="payback-time-val lat">
-                      {roiPaybackMonths}{" "}
-                      {locale === "fr"
-                        ? "mois seulement !"
-                        : locale === "es"
-                        ? "meses solamente!"
-                        : "أشهر فقط!"}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: Cost Comparison & Annual Budget Savings */}
-            <div className="surface roi-card roi-cost-card">
-              <div className="roi-head">
-                <span className="roi-icon-badge cost-badge">
-                  <svg className="ic">
-                    <use href="#i-coins" />
-                  </svg>
-                </span>
-                <div>
-                  <h3>{t.compare.costCompareTitle}</h3>
-                  <p className="lead">{t.compare.costCompareSubtitle}</p>
-                </div>
-              </div>
-
-              <div className="bars-showcase">
-                <div className="bar-card bad">
-                  <div className="bar-top">
-                    <span className="bar-name">
-                      {t.compare.colApp}{" "}
-                      <small>(400 DH/{locale === "fr" ? "mois" : locale === "es" ? "mes" : "شهر"})</small>
-                    </span>
-                    <b className="bar-amount lat">14,400 DH</b>
-                  </div>
-                  <div className="bar-track">
-                    <div className="bar-fill bad" style={{ width: "100%" }} />
-                  </div>
-                  <div className="bar-note">
-                    {locale === "fr"
-                      ? "Frais de dev initiaux + abonnements mensuels récurrents"
-                      : locale === "es"
-                      ? "Costes iniciales de app + suscripciones mensuales fijas"
-                      : "تكلفة تطوير باهظة في البداية + اشتراك شهري مستمر لا يتوقف"}
-                  </div>
-                </div>
-
-                <div className="bar-card good">
-                  <div className="bar-top">
-                    <div className="bar-name">
-                      <b>Walink</b>{" "}
-                      <span className="plan-badge">Standard</span>
-                    </div>
-                    <b className="bar-amount lat highlight">
-                      {locale === "fr" ? "199 DH/mois" : locale === "es" ? "199 DH/mes" : "199 DH/شهر"}
-                    </b>
-                  </div>
-                  <div className="bar-track">
-                    <div className="bar-fill good" style={{ width: "35%" }} />
-                  </div>
-                  <div className="bar-note good">
-                    {locale === "fr"
-                      ? "Sans appli • Stand NFC/QR inclus • Installation unique 300 DH"
-                      : locale === "es"
-                      ? "Sin app • Soporte NFC/QR incluido • Instalación única 300 DH"
-                      : "بدون تطبيقات • الستاند الذكي مشمول • التثبيت 300 درهم أول مرة فقط"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Savings Callout Box */}
-              <div className="savings-callout">
-                <div className="savings-badge">
-                  <span className="savings-sparkle">🎉</span>
-                  <b>{t.compare.costSavingsCallout}</b>
-                </div>
-                <p className="savings-explanation">
-                  {locale === "fr"
-                    ? "Démarrez dès 149 DH/mois (ou 199 DH/mois avec Radar 100m et avis Google) + 300 DH d'installation unique la 1ère fois."
-                    : locale === "es"
-                    ? "Empieza desde 149 DH/mes (o 199 DH/mes con Radar 100m y reseñas Google) + 300 DH de instalación inicial única."
-                    : "ابدأ باشتراك شهري ابتداءً من 149 درهم/شهر (أو 199 درهم للمتجر العادي كامل المميزات) + 300 درهم للتثبيت لأول مرة فقط."}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Enterprise Infrastructure & Security Grid */}
-      <section className="infra-sec" id="infrastructure">
-        <div className="wrap">
-          <div className="head c">
-            <div className="infra-live" style={{ display: "inline-flex", margin: "0 auto 16px" }}>
-              <span className="infra-live-dot" />
-              <span>LIVE ENTERPRISE NETWORK</span>
-            </div>
-            <h2 className="h2 silver">{t.enterprise.infraTitle}</h2>
-            <p className="lead">{t.enterprise.infraSubtitle}</p>
-          </div>
-
-          <div className="infra-grid">
-            <div className="infra-card">
-              <div className="infra-head">
-                <div className="infra-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                  </svg>
-                </div>
-                <div className="infra-live">
-                  <span className="infra-live-dot" />
-                  <span>SLA</span>
-                </div>
-              </div>
-              <div className="infra-metric">99.99%</div>
-              <div className="infra-label">{t.enterprise.uptimeTitle}</div>
-              <p className="infra-desc">{t.enterprise.uptimeDesc}</p>
-            </div>
-
-            <div className="infra-card">
-              <div className="infra-head">
-                <div className="infra-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                </div>
-                <div className="infra-live">
-                  <span className="infra-live-dot" />
-                  <span>FAST</span>
-                </div>
-              </div>
-              <div className="infra-metric">&lt; 45ms</div>
-              <div className="infra-label">{t.enterprise.latencyTitle}</div>
-              <p className="infra-desc">{t.enterprise.latencyDesc}</p>
-            </div>
-
-            <div className="infra-card">
-              <div className="infra-head">
-                <div className="infra-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                </div>
-                <div className="infra-live">
-                  <span className="infra-live-dot" />
-                  <span>AES-256</span>
-                </div>
-              </div>
-              <div className="infra-metric">256-Bit</div>
-              <div className="infra-label">{t.enterprise.securityTitle}</div>
-              <p className="infra-desc">{t.enterprise.securityDesc}</p>
-            </div>
-
-            <div className="infra-card">
-              <div className="infra-head">
-                <div className="infra-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                </div>
-                <div className="infra-live">
-                  <span className="infra-live-dot" />
-                  <span>SCALE</span>
-                </div>
-              </div>
-              <div className="infra-metric">+100K</div>
-              <div className="infra-label">{t.enterprise.capacityTitle}</div>
-              <p className="infra-desc">{t.enterprise.capacityDesc}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* F. Pricing Section (#pricing) */}
-      <section className="sec" id="pricing">
-        <div className="wrap">
-          <div className="head c">
-            <h2 className="h2 silver">{t.pricing.title}</h2>
-            <p className="lead">{t.pricing.subtitle}</p>
-          </div>
-
-          <div className="rush surface">
-            <span className="dot" />
-            <p>
-              <b>
-                {locale === "fr"
-                  ? "Offre de lancement :"
-                  : locale === "es"
-                  ? "Oferta de lanzamiento:"
-                  : "عرض الإطلاق الخاص:"}
-              </b>{" "}
-              {t.finalCta.desc}
-            </p>
-          </div>
-
-          <div className="plans">
-            {/* Starter Plan (149 DH/mo) */}
-            <div className="surface plan" data-plan="starter">
-              <div className="pn">
-                <svg className="ic">
-                  <use href="#i-card" />
-                </svg>
-                <span>{t.pricing.starterTitle}</span>
-              </div>
-              <div className="was">
-                <span className="launch">
-                  {locale === "fr" ? "+ 300 DH installation (1ère fois)" : locale === "es" ? "+ 300 DH instalación (1ª vez)" : "+ 300 درهم تثبيت (أول مرة)"}
-                </span>
-              </div>
-              <div className="pp">
-                <b className="lat">149</b>
-                <span>{locale === "fr" ? "DH / mois" : locale === "es" ? "DH / mes" : "DH / شهر"}</span>
-              </div>
-              <div className="per">{t.pricing.starterDesc}</div>
-              <ul>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  {t.pricing.featureStand}
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  {t.pricing.featureCards}
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  {t.pricing.featureCredits500}
-                </li>
-                <li className="off">
-                  <svg className="ic">
-                    <use href="#i-x" />
-                  </svg>
-                  {t.pricing.featureRadar}
-                </li>
-                <li className="off">
-                  <svg className="ic">
-                    <use href="#i-x" />
-                  </svg>
-                  {t.pricing.featureReviews}
-                </li>
-              </ul>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => {
-                  setModalPlan("starter");
-                  setIsModalOpen(true);
-                }}
-              >
-                {t.pricing.orderStarterBtn}
-              </button>
-            </div>
-
-            {/* Standard Plan (199 DH/mo - Most Popular) */}
-            <div className="surface plan pop" data-plan="growth">
-              <div className="ribbon">{t.pricing.popularBadge}</div>
-              <div className="pn" style={{ color: "var(--em2)" }}>
-                <svg className="ic">
-                  <use href="#i-bolt" />
-                </svg>
-                <span>{t.pricing.growthTitle}</span>
-              </div>
-              <div className="was">
-                <span className="launch">
-                  {locale === "fr" ? "+ 300 DH installation (1ère fois)" : locale === "es" ? "+ 300 DH instalación (1ª vez)" : "+ 300 درهم تثبيت (أول مرة)"}
-                </span>
-              </div>
-              <div className="pp">
-                <b className="lat">199</b>
-                <span>{locale === "fr" ? "DH / mois" : locale === "es" ? "DH / mes" : "DH / شهر"}</span>
-              </div>
-              <div className="per">{t.pricing.growthDesc}</div>
-              <ul>
-                <li className="all">
-                  {locale === "fr"
-                    ? "Tout le pack Essentiel, plus :"
-                    : locale === "es"
-                    ? "Todo el plan Esencial, más:"
-                    : "كل مميزات الباقة الأساسية، بالإضافة إلى:"}
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  <b>{t.pricing.featureRadar}</b>
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  <b>{t.pricing.featureReviews}</b>
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  <b>{t.engines.winbackTitle}</b>
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  <b>{t.pricing.featureCredits1000}</b>
-                </li>
-              </ul>
-              <button
-                type="button"
-                className="btn btn-em"
-                onClick={() => {
-                  setModalPlan("growth");
-                  setIsModalOpen(true);
-                }}
-              >
-                <span>{t.pricing.orderGrowthBtn}</span>
-                <svg className="ic">
-                  <use href="#i-bolt" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Multi-Branch Plan (Starting from 299 DH/mo = 199 + 100/branch) */}
-            <div className="surface plan" data-plan="multi">
-              <div className="pn">
-                <svg className="ic">
-                  <use href="#i-store" />
-                </svg>
-                <span>{t.pricing.multiTitle}</span>
-              </div>
-              <div className="was">
-                <span className="launch">
-                  {locale === "fr" ? "+ 300 DH installation (1ère fois)" : locale === "es" ? "+ 300 DH instalación (1ª vez)" : "+ 300 درهم تثبيت (أول مرة)"}
-                </span>
-              </div>
-              <div className="pp">
-                <b className="lat">299+</b>
-                <span>{locale === "fr" ? "DH / mois" : locale === "es" ? "DH / mes" : "DH / شهر"}</span>
-              </div>
-              <div className="per">{t.pricing.multiDesc}</div>
-              <ul>
-                <li className="all">
-                  {locale === "fr"
-                    ? "Tout le pack Standard, plus :"
-                    : locale === "es"
-                    ? "Todo el plan Estándar, más:"
-                    : "كل مميزات المتجر العادي، بالإضافة إلى:"}
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  <b>{t.pricing.featureMultiBranches}</b>
-                </li>
-                <li>
-                  <svg className="ic">
-                    <use href="#i-check" />
-                  </svg>
-                  <b>{t.pricing.featureDedicatedSupport}</b>
-                </li>
-              </ul>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => {
-                  setModalPlan("multi");
-                  setIsModalOpen(true);
-                }}
-              >
-                {t.pricing.orderMultiBtn}
-              </button>
-            </div>
-          </div>
-
-          {/* Setup Fee & Multi-Branch Explainers (No Credits/Points Mentioned) */}
-          <div className="explain">
-            <div className="surface">
-              <h3>
-                <svg className="ic">
-                  <use href="#i-bolt" />
-                </svg>
-                <span>{t.pricing.creditsTitle}</span>
-              </h3>
-              <p>{t.pricing.creditsDesc}</p>
-            </div>
-
-            <div className="surface">
-              <h3>
-                <svg className="ic">
-                  <use href="#i-store" />
-                </svg>
-                <span>{t.pricing.careTitle}</span>
-              </h3>
-              <p>{t.pricing.careDesc}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Payment & Guarantee Section (#payment) */}
-      <section className="sec" id="payment">
-        <div className="wrap">
-          <div className="pay">
-            <div className="surface payc">
-              <div className="pi">
-                <svg className="ic" style={{ color: "var(--em2)" }}>
-                  <use href="#i-shield" />
-                </svg>
-              </div>
-              <div>
-                <h3>{t.payment.termsTitle}</h3>
-                <p>{t.payment.termsDesc}</p>
-              </div>
-            </div>
-
-            <div className="surface payc">
-              <div className="pi">
-                <svg className="ic" style={{ color: "var(--gold2)" }}>
-                  <use href="#i-star" />
-                </svg>
-              </div>
-              <div>
-                <h3>{t.payment.guaranteeTitle}</h3>
-                <ul className="gl">
-                  <li>
-                    <svg className="ic">
-                      <use href="#i-check" />
-                    </svg>
-                    {t.payment.g1}
-                  </li>
-                  <li>
-                    <svg className="ic">
-                      <use href="#i-check" />
-                    </svg>
-                    {t.payment.g2}
-                  </li>
-                  <li>
-                    <svg className="ic">
-                      <use href="#i-check" />
-                    </svg>
-                    {t.payment.g3}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section (#faq) */}
-      <section className="sec" id="faq">
-        <div className="wrap">
-          <div className="head c">
-            <h2 className="h2 silver">{t.faq.title}</h2>
-            <p className="lead">{t.faq.subtitle}</p>
-          </div>
-
-          <div className="faq">
-            <details className="surface" open>
-              <summary>
-                <span>{t.faq.q1}</span>
-                <svg className="ic">
-                  <use href="#i-chev" />
-                </svg>
-              </summary>
-              <div className="a">{t.faq.a1}</div>
-            </details>
-
-            <details className="surface">
-              <summary>
-                <span>{t.faq.q2}</span>
-                <svg className="ic">
-                  <use href="#i-chev" />
-                </svg>
-              </summary>
-              <div className="a">{t.faq.a2}</div>
-            </details>
-
-            <details className="surface">
-              <summary>
-                <span>{t.faq.q3}</span>
-                <svg className="ic">
-                  <use href="#i-chev" />
-                </svg>
-              </summary>
-              <div className="a">{t.faq.a3}</div>
-            </details>
-
-            <details className="surface">
-              <summary>
-                <span>{t.faq.q4}</span>
-                <svg className="ic">
-                  <use href="#i-chev" />
-                </svg>
-              </summary>
-              <div className="a">{t.faq.a4}</div>
-            </details>
-
-            <details className="surface">
-              <summary>
-                <span>{t.faq.q5}</span>
-                <svg className="ic">
-                  <use href="#i-chev" />
-                </svg>
-              </summary>
-              <div className="a">{t.faq.a5}</div>
-            </details>
-
-            <details className="surface">
-              <summary>
-                <span>{t.faq.q6}</span>
-                <svg className="ic">
-                  <use href="#i-chev" />
-                </svg>
-              </summary>
-              <div className="a">{t.faq.a6}</div>
-            </details>
-          </div>
-        </div>
-      </section>
-
-      {/* Final Call to Action */}
-      <section className="final">
-        <div className="wrap">
-          <div className="surface box">
-            <h2 className="h2 silver">{t.finalCta.title}</h2>
-            <p className="lead" style={{ marginInline: "auto" }}>
-              {t.finalCta.desc}
-            </p>
-            <a href="#pricing" className="btn btn-em">
-              <span>{t.finalCta.btn}</span>
-              <svg className="ic">
-                <use href="#i-bolt" />
-              </svg>
-            </a>
-          </div>
-        </div>
-      </section>
+      <LandingSections
+        t={t}
+        locale={locale}
+        dir={dir}
+        roiCount={roiCount}
+        setRoiCount={setRoiCount}
+        roiSpend={roiSpend}
+        setRoiSpend={setRoiSpend}
+        onOpenModal={(plan) => {
+          setModalPlan(plan);
+          setModalShop(heroStoreInput.trim() || shopInput || "Café Atlas");
+          setIsModalOpen(true);
+        }}
+      />
 
       {/* Comprehensive Enterprise Footer */}
       <SiteFooter />

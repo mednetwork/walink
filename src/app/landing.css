@@ -977,3 +977,266 @@
   .walink-landing[dir="ltr"] .hv .phone{left:auto;right:0;transform:perspective(1200px) rotateY(-6deg) rotateX(1deg)}
   .walink-landing[dir="ltr"] .hv .stand{right:auto;left:0;transform:perspective(1000px) rotateY(10deg)}
 }
+
+
+/* ==========================================================================
+   Fidelix-Style Coral / Cream / Ink Theme Overrides & Utilities
+   ========================================================================== */
+.walink-landing {
+  --obsidian: #EFEAE4;
+  --slate: #FFFFFF;
+  --card: #FFFFFF;
+  --white: #161514;
+  --muted: rgba(22, 21, 20, 0.64);
+  --dim: rgba(22, 21, 20, 0.5);
+  --border: rgba(22, 21, 20, 0.08);
+  --em: #F85B04;
+  --em2: #DA5004;
+  --coral: #F85B04;
+  --coral-dark: #C14703;
+  --coral-text: #DA5004;
+  --ink: #161514;
+  --cream: #EFEAE4;
+  --gold: #F9742A;
+  --gold2: #C14703;
+  background-color: #EFEAE4;
+  color: #161514;
+  overflow-x: clip;
+}
+
+.walink-landing .shadow-sticker {
+  box-shadow: 0 4px 0 rgba(22, 21, 20, 0.12);
+}
+
+.walink-landing .shadow-coral-sticker {
+  box-shadow: 0 4px 0 #C14703;
+}
+
+.walink-landing .shadow-float {
+  box-shadow: 0 2px 4px rgba(16, 16, 24, 0.04), 0 24px 48px -16px rgba(16, 16, 24, 0.18);
+}
+
+/* Range sliders styled cleanly in Coral */
+.walink-landing input[type="range"].fidelix-range {
+  -webkit-appearance: none;
+  appearance: none;
+  inline-size: 100%;
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(22, 21, 20, 0.12);
+  outline: none;
+  cursor: pointer;
+}
+
+.walink-landing input[type="range"].fidelix-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #F85B04;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgba(22, 21, 20, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.walink-landing input[type="range"].fidelix-range::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.walink-landing input[type="range"].fidelix-range::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #F85B04;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgba(22, 21, 20, 0.25);
+  cursor: pointer;
+}
+
+/* Interactive Demo Theater Theme Harmonization */
+.walink-landing #demo .surface {
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 21, 20, 0.08);
+  color: #161514;
+  box-shadow: 0 12px 32px -12px rgba(22, 21, 20, 0.08);
+}
+
+.walink-landing #demo .ctrl,
+.walink-landing #demo .ctrl * {
+  color: #161514;
+}
+
+.walink-landing #demo .ctrl .k {
+  color: #DA5004;
+  font-weight: 800;
+}
+
+.walink-landing #demo .ctrl .btn-em,
+.walink-landing #demo .ctrl .btn-em * {
+  color: #FFFFFF;
+}
+
+.walink-landing #demo .btn-em {
+  background: #F85B04;
+  color: #FFFFFF;
+  border-color: transparent;
+  box-shadow: 0 4px 0 #C14703;
+}
+
+.walink-landing #demo .btn-em:hover {
+  background: #E25102;
+}
+
+.walink-landing #demo .niche-pill {
+  background: #EFEAE4;
+  border-color: rgba(22, 21, 20, 0.1);
+  color: #161514;
+}
+
+.walink-landing #demo .niche-pill.on {
+  background: #161514;
+  color: #FFFFFF;
+  border-color: #161514;
+}
+
+.walink-landing #demo .niche-pill.on * {
+  color: #FFFFFF;
+}
+
+.walink-landing #demo .seg {
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 21, 20, 0.08);
+}
+
+.walink-landing #demo .seg button {
+  color: rgba(22, 21, 20, 0.72);
+}
+
+.walink-landing #demo .seg button[aria-selected="true"] {
+  background: #161514;
+  color: #FFFFFF;
+}
+
+.walink-landing #demo .pos-auto-chip {
+  background: #EFEAE4;
+  border: 1px solid rgba(22, 21, 20, 0.1);
+  color: #161514;
+}
+
+.walink-landing #demo .pos-auto-chip:hover {
+  border-color: #F85B04;
+  background: rgba(248, 91, 4, 0.08);
+}
+
+/* Keep simulated iPhone screen dark charcoal for realistic OLED contrast */
+.walink-landing .demo-phone .bezel {
+  background: #161514;
+  border-color: rgba(22, 21, 20, 0.25);
+  box-shadow: 0 24px 48px -16px rgba(22, 21, 20, 0.28);
+}
+
+.walink-landing .demo-phone .screen {
+  background: #141312;
+  color: #FFFFFF;
+}
+
+.walink-landing .demo-phone .dash,
+.walink-landing .demo-phone .dash * {
+  color: #FFFFFF;
+}
+
+.walink-landing .demo-phone .d-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.walink-landing .nudge.glass {
+  background: #161514;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.walink-landing .nudge.glass .btn-gold {
+  background: #F85B04;
+  color: #FFFFFF;
+}
+
+/* Modal & Mobile Bar Coral/Cream Theme */
+.walink-landing .modal {
+  background: rgba(22, 21, 20, 0.65);
+  backdrop-filter: blur(8px);
+}
+
+.walink-landing .mbox.surface {
+  background: #FFFFFF;
+  color: #161514;
+  border: 1px solid rgba(22, 21, 20, 0.1);
+  border-radius: 2rem;
+}
+
+.walink-landing .mbox input,
+.walink-landing .mbox select {
+  background: #EFEAE4;
+  color: #161514;
+  border: 1px solid rgba(22, 21, 20, 0.14);
+}
+
+.walink-landing .mbox input:focus,
+.walink-landing .mbox select:focus {
+  border-color: #F85B04;
+  outline: none;
+}
+
+.walink-landing .mbar {
+  background: rgba(22, 21, 20, 0.94);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+}
+
+.walink-landing .mbar .btn-em {
+  background: #F85B04;
+  color: #FFFFFF;
+}
+
+/* Smooth GPU-only Animations */
+@keyframes fidelixFloatSlow {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50% { transform: translateY(-7px) rotate(-8deg); }
+}
+
+@keyframes fidelixFloatCenter {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+
+@keyframes fidelixFloatRight {
+  0%, 100% { transform: translateY(0) rotate(8deg); }
+  50% { transform: translateY(-6px) rotate(8deg); }
+}
+
+.walink-landing .fan-left {
+  animation: fidelixFloatSlow 5.5s ease-in-out infinite;
+}
+
+.walink-landing .fan-center {
+  animation: fidelixFloatCenter 4.8s ease-in-out infinite;
+}
+
+.walink-landing .fan-right {
+  animation: fidelixFloatRight 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .walink-landing .fan-left,
+  .walink-landing .fan-center,
+  .walink-landing .fan-right,
+  .walink-landing *,
+  .walink-landing *::before,
+  .walink-landing *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
