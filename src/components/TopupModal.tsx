@@ -63,22 +63,22 @@ export default function TopupModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white border border-[#E9EDEF] rounded-3xl shadow-2xl p-6 text-[#111B21]">
+      <div className="relative w-full max-w-md bg-white border border-[#161514]/10 rounded-3xl shadow-2xl p-6 text-[#161514]">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#E9EDEF]">
+        <div className="flex items-center justify-between pb-4 border-b border-[#161514]/10">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 shadow-sm">
+            <span className="p-2 rounded-xl bg-[#F85B04]/10 text-[#F85B04] border border-[#F85B04]/25 shadow-sm">
               <Coins className="w-5 h-5" />
             </span>
             <div>
-              <h3 className="font-bold text-lg text-[#111B21]">شحن رصيد الكريدي</h3>
-              <p className="text-xs text-[#54656F]">{merchant.name}</p>
+              <h3 className="font-bold text-lg text-[#161514]">شحن رصيد الكريدي</h3>
+              <p className="text-xs text-[#161514]/65">{merchant.name}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-[#F0F2F5] text-[#54656F] hover:text-[#111B21] transition"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl hover:bg-[#EFEAE4] text-[#161514]/65 hover:text-[#161514] transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -96,13 +96,13 @@ export default function TopupModal({
         </div>
 
         {/* Current Balance */}
-        <div className="my-3 p-4 rounded-2xl bg-[#F0F2F5] border border-[#E9EDEF] flex items-center justify-between">
-          <span className="text-xs text-[#54656F] font-semibold">الرصيد الحالي للمحل:</span>
+        <div className="my-3 p-4 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 flex items-center justify-between">
+          <span className="text-xs text-[#161514]/65 font-semibold">الرصيد الحالي للمحل:</span>
           <div className="text-right">
-            <span className="text-base font-bold text-amber-700 font-mono block">
+            <span className="text-base font-bold text-[#DA5004] font-mono tabular-nums block">
               {merchant.credits.toLocaleString()} كريدي
             </span>
-            <span className="text-[10px] text-[#54656F] font-mono font-semibold">
+            <span className="text-[10px] text-[#161514]/60 font-mono tabular-nums font-semibold">
               ≈ {(merchant.credits * CREDIT_PRICE_MAD).toFixed(1)} DH
             </span>
           </div>
@@ -110,7 +110,7 @@ export default function TopupModal({
 
         {/* Package Options */}
         <div className="space-y-2.5 my-4">
-          <label className="text-xs font-semibold text-[#111B21] block">
+          <label className="text-xs font-semibold text-[#161514] block">
             اختر باقة الشحن:
           </label>
           <div className="grid grid-cols-1 gap-2.5">
@@ -122,18 +122,18 @@ export default function TopupModal({
                   setSelectedAmount(pkg.credits);
                   setCustomAmount("");
                 }}
-                className={`p-3.5 rounded-2xl border text-right transition flex items-center justify-between ${
+                className={`p-3.5 min-h-[44px] rounded-2xl border text-right transition flex items-center justify-between ${
                   selectedAmount === pkg.credits && !customAmount
-                    ? "bg-amber-50 border-amber-300 text-amber-950 shadow-sm ring-1 ring-amber-300 font-semibold"
-                    : "bg-[#F0F2F5] border-[#E9EDEF] hover:bg-[#E9EDEF] text-[#111B21]"
+                    ? "bg-[#F85B04]/10 border-[#F85B04]/50 text-[#161514] shadow-sm ring-1 ring-[#F85B04]/40 font-semibold"
+                    : "bg-[#EFEAE4] border-[#161514]/10 hover:bg-[#EFEAE4]/80 text-[#161514]"
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <div
                     className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                       selectedAmount === pkg.credits && !customAmount
-                        ? "border-amber-500 bg-amber-500"
-                        : "border-[#D1D7DB] bg-white"
+                        ? "border-[#F85B04] bg-[#F85B04]"
+                        : "border-[#161514]/25 bg-white"
                     }`}
                   >
                     {selectedAmount === pkg.credits && !customAmount && (
@@ -141,8 +141,8 @@ export default function TopupModal({
                     )}
                   </div>
                   <div>
-                    <span className="font-bold text-sm block text-[#111B21]">{pkg.label}</span>
-                    <span className="text-[11px] text-[#54656F]">
+                    <span className="font-bold text-sm block text-[#161514]">{pkg.label}</span>
+                    <span className="text-[11px] text-[#161514]/65">
                       {pkg.credits.toLocaleString()} عملية أو إشعار
                     </span>
                   </div>
@@ -150,11 +150,11 @@ export default function TopupModal({
 
                 <div className="flex items-center gap-2">
                   {pkg.popular && (
-                    <span className="text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] font-bold bg-[#161514] text-white px-2 py-0.5 rounded-md">
                       الأكثر طلباً
                     </span>
                   )}
-                  <span className="text-sm font-bold text-amber-700 font-mono">
+                  <span className="text-sm font-bold text-[#DA5004] font-mono tabular-nums">
                     {pkg.price} درهم
                   </span>
                 </div>
@@ -164,7 +164,7 @@ export default function TopupModal({
 
           {/* Custom amount */}
           <div className="pt-2">
-            <label className="text-xs text-[#54656F] mb-1 block font-semibold">
+            <label className="text-xs text-[#161514]/65 mb-1 block font-semibold">
               أو حدد رصيد مخصص (1 كريدي = 0.1 درهم):
             </label>
             <div className="relative">
@@ -177,16 +177,16 @@ export default function TopupModal({
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
                 placeholder="مثلاً: 2500"
-                className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-4 py-2.5 text-sm text-[#111B21] focus:outline-none focus:border-amber-500 focus:bg-white transition"
+                className="w-full min-h-[44px] bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-4 py-2.5 text-base text-[#161514] focus:outline-none focus:border-[#F85B04] focus:bg-white transition"
               />
-              <span className="absolute left-3 top-2.5 text-xs text-[#54656F] font-semibold">
+              <span className="absolute left-3 top-3 text-xs text-[#161514]/60 font-semibold">
                 كريدي
               </span>
             </div>
             {finalAmount > 0 && (
-              <div className="mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs flex items-center justify-between text-amber-950 font-semibold animate-in fade-in">
+              <div className="mt-2 p-2.5 rounded-xl bg-[#F85B04]/10 border border-[#F85B04]/25 text-xs flex items-center justify-between text-[#161514] font-semibold animate-in fade-in">
                 <span>المبلغ المستحق:</span>
-                <span className="font-mono font-bold text-amber-800 text-sm">
+                <span className="font-mono font-bold text-[#DA5004] text-sm tabular-nums">
                   {(finalAmount * CREDIT_PRICE_MAD).toFixed(1)} درهم
                 </span>
               </div>
@@ -206,7 +206,7 @@ export default function TopupModal({
             type="button"
             disabled={loading || finalAmount <= 0}
             onClick={() => handleSubmit(finalAmount)}
-            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition disabled:opacity-50"
+            className="flex-1 min-h-[44px] py-3 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-[0_3px_0_#C14703] transition disabled:opacity-50"
           >
             {loading ? (
               <span>جاري الشحن...</span>
@@ -223,7 +223,7 @@ export default function TopupModal({
           <button
             type="button"
             onClick={onClose}
-            className="py-3 px-4 rounded-xl bg-[#F0F2F5] hover:bg-[#E9EDEF] text-[#54656F] border border-[#D1D7DB] font-semibold text-sm transition"
+            className="min-h-[44px] py-3 px-4 rounded-xl bg-[#EFEAE4] hover:bg-[#E5DFD7] text-[#161514] border border-[#161514]/15 font-semibold text-sm transition"
           >
             إلغاء
           </button>

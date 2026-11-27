@@ -35,13 +35,13 @@ export default async function CustomerJoinPage({ params }: JoinPageProps) {
 
   if (!merchant || !merchant.isActive) {
     return (
-      <div className="min-h-screen bg-[#FAF7F2] text-[#173E30] flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-[#FFFDF7] p-8 rounded-3xl text-center space-y-4 border border-[#DCE0D4] shadow-sm">
+      <div className="min-h-screen bg-[#EFEAE4] text-[#161514] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white p-8 rounded-3xl text-center space-y-4 border border-[#161514]/10 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-600 border border-amber-500/20 mx-auto flex items-center justify-center">
             <AlertTriangle className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-bold text-[#173E30]">المحل غير متاح حالياً</h1>
-          <p className="text-xs text-[#5F655D] leading-relaxed">
+          <h1 className="text-xl font-bold text-[#161514]">المحل غير متاح حالياً</h1>
+          <p className="text-xs text-[#161514]/65 leading-relaxed">
             عذراً، هذا المحل التجاري غير مفعل أو أن الرابط غير صحيح.
           </p>
         </div>

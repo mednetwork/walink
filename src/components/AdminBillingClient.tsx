@@ -181,21 +181,21 @@ export default function AdminBillingClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#111B21] flex items-center gap-2.5">
-            <span className="p-2 rounded-2xl bg-[#008069]/10 text-[#008069] border border-[#008069]/20">
+          <h1 className="text-2xl font-bold text-[#161514] flex items-center gap-2.5">
+            <span className="p-2 rounded-2xl bg-[#F85B04]/10 text-[#DA5004] border border-[#F85B04]/25">
               <Receipt className="w-6 h-6" />
             </span>
             <span>فوترة المتاجر الشهرية والاشتراكات</span>
           </h1>
-          <p className="text-xs text-[#54656F] mt-1">
+          <p className="text-xs text-[#161514]/65 mt-1">
             متابعة الاشتراك الشهري (149 / 199 / +100 لكل فرع)، رسوم التثبيت (300 درهم أول مرة)، واستهلاك النقاط (0.1 درهم/نقطة).
           </p>
         </div>
 
         {/* Month Picker */}
-        <div className="flex items-center gap-2 bg-white border border-[#D1D7DB] rounded-2xl px-3.5 py-2 shadow-sm">
-          <Calendar className="w-4 h-4 text-[#008069]" />
-          <label htmlFor="billing-month-picker" className="text-xs font-bold text-[#111B21]">
+        <div className="flex items-center gap-2 bg-white border border-[#161514]/15 rounded-2xl px-3.5 py-2 shadow-sm">
+          <Calendar className="w-4 h-4 text-[#DA5004]" />
+          <label htmlFor="billing-month-picker" className="text-xs font-bold text-[#161514]">
             الشهر:
           </label>
           <input
@@ -203,15 +203,15 @@ export default function AdminBillingClient({
             type="month"
             value={selectedMonth}
             onChange={(e) => loadMonthData(e.target.value)}
-            className="text-xs font-mono font-bold text-[#008069] bg-transparent focus:outline-none cursor-pointer"
+            className="text-xs font-mono font-bold text-[#DA5004] bg-transparent focus:outline-none cursor-pointer"
           />
           <button
             type="button"
             onClick={() => loadMonthData(selectedMonth)}
             aria-label="تحديث الفواتير"
-            className="p-1.5 rounded-lg hover:bg-[#F0F2F5] text-[#54656F] transition"
+            className="p-1.5 rounded-lg hover:bg-[#EFEAE4] text-[#161514]/65 transition"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoadingMonth ? "animate-spin text-[#008069]" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoadingMonth ? "animate-spin text-[#DA5004]" : ""}`} />
           </button>
         </div>
       </div>
@@ -232,15 +232,15 @@ export default function AdminBillingClient({
 
       {/* Top 4 KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-[#54656F] font-semibold">
+        <div className="bg-white p-5 rounded-3xl border border-[#161514]/10 shadow-sm space-y-1.5">
+          <div className="flex items-center justify-between text-xs text-[#161514]/65 font-semibold">
             <span>إجمالي فواتير الشهر</span>
-            <Receipt className="w-4 h-4 text-[#008069]" />
+            <Receipt className="w-4 h-4 text-[#DA5004]" />
           </div>
-          <div className="text-2xl font-black text-[#111B21] font-mono">
+          <div className="text-2xl font-black text-[#161514] font-mono">
             {summary.totalBilled.toLocaleString()} <span className="text-xs font-bold">DH</span>
           </div>
-          <p className="text-[11px] text-[#54656F]">{rows.length} متجر مشمول بالفوترة</p>
+          <p className="text-[11px] text-[#161514]/65">{rows.length} متجر مشمول بالفوترة</p>
         </div>
 
         <div className="bg-white p-5 rounded-3xl border border-emerald-200 bg-emerald-50/30 shadow-sm space-y-1.5">
@@ -280,16 +280,16 @@ export default function AdminBillingClient({
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white p-3.5 rounded-2xl border border-[#E9EDEF] shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="bg-white p-3.5 rounded-2xl border border-[#161514]/10 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-[#54656F] absolute right-3 top-2.5" />
+          <Search className="w-4 h-4 text-[#161514]/65 absolute right-3 top-2.5" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="بحث باسم المتجر أو المدينة"
             placeholder="بحث باسم المتجر أو المدينة..."
-            className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl pr-9 pl-3 py-2 text-xs text-[#111B21] focus:outline-none focus:border-[#008069] focus:bg-white"
+            className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-xl pr-9 pl-3 py-2 text-xs text-[#161514] focus:outline-none focus:border-[#F85B04] focus:bg-white"
           />
         </div>
 
@@ -307,8 +307,8 @@ export default function AdminBillingClient({
               onClick={() => setStatusFilter(tab.id)}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition ${
                 statusFilter === tab.id
-                  ? "bg-[#008069] text-white shadow-sm"
-                  : "bg-[#F0F2F5] text-[#54656F] hover:bg-[#E9EDEF]"
+                  ? "bg-[#F85B04] text-white shadow-sm"
+                  : "bg-[#EFEAE4] text-[#161514]/65 hover:bg-[#E5DFD7]"
               }`}
             >
               {tab.label}
@@ -319,10 +319,10 @@ export default function AdminBillingClient({
 
       {/* Invoices List */}
       {filteredRows.length === 0 ? (
-        <div className="bg-white p-12 rounded-3xl border border-[#E9EDEF] text-center space-y-2">
-          <Receipt className="w-8 h-8 text-[#54656F] mx-auto" />
-          <h2 className="text-sm font-bold text-[#111B21]">لا توجد فواتير مطابقة لهذا الشهر</h2>
-          <p className="text-xs text-[#54656F]">
+        <div className="bg-white p-12 rounded-3xl border border-[#161514]/10 text-center space-y-2">
+          <Receipt className="w-8 h-8 text-[#161514]/65 mx-auto" />
+          <h2 className="text-sm font-bold text-[#161514]">لا توجد فواتير مطابقة لهذا الشهر</h2>
+          <p className="text-xs text-[#161514]/65">
             جرّب اختيار شهر آخر أو مسح فلاتر البحث.
           </p>
         </div>
@@ -338,14 +338,14 @@ export default function AdminBillingClient({
                 className={`bg-white p-5 rounded-3xl border shadow-sm transition ${
                   row.status === "PAID"
                     ? "border-emerald-200 bg-emerald-50/10"
-                    : "border-[#E9EDEF]"
+                    : "border-[#161514]/10"
                 }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   {/* Store Identity & Plan */}
                   <div className="space-y-1.5 min-w-[220px]">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="font-bold text-base text-[#111B21]">{row.name}</h2>
+                      <h2 className="font-bold text-base text-[#161514]">{row.name}</h2>
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                           row.plan === "STARTER"
@@ -367,12 +367,12 @@ export default function AdminBillingClient({
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-[11px] text-[#54656F]">
+                    <div className="flex items-center gap-3 text-[11px] text-[#161514]/65">
                       <span>📍 {row.city}</span>
                       {row.phone && <span className="font-mono dir-ltr">📞 {row.phone}</span>}
                       <Link
                         href={`/admin/merchants/${row.merchantId}`}
-                        className="text-[#008069] hover:underline font-semibold inline-flex items-center gap-1"
+                        className="text-[#DA5004] hover:underline font-semibold inline-flex items-center gap-1"
                       >
                         <Building2 className="w-3 h-3" />
                         <span>تعديل الفروع/الباقة</span>
@@ -382,20 +382,20 @@ export default function AdminBillingClient({
                   </div>
 
                   {/* Breakdown Columns */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1 bg-[#F7F9FA] p-3 rounded-2xl border border-[#E9EDEF] text-center">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1 bg-[#F7F9FA] p-3 rounded-2xl border border-[#161514]/10 text-center">
                     <div>
-                      <span className="text-[10px] text-[#54656F] block">الاشتراك الشهري</span>
-                      <span className="text-sm font-bold text-[#111B21] font-mono">
+                      <span className="text-[10px] text-[#161514]/65 block">الاشتراك الشهري</span>
+                      <span className="text-sm font-bold text-[#161514] font-mono">
                         {row.subscriptionFee} DH
                       </span>
                     </div>
 
                     <div>
-                      <span className="text-[10px] text-[#54656F] block">ثمن التثبيت</span>
+                      <span className="text-[10px] text-[#161514]/65 block">ثمن التثبيت</span>
                       <div className="flex items-center justify-center gap-1">
                         <span
                           className={`text-sm font-bold font-mono ${
-                            row.installationFee > 0 ? "text-amber-700" : "text-[#54656F]"
+                            row.installationFee > 0 ? "text-amber-700" : "text-[#161514]/65"
                           }`}
                         >
                           {row.installationFee} DH
@@ -410,7 +410,7 @@ export default function AdminBillingClient({
                                 ? "إلغاء رسوم التثبيت لهذا الشهر"
                                 : "إضافة 300 DH رسوم التثبيت"
                             }
-                            className="p-1 rounded-md hover:bg-white text-[#54656F] hover:text-[#008069] transition"
+                            className="p-1 rounded-md hover:bg-white text-[#161514]/65 hover:text-[#DA5004] transition"
                           >
                             <Wrench className="w-3 h-3" />
                           </button>
@@ -419,7 +419,7 @@ export default function AdminBillingClient({
                     </div>
 
                     <div>
-                      <span className="text-[10px] text-[#54656F] block">
+                      <span className="text-[10px] text-[#161514]/65 block">
                         النقاط ({row.pointsUsed} × 0.1)
                       </span>
                       <span className="text-sm font-bold text-amber-700 font-mono">
@@ -428,8 +428,8 @@ export default function AdminBillingClient({
                     </div>
 
                     <div>
-                      <span className="text-[10px] text-[#54656F] block">المجموع المستحق</span>
-                      <span className="text-base font-black text-[#008069] font-mono">
+                      <span className="text-[10px] text-[#161514]/65 block">المجموع المستحق</span>
+                      <span className="text-base font-black text-[#DA5004] font-mono">
                         {row.totalAmount.toFixed(2)} DH
                       </span>
                     </div>
@@ -468,7 +468,7 @@ export default function AdminBillingClient({
                         <span>📲 إرسال الفاتورة (واتساب)</span>
                       </a>
                     ) : (
-                      <span className="px-3 py-2 rounded-xl bg-[#F0F2F5] text-[#54656F] text-[11px] font-semibold">
+                      <span className="px-3 py-2 rounded-xl bg-[#EFEAE4] text-[#161514]/65 text-[11px] font-semibold">
                         لا يوجد هاتف
                       </span>
                     )}

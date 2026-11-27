@@ -359,13 +359,13 @@ export default function AdminStandsClient({
       {/* Header & Main Actions */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 print:hidden">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#173E30] flex items-center gap-2.5">
-            <span className="w-10 h-10 rounded-2xl bg-[#008069] text-white flex items-center justify-center shadow-sm">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#161514] flex items-center gap-2.5">
+            <span className="w-10 h-10 rounded-2xl bg-[#F85B04] text-white flex items-center justify-center shadow-sm">
               <QrCode className="w-5 h-5" />
             </span>
             <span>ستاندات الكاونتر المطبوعة مسبقاً (Dynamic QR)</span>
           </h1>
-          <p className="text-xs text-[#5F655D] mt-1">
+          <p className="text-xs text-[#161514]/65 mt-1">
             اطبع دفعات QR مسبقاً قبل النزول للميدان، ثم اربط كل ستاند بمتجر المشتري في ثوانٍ دون إعادة طباعة.
           </p>
         </div>
@@ -375,9 +375,9 @@ export default function AdminStandsClient({
             type="button"
             onClick={handleExportCsvForPrintShop}
             disabled={filteredStands.length === 0}
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#FAF7F2] border border-[#DCE0D4] text-[#173E30] text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px]"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#EFEAE4] border border-[#161514]/10 text-[#161514] text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px]"
           >
-            <FileSpreadsheet className="w-4 h-4 text-[#008069]" />
+            <FileSpreadsheet className="w-4 h-4 text-[#DA5004]" />
             <span>📥 تصدير CSV للمطبعة / Canva</span>
           </button>
 
@@ -385,7 +385,7 @@ export default function AdminStandsClient({
             type="button"
             onClick={() => setShowPrintModal(true)}
             disabled={filteredStands.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px]"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 min-h-[44px]"
           >
             <Printer className="w-4 h-4" />
             <span>🖨️ طباعة ورقة الأكواد ({filteredStands.length})</span>
@@ -395,15 +395,15 @@ export default function AdminStandsClient({
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 print:hidden">
-        <div className="p-4 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm">
-          <span className="text-[11px] font-semibold text-[#5F655D] block">
+        <div className="p-4 rounded-2xl bg-white border border-[#161514]/10 shadow-sm">
+          <span className="text-[11px] font-semibold text-[#161514]/65 block">
             إجمالي الستاندات المطبوعة
           </span>
-          <span className="text-2xl font-extrabold font-mono text-[#173E30] mt-1 block">
+          <span className="text-2xl font-extrabold font-mono text-[#161514] mt-1 block">
             {summary.total}
           </span>
         </div>
-        <div className="p-4 rounded-2xl bg-[#FFFDF7] border border-amber-200 shadow-sm">
+        <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-sm">
           <span className="text-[11px] font-semibold text-amber-800 block">
             متاح للبيع (غير مربوط)
           </span>
@@ -411,20 +411,20 @@ export default function AdminStandsClient({
             {summary.unassigned}
           </span>
         </div>
-        <div className="p-4 rounded-2xl bg-[#FFFDF7] border border-[#A7F3D0] shadow-sm">
-          <span className="text-[11px] font-semibold text-[#008069] block">
+        <div className="p-4 rounded-2xl bg-white border border-[#A7F3D0] shadow-sm">
+          <span className="text-[11px] font-semibold text-[#DA5004] block">
             مربوط ونشط عند التجار
           </span>
-          <span className="text-2xl font-extrabold font-mono text-[#008069] mt-1 block">
+          <span className="text-2xl font-extrabold font-mono text-[#DA5004] mt-1 block">
             {summary.assigned}
           </span>
         </div>
-        <div className="p-4 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm">
-          <span className="text-[11px] font-semibold text-[#5F655D] block">
+        <div className="p-4 rounded-2xl bg-white border border-[#161514]/10 shadow-sm">
+          <span className="text-[11px] font-semibold text-[#161514]/65 block">
             إجمالي مسوحات الزبائن
           </span>
-          <span className="text-2xl font-extrabold font-mono text-[#173E30] mt-1 flex items-center gap-1.5">
-            <Activity className="w-5 h-5 text-[#008069]" />
+          <span className="text-2xl font-extrabold font-mono text-[#161514] mt-1 flex items-center gap-1.5">
+            <Activity className="w-5 h-5 text-[#DA5004]" />
             <span>{summary.totalScans}</span>
           </span>
         </div>
@@ -462,10 +462,10 @@ export default function AdminStandsClient({
       {/* Batch Generator Form */}
       <form
         onSubmit={handleGenerateBatch}
-        className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-4 print:hidden"
+        className="p-4 sm:p-5 rounded-3xl bg-white border border-[#161514]/10 shadow-sm space-y-4 print:hidden"
       >
-        <div className="flex items-center gap-2 text-sm font-bold text-[#173E30]">
-          <Plus className="w-4 h-4 text-[#008069]" />
+        <div className="flex items-center gap-2 text-sm font-bold text-[#161514]">
+          <Plus className="w-4 h-4 text-[#DA5004]" />
           <span>توليد دفعة ستاندات جديدة للطباعة</span>
         </div>
 
@@ -473,7 +473,7 @@ export default function AdminStandsClient({
           <div>
             <label
               htmlFor="stand-prefix"
-              className="text-[11px] font-bold text-[#5F655D] block mb-1"
+              className="text-[11px] font-bold text-[#161514]/65 block mb-1"
             >
               بادئة الكود (مثال: WLK)
             </label>
@@ -483,14 +483,14 @@ export default function AdminStandsClient({
               value={prefix}
               maxLength={6}
               onChange={(e) => setPrefix(e.target.value.toUpperCase())}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#C8D1BE] text-sm font-mono font-bold text-[#173E30] focus:outline-none focus:border-[#008069]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#161514]/15 text-sm font-mono font-bold text-[#161514] focus:outline-none focus:border-[#F85B04]"
             />
           </div>
 
           <div>
             <label
               htmlFor="stand-count"
-              className="text-[11px] font-bold text-[#5F655D] block mb-1"
+              className="text-[11px] font-bold text-[#161514]/65 block mb-1"
             >
               عدد الستاندات (1–200)
             </label>
@@ -501,14 +501,14 @@ export default function AdminStandsClient({
               max={200}
               value={batchCount}
               onChange={(e) => setBatchCount(Math.max(1, Math.min(200, Number(e.target.value) || 1)))}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#C8D1BE] text-sm font-mono font-bold text-[#173E30] focus:outline-none focus:border-[#008069]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#161514]/15 text-sm font-mono font-bold text-[#161514] focus:outline-none focus:border-[#F85B04]"
             />
           </div>
 
           <div>
             <label
               htmlFor="stand-batch-label"
-              className="text-[11px] font-bold text-[#5F655D] block mb-1"
+              className="text-[11px] font-bold text-[#161514]/65 block mb-1"
             >
               اسم الدفعة (اختياري للفرز)
             </label>
@@ -518,7 +518,7 @@ export default function AdminStandsClient({
               value={batchLabel}
               placeholder="مثال: دفعة كازا - نوفمبر"
               onChange={(e) => setBatchLabel(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#C8D1BE] text-xs font-medium text-[#173E30] focus:outline-none focus:border-[#008069]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#161514]/15 text-xs font-medium text-[#161514] focus:outline-none focus:border-[#F85B04]"
             />
           </div>
 
@@ -526,7 +526,7 @@ export default function AdminStandsClient({
             <button
               type="submit"
               disabled={generating}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[44px]"
+              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[44px]"
             >
               <Plus className="w-4 h-4" />
               <span>{generating ? "جاري التوليد..." : "توليد الأكواد الآن"}</span>
@@ -538,14 +538,14 @@ export default function AdminStandsClient({
       {/* Search & Filter Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between print:hidden">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-[#5F655D] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-[#161514]/65 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="search"
             aria-label="ابحث بكود الستاند أو اسم المتجر أو المدينة"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="بحث بالكود (WLK-001) أو المتجر أو الدفعة..."
-            className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-white border border-[#DCE0D4] text-xs text-[#173E30] focus:outline-none focus:border-[#008069]"
+            className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-white border border-[#161514]/10 text-xs text-[#161514] focus:outline-none focus:border-[#F85B04]"
           />
         </div>
 
@@ -563,8 +563,8 @@ export default function AdminStandsClient({
               onClick={() => setFilterMode(tab.id)}
               className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer min-h-[44px] ${
                 filterMode === tab.id
-                  ? "bg-[#008069] text-white shadow-sm"
-                  : "bg-white text-[#5F655D] border border-[#DCE0D4] hover:text-[#173E30]"
+                  ? "bg-[#F85B04] text-white shadow-sm"
+                  : "bg-white text-[#161514]/65 border border-[#161514]/10 hover:text-[#161514]"
               }`}
             >
               {tab.label}
@@ -576,7 +576,7 @@ export default function AdminStandsClient({
               aria-label="تصفية حسب الدفعة"
               value={selectedBatchFilter}
               onChange={(e) => setSelectedBatchFilter(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white border border-[#DCE0D4] text-xs font-semibold text-[#173E30] focus:outline-none focus:border-[#008069] min-h-[44px]"
+              className="px-3 py-2 rounded-xl bg-white border border-[#161514]/10 text-xs font-semibold text-[#161514] focus:outline-none focus:border-[#F85B04] min-h-[44px]"
             >
               <option value="ALL">كل الدفعات</option>
               {batchOptions.map((b) => (
@@ -591,12 +591,12 @@ export default function AdminStandsClient({
 
       {/* Stands Grid */}
       {filteredStands.length === 0 ? (
-        <div className="p-10 rounded-3xl bg-[#FFFDF7] border border-[#DCE0D4] text-center space-y-2 print:hidden">
-          <QrCode className="w-10 h-10 text-[#008069]/40 mx-auto" />
-          <h2 className="text-sm font-bold text-[#173E30]">
+        <div className="p-10 rounded-3xl bg-white border border-[#161514]/10 text-center space-y-2 print:hidden">
+          <QrCode className="w-10 h-10 text-[#DA5004]/40 mx-auto" />
+          <h2 className="text-sm font-bold text-[#161514]">
             لا توجد ستاندات مطابقة حالياً
           </h2>
-          <p className="text-xs text-[#5F655D]">
+          <p className="text-xs text-[#161514]/65">
             قم بتوليد دفعة جديدة من الأعلى لتجهيز أكواد QR للطباعة.
           </p>
         </div>
@@ -620,10 +620,10 @@ export default function AdminStandsClient({
             return (
               <div
                 key={stand.id}
-                className={`p-4 rounded-3xl bg-[#FFFDF7] border shadow-sm space-y-3.5 ${
+                className={`p-4 rounded-3xl bg-white border shadow-sm space-y-3.5 ${
                   stand.merchantId
                     ? "border-[#A7F3D0]"
-                    : "border-[#DCE0D4]"
+                    : "border-[#161514]/10"
                 }`}
               >
                 {/* Top Stand Header */}
@@ -632,7 +632,7 @@ export default function AdminStandsClient({
                     <div className="flex items-center gap-2">
                       <span
                         dir="ltr"
-                        className="font-mono font-extrabold text-base text-[#173E30]"
+                        className="font-mono font-extrabold text-base text-[#161514]"
                       >
                         {stand.code}
                       </span>
@@ -647,20 +647,20 @@ export default function AdminStandsClient({
                       </span>
                     </div>
                     {stand.batchLabel && (
-                      <span className="text-[10px] text-[#5F655D] block mt-0.5">
+                      <span className="text-[10px] text-[#161514]/65 block mt-0.5">
                         الدفعة: {stand.batchLabel}
                       </span>
                     )}
                   </div>
 
-                  <span className="text-[11px] font-mono font-bold text-[#008069] bg-[#E8F5E9] px-2.5 py-1 rounded-xl">
+                  <span className="text-[11px] font-mono font-bold text-[#DA5004] bg-[#F85B04]/10 px-2.5 py-1 rounded-xl">
                     {stand.scanCount} مسح
                   </span>
                 </div>
 
                 {/* QR Preview & Quick Downloads */}
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-white border border-[#DCE0D4]">
-                  <div className="w-24 h-24 rounded-xl bg-white border border-[#DCE0D4] flex items-center justify-center shrink-0 overflow-hidden p-1">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-white border border-[#161514]/10">
+                  <div className="w-24 h-24 rounded-xl bg-white border border-[#161514]/10 flex items-center justify-center shrink-0 overflow-hidden p-1">
                     {qrImg ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -671,7 +671,7 @@ export default function AdminStandsClient({
                         className="w-full h-full object-contain"
                       />
                     ) : (
-                      <QrCode className="w-8 h-8 text-[#008069]/30 animate-pulse" />
+                      <QrCode className="w-8 h-8 text-[#DA5004]/30 animate-pulse" />
                     )}
                   </div>
 
@@ -679,7 +679,7 @@ export default function AdminStandsClient({
                     <div className="flex items-center gap-1">
                       <span
                         dir="ltr"
-                        className="text-[10px] font-mono text-[#5F655D] truncate block flex-1"
+                        className="text-[10px] font-mono text-[#161514]/65 truncate block flex-1"
                       >
                         {standUrl}
                       </span>
@@ -687,7 +687,7 @@ export default function AdminStandsClient({
                         type="button"
                         onClick={() => handleCopyUrl(stand.code)}
                         aria-label={`نسخ رابط ${stand.code}`}
-                        className="p-1.5 rounded-lg hover:bg-[#FAF7F2] text-[#008069]"
+                        className="p-1.5 rounded-lg hover:bg-[#EFEAE4] text-[#DA5004]"
                       >
                         {copiedCode === stand.code ? (
                           <Check className="w-3.5 h-3.5" />
@@ -700,7 +700,7 @@ export default function AdminStandsClient({
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`فتح رابط ${stand.code}`}
-                        className="p-1.5 rounded-lg hover:bg-[#FAF7F2] text-[#5F655D]"
+                        className="p-1.5 rounded-lg hover:bg-[#EFEAE4] text-[#161514]/65"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
@@ -710,17 +710,17 @@ export default function AdminStandsClient({
                       <button
                         type="button"
                         onClick={() => handleDownloadHighResPng(stand.code)}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#C8D1BE] text-[10px] font-bold text-[#173E30] flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-lg bg-[#EFEAE4] hover:bg-[#DCE0D4] border border-[#161514]/15 text-[10px] font-bold text-[#161514] flex items-center gap-1 cursor-pointer"
                       >
-                        <Download className="w-3 h-3 text-[#008069]" />
+                        <Download className="w-3 h-3 text-[#DA5004]" />
                         <span>PNG 1024px</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDownloadSvg(stand.code)}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#C8D1BE] text-[10px] font-bold text-[#173E30] flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-lg bg-[#EFEAE4] hover:bg-[#DCE0D4] border border-[#161514]/15 text-[10px] font-bold text-[#161514] flex items-center gap-1 cursor-pointer"
                       >
-                        <Download className="w-3 h-3 text-[#008069]" />
+                        <Download className="w-3 h-3 text-[#DA5004]" />
                         <span>SVG فيكتور</span>
                       </button>
                     </div>
@@ -744,7 +744,7 @@ export default function AdminStandsClient({
                   <div className="space-y-1.5">
                     <label
                       htmlFor={`stand-merchant-${stand.id}`}
-                      className="text-[11px] font-bold text-[#5F655D] block"
+                      className="text-[11px] font-bold text-[#161514]/65 block"
                     >
                       ربط بمتجر العميل:
                     </label>
@@ -760,7 +760,7 @@ export default function AdminStandsClient({
                           },
                         }))
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#C8D1BE] text-xs font-semibold text-[#173E30] focus:outline-none focus:border-[#008069]"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#161514]/15 text-xs font-semibold text-[#161514] focus:outline-none focus:border-[#F85B04]"
                     >
                       <option value="">-- اختر متجراً للربط --</option>
                       {merchants.map((m) => (
@@ -775,7 +775,7 @@ export default function AdminStandsClient({
                     <div>
                       <label
                         htmlFor={`stand-branch-${stand.id}`}
-                        className="text-[11px] font-bold text-[#5F655D] block mb-1"
+                        className="text-[11px] font-bold text-[#161514]/65 block mb-1"
                       >
                         الفرع المخصص (اختياري):
                       </label>
@@ -791,7 +791,7 @@ export default function AdminStandsClient({
                             },
                           }))
                         }
-                        className="w-full px-3 py-2 rounded-xl bg-white border border-[#C8D1BE] text-xs font-semibold text-[#173E30] focus:outline-none focus:border-[#008069]"
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-[#161514]/15 text-xs font-semibold text-[#161514] focus:outline-none focus:border-[#F85B04]"
                       >
                         <option value="">المتجر كامل (بدون تحديد فرع)</option>
                         {branchOptions.map((b) => (
@@ -808,7 +808,7 @@ export default function AdminStandsClient({
                       type="button"
                       disabled={isBusy || !draft.merchantId}
                       onClick={() => handleAssignStand(stand, false)}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-45 min-h-[44px]"
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-45 min-h-[44px]"
                     >
                       <Link2 className="w-3.5 h-3.5" />
                       <span>
@@ -850,12 +850,12 @@ export default function AdminStandsClient({
       {showPrintModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-4 print:static print:bg-white print:p-0">
           <div className="max-w-5xl mx-auto bg-white rounded-3xl p-6 space-y-5 print:rounded-none print:p-0 print:shadow-none">
-            <div className="flex items-center justify-between border-b border-[#DCE0D4] pb-4 print:hidden">
+            <div className="flex items-center justify-between border-b border-[#161514]/10 pb-4 print:hidden">
               <div>
-                <h2 className="text-base font-extrabold text-[#173E30]">
+                <h2 className="text-base font-extrabold text-[#161514]">
                   🖨️ ورقة طباعة ستاندات QR ({filteredStands.length} ستاند)
                 </h2>
-                <p className="text-xs text-[#5F655D]">
+                <p className="text-xs text-[#161514]/65">
                   مضبوطة بمستوى تصحيح أخطاء عالٍ (Error Correction H) للمتانة على ستاندات الأكريليك وPVC.
                 </p>
               </div>
@@ -863,7 +863,7 @@ export default function AdminStandsClient({
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="px-4 py-2.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[44px]"
+                  className="px-4 py-2.5 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[44px]"
                 >
                   <Printer className="w-4 h-4" />
                   <span>طباعة / حفظ PDF</span>
@@ -872,7 +872,7 @@ export default function AdminStandsClient({
                   type="button"
                   onClick={() => setShowPrintModal(false)}
                   aria-label="إغلاق نافذة الطباعة"
-                  className="p-2.5 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] text-[#173E30] min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  className="p-2.5 rounded-xl bg-[#EFEAE4] hover:bg-[#DCE0D4] text-[#161514] min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -883,9 +883,9 @@ export default function AdminStandsClient({
               {filteredStands.map((stand) => (
                 <div
                   key={stand.id}
-                  className="p-4 rounded-2xl border-2 border-dashed border-[#C8D1BE] flex flex-col items-center justify-center text-center space-y-2 break-inside-avoid"
+                  className="p-4 rounded-2xl border-2 border-dashed border-[#161514]/15 flex flex-col items-center justify-center text-center space-y-2 break-inside-avoid"
                 >
-                  <span className="text-[11px] font-bold text-[#008069]">
+                  <span className="text-[11px] font-bold text-[#DA5004]">
                     امسح الكود واحصل على بطاقة الوفاء 🎁
                   </span>
                   <div className="w-40 h-40 p-1 bg-white flex items-center justify-center">

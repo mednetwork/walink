@@ -201,18 +201,18 @@ export default function AdminAutomationsClient({
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 text-[#111B21]">
+    <div className="space-y-8 animate-in fade-in duration-300 text-[#161514]">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-xs font-semibold mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F85B04]/10 border border-[#F85B04]/25 text-[#DA5004] text-xs font-semibold mb-2">
             <Sparkles className="w-3.5 h-3.5" />
             <span>مركز تحكم الأتمتة المتقدم (Automation Cron Engine)</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#111B21] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#161514] tracking-tight">
             محرك الأتمتة والرسائل الذكية
           </h1>
-          <p className="text-sm text-[#54656F] mt-1 max-w-2xl leading-relaxed">
+          <p className="text-sm text-[#161514]/65 mt-1 max-w-2xl leading-relaxed">
             مراقبة وتشغيل الأتمتة الذكية لجميع المتاجر: استرجاع العملاء الغائبين بعد 15 يوماً، تحفيز قرب المكافأة، تقييمات Google، ورادار القرب الجغرافي.
           </p>
         </div>
@@ -220,7 +220,7 @@ export default function AdminAutomationsClient({
         <div className="flex items-center gap-3">
           <Link
             href="/admin"
-            className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#F0F2F5] border border-[#D1D7DB] text-[#111B21] text-xs font-semibold shadow-sm transition"
+            className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#EFEAE4] border border-[#161514]/15 text-[#161514] text-xs font-semibold shadow-sm transition"
           >
             العودة للوحة التحكم
           </Link>
@@ -229,17 +229,17 @@ export default function AdminAutomationsClient({
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-[#E9EDEF] shadow-sm relative overflow-hidden group">
+        <div className="bg-white p-5 rounded-2xl border border-[#161514]/10 shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#54656F]">مجموع الإشعارات</span>
-            <div className="w-8 h-8 rounded-xl bg-[#008069]/10 text-[#008069] flex items-center justify-center">
+            <span className="text-xs font-semibold text-[#161514]/65">مجموع الإشعارات</span>
+            <div className="w-8 h-8 rounded-xl bg-[#F85B04]/10 text-[#DA5004] flex items-center justify-center">
               <Bell className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-[#111B21] mt-3 font-mono">
+          <div className="text-2xl font-bold text-[#161514] mt-3 font-mono">
             {stats.totalNotifications}
           </div>
-          <p className="text-[11px] text-[#54656F] mt-1">مرسلة للمشتركين</p>
+          <p className="text-[11px] text-[#161514]/65 mt-1">مرسلة للمشتركين</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-red-200 bg-red-50/30 shadow-sm relative overflow-hidden group">
@@ -283,17 +283,17 @@ export default function AdminAutomationsClient({
       </div>
 
       {/* Manual Cron Execution Launcher Box */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E9EDEF] shadow-sm relative overflow-hidden">
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#161514]/10 shadow-sm relative overflow-hidden">
         <div className="max-w-3xl space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] text-white flex items-center justify-center font-bold shadow-md shadow-[#008069]/20">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#F9742A] to-[#F85B04] text-white flex items-center justify-center font-bold shadow-md shadow-[#F85B04]/25">
               <Zap className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-[#111B21]">
+              <h2 className="text-lg font-bold text-[#161514]">
                 تشغيل محرك الأتمتة اليدوي (Manual Cron Trigger)
               </h2>
-              <p className="text-xs text-[#54656F]">
+              <p className="text-xs text-[#161514]/65">
                 يقوم بالبحث عن الزبناء المؤهلين تلقائياً وإرسال الإشعارات إلى بطاقاتهم وخصم الرصيد عند الحاجة.
               </p>
             </div>
@@ -301,14 +301,14 @@ export default function AdminAutomationsClient({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>
-              <label htmlFor="cron-merchant-select" className="block text-xs font-semibold text-[#111B21] mb-1.5">
+              <label htmlFor="cron-merchant-select" className="block text-xs font-semibold text-[#161514] mb-1.5">
                 تحديد المتجر المستهدف:
               </label>
               <select
                 id="cron-merchant-select"
                 value={selectedMerchantId}
                 onChange={(e) => setSelectedMerchantId(e.target.value)}
-                className="w-full bg-[#F0F2F5] border border-[#D1D7DB] rounded-xl px-3 py-2 text-xs text-[#111B21] focus:outline-none focus:border-[#008069]"
+                className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3 py-2 text-xs text-[#161514] focus:outline-none focus:border-[#F85B04]"
               >
                 <option value="ALL">جميع المتاجر النشطة ({merchants.length})</option>
                 {merchants.map((m) => (
@@ -320,12 +320,12 @@ export default function AdminAutomationsClient({
             </div>
 
             <div className="flex items-center gap-3 pt-4 sm:pt-6">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-[#111B21]">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-[#161514]">
                 <input
                   type="checkbox"
                   checked={forceDemo}
                   onChange={(e) => setForceDemo(e.target.checked)}
-                  className="rounded border-[#D1D7DB] text-[#008069] focus:ring-0 w-4 h-4 cursor-pointer"
+                  className="rounded border-[#161514]/15 text-[#DA5004] focus:ring-0 w-4 h-4 cursor-pointer"
                 />
                 <span className="font-medium">وضع المحاكاة التجريبي (Force Demo Mode لتفعيل الأتمتة فوراً)</span>
               </label>
@@ -337,7 +337,7 @@ export default function AdminAutomationsClient({
               type="button"
               onClick={handleRunCron}
               disabled={isRunningCron}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-[#008069]/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-[#F85B04]/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
             >
               {isRunningCron ? (
                 <>
@@ -352,7 +352,7 @@ export default function AdminAutomationsClient({
               )}
             </button>
 
-            <span className="text-xs text-[#54656F]">
+            <span className="text-xs text-[#161514]/65">
               * في الإنتاج يعمل هذا المحرك تلقائياً كل 6 ساعات عبر Vercel Cron أو Linux Cron.
             </span>
           </div>
@@ -375,19 +375,19 @@ export default function AdminAutomationsClient({
       </div>
 
       {/* Merchants Automation Status Grid */}
-      <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
+      <div className="bg-white p-6 rounded-3xl border border-[#161514]/10 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Store className="w-5 h-5 text-[#008069]" />
-            <h2 className="text-base font-bold text-[#111B21]">حالة أتمتة المتاجر المشتركة</h2>
+            <Store className="w-5 h-5 text-[#DA5004]" />
+            <h2 className="text-base font-bold text-[#161514]">حالة أتمتة المتاجر المشتركة</h2>
           </div>
-          <span className="text-xs text-[#54656F]">{merchants.length} متجر</span>
+          <span className="text-xs text-[#161514]/65">{merchants.length} متجر</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-right text-xs">
             <thead>
-              <tr className="border-b border-[#E9EDEF] text-[#54656F] pb-3">
+              <tr className="border-b border-[#161514]/10 text-[#161514]/65 pb-3">
                 <th className="py-2.5 font-semibold">المتجر</th>
                 <th className="py-2.5 font-semibold">الرصيد المتاح</th>
                 <th className="py-2.5 font-semibold">استرجاع 15 يوم</th>
@@ -399,13 +399,13 @@ export default function AdminAutomationsClient({
                 <th className="py-2.5 font-semibold">إجراء سريع</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E9EDEF] text-[#111B21]">
+            <tbody className="divide-y divide-[#E9EDEF] text-[#161514]">
               {merchants.map((m) => (
-                <tr key={m.id} className="hover:bg-[#F0F2F5] transition">
-                  <td className="py-3 font-bold text-[#111B21]">
+                <tr key={m.id} className="hover:bg-[#EFEAE4] transition">
+                  <td className="py-3 font-bold text-[#161514]">
                     <Link
                       href={`/admin/merchants/${m.id}`}
-                      className="hover:text-[#008069] transition"
+                      className="hover:text-[#DA5004] transition"
                     >
                       {m.name}
                     </Link>
@@ -419,28 +419,28 @@ export default function AdminAutomationsClient({
                     {m.autoWinback ? (
                       <span className="text-[#008069] font-bold">مفعّل ✓</span>
                     ) : (
-                      <span className="text-[#54656F]/40">معطّل</span>
+                      <span className="text-[#161514]/65/40">معطّل</span>
                     )}
                   </td>
                   <td className="py-3">
                     {m.autoNearReward ? (
                       <span className="text-[#008069] font-bold">مفعّل ✓</span>
                     ) : (
-                      <span className="text-[#54656F]/40">معطّل</span>
+                      <span className="text-[#161514]/65/40">معطّل</span>
                     )}
                   </td>
                   <td className="py-3">
                     {m.autoReview ? (
                       <span className="text-[#008069] font-bold">مفعّل ✓</span>
                     ) : (
-                      <span className="text-[#54656F]/40">معطّل</span>
+                      <span className="text-[#161514]/65/40">معطّل</span>
                     )}
                   </td>
                   <td className="py-3">
                     {m.autoRadar ? (
                       <span className="text-[#008069] font-bold">مفعّل ✓</span>
                     ) : (
-                      <span className="text-[#54656F]/40">معطّل</span>
+                      <span className="text-[#161514]/65/40">معطّل</span>
                     )}
                   </td>
                   <td className="py-3 font-mono">{m.customersCount}</td>
@@ -449,7 +449,7 @@ export default function AdminAutomationsClient({
                     <Link
                       href={`/m/${m.slug}`}
                       target="_blank"
-                      className="inline-flex items-center gap-1 text-[11px] text-[#008069] hover:underline font-semibold"
+                      className="inline-flex items-center gap-1 text-[11px] text-[#DA5004] hover:underline font-semibold"
                     >
                       <span>تطبيق التاجر</span>
                       <ExternalLink className="w-3 h-3" />
@@ -463,11 +463,11 @@ export default function AdminAutomationsClient({
       </div>
 
       {/* Live Notification Audit Log */}
-      <div className="bg-white p-6 rounded-3xl border border-[#E9EDEF] shadow-sm space-y-4">
+      <div className="bg-white p-6 rounded-3xl border border-[#161514]/10 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-[#008069]" />
-            <h2 className="text-base font-bold text-[#111B21]">سجل الإشعارات والأتمتة المباشر (Audit Log)</h2>
+            <Bell className="w-5 h-5 text-[#DA5004]" />
+            <h2 className="text-base font-bold text-[#161514]">سجل الإشعارات والأتمتة المباشر (Audit Log)</h2>
           </div>
 
           {/* Type Filter Pills */}
@@ -479,8 +479,8 @@ export default function AdminAutomationsClient({
                 onClick={() => setActiveFilter(type)}
                 className={`px-3 py-1.5 rounded-xl font-medium transition text-xs whitespace-nowrap ${
                   activeFilter === type
-                    ? "bg-[#008069] text-white font-bold shadow-sm"
-                    : "bg-[#F0F2F5] text-[#54656F] border border-[#D1D7DB] hover:text-[#111B21]"
+                    ? "bg-[#F85B04] text-white font-bold shadow-sm"
+                    : "bg-[#EFEAE4] text-[#161514]/65 border border-[#161514]/15 hover:text-[#161514]"
                 }`}
               >
                 {type === "ALL" && "الكل"}
@@ -495,14 +495,14 @@ export default function AdminAutomationsClient({
         </div>
 
         {filteredNotifications.length === 0 ? (
-          <div className="p-8 text-center text-[#54656F] text-xs">
+          <div className="p-8 text-center text-[#161514]/65 text-xs">
             لا توجد إشعارات مسجلة في هذا التصنيف حالياً.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-right text-xs">
               <thead>
-                <tr className="border-b border-[#E9EDEF] text-[#54656F] pb-3">
+                <tr className="border-b border-[#161514]/10 text-[#161514]/65 pb-3">
                   <th className="py-2.5 font-semibold">النوع</th>
                   <th className="py-2.5 font-semibold">المتجر</th>
                   <th className="py-2.5 font-semibold">العميل المستهدف</th>
@@ -511,30 +511,30 @@ export default function AdminAutomationsClient({
                   <th className="py-2.5 font-semibold">معاينة البطاقة</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E9EDEF] text-[#111B21]">
+              <tbody className="divide-y divide-[#E9EDEF] text-[#161514]">
                 {filteredNotifications.map((n) => (
-                  <tr key={n.id} className="hover:bg-[#F0F2F5] transition">
+                  <tr key={n.id} className="hover:bg-[#EFEAE4] transition">
                     <td className="py-3">{getTypeBadge(n.type)}</td>
-                    <td className="py-3 font-semibold text-[#111B21]">
+                    <td className="py-3 font-semibold text-[#161514]">
                       {n.merchant.name}
                     </td>
                     <td className="py-3">
                       {n.customer ? (
                         <div>
-                          <span className="font-semibold text-[#111B21]">{n.customer.name}</span>
-                          <span className="block text-[10px] text-[#54656F] font-mono">
+                          <span className="font-semibold text-[#161514]">{n.customer.name}</span>
+                          <span className="block text-[10px] text-[#161514]/65 font-mono">
                             {n.customer.phone}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-[#54656F]">بث جماعي (Broadcast)</span>
+                        <span className="text-[#161514]/65">بث جماعي (Broadcast)</span>
                       )}
                     </td>
-                    <td className="py-3 max-w-xs truncate text-[#54656F]">
-                      <span className="font-semibold text-[#111B21]">{n.title}: </span>
+                    <td className="py-3 max-w-xs truncate text-[#161514]/65">
+                      <span className="font-semibold text-[#161514]">{n.title}: </span>
                       <span>{n.body}</span>
                     </td>
-                    <td className="py-3 font-mono text-[11px] text-[#54656F]">
+                    <td className="py-3 font-mono text-[11px] text-[#161514]/65">
                       {formatTimeAgoArabic(n.createdAt)}
                     </td>
                     <td className="py-3">
@@ -542,13 +542,13 @@ export default function AdminAutomationsClient({
                         <Link
                           href={`/pass/${n.customer.passSerial}`}
                           target="_blank"
-                          className="inline-flex items-center gap-1 text-[11px] text-[#008069] hover:underline font-semibold"
+                          className="inline-flex items-center gap-1 text-[11px] text-[#DA5004] hover:underline font-semibold"
                         >
                           <span>عرض الكارط</span>
                           <ArrowUpRight className="w-3 h-3" />
                         </Link>
                       ) : (
-                        <span className="text-[#54656F]">-</span>
+                        <span className="text-[#161514]/65">-</span>
                       )}
                     </td>
                   </tr>

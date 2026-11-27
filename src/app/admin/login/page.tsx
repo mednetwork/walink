@@ -107,75 +107,45 @@ function LoginFormContent() {
 
   return (
     <div
-      className="min-h-screen bg-[#F0F2F5] text-[#111B21] flex flex-col justify-between selection:bg-[#008069] selection:text-white relative overflow-hidden font-sans"
-      style={{
-        backgroundImage:
-          "radial-gradient(rgba(0, 128, 105, 0.07) 1.2px, transparent 1.2px)",
-        backgroundSize: "24px 24px",
-      }}
+      className="min-h-screen bg-[#EFEAE4] text-[#161514] flex flex-col justify-between selection:bg-[#F85B04] selection:text-white relative overflow-hidden font-sans"
       dir={isRTL ? "rtl" : "ltr"}
     >
-      {/* Ambient background glows in Walink Brand Emerald */}
+      {/* Ambient background glow in Walink Brand Coral */}
       <div
-        className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[720px] h-[460px] rounded-full pointer-events-none blur-[140px] opacity-35"
+        className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[720px] h-[460px] rounded-full pointer-events-none blur-[140px] opacity-25"
         style={{
           background:
-            "radial-gradient(circle, rgba(0, 168, 132, 0.25) 0%, rgba(0, 128, 105, 0.12) 50%, transparent 80%)",
+            "radial-gradient(circle, rgba(248, 91, 4, 0.28) 0%, rgba(218, 80, 4, 0.1) 50%, transparent 80%)",
         }}
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-15%] right-[-10%] w-[520px] h-[420px] rounded-full pointer-events-none blur-[120px] opacity-20"
+        className="absolute bottom-[-15%] right-[-10%] w-[520px] h-[420px] rounded-full pointer-events-none blur-[120px] opacity-15"
         style={{
           background:
-            "radial-gradient(circle, rgba(0, 128, 105, 0.2) 0%, transparent 70%)",
+            "radial-gradient(circle, rgba(248, 91, 4, 0.22) 0%, transparent 70%)",
         }}
         aria-hidden="true"
       />
 
       {/* Top Header Bar matching walink.ma Navbar */}
-      <header className="sticky top-0 z-30 w-full bg-white/90 backdrop-blur-md border-b border-[#E9EDEF] shadow-[0_1px_3px_rgba(11,20,26,0.04)]">
+      <header className="sticky top-0 z-30 w-full bg-[#161514] text-white border-b border-white/10 shadow-md">
         <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo & Platform Name */}
           <a
             href={getMainUrl("/")}
-            className="flex items-center gap-2.5 group transition-transform active:scale-95"
+            className="flex items-center gap-2.5 group transition-transform active:scale-95 min-h-[44px]"
             aria-label="Walink.ma Homepage"
           >
-            {/* SVG Brand Mark */}
-            <svg
-              className="w-8 h-8 flex-none transition-transform group-hover:scale-105 duration-200"
-              viewBox="0 0 32 32"
-              aria-hidden="true"
-            >
-              <defs>
-                <linearGradient
-                  id="walink-mark-grad"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" stopColor="#00A884" />
-                  <stop offset="50%" stopColor="#008069" />
-                  <stop offset="100%" stopColor="#075E54" />
-                </linearGradient>
-              </defs>
-              <path
-                fill="url(#walink-mark-grad)"
-                d="M16 3L4 7v9c0 8.3 5.1 12.8 12 14 6.9-1.2 12-5.7 12-14V7L16 3z"
-              />
-              <path
-                fill="#FFFFFF"
-                d="M16 8a7 7 0 0 1 7 7h-2.5a4.5 4.5 0 0 0-4.5-4.5V8zm0 4.5a2.5 2.5 0 0 1 2.5 2.5H16v-2.5z"
-              />
-            </svg>
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F85B04] text-base font-black text-white shadow-[0_3px_0_#C14703] transition-transform group-hover:scale-105">
+              W
+            </span>
 
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-xl tracking-tight text-[#111B21]">
-                walink<span className="text-[#008069]">.ma</span>
+              <span className="font-extrabold text-xl tracking-tight text-white">
+                walink<span className="text-[#FA7F3B]">.ma</span>
               </span>
-              <span className="text-xs text-[#54656F] font-semibold ps-2 border-s border-[#D1D7DB] hidden sm:inline leading-none">
+              <span className="text-xs text-white/60 font-semibold ps-2 border-s border-white/15 hidden sm:inline leading-none">
                 {locale === "fr"
                   ? "Console d'administration"
                   : locale === "es"
@@ -190,7 +160,7 @@ function LoginFormContent() {
             {/* Back to Homepage Link */}
             <a
               href={getMainUrl("/")}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#54656F] hover:text-[#008069] transition-colors duration-150 py-1.5 px-2.5 rounded-lg hover:bg-[#F0F2F5]"
+              className="inline-flex min-h-[44px] items-center gap-1.5 text-xs font-semibold text-white/75 hover:text-white transition-colors duration-150 py-1.5 px-3 rounded-xl hover:bg-white/10"
             >
               <svg
                 className="w-4 h-4 rtl:rotate-180"
@@ -215,13 +185,13 @@ function LoginFormContent() {
             </a>
 
             {/* Subdomain / Status Indicator Pill */}
-            <div className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-[11px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#008069] animate-pulse" />
+            <div className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F85B04]/20 border border-[#F85B04]/35 text-[#FA7F3B] text-[11px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F85B04] animate-pulse" />
               <span>Super Admin Portal</span>
             </div>
 
             {/* Language Switcher */}
-            <LanguageSwitcher size="sm" variant="light" />
+            <LanguageSwitcher size="sm" variant="dark" />
           </div>
         </div>
       </header>
@@ -229,12 +199,12 @@ function LoginFormContent() {
       {/* Main Login Card Section */}
       <main className="flex-1 flex items-center justify-center px-4 py-10 z-10">
         <div className="w-full max-w-[430px]">
-          {/* Card Box in WhatsApp Crisp White */}
-          <div className="bg-white border border-[#E9EDEF] border-t-4 border-t-[#00A884] rounded-3xl p-7 sm:p-9 shadow-[0_4px_24px_-4px_rgba(11,20,26,0.08),0_1px_3px_rgba(11,20,26,0.05)] relative transition-all">
+          {/* Card Box in Pure White */}
+          <div className="bg-white border border-[#161514]/10 border-t-4 border-t-[#F85B04] rounded-3xl p-7 sm:p-9 shadow-[0_12px_36px_-10px_rgba(22,21,20,0.12)] relative transition-all">
             {/* Brand Logo & Title Area */}
             <div className="text-center mb-7">
               {/* Shield Icon Badge */}
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] text-white shadow-lg shadow-[#008069]/25 mb-4 ring-4 ring-[#008069]/10">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#F85B04] text-white shadow-[0_4px_0_#C14703] mb-4 ring-4 ring-[#F85B04]/15">
                 <svg
                   className="w-7 h-7"
                   viewBox="0 0 24 24"
@@ -252,19 +222,19 @@ function LoginFormContent() {
 
               {/* Title & Badge */}
               <div className="flex items-center justify-center gap-2 mb-1.5">
-                <h1 className="text-xl font-black text-[#111B21] tracking-tight">
+                <h1 className="text-xl font-black text-[#161514] tracking-tight">
                   {locale === "fr"
                     ? "Console d'administration"
                     : locale === "es"
                     ? "Panel de administración"
                     : "بوابة الإدارة المركزية"}
                 </h1>
-                <span className="px-2 py-0.5 rounded-full bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-[10.5px] font-bold">
+                <span className="font-script px-2.5 py-0.5 rounded-full bg-[#F85B04]/10 border border-[#F85B04]/25 text-[#DA5004] text-sm font-bold">
                   Admin
                 </span>
               </div>
 
-              <p className="text-xs text-[#54656F] leading-relaxed max-w-[340px] mx-auto">
+              <p className="text-xs text-[#161514]/65 leading-relaxed max-w-[340px] mx-auto">
                 {locale === "fr"
                   ? "Veuillez vous authentifier pour accéder aux outils de gestion"
                   : locale === "es"
@@ -347,7 +317,7 @@ function LoginFormContent() {
               <div>
                 <label
                   htmlFor="admin-user"
-                  className="block text-xs font-bold text-[#111B21] mb-1.5"
+                  className="block text-xs font-bold text-[#161514] mb-1.5"
                 >
                   {locale === "fr"
                     ? "Identifiant administrateur"
@@ -356,7 +326,7 @@ function LoginFormContent() {
                     : "اسم المستخدم"}
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-[#54656F]">
+                  <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-[#161514]/55">
                     <svg
                       className="w-4 h-4"
                       viewBox="0 0 24 24"
@@ -389,7 +359,7 @@ function LoginFormContent() {
                         ? "ej: admin"
                         : "مثال: admin"
                     }
-                    className="w-full bg-[#F7F8FA] hover:bg-white focus:bg-white border border-[#D1D7DB] rounded-xl py-3 ps-10 pe-3.5 text-sm text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-4 focus:ring-[#008069]/10 transition-all font-mono"
+                    className="w-full min-h-[44px] bg-[#EFEAE4] hover:bg-white focus:bg-white border border-[#161514]/15 rounded-xl py-3 ps-10 pe-3.5 text-base text-[#161514] placeholder-[#161514]/40 focus:outline-none focus:border-[#F85B04] focus:ring-4 focus:ring-[#F85B04]/10 transition-all font-mono"
                   />
                 </div>
               </div>
@@ -398,7 +368,7 @@ function LoginFormContent() {
               <div>
                 <label
                   htmlFor="admin-pass"
-                  className="block text-xs font-bold text-[#111B21] mb-1.5"
+                  className="block text-xs font-bold text-[#161514] mb-1.5"
                 >
                   {locale === "fr"
                     ? "Mot de passe secret"
@@ -407,7 +377,7 @@ function LoginFormContent() {
                     : "كلمة المرور السرية"}
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-[#54656F]">
+                  <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-[#161514]/55">
                     <svg
                       className="w-4 h-4"
                       viewBox="0 0 24 24"
@@ -441,12 +411,12 @@ function LoginFormContent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••••••"
-                    className="w-full bg-[#F7F8FA] hover:bg-white focus:bg-white border border-[#D1D7DB] rounded-xl py-3 ps-10 pe-11 text-sm text-[#111B21] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-4 focus:ring-[#008069]/10 transition-all font-mono"
+                    className="w-full min-h-[44px] bg-[#EFEAE4] hover:bg-white focus:bg-white border border-[#161514]/15 rounded-xl py-3 ps-10 pe-11 text-base text-[#161514] placeholder-[#161514]/40 focus:outline-none focus:border-[#F85B04] focus:ring-4 focus:ring-[#F85B04]/10 transition-all font-mono"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 end-0 flex items-center pe-3 text-[#54656F] hover:text-[#111B21] transition-colors p-2"
+                    className="absolute inset-y-0 end-0 flex items-center pe-3 text-[#161514]/55 hover:text-[#161514] transition-colors p-2 min-w-[44px] justify-center"
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
@@ -486,14 +456,14 @@ function LoginFormContent() {
 
               {/* Remember Me Checkbox */}
               <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2 cursor-pointer select-none min-h-[44px]">
                   <input
                     type="checkbox"
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
-                    className="w-4 h-4 rounded border-[#D1D7DB] text-[#008069] focus:ring-[#008069] focus:ring-offset-0 focus:ring-1 cursor-pointer accent-[#008069]"
+                    className="w-4 h-4 rounded border-[#161514]/25 text-[#F85B04] focus:ring-[#F85B04] focus:ring-offset-0 focus:ring-1 cursor-pointer accent-[#F85B04]"
                   />
-                  <span className="text-xs text-[#54656F] font-medium">
+                  <span className="text-xs text-[#161514]/65 font-medium">
                     {locale === "fr"
                       ? "Garder ma session active (30 jours)"
                       : locale === "es"
@@ -503,7 +473,7 @@ function LoginFormContent() {
                 </label>
               </div>
 
-              {/* Submit CTA Button in WhatsApp Emerald */}
+              {/* Submit CTA Button in Brand Coral */}
               <div className="pt-2">
                 <button
                   type="submit"
@@ -511,7 +481,7 @@ function LoginFormContent() {
                     status === "loading" ||
                     (retryAfter !== null && retryAfter > 0)
                   }
-                  className="w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#009071] hover:to-[#006D59] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[#008069]/25 hover:shadow-lg hover:shadow-[#008069]/35 transition-all flex items-center justify-center gap-2"
+                  className="w-full min-h-[48px] py-3.5 px-4 rounded-2xl font-extrabold text-sm text-white bg-[#F85B04] hover:bg-[#E25102] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_0_#C14703] transition-all flex items-center justify-center gap-2"
                 >
                   {status === "loading" ? (
                     <>
@@ -576,9 +546,9 @@ function LoginFormContent() {
 
           {/* Security & Moroccan Pride Assurance Box */}
           <div className="mt-6 flex flex-col items-center gap-2 text-center">
-            <div className="inline-flex items-center gap-2 text-[11.5px] text-[#54656F] font-medium bg-white/70 backdrop-blur-sm border border-[#E9EDEF] px-3.5 py-1.5 rounded-full shadow-sm">
+            <div className="inline-flex items-center gap-2 text-[11.5px] text-[#161514]/70 font-medium bg-white/80 backdrop-blur-sm border border-[#161514]/10 px-3.5 py-1.5 rounded-full shadow-sm">
               <svg
-                className="w-3.5 h-3.5 text-[#008069] flex-none"
+                className="w-3.5 h-3.5 text-[#F85B04] flex-none"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -599,7 +569,7 @@ function LoginFormContent() {
               </span>
             </div>
 
-            <p className="text-[11px] text-[#8696A0]">
+            <p className="text-[11px] text-[#161514]/55">
               صُنع بكل فخر في المغرب 🇲🇦 • Walink Enterprise Platform
             </p>
           </div>
@@ -607,7 +577,7 @@ function LoginFormContent() {
       </main>
 
       {/* Footer Bar */}
-      <footer className="w-full text-center py-4 text-[11px] text-[#8696A0] border-t border-[#E9EDEF]/60 bg-white/50 backdrop-blur-sm z-10">
+      <footer className="w-full text-center py-4 text-[11px] text-white/60 border-t border-white/10 bg-[#161514] z-10">
         © {new Date().getFullYear()} Walink (walink.ma) • All Rights Reserved.
       </footer>
     </div>
@@ -618,10 +588,10 @@ export default function AdminLoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center text-[#54656F] text-sm font-sans">
-          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-white border border-[#E9EDEF] shadow-sm">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#008069] animate-ping" />
-            <span className="font-semibold text-xs text-[#111B21]">
+        <div className="min-h-screen bg-[#EFEAE4] flex items-center justify-center text-[#161514]/70 text-sm font-sans">
+          <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-white border border-[#161514]/10 shadow-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F85B04] animate-ping" />
+            <span className="font-semibold text-xs text-[#161514]">
               تحميل لوحة الإدارة...
             </span>
           </div>

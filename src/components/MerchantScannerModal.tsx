@@ -1017,15 +1017,15 @@ export default function MerchantScannerModal({
         paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0.75rem)",
       }}
     >
-      <div className="relative w-full max-w-md bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl shadow-2xl p-5 text-[#173E30] my-6 space-y-4">
+      <div className="relative w-full max-w-md bg-white border border-[#161514]/10 rounded-3xl shadow-2xl p-5 text-[#161514] my-6 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4]">
+        <div className="flex items-center justify-between pb-3 border-b border-[#161514]/10">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-[#008069]/10 text-[#008069] border border-[#008069]/20 shadow-sm">
+            <span className="p-2 rounded-xl bg-[#F85B04]/10 text-[#DA5004] border border-[#F85B04]/25 shadow-sm">
               {selectedCustomer ? <Users className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
             </span>
             <div>
-              <h3 className="font-bold text-base text-[#173E30]">
+              <h3 className="font-bold text-base text-[#161514]">
                 {selectedCustomer
                   ? locale === "ar"
                     ? "بطاقة العميل"
@@ -1035,7 +1035,7 @@ export default function MerchantScannerModal({
                   : t.merchant.scannerBtn}
               </h3>
               <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="text-[11px] text-[#5F655D]">
+                <p className="text-[11px] text-[#161514]/65">
                   {selectedCustomer
                     ? locale === "ar"
                       ? "إضافة طابع أو إدارة الكاش باك"
@@ -1049,7 +1049,7 @@ export default function MerchantScannerModal({
                     : "Escanee el código o busque por número"}
                 </p>
                 {branchName && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#008069]/10 text-[#008069] font-bold border border-[#008069]/20">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#F85B04]/10 text-[#DA5004] font-bold border border-[#F85B04]/25">
                     📍 {branchName}
                   </span>
                 )}
@@ -1061,7 +1061,7 @@ export default function MerchantScannerModal({
               <button
                 type="button"
                 onClick={handleResetCustomer}
-                className="py-1.5 px-3 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 text-[#008069] font-bold text-xs flex items-center gap-1.5 transition border border-[#008069]/20 shadow-sm cursor-pointer"
+                className="py-1.5 px-3 rounded-xl bg-[#F85B04]/10 hover:bg-[#F85B04]/20 text-[#DA5004] font-bold text-xs flex items-center gap-1.5 transition border border-[#F85B04]/25 shadow-sm cursor-pointer"
                 title={
                   locale === "ar"
                     ? "مسح عميل آخر"
@@ -1084,7 +1084,7 @@ export default function MerchantScannerModal({
               type="button"
               onClick={handleModalClose}
               aria-label={locale === "ar" ? "إغلاق" : locale === "fr" ? "Fermer" : "Cerrar"}
-              className="p-1.5 rounded-xl hover:bg-[#FAF7F2] text-[#5F655D] cursor-pointer"
+              className="p-1.5 rounded-xl hover:bg-[#EFEAE4] text-[#161514]/65 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1113,9 +1113,9 @@ export default function MerchantScannerModal({
               <button
                 type="button"
                 onClick={handleResetCustomer}
-                className="w-full py-2.5 px-3 rounded-xl bg-[#FFFDF7] hover:bg-[#FAF7F2] text-[#173E30] border border-[#C8D1BE] font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-[#EFEAE4] text-[#161514] border border-[#161514]/15 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
               >
-                <RefreshCw className="w-3.5 h-3.5 text-[#008069]" />
+                <RefreshCw className="w-3.5 h-3.5 text-[#DA5004]" />
                 <span>
                   {locale === "fr"
                     ? "Scanner un autre client"
@@ -1157,8 +1157,8 @@ export default function MerchantScannerModal({
 
             {/* Target Overlays & Laser Animation when Active */}
             {cameraState === "active" && (
-              <div className="absolute inset-8 border-2 border-[#00A884] rounded-2xl pointer-events-none flex items-center justify-center z-10">
-                <span className="w-full h-0.5 bg-[#00A884] absolute shadow-[0_0_12px_#00A884] animate-pulse" />
+              <div className="absolute inset-8 border-2 border-[#F85B04] rounded-2xl pointer-events-none flex items-center justify-center z-10">
+                <span className="w-full h-0.5 bg-[#F85B04] absolute shadow-[0_0_12px_#F85B04] animate-pulse" />
               </div>
             )}
 
@@ -1238,7 +1238,7 @@ export default function MerchantScannerModal({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-[11px] text-[#5F655D] hover:text-[#008069] font-medium flex items-center gap-1 cursor-pointer"
+              className="text-[11px] text-[#161514]/65 hover:text-[#DA5004] font-medium flex items-center gap-1 cursor-pointer"
             >
               <Camera className="w-3 h-3" />
               <span>{locale === "ar" ? "التقاط صورة" : "Prendre photo"}</span>
@@ -1266,11 +1266,11 @@ export default function MerchantScannerModal({
 
         {/* Selected Customer Card & Dual POS Controls (Single Focus View: Centered, Zero Scroll) */}
         {selectedCustomer && (
-          <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-3.5 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
+          <div className="p-4 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 space-y-3.5 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2 border-b border-[#161514]/10">
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-sm text-[#173E30]">
+                  <h4 className="font-bold text-sm text-[#161514]">
                     {selectedCustomer.name}
                   </h4>
                   {isCashback ? (
@@ -1279,13 +1279,13 @@ export default function MerchantScannerModal({
                       <span>{t.merchant.badgeCashback} ({cashbackRate}%)</span>
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold text-[#008069] bg-[#008069]/10 px-2 py-0.5 rounded-full border border-[#008069]/20 flex items-center gap-1">
-                      <Gift className="w-3 h-3 text-[#008069]" />
+                    <span className="text-[10px] font-bold text-[#DA5004] bg-[#F85B04]/10 px-2 py-0.5 rounded-full border border-[#F85B04]/25 flex items-center gap-1">
+                      <Gift className="w-3 h-3 text-[#DA5004]" />
                       <span>{t.merchant.badgeStamps}</span>
                     </span>
                   )}
                 </div>
-                <span className="text-[11px] text-[#5F655D] font-mono">
+                <span className="text-[11px] text-[#161514]/65 font-mono">
                   #{selectedCustomer.memberCode} • {selectedCustomer.phone}
                 </span>
               </div>
@@ -1296,17 +1296,17 @@ export default function MerchantScannerModal({
                     type="button"
                     onClick={handleSwitchType}
                     disabled={loading}
-                    className="px-2 py-1 rounded-lg bg-[#FFFDF7] border border-[#C8D1BE] text-[10px] font-semibold text-[#173E30] flex items-center gap-1 transition shadow-sm hover:bg-[#FAF7F2] cursor-pointer"
+                    className="px-2 py-1 rounded-lg bg-white border border-[#161514]/15 text-[10px] font-semibold text-[#161514] flex items-center gap-1 transition shadow-sm hover:bg-[#EFEAE4] cursor-pointer"
                     title="تحويل نظام العميل"
                   >
-                    <ArrowRightLeft className="w-3 h-3 text-[#008069]" />
+                    <ArrowRightLeft className="w-3 h-3 text-[#DA5004]" />
                     <span>{locale === "ar" ? "تبديل" : locale === "fr" ? "Changer" : "Cambiar"}</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={handleResetCustomer}
-                  className="px-2 py-1 rounded-lg bg-[#FFFDF7] border border-[#C8D1BE] text-[10px] font-semibold text-[#5F655D] hover:text-[#008069] flex items-center gap-1 transition shadow-sm hover:bg-[#FAF7F2] cursor-pointer"
+                  className="px-2 py-1 rounded-lg bg-white border border-[#161514]/15 text-[10px] font-semibold text-[#161514]/65 hover:text-[#DA5004] flex items-center gap-1 transition shadow-sm hover:bg-[#EFEAE4] cursor-pointer"
                   title={
                     locale === "ar"
                       ? "مسح عميل آخر"
@@ -1331,14 +1331,14 @@ export default function MerchantScannerModal({
             {!isCashback && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#5F655D] font-semibold">
+                  <span className="text-[#161514]/65 font-semibold">
                     {locale === "fr"
                       ? "Tampons collectés :"
                       : locale === "es"
                       ? "Sellos acumulados:"
                       : "الأختام المجمّعة:"}
                   </span>
-                  <span className="font-mono font-bold text-[#008069] text-sm">
+                  <span className="font-mono font-bold text-[#DA5004] text-sm">
                     {formatStamps(selectedCustomer.stamps)} / {stampsRequired}
                   </span>
                 </div>
@@ -1417,7 +1417,7 @@ export default function MerchantScannerModal({
                         )}
 
                         {/* + / - Quantity Stepper Box */}
-                        <div className="p-2.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] flex items-center justify-between gap-2 shadow-sm">
+                        <div className="p-2.5 rounded-2xl bg-white border border-[#161514]/10 flex items-center justify-between gap-2 shadow-sm">
                           <button
                             type="button"
                             disabled={!canStepMinus || loading}
@@ -1429,7 +1429,7 @@ export default function MerchantScannerModal({
                                 ? "Disminuir sellos"
                                 : "إنقاص أو خصم ختم"
                             }
-                            className="w-11 h-11 rounded-xl bg-[#FAF7F2] hover:bg-rose-50 hover:text-rose-700 border border-[#C8D1BE] text-[#173E30] flex items-center justify-center transition disabled:opacity-35 cursor-pointer shrink-0 active:scale-95"
+                            className="w-11 h-11 rounded-xl bg-[#EFEAE4] hover:bg-rose-50 hover:text-rose-700 border border-[#161514]/15 text-[#161514] flex items-center justify-center transition disabled:opacity-35 cursor-pointer shrink-0 active:scale-95"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
@@ -1438,18 +1438,18 @@ export default function MerchantScannerModal({
                             <div
                               dir="ltr"
                               className={`text-lg font-mono font-extrabold leading-tight ${
-                                stampDelta < 0 ? "text-rose-600" : "text-[#008069]"
+                                stampDelta < 0 ? "text-rose-600" : "text-[#DA5004]"
                               }`}
                             >
                               {stampDelta > 0 ? `+${stampDelta}` : stampDelta}
                             </div>
-                            <div className="text-[10px] text-[#5F655D] font-semibold mt-0.5">
+                            <div className="text-[10px] text-[#161514]/65 font-semibold mt-0.5">
                               {locale === "fr"
                                 ? "Nouveau solde :"
                                 : locale === "es"
                                 ? "Nuevo saldo:"
                                 : "الرصيد الجديد:"}{" "}
-                              <span dir="ltr" className="font-mono font-bold text-[#173E30]">
+                              <span dir="ltr" className="font-mono font-bold text-[#161514]">
                                 {formatStamps(projectedStamps)} / {stampsRequired}
                               </span>
                             </div>
@@ -1466,7 +1466,7 @@ export default function MerchantScannerModal({
                                 ? "Aumentar sellos"
                                 : "زيادة عدد الأختام"
                             }
-                            className="w-11 h-11 rounded-xl bg-[#FAF7F2] hover:bg-emerald-50 hover:text-[#008069] border border-[#C8D1BE] text-[#173E30] flex items-center justify-center transition disabled:opacity-35 cursor-pointer shrink-0 active:scale-95"
+                            className="w-11 h-11 rounded-xl bg-[#EFEAE4] hover:bg-emerald-50 hover:text-[#008069] border border-[#C8D1BE] text-[#161514] flex items-center justify-center transition disabled:opacity-35 cursor-pointer shrink-0 active:scale-95"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -1480,7 +1480,7 @@ export default function MerchantScannerModal({
                             className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-45 shadow-sm cursor-pointer min-h-[44px] ${
                               stampDelta < 0
                                 ? "bg-rose-600 hover:bg-rose-700 text-white"
-                                : "bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white"
+                                : "bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] text-white"
                             }`}
                           >
                             {stampDelta < 0 ? (
@@ -1498,7 +1498,7 @@ export default function MerchantScannerModal({
                             className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-30 min-h-[44px] ${
                               selectedCustomer.stamps >= stampsRequired
                                 ? "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md animate-pulse cursor-pointer"
-                                : "bg-[#FFFDF7] text-[#5F655D] border border-[#C8D1BE]"
+                                : "bg-white text-[#161514]/65 border border-[#161514]/15"
                             }`}
                           >
                             <Gift className="w-4 h-4" />
@@ -1514,7 +1514,7 @@ export default function MerchantScannerModal({
                       type="button"
                       disabled={loading}
                       onClick={() => handleStampOrRedeem("STAMP")}
-                      className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-sm"
+                      className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-sm"
                     >
                       <Plus className="w-4 h-4" />
                       <span>{t.merchant.addStampBtn}</span>
@@ -1527,7 +1527,7 @@ export default function MerchantScannerModal({
                       className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-30 ${
                         selectedCustomer.stamps >= stampsRequired
                           ? "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md animate-pulse"
-                          : "bg-[#FFFDF7] text-[#5F655D] border border-[#C8D1BE]"
+                          : "bg-white text-[#161514]/65 border border-[#161514]/15"
                       }`}
                     >
                       <Gift className="w-4 h-4" />
@@ -1542,8 +1542,8 @@ export default function MerchantScannerModal({
             {isCashback && (
               <div className="space-y-3">
                 {/* Available Balance Display */}
-                <div className="p-3 rounded-xl bg-[#FFFDF7] border border-amber-300 flex items-center justify-between shadow-sm">
-                  <span className="text-xs text-[#5F655D] font-semibold">
+                <div className="p-3 rounded-xl bg-white border border-amber-300 flex items-center justify-between shadow-sm">
+                  <span className="text-xs text-[#161514]/65 font-semibold">
                     {t.merchant.currentBalance}
                   </span>
                   <div className="flex items-baseline gap-1 font-mono">
@@ -1555,14 +1555,14 @@ export default function MerchantScannerModal({
                 </div>
 
                 {/* Sub-tabs: Earn vs Redeem */}
-                <div className="grid grid-cols-2 gap-1 p-1 bg-[#FFFDF7] rounded-xl border border-[#C8D1BE] text-[11px] font-semibold shadow-sm">
+                <div className="grid grid-cols-2 gap-1 p-1 bg-white rounded-xl border border-[#161514]/15 text-[11px] font-semibold shadow-sm">
                   <button
                     type="button"
                     onClick={() => setPosTab("earn")}
                     className={`py-1.5 rounded-lg transition ${
                       posTab === "earn"
-                        ? "bg-[#008069] text-white font-bold shadow-sm"
-                        : "text-[#5F655D] hover:text-[#173E30]"
+                        ? "bg-[#F85B04] text-white font-bold shadow-sm"
+                        : "text-[#161514]/65 hover:text-[#161514]"
                     }`}
                   >
                     {t.merchant.earnCashbackTab}
@@ -1573,7 +1573,7 @@ export default function MerchantScannerModal({
                     className={`py-1.5 rounded-lg transition ${
                       posTab === "redeem"
                         ? "bg-amber-500 text-slate-950 font-bold shadow-sm"
-                        : "text-[#5F655D] hover:text-[#173E30]"
+                        : "text-[#161514]/65 hover:text-[#161514]"
                     }`}
                   >
                     {t.merchant.redeemCashbackTab}
@@ -1584,7 +1584,7 @@ export default function MerchantScannerModal({
                 {posTab === "earn" && (
                   <div className="space-y-2.5">
                     <div className="space-y-1">
-                      <label className="text-[11px] text-[#5F655D] font-semibold block">
+                      <label className="text-[11px] text-[#161514]/65 font-semibold block">
                         {t.merchant.billAmountLabel.replace("{currency}", currency)}
                       </label>
                       <input
@@ -1596,7 +1596,7 @@ export default function MerchantScannerModal({
                         placeholder="0.00"
                         value={billAmount}
                         onChange={(e) => setBillAmount(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFDF7] border border-[#C8D1BE] text-[#173E30] font-mono text-sm focus:outline-none focus:border-[#008069] shadow-sm"
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-[#161514]/15 text-[#161514] font-mono text-sm focus:outline-none focus:border-[#F85B04] shadow-sm"
                       />
                     </div>
 
@@ -1607,7 +1607,7 @@ export default function MerchantScannerModal({
                           key={val}
                           type="button"
                           onClick={() => setBillAmount(val)}
-                          className="px-2 py-1 rounded-lg bg-[#FFFDF7] hover:bg-[#FAF7F2] text-[10px] font-mono text-[#173E30] border border-[#C8D1BE] transition shadow-sm font-semibold"
+                          className="px-2 py-1 rounded-lg bg-white hover:bg-[#EFEAE4] text-[10px] font-mono text-[#161514] border border-[#161514]/15 transition shadow-sm font-semibold"
                         >
                           {val}
                         </button>
@@ -1615,7 +1615,7 @@ export default function MerchantScannerModal({
                     </div>
 
                     {/* Calculation Preview */}
-                    <p className="text-[11px] text-[#008069] font-semibold leading-tight">
+                    <p className="text-[11px] text-[#DA5004] font-semibold leading-tight">
                       {t.merchant.calculatePreview
                         .replace("{amount}", String(calculatedEarned))
                         .replace("{currency}", currency)
@@ -1626,7 +1626,7 @@ export default function MerchantScannerModal({
                       type="button"
                       disabled={loading || calculatedEarned <= 0}
                       onClick={handleCashbackEarn}
-                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-md shadow-[#008069]/20"
+                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-md shadow-[#F85B04]/20"
                     >
                       <Plus className="w-4 h-4" />
                       <span>
@@ -1643,7 +1643,7 @@ export default function MerchantScannerModal({
                   <div className="space-y-2.5">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <label className="text-[11px] text-[#5F655D] font-semibold block">
+                        <label className="text-[11px] text-[#161514]/65 font-semibold block">
                           {t.merchant.redeemAmountLabel.replace(
                             "{currency}",
                             currency
@@ -1680,12 +1680,12 @@ export default function MerchantScannerModal({
                         onChange={(e) => setRedeemAmount(e.target.value)}
                         placeholder="0.00"
                         aria-label="مبلغ الكاش باك المراد صرفه"
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFDF7] border border-[#C8D1BE] text-[#173E30] font-mono text-sm focus:outline-none focus:border-amber-500 shadow-sm"
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-[#161514]/15 text-[#161514] font-mono text-sm focus:outline-none focus:border-amber-500 shadow-sm"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] text-[#5F655D] block">
+                      <label className="text-[11px] text-[#161514]/65 block">
                         قيمة الفاتورة الإجمالية (اختياري لحساب الباقي):
                       </label>
                       <input
@@ -1696,12 +1696,12 @@ export default function MerchantScannerModal({
                         value={redeemBillTotal}
                         onChange={(e) => setRedeemBillTotal(e.target.value)}
                         placeholder="100"
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFDF7] border border-[#C8D1BE] text-[#173E30] font-mono text-xs focus:outline-none shadow-sm"
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-[#161514]/15 text-[#161514] font-mono text-xs focus:outline-none shadow-sm"
                       />
                     </div>
 
                     {parsedBillTotal > 0 && (
-                      <p className="text-[11px] text-[#173E30] font-semibold">
+                      <p className="text-[11px] text-[#161514] font-semibold">
                         {t.merchant.remainingToPay
                           .replace("{amount}", remainingCashToPay.toFixed(2))
                           .replace("{currency}", currency)}

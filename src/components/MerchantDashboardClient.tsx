@@ -2051,15 +2051,15 @@ export default function MerchantDashboardClient({
   // PIN Gate Screen (Server-Verified HttpOnly Auth — Zero PIN Leakage)
   if (!isUnlocked) {
     return (
-      <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center p-4 text-[#173E30]">
-        <div className="w-full max-w-xs bg-[#FFFDF7] p-6 rounded-3xl border border-[#DCE0D4] shadow-xl text-center space-y-5">
-          <div className="w-14 h-14 rounded-2xl bg-[#008069]/10 text-[#008069] border border-[#008069]/20 mx-auto flex items-center justify-center shadow-sm">
+      <div className="min-h-screen bg-[#EFEAE4] flex items-center justify-center p-4 text-[#161514]">
+        <div className="w-full max-w-xs bg-white p-6 rounded-3xl border border-[#161514]/10 shadow-xl text-center space-y-5">
+          <div className="w-14 h-14 rounded-2xl bg-[#F85B04]/10 text-[#DA5004] border border-[#F85B04]/25 mx-auto flex items-center justify-center shadow-sm">
             <KeyRound className="w-7 h-7" />
           </div>
 
           <div>
-            <h2 className="font-bold text-lg text-[#173E30]">{merchant.name}</h2>
-            <p className="text-xs text-[#5F655D] mt-1">
+            <h2 className="font-bold text-lg text-[#161514]">{merchant.name}</h2>
+            <p className="text-xs text-[#161514]/65 mt-1">
               {merchant.hasBranchPins
                 ? locale === "fr"
                   ? "Entrez le PIN propriétaire ou le PIN de votre succursale"
@@ -2073,7 +2073,7 @@ export default function MerchantDashboardClient({
           </div>
 
           {merchant.slug === "cafe-atlas" && (
-            <div className="p-2.5 rounded-xl bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-xs flex items-center justify-center gap-1.5 font-semibold">
+            <div className="p-2.5 rounded-xl bg-[#F85B04]/10 border border-[#F85B04]/25 text-[#DA5004] text-xs flex items-center justify-center gap-1.5 font-semibold">
               <span>كود التجربة (Demo):</span>
               <strong className="font-mono text-sm tracking-widest">1234</strong>
             </div>
@@ -2103,9 +2103,9 @@ export default function MerchantDashboardClient({
               }}
               placeholder="••••"
               aria-label="رمز PIN للتاجر أو الكاشير"
-              className="w-full bg-[#FAF7F2] border border-[#C8D1BE] rounded-2xl py-3 text-center text-xl font-mono tracking-widest text-[#008069] focus:outline-none focus:border-[#008069] focus:bg-white"
+              className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-2xl py-3 text-center text-xl font-mono tracking-widest text-[#DA5004] focus:outline-none focus:border-[#F85B04] focus:bg-white"
             />
-            <span className="text-[10px] text-[#5F655D] block">
+            <span className="text-[10px] text-[#161514]/65 block">
               {locale === "fr"
                 ? "Code PIN de 4 à 6 chiffres"
                 : locale === "es"
@@ -2122,7 +2122,7 @@ export default function MerchantDashboardClient({
             <button
               type="submit"
               disabled={verifyingPin || pinInput.trim().length < 4}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#008069]/20 transition cursor-pointer"
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#F85B04]/20 transition cursor-pointer"
             >
               {verifyingPin ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -2148,7 +2148,7 @@ export default function MerchantDashboardClient({
   }
 
   return (
-    <div className={`min-h-screen bg-[#FAF7F2] flex justify-center text-[#173E30] selection:bg-[#008069] selection:text-white font-arabic ${isFrameMode ? "py-8" : ""}`}>
+    <div className={`min-h-screen bg-[#EFEAE4] flex justify-center text-[#161514] selection:bg-[#F85B04] selection:text-white font-arabic ${isFrameMode ? "py-8" : ""}`}>
       {/* Floating Cashier Action Success / Cooldown Warning Toast Banner (Trilingual: AR, FR, ES) */}
       {actionSuccessToast && (
         <aside
@@ -2159,7 +2159,7 @@ export default function MerchantDashboardClient({
           <div
             className={`${actionSuccessToast.variant === "warning"
               ? "bg-gradient-to-r from-amber-500 to-amber-600 text-amber-950 shadow-xl shadow-amber-500/30 border border-amber-300"
-              : "bg-gradient-to-r from-[#008069] to-[#00A884] text-white shadow-xl shadow-[#008069]/30 border border-white/20"
+              : "bg-gradient-to-r from-[#161514] to-[#2A2826] text-white shadow-xl shadow-[#F85B04]/25 border border-white/20"
               } p-3.5 rounded-2xl flex items-center justify-between gap-3`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
@@ -2252,7 +2252,7 @@ export default function MerchantDashboardClient({
           />
 
           <div
-            className="relative z-10 w-full max-w-sm bg-[#FFFDF7] border-2 border-[#008069]/30 rounded-3xl p-6 text-center text-[#173E30] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 cursor-default"
+            className="relative z-10 w-full max-w-sm bg-white border-2 border-[#008069]/30 rounded-3xl p-6 text-center text-[#161514] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 cursor-default"
             dir={locale === "ar" ? "rtl" : "ltr"}
           >
             {/* Top Close Button */}
@@ -2266,7 +2266,7 @@ export default function MerchantDashboardClient({
                 setSuccessModalData(null);
               }}
               aria-label={locale === "ar" ? "إغلاق" : "Fermer"}
-              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-[#FAF7F2] text-[#5F655D] hover:text-[#173E30] transition cursor-pointer"
+              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-[#FAF7F2] text-[#161514]/65 hover:text-[#161514] transition cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -2290,7 +2290,7 @@ export default function MerchantDashboardClient({
 
             {/* Title & Customer Pill */}
             <div className="space-y-1 mb-4">
-              <h3 className="font-extrabold text-lg text-[#173E30]">
+              <h3 className="font-extrabold text-lg text-[#161514]">
                 {successModalData.type === "CASHBACK"
                   ? locale === "ar"
                     ? "تمت إضافة الكاش باك بنجاح! 💰"
@@ -2316,9 +2316,9 @@ export default function MerchantDashboardClient({
                           : "¡Sello añadido con éxito! ⭐"}
               </h3>
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF7F2] border border-[#DCE0D4] text-xs">
-                <span className="font-bold text-[#173E30]">{successModalData.customerName}</span>
-                <span className="text-[#5F655D] font-mono font-semibold">#{successModalData.memberCode}</span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF7F2] border border-[#161514]/10 text-xs">
+                <span className="font-bold text-[#161514]">{successModalData.customerName}</span>
+                <span className="text-[#161514]/65 font-mono font-semibold">#{successModalData.memberCode}</span>
               </div>
             </div>
 
@@ -2346,7 +2346,7 @@ export default function MerchantDashboardClient({
                   ) : null}
                 </p>
                 <div className="pt-2 border-t border-amber-200/60 flex items-center justify-between text-[11px]">
-                  <span className="text-[#5F655D] font-medium">
+                  <span className="text-[#161514]/65 font-medium">
                     {locale === "ar" ? "رصيد المحفظة الجديد:" : "Nouveau solde :"}
                   </span>
                   <span className="font-mono font-bold text-amber-900">
@@ -2377,8 +2377,8 @@ export default function MerchantDashboardClient({
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all relative overflow-hidden ${isFilled
                           ? "bg-[#008069] text-white shadow-sm scale-105"
                           : isHalf
-                          ? "bg-white border border-[#008069] text-[#173E30] shadow-sm"
-                          : "bg-white border border-[#C8D1BE] text-[#5F655D]"
+                          ? "bg-white border border-[#008069] text-[#161514] shadow-sm"
+                          : "bg-white border border-[#C8D1BE] text-[#161514]/65"
                           }`}
                       >
                         {isHalf && (
@@ -2390,7 +2390,7 @@ export default function MerchantDashboardClient({
                   })}
                 </div>
 
-                <div className="pt-1 flex items-center justify-between text-[11px] text-[#5F655D]">
+                <div className="pt-1 flex items-center justify-between text-[11px] text-[#161514]/65">
                   <span>{locale === "ar" ? "مجموع الأختام:" : "Total tampons :"}</span>
                   <span className="font-mono font-bold text-[#008069]">
                     {formatStamps(successModalData.stamps)} / {successModalData.stampsRequired || merchant.stampsRequired}
@@ -2410,7 +2410,7 @@ export default function MerchantDashboardClient({
               <div className="w-full bg-[#E8EDE3] h-1.5 rounded-full overflow-hidden">
                 <div className="bg-[#008069] h-full animate-shrink-progress" />
               </div>
-              <p className="text-[10px] text-[#5F655D]">
+              <p className="text-[10px] text-[#161514]/65">
                 {locale === "ar"
                   ? "تختفي هذه النافذة تلقائياً خلال 3 ثوانٍ (أو انقر للمتابعة)"
                   : locale === "fr"
@@ -2424,14 +2424,14 @@ export default function MerchantDashboardClient({
 
       {/* Centered Mobile Container */}
       <div
-        className={`w-full max-w-[440px] flex flex-col justify-between bg-[#FAF7F2] text-[#173E30] relative ${isFrameMode
-          ? "rounded-[48px] border-[6px] border-slate-400 shadow-2xl shadow-slate-400/50 overflow-hidden min-h-[820px] bg-[#FAF7F2]"
-          : "min-h-screen border-x border-[#DCE0D4]"
+        className={`w-full max-w-[440px] flex flex-col justify-between bg-[#EFEAE4] text-[#161514] relative ${isFrameMode
+          ? "rounded-[48px] border-[6px] border-slate-400 shadow-2xl shadow-slate-400/50 overflow-hidden min-h-[820px] bg-[#EFEAE4]"
+          : "min-h-screen border-x border-[#161514]/10"
           }`}
       >
         {/* Top App Bar - WhatsApp Business Dark Teal Header with Safe Area Insets */}
         <header
-          className="sticky top-0 z-30 px-3.5 pb-3 bg-[#075E54] text-white shadow-md flex items-center justify-between transition-all"
+          className="sticky top-0 z-30 px-3.5 pb-3 bg-[#161514] text-white shadow-md flex items-center justify-between transition-all"
           style={{
             paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)",
           }}
@@ -2451,7 +2451,7 @@ export default function MerchantDashboardClient({
                 {merchant.name}
               </h1>
               {isRestrictedStaff ? (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-400 text-[#075E54] font-extrabold flex items-center gap-1 shadow-sm">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-extrabold flex items-center gap-1 shadow-sm">
                   <MapPin className="w-2.5 h-2.5" />
                   <span className="truncate max-w-[90px]">
                     {liveAuthBranch ? liveAuthBranch.name : authStaffName || (locale === "fr" ? "Caissier" : "كاشير")}
@@ -2503,7 +2503,7 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setIsScannerOpen(true)}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-[#008069]/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-[#F85B04]/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
           >
             <Camera className="w-5 h-5 stroke-[2.5]" />
             <span>
@@ -2522,13 +2522,13 @@ export default function MerchantDashboardClient({
             {/* Multi-Branch Selector Header (MULTI Plan Exclusive) */}
             {isMultiBranch && branches.length > 0 && (
               isRestrictedStaff && liveAuthBranch ? (
-                <div className="flex items-center justify-between p-3 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm">
+                <div className="flex items-center justify-between p-3 bg-white rounded-2xl border border-[#161514]/10 shadow-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-bold text-[#173E30] flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-[#008069]" />
+                    <span className="text-xs font-bold text-[#161514] flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#DA5004]" />
                       <span>{locale === "fr" ? "Point de vente :" : locale === "es" ? "Sucursal:" : "الفرع النشط:"}</span>
-                      <span className="text-[#008069]">{liveAuthBranch.name}</span>
+                      <span className="text-[#DA5004]">{liveAuthBranch.name}</span>
                     </span>
                   </div>
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
@@ -2536,21 +2536,21 @@ export default function MerchantDashboardClient({
                   </span>
                 </div>
               ) : isOwner ? (
-                <div className="space-y-2 p-3 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm">
+                <div className="space-y-2 p-3 bg-white rounded-2xl border border-[#161514]/10 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <Building2 className="w-4 h-4 text-[#008069]" />
-                      <span className="font-bold text-xs text-[#173E30]">
+                      <Building2 className="w-4 h-4 text-[#DA5004]" />
+                      <span className="font-bold text-xs text-[#161514]">
                         {t.demo.branch}:
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#008069]/10 text-[#008069] font-bold border border-[#008069]/20">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F85B04]/10 text-[#DA5004] font-bold border border-[#F85B04]/25">
                         MULTI ({branches.length} {locale === "fr" ? "succursales" : locale === "es" ? "sucursales" : "فروع"})
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveTab("settings")}
-                      className="text-[11px] text-[#008069] hover:underline font-bold flex items-center gap-1"
+                      className="text-[11px] text-[#DA5004] hover:underline font-bold flex items-center gap-1"
                     >
                       <span>{t.demo.manageBranches}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -2563,8 +2563,8 @@ export default function MerchantDashboardClient({
                       type="button"
                       onClick={() => setSelectedBranchId("ALL")}
                       className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-bold flex items-center gap-1.5 ${selectedBranchId === "ALL"
-                        ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                        : "bg-[#FAF7F2] border-[#C8D1BE] text-[#5F655D] hover:bg-[#DCE0D4]"
+                        ? "bg-[#F85B04] border-[#F85B04] text-white shadow-sm"
+                        : "bg-[#EFEAE4] border-[#161514]/15 text-[#161514]/65 hover:bg-[#E5DFD7]"
                         }`}
                     >
                       <Globe className="w-3.5 h-3.5" />
@@ -2577,8 +2577,8 @@ export default function MerchantDashboardClient({
                         type="button"
                         onClick={() => setSelectedBranchId(b.id)}
                         className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-semibold flex items-center gap-1.5 ${selectedBranchId === b.id
-                          ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                          : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                          ? "bg-[#F85B04] border-[#F85B04] text-white shadow-sm"
+                          : "bg-white border-[#161514]/15 text-[#161514]/65 hover:bg-[#EFEAE4]"
                           }`}
                       >
                         <span>📍 {b.name}</span>
@@ -2596,38 +2596,38 @@ export default function MerchantDashboardClient({
 
             {/* 2x2 KPI Grid */}
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
-                <span className="text-[11px] text-[#5F655D] block">
+              <div className="bg-white p-3.5 rounded-2xl border border-[#161514]/10 shadow-sm">
+                <span className="text-[11px] text-[#161514]/65 block">
                   {selectedBranch ? `${t.demo.branchVisitsLabel} (${selectedBranch.name})` : "زيارات (إجمالي)"}
                 </span>
                 <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-[#173E30]">
+                  <span className="text-2xl font-bold font-mono text-[#161514]">
                     {displayedMetrics.visits}
                   </span>
                   {displayedMetrics.visits > 0 && (
-                    <span className="text-[10px] text-[#008069] font-bold font-mono">
+                    <span className="text-[10px] text-[#DA5004] font-bold font-mono">
                       نشط
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
-                <span className="text-[11px] text-[#5F655D] block">كليان رجعو</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-[#161514]/10 shadow-sm">
+                <span className="text-[11px] text-[#161514]/65 block">كليان رجعو</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-[#173E30]">
+                  <span className="text-2xl font-bold font-mono text-[#161514]">
                     {displayedMetrics.returningCustomers}
                   </span>
                   {displayedMetrics.returningCustomers > 0 && (
-                    <span className="text-[10px] text-[#008069] font-bold font-mono">
+                    <span className="text-[10px] text-[#DA5004] font-bold font-mono">
                       عملاء
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
-                <span className="text-[11px] text-[#5F655D] block">كادوات تعطاو</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-[#161514]/10 shadow-sm">
+                <span className="text-[11px] text-[#161514]/65 block">كادوات تعطاو</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold font-mono text-amber-600">
                     {displayedMetrics.rewards}
@@ -2636,8 +2636,8 @@ export default function MerchantDashboardClient({
                 </div>
               </div>
 
-              <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm">
-                <span className="text-[11px] text-[#5F655D] block">تقييم Google</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-[#161514]/10 shadow-sm">
+                <span className="text-[11px] text-[#161514]/65 block">تقييم Google</span>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold font-mono text-amber-600 flex items-center gap-1">
                     4.8 <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
@@ -2669,13 +2669,13 @@ export default function MerchantDashboardClient({
 
             {/* Branch Performance Comparison Card (MULTI Plan Global View) */}
             {isMultiBranch && isOwner && selectedBranchId === "ALL" && branches.length > 1 && (
-              <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-3">
+              <div className="bg-white p-4 rounded-2xl border border-[#161514]/10 shadow-sm space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-[#173E30] flex items-center gap-1.5">
-                    <Building2 className="w-4 h-4 text-[#008069]" />
+                  <span className="font-bold text-[#161514] flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-[#DA5004]" />
                     <span>{t.demo.branchStatsComparison}</span>
                   </span>
-                  <span className="text-[10px] text-[#5F655D]">
+                  <span className="text-[10px] text-[#161514]/65">
                     {branches.length} {t.demo.branch}
                   </span>
                 </div>
@@ -2685,24 +2685,24 @@ export default function MerchantDashboardClient({
                     const bVisits = metrics.byBranch?.[b.name]?.visits ?? 0;
                     const pct = metrics.totalVisits > 0 ? Math.min(100, Math.round((bVisits / metrics.totalVisits) * 100)) : 0;
                     return (
-                      <div key={b.id} className="p-2.5 rounded-xl bg-[#FAF7F2] space-y-1.5">
+                      <div key={b.id} className="p-2.5 rounded-xl bg-[#EFEAE4] space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-[#173E30]">{b.name}</span>
-                            <span className="text-[10px] text-[#5F655D]">({b.city})</span>
+                            <span className="font-bold text-[#161514]">{b.name}</span>
+                            <span className="text-[10px] text-[#161514]/65">({b.city})</span>
                             {b.isMain && (
                               <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-400 text-amber-950 font-bold">
                                 {t.demo.mainBranch}
                               </span>
                             )}
                           </div>
-                          <span className="font-mono font-bold text-[#008069]">
+                          <span className="font-mono font-bold text-[#DA5004]">
                             {bVisits} زيارة ({pct}%)
                           </span>
                         </div>
                         <div className="w-full bg-[#C8D1BE] h-1.5 rounded-full overflow-hidden">
                           <div
-                            className="bg-gradient-to-r from-[#00A884] to-[#008069] h-full rounded-full transition-all duration-500"
+                            className="bg-gradient-to-r from-[#F9742A] to-[#F85B04] h-full rounded-full transition-all duration-500"
                             style={{ width: `${bVisits > 0 ? Math.max(8, pct) : 0}%` }}
                           />
                         </div>
@@ -2714,10 +2714,10 @@ export default function MerchantDashboardClient({
             )}
 
             {/* Weekly Visits Dynamic Bar Chart */}
-            <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-2.5">
+            <div className="bg-white p-4 rounded-2xl border border-[#161514]/10 shadow-sm space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#173E30]">هاد السيمانة — زيارات</span>
-                <span className="text-[11px] text-[#008069] font-mono font-bold">
+                <span className="font-bold text-[#161514]">هاد السيمانة — زيارات</span>
+                <span className="text-[11px] text-[#DA5004] font-mono font-bold">
                   {displayedMetrics.visits} زيارة مسجلة
                 </span>
               </div>
@@ -2747,14 +2747,14 @@ export default function MerchantDashboardClient({
                         <div
                           className={`w-full rounded-t-lg transition-all duration-500 ${bar.visits > 0
                             ? bar.isToday
-                              ? "bg-gradient-to-t from-[#008069] to-[#00A884] shadow-sm"
-                              : "bg-[#008069]/65 hover:bg-[#008069]"
+                              ? "bg-gradient-to-t from-[#161514] to-[#2A2826] shadow-sm"
+                              : "bg-[#F85B04]/65 hover:bg-[#F85B04]"
                             : "bg-[#DCE0D4]"
                             }`}
                           style={{ height: barHeight }}
                           title={`${bar.label}: ${bar.visits}`}
                         />
-                        <span className={`text-[10px] ${bar.isToday ? "text-[#008069] font-bold" : "text-[#5F655D]"}`}>
+                        <span className={`text-[10px] ${bar.isToday ? "text-[#DA5004] font-bold" : "text-[#161514]/65"}`}>
                           {bar.label}
                         </span>
                       </div>
@@ -2765,48 +2765,48 @@ export default function MerchantDashboardClient({
             </div>
 
             {/* Live Activity Feed */}
-            <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-2.5">
+            <div className="bg-white p-4 rounded-2xl border border-[#161514]/10 shadow-sm space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#173E30]">آخر الحركات</span>
+                <span className="font-bold text-[#161514]">آخر الحركات</span>
                 {selectedBranch && (
-                  <span className="text-[10px] text-[#008069] font-bold">
+                  <span className="text-[10px] text-[#DA5004] font-bold">
                     📍 {selectedBranch.name}
                   </span>
                 )}
               </div>
               <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
                 {displayedTransactions.length === 0 ? (
-                  <p className="text-center py-4 text-xs text-[#5F655D]">
+                  <p className="text-center py-4 text-xs text-[#161514]/65">
                     لا توجد معاملات مسجلة في هذا الفرع بعد.
                   </p>
                 ) : (
                   displayedTransactions.slice(0, 6).map((tx: TransactionData) => (
                     <div
                       key={tx.id}
-                      className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#DCE0D4] flex items-center justify-between text-xs"
+                      className="p-2.5 rounded-xl bg-[#EFEAE4] border border-[#161514]/10 flex items-center justify-between text-xs"
                     >
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-[#008069]/10 text-[#008069] flex items-center justify-center font-bold text-[11px]">
+                        <div className="w-7 h-7 rounded-lg bg-[#F85B04]/10 text-[#DA5004] flex items-center justify-center font-bold text-[11px]">
                           {tx.customer.name.slice(0, 1)}
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-[#173E30]">
+                            <span className="font-bold text-[#161514]">
                               {tx.customer.name}
                             </span>
                             {tx.branchName && (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-white border border-[#C8D1BE] text-[#5F655D]">
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-white border border-[#161514]/15 text-[#161514]/65">
                                 📍 {tx.branchName}
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] text-[#5F655D] font-mono block">
+                          <span className="text-[10px] text-[#161514]/65 font-mono block">
                             {formatTimeAgoArabic(tx.createdAt)}
                           </span>
                         </div>
                       </div>
                       <span
-                        className={`text-[11px] font-bold font-mono ${tx.stampsDelta > 0 ? "text-[#008069]" : "text-amber-600"
+                        className={`text-[11px] font-bold font-mono ${tx.stampsDelta > 0 ? "text-emerald-600" : "text-amber-600"
                           }`}
                       >
                         {tx.note || (tx.stampsDelta > 0 ? `+${formatStamps(tx.stampsDelta)} طابع` : "استلام مكافأة")}
@@ -2831,14 +2831,14 @@ export default function MerchantDashboardClient({
                   onChange={(e) => setCrmSearch(e.target.value)}
                   placeholder="قلّب بالسمية، النمرة، ولا الكود #..."
                   aria-label="بحث في قائمة الزبائن"
-                  className="w-full bg-white border border-[#C8D1BE] rounded-2xl px-4 py-2.5 text-xs text-[#173E30] placeholder-[#5F655D] focus:outline-none focus:border-[#008069] shadow-sm"
+                  className="w-full bg-white border border-[#161514]/15 rounded-2xl px-4 py-2.5 text-xs text-[#161514] placeholder-[#161514]/45 focus:outline-none focus:border-[#F85B04] shadow-sm"
                 />
-                <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#5F655D]" />
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#161514]/65" />
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddCustomerOpen(true)}
-                className="px-3 py-2.5 rounded-2xl bg-[#008069] hover:bg-[#00705a] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition shrink-0 cursor-pointer"
+                className="px-3 py-2.5 rounded-2xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition shrink-0 cursor-pointer"
                 title="إضافة زبون جديد يدوياً"
               >
                 <UserPlus className="w-4 h-4" />
@@ -2859,8 +2859,8 @@ export default function MerchantDashboardClient({
                   type="button"
                   onClick={() => setCrmFilter(f.id as typeof crmFilter)}
                   className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition font-medium ${crmFilter === f.id
-                    ? "bg-[#008069] text-white font-bold border-[#008069] shadow-sm"
-                    : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                    ? "bg-[#F85B04] text-white font-bold border-[#F85B04] shadow-sm"
+                    : "bg-white border-[#161514]/15 text-[#161514]/65 hover:bg-[#EFEAE4]"
                     }`}
                 >
                   {f.label}
@@ -2871,7 +2871,7 @@ export default function MerchantDashboardClient({
             {/* Customers List */}
             <div className="space-y-2">
               {filteredCustomers.length === 0 ? (
-                <p className="text-center text-xs text-[#5F655D] py-8">لا يوجد زبائن مطابقين</p>
+                <p className="text-center text-xs text-[#161514]/65 py-8">لا يوجد زبائن مطابقين</p>
               ) : (
                 filteredCustomers.map((c) => {
                   const isQuiet = new Date(c.lastVisitAt) <= new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
@@ -2881,18 +2881,18 @@ export default function MerchantDashboardClient({
                   return (
                     <div
                       key={c.id}
-                      className={`w-full p-3.5 rounded-2xl bg-[#FFFDF7] border ${isLocked ? "border-red-300 ring-1 ring-red-300 bg-red-50/20" : "border-[#DCE0D4]"
+                      className={`w-full p-3.5 rounded-2xl bg-white border ${isLocked ? "border-red-300 ring-1 ring-red-300 bg-red-50/20" : "border-[#161514]/10"
                         } shadow-sm space-y-2.5 text-xs transition`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] text-[#173E30] border border-[#DCE0D4] font-bold flex items-center justify-center shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-[#EFEAE4] text-[#161514] border border-[#161514]/10 font-bold flex items-center justify-center shrink-0">
                             {c.name.slice(0, 1)}
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-bold text-[#173E30]">{c.name}</span>
-                              <span className="font-mono text-[10px] text-[#5F655D]">
+                              <span className="font-bold text-[#161514]">{c.name}</span>
+                              <span className="font-mono text-[10px] text-[#161514]/65">
                                 #{c.memberCode}
                               </span>
                               {isLocked && (
@@ -2901,7 +2901,7 @@ export default function MerchantDashboardClient({
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] text-[#5F655D] block">
+                            <span className="text-[10px] text-[#161514]/65 block">
                               {c.phone} • {c.totalVisits} زيارات • آخر زيارة: {formatTimeAgoArabic(c.lastVisitAt)}
                             </span>
                           </div>
@@ -2915,7 +2915,7 @@ export default function MerchantDashboardClient({
                                 ? "bg-red-100 text-red-800 border border-red-200"
                                 : isCashbackCust
                                   ? "bg-amber-100 text-amber-800 border border-amber-200"
-                                  : "bg-[#008069]/10 text-[#008069] border border-[#008069]/20"
+                                  : "bg-[#F85B04]/10 text-[#DA5004] border border-[#F85B04]/25"
                               }`}
                           >
                             {isVip ? "VIP" : isQuiet ? "غائب" : isCashbackCust ? "كاش باك" : "أختام"}
@@ -2926,7 +2926,7 @@ export default function MerchantDashboardClient({
                                 {Number(c.cashbackBalance || 0).toFixed(2)} {merchant.currency || "DH"}
                               </span>
                             ) : (
-                              <span className="font-mono font-bold text-[#008069] text-xs block">
+                              <span className="font-mono font-bold text-[#DA5004] text-xs block">
                                 {formatStamps(c.stamps)}/{merchant.stampsRequired}
                               </span>
                             )}
@@ -2941,10 +2941,10 @@ export default function MerchantDashboardClient({
                           <button
                             type="button"
                             onClick={() => handleOpenPinReset(c)}
-                            className="px-2.5 py-1 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#C8D1BE] text-[#173E30] text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl bg-[#EFEAE4] hover:bg-[#E5DFD7] border border-[#161514]/15 text-[#161514] text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer"
                             title="إدارة أو تغيير رمز PIN"
                           >
-                            <KeyRound className="w-3.5 h-3.5 text-[#008069]" />
+                            <KeyRound className="w-3.5 h-3.5 text-[#DA5004]" />
                             <span>PIN: <strong className="font-mono">{c.securityPin || c.memberCode}</strong></span>
                           </button>
 
@@ -2998,7 +2998,7 @@ export default function MerchantDashboardClient({
                                   ? handleOpenCashbackModal(c)
                                   : handleDirectStamp(c)
                               }
-                              className="px-3 py-1.5 rounded-xl bg-[#008069] hover:bg-[#00705a] text-white text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                              className="px-3 py-1.5 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
                               title={
                                 merchant.allowMultiStamps
                                   ? locale === "fr"
@@ -3049,14 +3049,14 @@ export default function MerchantDashboardClient({
             {/* Header with Title and Refresh Button */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#008069]/10 text-[#008069] flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-xl bg-[#F85B04]/10 text-[#DA5004] flex items-center justify-center font-bold">
                   <BarChart3 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-xs font-bold text-[#173E30]">
+                  <h2 className="text-xs font-bold text-[#161514]">
                     {t.demo.monthlyReports}
                   </h2>
-                  <p className="text-[10px] text-[#5F655D]">
+                  <p className="text-[10px] text-[#161514]/65">
                     {locale === "fr"
                       ? "Performances & historique mensuel"
                       : locale === "es"
@@ -3070,10 +3070,10 @@ export default function MerchantDashboardClient({
                 type="button"
                 onClick={() => fetchMonthlyAnalytics(true)}
                 disabled={isLoadingAnalytics}
-                className="px-2.5 py-1 rounded-xl bg-white hover:bg-[#FAF7F2] border border-[#C8D1BE] text-[#5F655D] text-[11px] font-semibold flex items-center gap-1 transition disabled:opacity-50 cursor-pointer shadow-sm active:scale-95"
+                className="px-2.5 py-1 rounded-xl bg-white hover:bg-[#EFEAE4] border border-[#161514]/15 text-[#161514]/65 text-[11px] font-semibold flex items-center gap-1 transition disabled:opacity-50 cursor-pointer shadow-sm active:scale-95"
                 title={locale === "fr" ? "Actualiser" : locale === "es" ? "Actualizar" : "تحديث البيانات"}
               >
-                <Loader2 className={`w-3.5 h-3.5 ${isLoadingAnalytics ? "animate-spin text-[#008069]" : ""}`} />
+                <Loader2 className={`w-3.5 h-3.5 ${isLoadingAnalytics ? "animate-spin text-[#DA5004]" : ""}`} />
                 <span>{locale === "fr" ? "Actualiser" : locale === "es" ? "Actualizar" : "تحديث"}</span>
               </button>
             </div>
@@ -3081,14 +3081,14 @@ export default function MerchantDashboardClient({
             {/* Skeleton Loading State */}
             {isLoadingAnalytics && !monthlyAnalytics && (
               <div className="space-y-3 animate-pulse">
-                <div className="h-10 bg-white rounded-2xl border border-[#DCE0D4]" />
+                <div className="h-10 bg-white rounded-2xl border border-[#161514]/10" />
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="h-24 bg-white rounded-2xl border border-[#DCE0D4]" />
-                  <div className="h-24 bg-white rounded-2xl border border-[#DCE0D4]" />
-                  <div className="h-24 bg-white rounded-2xl border border-[#DCE0D4]" />
-                  <div className="h-24 bg-white rounded-2xl border border-[#DCE0D4]" />
+                  <div className="h-24 bg-white rounded-2xl border border-[#161514]/10" />
+                  <div className="h-24 bg-white rounded-2xl border border-[#161514]/10" />
+                  <div className="h-24 bg-white rounded-2xl border border-[#161514]/10" />
+                  <div className="h-24 bg-white rounded-2xl border border-[#161514]/10" />
                 </div>
-                <div className="h-36 bg-white rounded-2xl border border-[#DCE0D4]" />
+                <div className="h-36 bg-white rounded-2xl border border-[#161514]/10" />
               </div>
             )}
 
@@ -3119,8 +3119,8 @@ export default function MerchantDashboardClient({
                         type="button"
                         onClick={() => setSelectedMonthKey(m.monthKey)}
                         className={`px-3 py-1.5 rounded-xl border whitespace-nowrap transition text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer ${isSelected
-                          ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                          : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                          ? "bg-[#F85B04] border-[#F85B04] text-white shadow-sm"
+                          : "bg-white border-[#161514]/15 text-[#161514]/65 hover:bg-[#EFEAE4]"
                           }`}
                       >
                         <span>{formatMonthTitle(m.monthKey, locale)}</span>
@@ -3142,20 +3142,20 @@ export default function MerchantDashboardClient({
                 {/* 2. Branch Filter Tabs (For Multi-Branch Merchants) */}
                 {monthlyAnalytics.isMultiBranch && monthlyAnalytics.branches.length > 1 && (
                   isRestrictedStaff && liveAuthBranch ? (
-                    <div className="p-2.5 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#173E30]">
-                        <Building2 className="w-3.5 h-3.5 text-[#008069]" />
+                    <div className="p-2.5 bg-white rounded-2xl border border-[#161514]/10 shadow-sm flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#161514]">
+                        <Building2 className="w-3.5 h-3.5 text-[#DA5004]" />
                         <span>{locale === "fr" ? "Rapport de succursale :" : locale === "es" ? "Informe de sucursal:" : "تقرير الفرع:"}</span>
-                        <span className="text-[#008069]">{liveAuthBranch.name}</span>
+                        <span className="text-[#DA5004]">{liveAuthBranch.name}</span>
                       </div>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
                         {locale === "fr" ? "Verrouillé" : "مقفل للفرع"}
                       </span>
                     </div>
                   ) : isOwner ? (
-                    <div className="space-y-1.5 p-2.5 bg-[#FFFDF7] rounded-2xl border border-[#DCE0D4] shadow-sm">
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-[#173E30]">
-                        <Building2 className="w-3.5 h-3.5 text-[#008069]" />
+                    <div className="space-y-1.5 p-2.5 bg-white rounded-2xl border border-[#161514]/10 shadow-sm">
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-[#161514]">
+                        <Building2 className="w-3.5 h-3.5 text-[#DA5004]" />
                         <span>{locale === "fr" ? "Filtrer par succursale :" : locale === "es" ? "Filtrar por sucursal:" : "تصفية حسب الفرع:"}</span>
                       </div>
 
@@ -3164,8 +3164,8 @@ export default function MerchantDashboardClient({
                           type="button"
                           onClick={() => setAnalyticsBranchFilter("ALL")}
                           className={`px-2.5 py-1 rounded-xl border whitespace-nowrap transition text-[11px] font-bold flex items-center gap-1 cursor-pointer ${analyticsBranchFilter === "ALL"
-                            ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                            : "bg-[#FAF7F2] border-[#C8D1BE] text-[#5F655D] hover:bg-[#DCE0D4]"
+                            ? "bg-[#F85B04] border-[#F85B04] text-white shadow-sm"
+                            : "bg-[#EFEAE4] border-[#161514]/15 text-[#161514]/65 hover:bg-[#E5DFD7]"
                             }`}
                         >
                           <Globe className="w-3 h-3" />
@@ -3178,8 +3178,8 @@ export default function MerchantDashboardClient({
                             type="button"
                             onClick={() => setAnalyticsBranchFilter(b.name)}
                             className={`px-2.5 py-1 rounded-xl border whitespace-nowrap transition text-[11px] font-semibold flex items-center gap-1 cursor-pointer ${analyticsBranchFilter === b.name
-                              ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                              : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                              ? "bg-[#F85B04] border-[#F85B04] text-white shadow-sm"
+                              : "bg-white border-[#161514]/15 text-[#161514]/65 hover:bg-[#EFEAE4]"
                               }`}
                           >
                             <span>📍 {b.name}</span>
@@ -3203,7 +3203,7 @@ export default function MerchantDashboardClient({
 
                   if (!selectedMonth) {
                     return (
-                      <p className="text-center text-xs text-[#5F655D] py-8">
+                      <p className="text-center text-xs text-[#161514]/65 py-8">
                         {locale === "fr" ? "Aucune donnée disponible" : "لا توجد بيانات متاحة لهذا الشهر"}
                       </p>
                     );
@@ -3236,12 +3236,12 @@ export default function MerchantDashboardClient({
                   return (
                     <div className="space-y-3.5">
                       {/* Active Filter Title Banner */}
-                      <div className="p-3 rounded-2xl bg-gradient-to-r from-[#008069]/10 via-[#00A884]/10 to-transparent border border-[#008069]/20 flex items-center justify-between">
+                      <div className="p-3 rounded-2xl bg-gradient-to-r from-[#F85B04]/10 via-[#FA7F3B]/10 to-transparent border border-[#F85B04]/25 flex items-center justify-between">
                         <div>
-                          <span className="text-xs font-bold text-[#173E30] block">
+                          <span className="text-xs font-bold text-[#161514] block">
                             📅 {formatMonthTitle(selectedMonth.monthKey, locale)}
                           </span>
-                          <span className="text-[10px] text-[#5F655D]">
+                          <span className="text-[10px] text-[#161514]/65">
                             {isAllBranches
                               ? t.demo.allBranchesCombined
                               : `فرع: ${analyticsBranchFilter}`}
@@ -3252,7 +3252,7 @@ export default function MerchantDashboardClient({
                             {locale === "fr" ? "Mois en cours" : locale === "es" ? "Mes en curso" : "الشهر الجاري"}
                           </span>
                         ) : (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF7F2] text-[#5F655D] font-bold border border-[#DCE0D4]">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EFEAE4] text-[#161514]/65 font-bold border border-[#161514]/10">
                             {locale === "fr" ? "Mois clôturé" : locale === "es" ? "Mes cerrado" : "شهر منتهي"}
                           </span>
                         )}
@@ -3261,17 +3261,17 @@ export default function MerchantDashboardClient({
                       {/* 2x2 KPI Cards */}
                       <div className="grid grid-cols-2 gap-2.5">
                         {/* 1. Visits & Growth */}
-                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
-                          <span className="text-[11px] text-[#5F655D] block">
+                        <div className="bg-white p-3.5 rounded-2xl border border-[#161514]/10 shadow-sm space-y-1">
+                          <span className="text-[11px] text-[#161514]/65 block">
                             {t.demo.kpiTotalVisits}
                           </span>
                           <div className="flex items-baseline gap-1.5 flex-wrap">
-                            <span className="text-2xl font-bold font-mono text-[#173E30]">
+                            <span className="text-2xl font-bold font-mono text-[#161514]">
                               {displayVisits}
                             </span>
                             {growth !== null && (
                               <span
-                                className={`text-[10px] font-bold font-mono flex items-center ${growth >= 0 ? "text-[#008069]" : "text-red-500"
+                                className={`text-[10px] font-bold font-mono flex items-center ${growth >= 0 ? "text-emerald-600" : "text-red-500"
                                   }`}
                               >
                                 {growth >= 0 ? `+${growth}%` : `${growth}%`}
@@ -3279,33 +3279,33 @@ export default function MerchantDashboardClient({
                             )}
                           </div>
                           {growth !== null && (
-                            <span className="text-[9px] text-[#5F655D] block">
+                            <span className="text-[9px] text-[#161514]/65 block">
                               {t.demo.growthVsPrevMonth}
                             </span>
                           )}
                         </div>
 
                         {/* 2. New Customers */}
-                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
-                          <span className="text-[11px] text-[#5F655D] block">
+                        <div className="bg-white p-3.5 rounded-2xl border border-[#161514]/10 shadow-sm space-y-1">
+                          <span className="text-[11px] text-[#161514]/65 block">
                             {t.demo.newCustomersLabel}
                           </span>
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-2xl font-bold font-mono text-[#173E30]">
+                            <span className="text-2xl font-bold font-mono text-[#161514]">
                               {displayNewCust}
                             </span>
-                            <span className="text-[10px] text-[#008069] font-bold">
+                            <span className="text-[10px] text-[#DA5004] font-bold">
                               {locale === "fr" ? "clients" : "زبون"}
                             </span>
                           </div>
-                          <span className="text-[9px] text-[#5F655D] block">
+                          <span className="text-[9px] text-[#161514]/65 block">
                             {locale === "fr" ? "Inscrits ce mois" : "انضموا هذا الشهر"}
                           </span>
                         </div>
 
                         {/* 3. Rewards Delivered */}
-                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
-                          <span className="text-[11px] text-[#5F655D] block">
+                        <div className="bg-white p-3.5 rounded-2xl border border-[#161514]/10 shadow-sm space-y-1">
+                          <span className="text-[11px] text-[#161514]/65 block">
                             {t.demo.rewardsDeliveredLabel}
                           </span>
                           <div className="flex items-baseline gap-1.5">
@@ -3316,14 +3316,14 @@ export default function MerchantDashboardClient({
                               🎁 {locale === "fr" ? "cadeaux" : "مكافأة"}
                             </span>
                           </div>
-                          <span className="text-[9px] text-[#5F655D] block">
+                          <span className="text-[9px] text-[#161514]/65 block">
                             {locale === "fr" ? "Récompenses utilisées" : "تم استلامها"}
                           </span>
                         </div>
 
                         {/* 4. Sales / Cashback Activity */}
-                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-1">
-                          <span className="text-[11px] text-[#5F655D] block">
+                        <div className="bg-white p-3.5 rounded-2xl border border-[#161514]/10 shadow-sm space-y-1">
+                          <span className="text-[11px] text-[#161514]/65 block">
                             {merchant.loyaltyMode === "CASHBACK"
                               ? (locale === "fr" ? "Cashback distribué" : "كاش باك ممنوح")
                               : t.demo.salesVolumeLabel}
@@ -3340,7 +3340,7 @@ export default function MerchantDashboardClient({
                               {merchant.currency || "DH"}
                             </span>
                           </div>
-                          <span className="text-[9px] text-[#5F655D] block">
+                          <span className="text-[9px] text-[#161514]/65 block">
                             {locale === "fr" ? "Activité enregistrée" : "النشاط المسجل"}
                           </span>
                         </div>
@@ -3348,13 +3348,13 @@ export default function MerchantDashboardClient({
 
                       {/* 4. Branch Performance Breakdown Card (Only shown when "ALL" branches is selected in Multi-Branch mode) */}
                       {monthlyAnalytics.isMultiBranch && isOwner && isAllBranches && selectedMonth.branches.length > 1 && (
-                        <div className="bg-[#FFFDF7] p-4 rounded-2xl border border-[#DCE0D4] shadow-sm space-y-3">
+                        <div className="bg-white p-4 rounded-2xl border border-[#161514]/10 shadow-sm space-y-3">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-[#173E30] flex items-center gap-1.5">
-                              <Building2 className="w-4 h-4 text-[#008069]" />
+                            <span className="font-bold text-[#161514] flex items-center gap-1.5">
+                              <Building2 className="w-4 h-4 text-[#DA5004]" />
                               <span>{t.demo.branchBreakdown}</span>
                             </span>
-                            <span className="text-[10px] text-[#5F655D]">
+                            <span className="text-[10px] text-[#161514]/65">
                               {selectedMonth.branches.length} {t.demo.branch}
                             </span>
                           </div>
@@ -3363,13 +3363,13 @@ export default function MerchantDashboardClient({
                             {selectedMonth.branches.map((b) => (
                               <div
                                 key={b.branchName}
-                                className="p-3 rounded-xl bg-[#FAF7F2] space-y-2 border border-[#DCE0D4]"
+                                className="p-3 rounded-xl bg-[#EFEAE4] space-y-2 border border-[#161514]/10"
                               >
                                 <div className="flex items-center justify-between text-xs">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="font-bold text-[#173E30]">📍 {b.branchName}</span>
+                                    <span className="font-bold text-[#161514]">📍 {b.branchName}</span>
                                     {b.city && (
-                                      <span className="text-[10px] text-[#5F655D]">({b.city})</span>
+                                      <span className="text-[10px] text-[#161514]/65">({b.city})</span>
                                     )}
                                     {b.isMain && (
                                       <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-400 text-amber-950 font-bold">
@@ -3377,7 +3377,7 @@ export default function MerchantDashboardClient({
                                       </span>
                                     )}
                                   </div>
-                                  <span className="font-mono font-bold text-[#008069]">
+                                  <span className="font-mono font-bold text-[#DA5004]">
                                     {b.visits} {locale === "fr" ? "visites" : "زيارة"} ({b.visitsShare}%)
                                   </span>
                                 </div>
@@ -3385,12 +3385,12 @@ export default function MerchantDashboardClient({
                                 {/* Progress Bar showing branch share of total visits */}
                                 <div className="w-full bg-[#C8D1BE] h-2 rounded-full overflow-hidden">
                                   <div
-                                    className="bg-gradient-to-r from-[#00A884] to-[#008069] h-full rounded-full transition-all duration-500"
+                                    className="bg-gradient-to-r from-[#F9742A] to-[#F85B04] h-full rounded-full transition-all duration-500"
                                     style={{ width: `${Math.max(5, b.visitsShare)}%` }}
                                   />
                                 </div>
 
-                                <div className="flex items-center justify-between text-[11px] text-[#5F655D] pt-0.5">
+                                <div className="flex items-center justify-between text-[11px] text-[#161514]/65 pt-0.5">
                                   <span>
                                     🎁 {b.rewardsRedeemed} {locale === "fr" ? "cadeaux" : "مكافأة"}
                                   </span>
@@ -3418,12 +3418,12 @@ export default function MerchantDashboardClient({
           <div className="p-3.5 space-y-4 flex-1 animate-in fade-in duration-200">
             {/* Dynamic Template Chips or Empty State */}
             {templates.length === 0 ? (
-              <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-2xl bg-white border border-[#161514]/10 shadow-sm flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
-                  <span className="text-xs font-bold text-[#173E30] block">
+                  <span className="text-xs font-bold text-[#161514] block">
                     {t.demo.noTemplatesYet}
                   </span>
-                  <p className="text-[11px] text-[#5F655D]">
+                  <p className="text-[11px] text-[#161514]/65">
                     {locale === "fr"
                       ? "Créez vos modèles d'offres pour les envoyer en un clic."
                       : locale === "es"
@@ -3434,7 +3434,7 @@ export default function MerchantDashboardClient({
                 <button
                   type="button"
                   onClick={() => handleOpenAddTemplate()}
-                  className="px-3 py-2 rounded-xl bg-[#008069]/10 hover:bg-[#008069]/20 text-[#008069] border border-[#008069]/30 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition active:scale-95"
+                  className="px-3 py-2 rounded-xl bg-[#F85B04]/10 hover:bg-[#F85B04]/20 text-[#DA5004] border border-[#F85B04]/30 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>{t.demo.addTemplate}</span>
@@ -3443,13 +3443,13 @@ export default function MerchantDashboardClient({
             ) : (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-[#5F655D] font-semibold">
+                  <span className="text-[11px] text-[#161514]/65 font-semibold">
                     {t.demo.presetSuggestions}:
                   </span>
                   <button
                     type="button"
                     onClick={() => handleOpenAddTemplate()}
-                    className="text-[11px] text-[#008069] hover:underline font-bold flex items-center gap-1"
+                    className="text-[11px] text-[#DA5004] hover:underline font-bold flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" />
                     <span>{t.demo.addTemplate}</span>
@@ -3460,8 +3460,8 @@ export default function MerchantDashboardClient({
                     <div
                       key={tpl.id}
                       className={`group inline-flex items-center rounded-xl border whitespace-nowrap transition text-[11px] font-semibold px-2 py-1 gap-1 ${promoTemplate === tpl.id
-                        ? "bg-[#008069] border-[#008069] text-white shadow-sm"
-                        : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                        ? "bg-[#F85B04] border-[#F85B04] text-white shadow-sm"
+                        : "bg-white border-[#161514]/15 text-[#161514]/65 hover:bg-[#EFEAE4]"
                         }`}
                     >
                       <button
@@ -3496,7 +3496,7 @@ export default function MerchantDashboardClient({
                   <button
                     type="button"
                     onClick={() => handleOpenAddTemplate()}
-                    className="p-1.5 rounded-xl border border-dashed border-[#008069] text-[#008069] hover:bg-[#008069]/10 transition text-xs flex items-center gap-1 flex-shrink-0"
+                    className="p-1.5 rounded-xl border border-dashed border-[#F85B04] text-[#DA5004] hover:bg-[#F85B04]/10 transition text-xs flex items-center gap-1 flex-shrink-0"
                     title={t.demo.addTemplate}
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -3507,8 +3507,8 @@ export default function MerchantDashboardClient({
 
             {/* Message Textarea - ALWAYS AVAILABLE */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-[#5F655D]">
-                <span className="font-semibold text-[#173E30]">
+              <div className="flex items-center justify-between text-xs text-[#161514]/65">
+                <span className="font-semibold text-[#161514]">
                   {t.demo.notificationMessage}:
                 </span>
                 <span className="font-mono text-[10px]">{promoMessage.length}/110</span>
@@ -3519,7 +3519,7 @@ export default function MerchantDashboardClient({
                 value={promoMessage}
                 onChange={(e) => setPromoMessage(e.target.value)}
                 placeholder={t.demo.notificationPlaceholder}
-                className="w-full bg-white border border-[#C8D1BE] rounded-2xl p-3 text-xs text-[#173E30] focus:outline-none focus:border-[#008069] shadow-sm leading-relaxed"
+                className="w-full bg-white border border-[#161514]/15 rounded-2xl p-3 text-xs text-[#161514] focus:outline-none focus:border-[#F85B04] shadow-sm leading-relaxed"
               />
 
               {/* Requirement 2: Subtle Quick "Save Current Text as Template" Shortcut */}
@@ -3528,7 +3528,7 @@ export default function MerchantDashboardClient({
                   <button
                     type="button"
                     onClick={() => handleOpenAddTemplate(promoMessage.trim())}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#008069] hover:text-[#00705c] bg-[#008069]/10 hover:bg-[#008069]/15 px-2.5 py-1 rounded-lg border border-[#008069]/20 transition active:scale-95"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#DA5004] hover:text-[#DA5004] bg-[#F85B04]/10 hover:bg-[#F85B04]/15 px-2.5 py-1 rounded-lg border border-[#F85B04]/25 transition active:scale-95"
                   >
                     <BookmarkPlus className="w-3.5 h-3.5" />
                     <span>{t.demo.saveAsTemplate}</span>
@@ -3539,7 +3539,7 @@ export default function MerchantDashboardClient({
 
             {/* 2x2 Audience Selector Grid */}
             <div className="space-y-1.5">
-              <span className="text-[11px] text-[#5F655D] font-semibold block">لمن غادي تصيفط:</span>
+              <span className="text-[11px] text-[#161514]/65 font-semibold block">لمن غادي تصيفط:</span>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {[
                   { id: "ALL", label: "كاع الكليان", count: metrics.audienceCounts.all },
@@ -3552,12 +3552,12 @@ export default function MerchantDashboardClient({
                     type="button"
                     onClick={() => setPromoAudience(a.id as typeof promoAudience)}
                     className={`p-3 rounded-2xl border text-right transition ${promoAudience === a.id
-                      ? "bg-[#008069]/10 border-[#008069] text-[#173E30] ring-1 ring-[#008069]"
-                      : "bg-white border-[#DCE0D4] text-[#5F655D] shadow-sm hover:border-[#C8D1BE]"
+                      ? "bg-[#F85B04]/10 border-[#F85B04] text-[#161514] ring-1 ring-[#F85B04]"
+                      : "bg-white border-[#161514]/10 text-[#161514]/65 shadow-sm hover:border-[#161514]/15"
                       }`}
                   >
-                    <span className="font-bold text-[#173E30] block">{a.label}</span>
-                    <span className="text-[10px] text-[#008069] font-mono font-bold">
+                    <span className="font-bold text-[#161514] block">{a.label}</span>
+                    <span className="text-[10px] text-[#DA5004] font-mono font-bold">
                       {a.count} زبون
                     </span>
                   </button>
@@ -3566,17 +3566,17 @@ export default function MerchantDashboardClient({
             </div>
 
             {/* Cost Summary Row (Postpaid) */}
-            <div className="p-3 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm flex items-center justify-between text-xs">
-              <span className="text-[#5F655D]">
+            <div className="p-3 rounded-2xl bg-white border border-[#161514]/10 shadow-sm flex items-center justify-between text-xs">
+              <span className="text-[#161514]/65">
                 استهلاك الحملة: <strong className="text-amber-600 font-mono font-bold">{costCredits}</strong> نقطة
               </span>
-              <span className="text-[#5F655D] font-mono font-bold">
+              <span className="text-[#161514]/65 font-mono font-bold">
                 {(costCredits * 0.1).toFixed(2)} DH (آخر الشهر)
               </span>
             </div>
 
             {promoSuccessMsg && (
-              <div className="p-3 rounded-xl bg-[#008069]/10 border border-[#008069]/30 text-[#008069] text-xs font-semibold">
+              <div className="p-3 rounded-xl bg-[#F85B04]/10 border border-[#F85B04]/30 text-[#DA5004] text-xs font-semibold">
                 {promoSuccessMsg}
               </div>
             )}
@@ -3587,7 +3587,7 @@ export default function MerchantDashboardClient({
                 type="button"
                 disabled={sendingPromo}
                 onClick={handleSendCampaign}
-                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-[#008069]/20 transition disabled:opacity-50"
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-[#F85B04]/20 transition disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
                 <span>{sendingPromo ? "جاري الإرسال..." : "صيفط دابا (Broadcast)"}</span>
@@ -3605,22 +3605,22 @@ export default function MerchantDashboardClient({
                 }
                 title="معاينة كيف يظهر على هاتف الزبون"
                 aria-label="معاينة كيف يظهر على هاتف الزبون"
-                className="p-3 rounded-2xl bg-white hover:bg-[#FAF7F2] border border-[#C8D1BE] text-[#5F655D] shadow-sm transition"
+                className="p-3 rounded-2xl bg-white hover:bg-[#EFEAE4] border border-[#161514]/15 text-[#161514]/65 shadow-sm transition"
               >
                 <Eye className="w-4 h-4" />
               </button>
             </div>
 
             {/* Past Campaigns */}
-            <div className="space-y-2 pt-2 border-t border-[#DCE0D4]">
-              <span className="text-[11px] font-bold text-[#173E30] block">سجل الحملات السابقة:</span>
+            <div className="space-y-2 pt-2 border-t border-[#161514]/10">
+              <span className="text-[11px] font-bold text-[#161514] block">سجل الحملات السابقة:</span>
               {campaigns.slice(0, 3).map((camp) => (
-                <div key={camp.id} className="p-3 rounded-xl bg-white border border-[#DCE0D4] shadow-sm text-xs space-y-1">
-                  <div className="flex items-center justify-between font-bold text-[#173E30]">
+                <div key={camp.id} className="p-3 rounded-xl bg-white border border-[#161514]/10 shadow-sm text-xs space-y-1">
+                  <div className="flex items-center justify-between font-bold text-[#161514]">
                     <span>{camp.title}</span>
-                    <span className="font-mono text-[#008069]">+{camp.returnedCount} رجعو</span>
+                    <span className="font-mono text-[#DA5004]">+{camp.returnedCount} رجعو</span>
                   </div>
-                  <p className="text-[11px] text-[#5F655D] truncate">{camp.message}</p>
+                  <p className="text-[11px] text-[#161514]/65 truncate">{camp.message}</p>
                 </div>
               ))}
             </div>
@@ -3657,10 +3657,10 @@ export default function MerchantDashboardClient({
               </div>
             )}
             {/* Language Switcher Bar */}
-            <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-2.5">
+            <div className="p-3.5 rounded-2xl bg-white border border-[#161514]/10 shadow-sm space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
-                  <Globe className="w-4 h-4 text-[#008069]" />
+                <span className="font-bold text-xs text-[#161514] flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-[#DA5004]" />
                   <span>
                     {locale === "fr"
                       ? "Langue de la plateforme"
@@ -3669,7 +3669,7 @@ export default function MerchantDashboardClient({
                         : "لغة لوحة التحكم"}
                   </span>
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF7F2] text-[#5F655D] font-mono font-bold uppercase">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EFEAE4] text-[#161514]/65 font-mono font-bold uppercase">
                   {locale}
                 </span>
               </div>
@@ -3686,8 +3686,8 @@ export default function MerchantDashboardClient({
                       type="button"
                       onClick={() => setLocale(l.key)}
                       className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${isSel
-                        ? "bg-[#008069] text-white border-[#008069] shadow-sm scale-[1.02]"
-                        : "bg-[#F7F8FA] hover:bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4]"
+                        ? "bg-[#F85B04] text-white border-[#F85B04] shadow-sm scale-[1.02]"
+                        : "bg-[#EFEAE4] hover:bg-[#EFEAE4] text-[#161514]/65 border-[#161514]/10"
                         }`}
                     >
                       <span className="text-sm">{l.flag}</span>
@@ -3700,9 +3700,9 @@ export default function MerchantDashboardClient({
 
             {/* Loyalty Program Settings Card (OWNER ONLY) */}
             {isOwner && (
-              <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
-                  <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
+              <div className="p-3.5 rounded-2xl bg-white border border-[#161514]/10 shadow-sm space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#161514]/10">
+                  <span className="font-bold text-xs text-[#161514] flex items-center gap-1.5">
                     <Coins className="w-4 h-4 text-amber-500" />
                     <span>نظام الولاء للمحل</span>
                   </span>
@@ -3712,7 +3712,7 @@ export default function MerchantDashboardClient({
                         {t.demo.unsavedChanges}
                       </span>
                     )}
-                    <span className="text-[10px] text-[#008069] font-bold font-mono">
+                    <span className="text-[10px] text-[#DA5004] font-bold font-mono">
                       {merchantLoyaltyMode === "BOTH"
                         ? "أختام + كاش باك"
                         : merchantLoyaltyMode === "CASHBACK"
@@ -3724,7 +3724,7 @@ export default function MerchantDashboardClient({
 
                 {/* Mode Selector */}
                 <div className="space-y-1">
-                  <span className="text-[10px] text-[#5F655D] font-semibold block">
+                  <span className="text-[10px] text-[#161514]/65 font-semibold block">
                     البرنامج المفعّل للعملاء:
                   </span>
                   <div className="grid grid-cols-3 gap-1.5 text-[11px] font-semibold">
@@ -3738,8 +3738,8 @@ export default function MerchantDashboardClient({
                         type="button"
                         onClick={() => setMerchantLoyaltyMode(m.id)}
                         className={`py-1.5 px-2 rounded-xl border text-center transition ${merchantLoyaltyMode === m.id
-                          ? "bg-[#008069] text-white border-[#008069] shadow-sm"
-                          : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                          ? "bg-[#F85B04] text-white border-[#F85B04] shadow-sm"
+                          : "bg-white border-[#161514]/15 text-[#161514]/65 hover:bg-[#EFEAE4]"
                           }`}
                       >
                         {m.label}
@@ -3750,9 +3750,9 @@ export default function MerchantDashboardClient({
 
                 {/* Cashback Rate Selector */}
                 {(merchantLoyaltyMode === "CASHBACK" || merchantLoyaltyMode === "BOTH") && (
-                  <div className="space-y-1 pt-1.5 border-t border-[#DCE0D4]">
-                    <div className="flex items-center justify-between text-[10px] text-[#5F655D]">
-                      <span className="font-semibold text-[#173E30]">نسبة الكاش باك من كل فاتورة:</span>
+                  <div className="space-y-1 pt-1.5 border-t border-[#161514]/10">
+                    <div className="flex items-center justify-between text-[10px] text-[#161514]/65">
+                      <span className="font-semibold text-[#161514]">نسبة الكاش باك من كل فاتورة:</span>
                       <span className="font-bold text-amber-600 font-mono text-xs">
                         {merchantCashbackRate}%
                       </span>
@@ -3765,7 +3765,7 @@ export default function MerchantDashboardClient({
                           onClick={() => setMerchantCashbackRate(rate)}
                           className={`flex-1 py-1 rounded-lg border text-center text-[11px] font-bold font-mono transition ${Number(merchantCashbackRate) === rate
                             ? "bg-amber-100 text-amber-800 border-amber-300 font-bold"
-                            : "bg-white border-[#C8D1BE] text-[#5F655D] hover:bg-[#FAF7F2]"
+                            : "bg-white border-[#161514]/15 text-[#161514]/65 hover:bg-[#EFEAE4]"
                             }`}
                         >
                           {rate}%
@@ -3782,8 +3782,8 @@ export default function MerchantDashboardClient({
                     disabled={savingSettings}
                     onClick={handleSaveSettings}
                     className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${hasUnsavedChanges
-                      ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
-                      : "bg-[#008069] text-white hover:bg-[#00705c]"
+                      ? "bg-gradient-to-r from-[#F9742A] to-[#F85B04] text-white hover:opacity-95 shadow-md shadow-[#F85B04]/20 scale-[1.01]"
+                      : "bg-[#F85B04] text-white hover:bg-[#E25102]"
                       } disabled:opacity-50`}
                   >
                     {savingSettings ? (
@@ -3809,10 +3809,10 @@ export default function MerchantDashboardClient({
 
             {/* Store Location & Multi-Branch Management Card */}
             {isMultiBranch && (isOwner || liveAuthBranch) ? (
-              <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3.5">
-                <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
-                  <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
-                    <Building2 className="w-4 h-4 text-[#008069]" />
+              <div className="p-3.5 rounded-2xl bg-white border border-[#161514]/10 shadow-sm space-y-3.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#161514]/10">
+                  <span className="font-bold text-xs text-[#161514] flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-[#DA5004]" />
                     <span>
                       {isRestrictedStaff
                         ? locale === "fr"
@@ -3828,7 +3828,7 @@ export default function MerchantDashboardClient({
                       type="button"
                       disabled={branches.length >= (merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1))}
                       onClick={handleOpenAddBranch}
-                      className="px-2.5 py-1.5 rounded-xl bg-[#E8F5E9] hover:bg-[#C8E6C9] disabled:opacity-40 disabled:hover:bg-[#E8F5E9] text-[#008069] text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                      className="px-2.5 py-1.5 rounded-xl bg-[#F85B04]/10 hover:bg-[#F85B04]/20 disabled:opacity-40 disabled:hover:bg-[#F85B04]/10 text-[#DA5004] text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>{t.demo.addBranch}</span>
@@ -3838,19 +3838,19 @@ export default function MerchantDashboardClient({
 
                 {/* Branch Quota Progress Card (OWNER ONLY) */}
                 {isOwner && (
-                  <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-1.5">
+                  <div className="p-3 rounded-xl bg-[#EFEAE4] border border-[#161514]/10 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-[#173E30] flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-[#008069]" />
+                      <span className="font-bold text-[#161514] flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5 text-[#DA5004]" />
                         <span>{locale === "fr" ? "Quota de succursales :" : locale === "es" ? "Cuota de sucursales:" : "كوطا الفروع المسموح بها:"}</span>
                       </span>
-                      <span className="font-mono text-xs font-bold text-[#008069]">
+                      <span className="font-mono text-xs font-bold text-[#DA5004]">
                         {branches.length} / {merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1)} {locale === "fr" ? "succursales" : locale === "es" ? "sucursales" : "فروع"}
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-[#DCE0D4] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-[#00A884] to-[#008069] transition-all duration-300"
+                        className="h-full bg-gradient-to-r from-[#F9742A] to-[#F85B04] transition-all duration-300"
                         style={{
                           width: `${Math.min(100, Math.round((branches.length / (merchant.maxBranches ?? (merchant.plan === "MULTI" ? 3 : 1))) * 100))}%`,
                         }}
@@ -3870,10 +3870,10 @@ export default function MerchantDashboardClient({
 
                 {/* Current Cashier Device Branch Selector (OWNER ONLY) */}
                 {isOwner && (
-                  <div className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#C8D1BE] space-y-1.5">
+                  <div className="p-2.5 rounded-xl bg-[#EFEAE4] border border-[#161514]/15 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label htmlFor="device-branch-select" className="text-[10px] text-[#5F655D] font-bold flex items-center gap-1">
-                        <Smartphone className="w-3.5 h-3.5 text-[#008069]" />
+                      <label htmlFor="device-branch-select" className="text-[10px] text-[#161514]/65 font-bold flex items-center gap-1">
+                        <Smartphone className="w-3.5 h-3.5 text-[#DA5004]" />
                         <span>{t.demo.currentDeviceBranch}:</span>
                       </label>
                       <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
@@ -3894,7 +3894,7 @@ export default function MerchantDashboardClient({
                           }
                         }
                       }}
-                      className="w-full py-1.5 px-2.5 text-xs rounded-lg border border-[#C8D1BE] bg-white text-[#173E30] font-semibold focus:outline-none focus:ring-2 focus:ring-[#008069]"
+                      className="w-full py-1.5 px-2.5 text-xs rounded-lg border border-[#161514]/15 bg-white text-[#161514] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F85B04]"
                     >
                       {branches.map((b) => (
                         <option key={b.id} value={b.id}>
@@ -3902,7 +3902,7 @@ export default function MerchantDashboardClient({
                         </option>
                       ))}
                     </select>
-                    <p className="text-[9px] text-[#5F655D] leading-tight">
+                    <p className="text-[9px] text-[#161514]/65 leading-tight">
                       {locale === "fr"
                         ? "Chaque scan effectué sur cet appareil sera enregistré sous ce point de vente et dirigera le client vers ses avis Google."
                         : locale === "es"
@@ -3915,18 +3915,18 @@ export default function MerchantDashboardClient({
                 {/* Branches List (Scoped to ONLY Cashier's Own Branch when BRANCH_STAFF) */}
                 <div className="space-y-2">
                   {isOwner && (
-                    <span className="text-[10px] text-[#5F655D] font-bold uppercase block">
+                    <span className="text-[10px] text-[#161514]/65 font-bold uppercase block">
                       {locale === "fr" ? "Liste des points de vente" : locale === "es" ? "Lista de sucursales" : "قائمة الفروع المسجلة:"} ({branches.length})
                     </span>
                   )}
                   {(isRestrictedStaff && liveAuthBranch ? [liveAuthBranch] : branches).map((b) => (
                     <div
                       key={b.id}
-                      className="p-2.5 rounded-xl border border-[#DCE0D4] bg-[#FAF7F2] hover:bg-white transition space-y-1.5"
+                      className="p-2.5 rounded-xl border border-[#161514]/10 bg-[#EFEAE4] hover:bg-white transition space-y-1.5"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-xs text-[#173E30]">{b.name}</span>
+                          <span className="font-bold text-xs text-[#161514]">{b.name}</span>
                           {b.isMain && (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold flex items-center gap-0.5">
                               ⭐ {t.demo.mainBranch}
@@ -3938,7 +3938,7 @@ export default function MerchantDashboardClient({
                             <button
                               type="button"
                               onClick={(e) => handleOpenEditBranch(b, e)}
-                              className="p-1 rounded-lg text-[#5F655D] hover:text-[#008069] hover:bg-white transition"
+                              className="p-1 rounded-lg text-[#161514]/65 hover:text-[#DA5004] hover:bg-white transition"
                               title={t.demo.editBranch}
                             >
                               <Edit3 className="w-3.5 h-3.5" />
@@ -3947,7 +3947,7 @@ export default function MerchantDashboardClient({
                               <button
                                 type="button"
                                 onClick={(e) => handleDeleteBranch(b.id, e)}
-                                className="p-1 rounded-lg text-[#5F655D] hover:text-rose-600 hover:bg-white transition"
+                                className="p-1 rounded-lg text-[#161514]/65 hover:text-rose-600 hover:bg-white transition"
                                 title={t.demo.deleteBranch}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -3957,10 +3957,10 @@ export default function MerchantDashboardClient({
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between text-[10px] text-[#5F655D]">
+                      <div className="flex items-center justify-between text-[10px] text-[#161514]/65">
                         <div className="flex items-center gap-2">
                           <span>📍 {b.city}</span>
-                          <span className="font-mono font-bold text-[#008069] bg-white px-2 py-0.5 rounded-md border border-[#DCE0D4]">
+                          <span className="font-mono font-bold text-[#DA5004] bg-white px-2 py-0.5 rounded-md border border-[#161514]/10">
                             PIN: {b.pinCode ? b.pinCode : (locale === "fr" ? "Non défini" : locale === "es" ? "Sin definir" : "غير معين")}
                           </span>
                         </div>
@@ -3969,7 +3969,7 @@ export default function MerchantDashboardClient({
                             href={b.googleMapsUrl || `https://www.google.com/maps?q=${b.latitude},${b.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#008069] hover:underline flex items-center gap-0.5 font-semibold"
+                            className="text-[#DA5004] hover:underline flex items-center gap-0.5 font-semibold"
                           >
                             <span>{t.demo.mapPreview}</span>
                             <ExternalLink className="w-2.5 h-2.5" />
@@ -3978,7 +3978,7 @@ export default function MerchantDashboardClient({
                       </div>
 
                       {b.radarMessage && (
-                        <p className="text-[9px] text-[#5F655D] bg-[#FFFDF7] p-1.5 rounded-lg border border-[#DCE0D4] italic line-clamp-1">
+                        <p className="text-[9px] text-[#161514]/65 bg-white p-1.5 rounded-lg border border-[#161514]/10 italic line-clamp-1">
                           🔔 &quot;{b.radarMessage}&quot;
                         </p>
                       )}
@@ -3998,9 +3998,9 @@ export default function MerchantDashboardClient({
               </div>
             ) : isOwner ? (
               /* Store Location & GPS Radar Card (OWNER ONLY) */
-              <div className="p-3.5 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
-                  <span className="font-bold text-xs text-[#173E30] flex items-center gap-1.5">
+              <div className="p-3.5 rounded-2xl bg-white border border-[#161514]/10 shadow-sm space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#161514]/10">
+                  <span className="font-bold text-xs text-[#161514] flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-rose-500" />
                     <span>{t.demo.storeLocation}</span>
                   </span>
@@ -4009,7 +4009,7 @@ export default function MerchantDashboardClient({
                       href={`https://www.google.com/maps?q=${merchantLatitude},${merchantLongitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[10px] text-[#008069] hover:underline flex items-center gap-1 font-semibold"
+                      className="text-[10px] text-[#DA5004] hover:underline flex items-center gap-1 font-semibold"
                     >
                       <span>{t.demo.mapPreview}</span>
                       <ExternalLink className="w-3 h-3 opacity-80" />
@@ -4017,7 +4017,7 @@ export default function MerchantDashboardClient({
                   ) : null}
                 </div>
 
-                <p className="text-[11px] text-[#5F655D] leading-relaxed">
+                <p className="text-[11px] text-[#161514]/65 leading-relaxed">
                   {locale === "fr"
                     ? "Coordonnées GPS utilisées pour le radar de proximité 100m sur iPhone (Apple Wallet) et la fiche du commerce sur Google Wallet."
                     : locale === "es"
@@ -4049,7 +4049,7 @@ export default function MerchantDashboardClient({
 
                 {/* Google Maps Link Input with Smart Coordinate Parser */}
                 <div className="space-y-1">
-                  <label htmlFor="gmaps-url-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                  <label htmlFor="gmaps-url-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                     {t.demo.googleMapsUrl}:
                   </label>
                   <div className="relative">
@@ -4059,11 +4059,11 @@ export default function MerchantDashboardClient({
                       value={merchantGoogleMapsUrl}
                       onChange={(e) => handleGoogleMapsUrlChange(e.target.value)}
                       placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
-                      className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30] placeholder-[#5F655D]"
+                      className="w-full py-2 px-3 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514] placeholder-[#161514]/45"
                       dir="ltr"
                     />
                   </div>
-                  <span className="text-[9px] text-[#5F655D] block">
+                  <span className="text-[9px] text-[#161514]/65 block">
                     {locale === "fr"
                       ? "💡 Collez un lien Google Maps et les coordonnées GPS seront extraites automatiquement."
                       : locale === "es"
@@ -4075,7 +4075,7 @@ export default function MerchantDashboardClient({
                 {/* Coordinates Inputs: Latitude & Longitude */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label htmlFor="lat-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                    <label htmlFor="lat-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                       {locale === "fr" ? "Latitude" : locale === "es" ? "Latitud" : "خط العرض (Latitude)"}
                     </label>
                     <input
@@ -4086,12 +4086,12 @@ export default function MerchantDashboardClient({
                       value={merchantLatitude}
                       onChange={(e) => setMerchantLatitude(e.target.value)}
                       placeholder="33.5731"
-                      className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#173E30]"
+                      className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono text-[#161514]"
                       dir="ltr"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="lng-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                    <label htmlFor="lng-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                       {locale === "fr" ? "Longitude" : locale === "es" ? "Longitud" : "خط الطول (Longitude)"}
                     </label>
                     <input
@@ -4102,7 +4102,7 @@ export default function MerchantDashboardClient({
                       value={merchantLongitude}
                       onChange={(e) => setMerchantLongitude(e.target.value)}
                       placeholder="-7.5898"
-                      className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#173E30]"
+                      className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono text-[#161514]"
                       dir="ltr"
                     />
                   </div>
@@ -4114,11 +4114,11 @@ export default function MerchantDashboardClient({
                     type="button"
                     disabled={isDetectingGps}
                     onClick={handleDetectGps}
-                    className="w-full py-2 px-3 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#C8D1BE] text-xs font-bold text-[#173E30] flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                    className="w-full py-2 px-3 rounded-xl bg-[#EFEAE4] hover:bg-[#E5DFD7] border border-[#161514]/15 text-xs font-bold text-[#161514] flex items-center justify-center gap-1.5 transition disabled:opacity-50"
                   >
                     {isDetectingGps ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#008069]" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#DA5004]" />
                         <span>
                           {locale === "fr"
                             ? "Recherche de la position GPS..."
@@ -4129,7 +4129,7 @@ export default function MerchantDashboardClient({
                       </>
                     ) : (
                       <>
-                        <Navigation className="w-3.5 h-3.5 text-[#008069]" />
+                        <Navigation className="w-3.5 h-3.5 text-[#DA5004]" />
                         <span>{t.demo.detectGps}</span>
                       </>
                     )}
@@ -4149,8 +4149,8 @@ export default function MerchantDashboardClient({
                 )}
 
                 {/* Radar Lock Screen Message */}
-                <div className="space-y-1 pt-1.5 border-t border-[#DCE0D4]">
-                  <label htmlFor="radar-msg-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                <div className="space-y-1 pt-1.5 border-t border-[#161514]/10">
+                  <label htmlFor="radar-msg-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                     {t.demo.radarMessage}:
                   </label>
                   <input
@@ -4159,7 +4159,7 @@ export default function MerchantDashboardClient({
                     value={merchantRadarMessage}
                     onChange={(e) => setMerchantRadarMessage(e.target.value)}
                     placeholder="أنت بالقرب منا! تفضل بزيارتنا وبطاقتك جاهزة."
-                    className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30]"
+                    className="w-full py-2 px-3 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514]"
                   />
                 </div>
 
@@ -4170,8 +4170,8 @@ export default function MerchantDashboardClient({
                     disabled={savingSettings}
                     onClick={handleSaveSettings}
                     className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm ${hasUnsavedChanges
-                      ? "bg-gradient-to-r from-[#00A884] to-[#008069] text-white hover:opacity-95 shadow-md shadow-[#008069]/20 scale-[1.01]"
-                      : "bg-[#008069] text-white hover:bg-[#00705c]"
+                      ? "bg-gradient-to-r from-[#F9742A] to-[#F85B04] text-white hover:opacity-95 shadow-md shadow-[#F85B04]/20 scale-[1.01]"
+                      : "bg-[#F85B04] text-white hover:bg-[#E25102]"
                       } disabled:opacity-50`}
                   >
                     {savingSettings ? (
@@ -4235,12 +4235,12 @@ export default function MerchantDashboardClient({
                   ].map((item) => (
                     <div
                       key={item.key}
-                      className="p-3 rounded-2xl bg-[#FFFDF7] border border-[#DCE0D4] shadow-sm flex items-center justify-between text-xs gap-3"
+                      className="p-3 rounded-2xl bg-white border border-[#161514]/10 shadow-sm flex items-center justify-between text-xs gap-3"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#173E30]">{item.title}</span>
-                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#FAF7F2] text-[#5F655D] border border-[#DCE0D4]">
+                          <span className="font-bold text-[#161514]">{item.title}</span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#EFEAE4] text-[#161514]/65 border border-[#161514]/10">
                             {item.badge}
                           </span>
                           {item.locked && (
@@ -4249,7 +4249,7 @@ export default function MerchantDashboardClient({
                             </span>
                           )}
                         </div>
-                        <p className="text-[10px] text-[#5F655D] mt-1 truncate max-w-[200px]">
+                        <p className="text-[10px] text-[#161514]/65 mt-1 truncate max-w-[200px]">
                           {item.message}
                         </p>
                       </div>
@@ -4265,7 +4265,7 @@ export default function MerchantDashboardClient({
                               message: item.message,
                             })
                           }
-                          className="px-2 py-1 rounded-lg bg-[#FAF7F2] hover:bg-[#DCE0D4] text-[#5F655D] text-[10px] border border-[#C8D1BE] font-medium"
+                          className="px-2 py-1 rounded-lg bg-[#EFEAE4] hover:bg-[#E5DFD7] text-[#161514]/65 text-[10px] border border-[#161514]/15 font-medium"
                         >
                           شوف
                         </button>
@@ -4274,7 +4274,7 @@ export default function MerchantDashboardClient({
                           type="button"
                           disabled={savingSettings || item.locked}
                           onClick={() => handleToggleAutomation(item.key)}
-                          className={`w-11 h-6 rounded-full transition-colors p-0.5 flex items-center ${item.active ? "bg-[#008069] justify-end" : "bg-[#C8D1BE] justify-start"
+                          className={`w-11 h-6 rounded-full transition-colors p-0.5 flex items-center ${item.active ? "bg-[#F85B04] justify-end" : "bg-[#C8D1BE] justify-start"
                             } ${item.locked ? "opacity-40 cursor-not-allowed" : ""}`}
                         >
                           <div className="w-5 h-5 rounded-full bg-white shadow-md"></div>
@@ -4285,7 +4285,7 @@ export default function MerchantDashboardClient({
                 </div>
 
                 {/* Test Automations Trigger Button */}
-                <div className="pt-2 border-t border-[#DCE0D4] space-y-2">
+                <div className="pt-2 border-t border-[#161514]/10 space-y-2">
                   <button
                     type="button"
                     disabled={testingCron}
@@ -4297,7 +4297,7 @@ export default function MerchantDashboardClient({
                   </button>
 
                   {cronTestMessage && (
-                    <div className="p-2.5 rounded-xl bg-[#008069]/10 border border-[#008069]/20 text-[#008069] text-[11px] text-center font-bold">
+                    <div className="p-2.5 rounded-xl bg-[#F85B04]/10 border border-[#F85B04]/25 text-[#DA5004] text-[11px] text-center font-bold">
                       {cronTestMessage}
                     </div>
                   )}
@@ -4309,7 +4309,7 @@ export default function MerchantDashboardClient({
 
         {/* Bottom Navigation Bar with Safe Area Bottom Padding */}
         <nav
-          className="sticky bottom-0 z-30 bg-[#FFFDF7] border-t border-[#DCE0D4] grid grid-cols-5 items-center px-1 py-1 text-center text-xs shadow-lg"
+          className="sticky bottom-0 z-30 bg-white border-t border-[#161514]/10 grid grid-cols-5 items-center px-1 py-1 text-center text-xs shadow-lg"
           style={{
             paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)",
           }}
@@ -4318,7 +4318,7 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setActiveTab("home")}
-            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "home" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "home" ? "text-[#DA5004] font-bold" : "text-[#161514]/65 hover:text-[#161514]"
               }`}
           >
             <LayoutDashboard className={`w-4 h-4 ${activeTab === "home" ? "stroke-[2.5]" : ""}`} />
@@ -4331,7 +4331,7 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setActiveTab("customers")}
-            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "customers" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "customers" ? "text-[#DA5004] font-bold" : "text-[#161514]/65 hover:text-[#161514]"
               }`}
           >
             <Users className={`w-4 h-4 ${activeTab === "customers" ? "stroke-[2.5]" : ""}`} />
@@ -4352,9 +4352,9 @@ export default function MerchantDashboardClient({
               className="group -mt-6 flex items-center justify-center cursor-pointer transition-transform duration-200 active:scale-90 hover:scale-105"
             >
               {/* Outer Translucent Halo Ring */}
-              <div className="w-14 h-14 rounded-full bg-[#008069]/15 group-hover:bg-[#008069]/25 p-1.5 flex items-center justify-center transition-all duration-300 shadow-md">
+              <div className="w-14 h-14 rounded-full bg-[#F85B04]/15 group-hover:bg-[#F85B04]/25 p-1.5 flex items-center justify-center transition-all duration-300 shadow-md">
                 {/* Inner Solid Gradient Circle with Camera Icon */}
-                <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#075E54] via-[#008069] to-[#00A884] text-white flex items-center justify-center shadow-lg border-2 border-white">
+                <div className="w-full h-full rounded-full bg-[#F85B04] hover:bg-[#E25102] text-white flex items-center justify-center shadow-lg border-2 border-white">
                   <Camera className="w-6 h-6 stroke-[2.3] text-white" />
                 </div>
               </div>
@@ -4365,7 +4365,7 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setActiveTab("analytics")}
-            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "analytics" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "analytics" ? "text-[#DA5004] font-bold" : "text-[#161514]/65 hover:text-[#161514]"
               }`}
           >
             <BarChart3 className={`w-4 h-4 ${activeTab === "analytics" ? "stroke-[2.5]" : ""}`} />
@@ -4378,7 +4378,7 @@ export default function MerchantDashboardClient({
           <button
             type="button"
             onClick={() => setActiveTab("settings")}
-            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "settings" ? "text-[#008069] font-bold" : "text-[#5F655D] hover:text-[#173E30]"
+            className={`py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-1 transition ${activeTab === "settings" ? "text-[#DA5004] font-bold" : "text-[#161514]/65 hover:text-[#161514]"
               }`}
           >
             <div className="relative">
@@ -4399,9 +4399,9 @@ export default function MerchantDashboardClient({
         <button
           type="button"
           onClick={() => setIsFrameMode(!isFrameMode)}
-          className="px-3 py-2 rounded-xl bg-white hover:bg-[#FAF7F2] border border-[#C8D1BE] text-[#173E30] text-xs flex items-center gap-1.5 shadow-md font-medium"
+          className="px-3 py-2 rounded-xl bg-white hover:bg-[#EFEAE4] border border-[#161514]/15 text-[#161514] text-xs flex items-center gap-1.5 shadow-md font-medium"
         >
-          <Smartphone className="w-3.5 h-3.5 text-[#008069]" />
+          <Smartphone className="w-3.5 h-3.5 text-[#DA5004]" />
           <span>{isFrameMode ? "إلغاء إطار الهاتف" : "معاينة داخل آيفون"}</span>
         </button>
 
@@ -4409,7 +4409,7 @@ export default function MerchantDashboardClient({
           href={getPassUrl(customers[0]?.passSerial || "pass-atlas-4821")}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-2 rounded-xl bg-[#008069] hover:bg-[#00A884] text-white text-xs flex items-center gap-1.5 shadow-md font-bold"
+          className="px-3 py-2 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs flex items-center gap-1.5 shadow-md font-bold"
         >
           <span>فتح كارط الزبون (Live Pass) ↗</span>
         </a>
@@ -4471,12 +4471,12 @@ export default function MerchantDashboardClient({
       {isTemplateModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div
-            className="w-full max-w-sm bg-[#FFFDF7] rounded-3xl p-5 border border-[#DCE0D4] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-sm bg-white rounded-3xl p-5 border border-[#161514]/10 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
             dir={isRTL ? "rtl" : "ltr"}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
-              <h3 className="text-sm font-bold text-[#173E30] flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#008069]" />
+            <div className="flex items-center justify-between pb-2 border-b border-[#161514]/10">
+              <h3 className="text-sm font-bold text-[#161514] flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#DA5004]" />
                 <span>
                   {editingTemplateId
                     ? locale === "fr"
@@ -4490,7 +4490,7 @@ export default function MerchantDashboardClient({
               <button
                 type="button"
                 onClick={() => setIsTemplateModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-[#FAF7F2] hover:bg-[#DCE0D4] text-[#5F655D] flex items-center justify-center text-xs transition"
+                className="w-7 h-7 rounded-full bg-[#EFEAE4] hover:bg-[#E5DFD7] text-[#161514]/65 flex items-center justify-center text-xs transition"
               >
                 ✕
               </button>
@@ -4499,7 +4499,7 @@ export default function MerchantDashboardClient({
             {/* Preset Quick Fill Suggestions */}
             {!editingTemplateId && (
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-[#5F655D] uppercase block">
+                <span className="text-[10px] font-bold text-[#161514]/65 uppercase block">
                   {t.demo.presetSuggestions}:
                 </span>
                 <div className="grid grid-cols-2 gap-1.5">
@@ -4511,12 +4511,12 @@ export default function MerchantDashboardClient({
                         setTemplateLabelInput(preset.label);
                         setTemplateTextInput(preset.text);
                       }}
-                      className="p-2 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#C8D1BE] text-start transition text-[11px] font-medium text-[#173E30]"
+                      className="p-2 rounded-xl bg-[#EFEAE4] hover:bg-[#E5DFD7] border border-[#161514]/15 text-start transition text-[11px] font-medium text-[#161514]"
                     >
-                      <span className="font-bold text-[#008069] block truncate">
+                      <span className="font-bold text-[#DA5004] block truncate">
                         {preset.label}
                       </span>
-                      <span className="text-[9px] text-[#5F655D] line-clamp-1">
+                      <span className="text-[9px] text-[#161514]/65 line-clamp-1">
                         {preset.text}
                       </span>
                     </button>
@@ -4528,7 +4528,7 @@ export default function MerchantDashboardClient({
             {/* Template Inputs */}
             <div className="space-y-3">
               <div className="space-y-1">
-                <label htmlFor="tpl-label-input" className="text-xs font-semibold text-[#173E30] block">
+                <label htmlFor="tpl-label-input" className="text-xs font-semibold text-[#161514] block">
                   {t.demo.templateName}:
                 </label>
                 <input
@@ -4538,16 +4538,16 @@ export default function MerchantDashboardClient({
                   value={templateLabelInput}
                   onChange={(e) => setTemplateLabelInput(e.target.value)}
                   placeholder={locale === "fr" ? "Ex: Promo weekend" : locale === "es" ? "Ej: Promo fin de semana" : "مثال: عرض الويكاند"}
-                  className="w-full bg-[#FAF7F2] border border-[#C8D1BE] rounded-xl px-3 py-2 text-xs text-[#173E30] focus:outline-none focus:border-[#008069] focus:bg-white"
+                  className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-xl px-3 py-2 text-xs text-[#161514] focus:outline-none focus:border-[#F85B04] focus:bg-white"
                 />
               </div>
 
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <label htmlFor="tpl-text-input" className="font-semibold text-[#173E30]">
+                  <label htmlFor="tpl-text-input" className="font-semibold text-[#161514]">
                     {t.demo.templateText}:
                   </label>
-                  <span className="font-mono text-[10px] text-[#5F655D]">
+                  <span className="font-mono text-[10px] text-[#161514]/65">
                     {templateTextInput.length}/110
                   </span>
                 </div>
@@ -4558,9 +4558,9 @@ export default function MerchantDashboardClient({
                   value={templateTextInput}
                   onChange={(e) => setTemplateTextInput(e.target.value)}
                   placeholder={locale === "fr" ? "Texte de la notification..." : locale === "es" ? "Texto de la notificación..." : "نص الإشعار..."}
-                  className="w-full bg-[#FAF7F2] border border-[#C8D1BE] rounded-xl p-3 text-xs text-[#173E30] focus:outline-none focus:border-[#008069] focus:bg-white leading-relaxed"
+                  className="w-full bg-[#EFEAE4] border border-[#161514]/15 rounded-xl p-3 text-xs text-[#161514] focus:outline-none focus:border-[#F85B04] focus:bg-white leading-relaxed"
                 />
-                <p className="text-[10px] text-[#5F655D]">
+                <p className="text-[10px] text-[#161514]/65">
                   {locale === "fr"
                     ? "Astuce : Vous pouvez utiliser {shop} pour insérer le nom du magasin automatiquement."
                     : locale === "es"
@@ -4576,7 +4576,7 @@ export default function MerchantDashboardClient({
                 type="button"
                 disabled={isSavingTemplate || !templateLabelInput.trim() || !templateTextInput.trim()}
                 onClick={handleSaveTemplate}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#008069]/20 transition disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#F85B04]/20 transition disabled:opacity-50"
               >
                 {isSavingTemplate ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -4596,7 +4596,7 @@ export default function MerchantDashboardClient({
               <button
                 type="button"
                 onClick={() => setIsTemplateModalOpen(false)}
-                className="px-4 py-2.5 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] text-[#5F655D] font-bold text-xs transition"
+                className="px-4 py-2.5 rounded-xl bg-[#EFEAE4] hover:bg-[#E5DFD7] text-[#161514]/65 font-bold text-xs transition"
               >
                 {locale === "fr" ? "Annuler" : locale === "es" ? "Cancelar" : "إلغاء"}
               </button>
@@ -4609,12 +4609,12 @@ export default function MerchantDashboardClient({
       {isBranchModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div
-            className="w-full max-w-sm bg-[#FFFDF7] rounded-3xl p-5 border border-[#DCE0D4] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-sm bg-white rounded-3xl p-5 border border-[#161514]/10 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
             dir={isRTL ? "rtl" : "ltr"}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[#DCE0D4]">
-              <h3 className="text-sm font-bold text-[#173E30] flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-[#008069]" />
+            <div className="flex items-center justify-between pb-2 border-b border-[#161514]/10">
+              <h3 className="text-sm font-bold text-[#161514] flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#DA5004]" />
                 <span>
                   {editingBranchId ? t.demo.editBranch : t.demo.addBranch}
                 </span>
@@ -4622,7 +4622,7 @@ export default function MerchantDashboardClient({
               <button
                 type="button"
                 onClick={() => setIsBranchModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-[#FAF7F2] hover:bg-[#DCE0D4] text-[#5F655D] flex items-center justify-center text-xs transition"
+                className="w-7 h-7 rounded-full bg-[#EFEAE4] hover:bg-[#E5DFD7] text-[#161514]/65 flex items-center justify-center text-xs transition"
               >
                 ✕
               </button>
@@ -4631,7 +4631,7 @@ export default function MerchantDashboardClient({
             <div className="space-y-3">
               {/* Branch Name */}
               <div className="space-y-1">
-                <label htmlFor="branch-name-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                <label htmlFor="branch-name-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                   {t.demo.branchName} *:
                 </label>
                 <input
@@ -4640,13 +4640,13 @@ export default function MerchantDashboardClient({
                   value={branchNameInput}
                   onChange={(e) => setBranchNameInput(e.target.value)}
                   placeholder="مثال: فرع المعاريف"
-                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30]"
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514]"
                 />
               </div>
 
               {/* City */}
               <div className="space-y-1">
-                <label htmlFor="branch-city-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                <label htmlFor="branch-city-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                   {locale === "fr" ? "Ville" : locale === "es" ? "Ciudad" : "المدينة"}:
                 </label>
                 <input
@@ -4655,17 +4655,17 @@ export default function MerchantDashboardClient({
                   value={branchCityInput}
                   onChange={(e) => setBranchCityInput(e.target.value)}
                   placeholder="مثال: الدار البيضاء"
-                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30]"
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514]"
                 />
               </div>
 
               {/* Branch Cashier PIN */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="branch-pin-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                  <label htmlFor="branch-pin-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                     {locale === "fr" ? "Code PIN de la succursale (4 chiffres)" : locale === "es" ? "Código PIN de la sucursal (4 dígitos)" : "رمز PIN الخاص بالفرع (4 أرقام)"} *:
                   </label>
-                  <span className="text-[9px] text-[#008069] font-bold">حساب فرع مستقل</span>
+                  <span className="text-[9px] text-[#DA5004] font-bold">حساب فرع مستقل</span>
                 </div>
                 <input
                   id="branch-pin-input"
@@ -4679,10 +4679,10 @@ export default function MerchantDashboardClient({
                     setBranchPinError(null);
                   }}
                   placeholder="مثال: 2222"
-                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono font-bold tracking-widest text-[#008069]"
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono font-bold tracking-widest text-[#DA5004]"
                   dir="ltr"
                 />
-                <span className="text-[9px] text-[#5F655D] block">
+                <span className="text-[9px] text-[#161514]/65 block">
                   {locale === "fr"
                     ? "Permet aux caissiers de cette succursale de se connecter directement à leur compte dédié."
                     : locale === "es"
@@ -4699,7 +4699,7 @@ export default function MerchantDashboardClient({
               {/* Google Maps URL */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="branch-gmaps-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                  <label htmlFor="branch-gmaps-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                     {t.demo.googleMapsUrl}:
                   </label>
                   {Number(branchLatInput) && Number(branchLngInput) ? (
@@ -4707,7 +4707,7 @@ export default function MerchantDashboardClient({
                       href={`https://www.google.com/maps?q=${branchLatInput},${branchLngInput}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[10px] text-[#008069] hover:underline flex items-center gap-1 font-semibold"
+                      className="text-[10px] text-[#DA5004] hover:underline flex items-center gap-1 font-semibold"
                     >
                       <span>{t.demo.mapPreview}</span>
                       <ExternalLink className="w-2.5 h-2.5" />
@@ -4720,10 +4720,10 @@ export default function MerchantDashboardClient({
                   value={branchGmapsInput}
                   onChange={(e) => handleBranchGoogleMapsUrlChange(e.target.value)}
                   placeholder="https://maps.app.goo.gl/... أو https://www.google.com/maps/..."
-                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30] placeholder-[#5F655D]"
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514] placeholder-[#161514]/45"
                   dir="ltr"
                 />
-                <span className="text-[9px] text-[#5F655D] block">
+                <span className="text-[9px] text-[#161514]/65 block">
                   💡 {locale === "fr"
                     ? "Collez le lien Google Maps du point de vente pour extraire les coordonnées GPS automatiquement."
                     : locale === "es"
@@ -4735,7 +4735,7 @@ export default function MerchantDashboardClient({
               {/* Coordinates */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label htmlFor="branch-lat-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                  <label htmlFor="branch-lat-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                     {locale === "fr" ? "Latitude" : locale === "es" ? "Latitud" : "خط العرض"}
                   </label>
                   <input
@@ -4745,12 +4745,12 @@ export default function MerchantDashboardClient({
                     inputMode="decimal"
                     value={branchLatInput}
                     onChange={(e) => setBranchLatInput(e.target.value)}
-                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#173E30]"
+                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono text-[#161514]"
                     dir="ltr"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="branch-lng-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                  <label htmlFor="branch-lng-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                     {locale === "fr" ? "Longitude" : locale === "es" ? "Longitud" : "خط الطول"}
                   </label>
                   <input
@@ -4760,7 +4760,7 @@ export default function MerchantDashboardClient({
                     inputMode="decimal"
                     value={branchLngInput}
                     onChange={(e) => setBranchLngInput(e.target.value)}
-                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] font-mono text-[#173E30]"
+                    className="w-full py-1.5 px-2.5 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] font-mono text-[#161514]"
                     dir="ltr"
                   />
                 </div>
@@ -4772,16 +4772,16 @@ export default function MerchantDashboardClient({
                   type="button"
                   disabled={isDetectingBranchGps}
                   onClick={handleDetectBranchGps}
-                  className="w-full py-2 px-3 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] border border-[#C8D1BE] text-xs font-bold text-[#173E30] flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                  className="w-full py-2 px-3 rounded-xl bg-[#EFEAE4] hover:bg-[#E5DFD7] border border-[#161514]/15 text-xs font-bold text-[#161514] flex items-center justify-center gap-1.5 transition disabled:opacity-50"
                 >
                   {isDetectingBranchGps ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#008069]" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#DA5004]" />
                       <span>جاري التقاط إحداثيات الفرع...</span>
                     </>
                   ) : (
                     <>
-                      <Navigation className="w-3.5 h-3.5 text-[#008069]" />
+                      <Navigation className="w-3.5 h-3.5 text-[#DA5004]" />
                       <span>{t.demo.detectGps}</span>
                     </>
                   )}
@@ -4802,7 +4802,7 @@ export default function MerchantDashboardClient({
 
               {/* Radar Lock Screen Message */}
               <div className="space-y-1">
-                <label htmlFor="branch-radar-msg-input" className="text-[10px] text-[#5F655D] font-semibold block">
+                <label htmlFor="branch-radar-msg-input" className="text-[10px] text-[#161514]/65 font-semibold block">
                   {t.demo.radarMessage}:
                 </label>
                 <input
@@ -4811,7 +4811,7 @@ export default function MerchantDashboardClient({
                   value={branchRadarMsgInput}
                   onChange={(e) => setBranchRadarMsgInput(e.target.value)}
                   placeholder="أنت بالقرب من فرعنا! تفضل بزيارتنا وبطاقتك جاهزة."
-                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#C8D1BE] focus:outline-none focus:ring-2 focus:ring-[#008069] text-[#173E30]"
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-[#161514]/15 focus:outline-none focus:ring-2 focus:ring-[#F85B04] text-[#161514]"
                 />
               </div>
 
@@ -4821,9 +4821,9 @@ export default function MerchantDashboardClient({
                   type="checkbox"
                   checked={branchIsMainInput}
                   onChange={(e) => setBranchIsMainInput(e.target.checked)}
-                  className="w-4 h-4 text-[#008069] rounded focus:ring-[#008069]"
+                  className="w-4 h-4 text-[#DA5004] rounded focus:ring-[#F85B04]"
                 />
-                <span className="text-xs text-[#173E30] font-medium">
+                <span className="text-xs text-[#161514] font-medium">
                   {t.demo.setAsMainBranch}
                 </span>
               </label>
@@ -4835,7 +4835,7 @@ export default function MerchantDashboardClient({
                 type="button"
                 disabled={isSavingBranch || !branchNameInput.trim()}
                 onClick={handleSaveBranch}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#008069] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#008069]/20 transition disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#F85B04]/20 transition disabled:opacity-50"
               >
                 {isSavingBranch ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -4855,7 +4855,7 @@ export default function MerchantDashboardClient({
               <button
                 type="button"
                 onClick={() => setIsBranchModalOpen(false)}
-                className="px-4 py-2.5 rounded-xl bg-[#FAF7F2] hover:bg-[#DCE0D4] text-[#5F655D] font-bold text-xs transition"
+                className="px-4 py-2.5 rounded-xl bg-[#EFEAE4] hover:bg-[#E5DFD7] text-[#161514]/65 font-bold text-xs transition"
               >
                 {locale === "fr" ? "Annuler" : locale === "es" ? "Cancelar" : "إلغاء"}
               </button>
@@ -4869,20 +4869,20 @@ export default function MerchantDashboardClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div
             dir={isRTL ? "rtl" : "ltr"}
-            className="relative w-full max-w-sm bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl shadow-2xl p-6 text-[#173E30] space-y-4"
+            className="relative w-full max-w-sm bg-white border border-[#161514]/10 rounded-3xl shadow-2xl p-6 text-[#161514] space-y-4"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#161514]/10">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#E8F5E9] text-[#008069] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-[#F85B04]/10 text-[#DA5004] flex items-center justify-center">
                   <KeyRound className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#173E30]">
+                  <h3 className="font-bold text-sm text-[#161514]">
                     {locale === "ar"
                       ? "إدارة رمز الأمان (PIN) للزبون"
                       : "Gestion du code PIN client"}
                   </h3>
-                  <span className="text-[10px] text-[#5F655D] block">
+                  <span className="text-[10px] text-[#161514]/65 block">
                     {pinResetModal.customer.name} (#{pinResetModal.customer.memberCode})
                   </span>
                 </div>
@@ -4899,7 +4899,7 @@ export default function MerchantDashboardClient({
                     success: null,
                   })
                 }
-                className="p-1.5 rounded-xl hover:bg-[#FAF7F2] text-[#5F655D]"
+                className="p-1.5 rounded-xl hover:bg-[#EFEAE4] text-[#161514]/65"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -4918,16 +4918,16 @@ export default function MerchantDashboardClient({
               </div>
             )}
 
-            <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-1.5 text-xs">
+            <div className="p-3 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 space-y-1.5 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[#5F655D]">
+                <span className="text-[#161514]/65">
                   {locale === "ar" ? "الرمز الحالي المسجل:" : "Code PIN actuel :"}
                 </span>
-                <span className="font-mono font-bold text-sm bg-white px-2 py-0.5 rounded border border-[#C8D1BE]">
+                <span className="font-mono font-bold text-sm bg-white px-2 py-0.5 rounded border border-[#161514]/15">
                   {pinResetModal.customer.securityPin || pinResetModal.customer.memberCode}
                 </span>
               </div>
-              <span className="text-[10px] text-[#5F655D] block">
+              <span className="text-[10px] text-[#161514]/65 block">
                 {locale === "ar"
                   ? "يستخدم الزبون هذا الرمز لاسترجاع بطاقته إذا غير هاتفه أو حذفها."
                   : "Le client utilise ce code pour récupérer son pass en cas de perte."}
@@ -4935,7 +4935,7 @@ export default function MerchantDashboardClient({
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#173E30] flex items-center justify-between">
+              <label className="text-xs font-bold text-[#161514] flex items-center justify-between">
                 <span>
                   {locale === "ar"
                     ? "تعيين رمز PIN جديد (4 أرقام):"
@@ -4947,7 +4947,7 @@ export default function MerchantDashboardClient({
                     const rnd = Math.floor(1000 + Math.random() * 9000).toString();
                     setPinResetModal((prev) => ({ ...prev, newPin: rnd }));
                   }}
-                  className="text-[10px] text-[#008069] font-bold hover:underline cursor-pointer"
+                  className="text-[10px] text-[#DA5004] font-bold hover:underline cursor-pointer"
                 >
                   {locale === "ar" ? "توليد عشوائي 🎲" : "Générer aléatoire 🎲"}
                 </button>
@@ -4965,7 +4965,7 @@ export default function MerchantDashboardClient({
                   }))
                 }
                 placeholder="••••"
-                className="w-full px-4 py-2.5 rounded-xl bg-white border-2 border-[#C8D1BE] focus:border-[#008069] text-center text-xl font-mono font-bold tracking-widest text-[#173E30]"
+                className="w-full px-4 py-2.5 rounded-xl bg-white border-2 border-[#161514]/15 focus:border-[#F85B04] text-center text-xl font-mono font-bold tracking-widest text-[#161514]"
               />
             </div>
 
@@ -4982,7 +4982,7 @@ export default function MerchantDashboardClient({
                     success: null,
                   })
                 }
-                className="flex-1 py-2.5 px-4 rounded-xl border border-[#C8D1BE] text-xs font-bold text-[#5F655D] hover:bg-[#FAF7F2] transition"
+                className="flex-1 py-2.5 px-4 rounded-xl border border-[#161514]/15 text-xs font-bold text-[#161514]/65 hover:bg-[#EFEAE4] transition"
               >
                 {locale === "ar" ? "إلغاء" : "Annuler"}
               </button>
@@ -4993,7 +4993,7 @@ export default function MerchantDashboardClient({
                   pinResetModal.isSubmitting ||
                   pinResetModal.newPin.length !== 4
                 }
-                className="flex-2 py-2.5 px-4 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="flex-2 py-2.5 px-4 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 {pinResetModal.isSubmitting ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -5022,32 +5022,32 @@ export default function MerchantDashboardClient({
             className="fixed inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setShowIOSInstallGuide(false)}
           />
-          <div className="relative z-10 bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl p-5 max-w-sm w-full text-[#173E30] shadow-2xl">
+          <div className="relative z-10 bg-white border border-[#161514]/10 rounded-3xl p-5 max-w-sm w-full text-[#161514] shadow-2xl">
             <button
               type="button"
               onClick={() => setShowIOSInstallGuide(false)}
-              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-[#FAF7F2] text-[#5F655D] hover:text-[#173E30]"
+              className="absolute top-4 left-4 p-1.5 rounded-full hover:bg-[#EFEAE4] text-[#161514]/65 hover:text-[#161514]"
             >
               <X className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-2xl bg-[#008069]/10 border border-[#008069]/20 flex items-center justify-center text-[#008069]">
+              <div className="w-10 h-10 rounded-2xl bg-[#F85B04]/10 border border-[#F85B04]/25 flex items-center justify-center text-[#DA5004]">
                 <Smartphone className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-[#173E30]">
+                <h3 className="font-bold text-sm text-[#161514]">
                   {locale === "ar"
                     ? `إضافة ${merchant.name} للشاشة الرئيسية`
                     : locale === "fr"
                       ? `Ajouter ${merchant.name} à l'écran d'accueil`
                       : `Añadir ${merchant.name} a inicio`}
                 </h3>
-                <p className="text-xs text-[#5F655D]">iPhone / iPad Safari</p>
+                <p className="text-xs text-[#161514]/65">iPhone / iPad Safari</p>
               </div>
             </div>
-            <div className="space-y-3 text-xs text-[#173E30]">
-              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#FAF7F2] border border-[#DCE0D4]">
-                <span className="w-5 h-5 rounded-full bg-[#008069]/15 text-[#008069] font-bold flex items-center justify-center shrink-0">1</span>
+            <div className="space-y-3 text-xs text-[#161514]">
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#EFEAE4] border border-[#161514]/10">
+                <span className="w-5 h-5 rounded-full bg-[#F85B04]/15 text-[#DA5004] font-bold flex items-center justify-center shrink-0">1</span>
                 <p>
                   {locale === "ar"
                     ? "اضغط على زر المشاركة (Share) في أسفل شاشة Safari"
@@ -5056,8 +5056,8 @@ export default function MerchantDashboardClient({
                       : "Toca el botón Compartir en la parte inferior de Safari"}
                 </p>
               </div>
-              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#FAF7F2] border border-[#DCE0D4]">
-                <span className="w-5 h-5 rounded-full bg-[#008069]/15 text-[#008069] font-bold flex items-center justify-center shrink-0">2</span>
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#EFEAE4] border border-[#161514]/10">
+                <span className="w-5 h-5 rounded-full bg-[#F85B04]/15 text-[#DA5004] font-bold flex items-center justify-center shrink-0">2</span>
                 <p>
                   {locale === "ar"
                     ? 'مرّر للأسفل واختر "إضافة إلى الصفحة الرئيسية" (+)'
@@ -5070,7 +5070,7 @@ export default function MerchantDashboardClient({
             <button
               type="button"
               onClick={() => setShowIOSInstallGuide(false)}
-              className="w-full mt-5 py-2.5 rounded-xl bg-[#008069] hover:bg-[#006D59] text-white font-bold text-xs transition"
+              className="w-full mt-5 py-2.5 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white font-bold text-xs transition"
             >
               {locale === "ar" ? "فهمت" : locale === "fr" ? "J'ai compris" : "Entendido"}
             </button>
@@ -5090,10 +5090,10 @@ export default function MerchantDashboardClient({
           />
 
           {/* Drawer Panel */}
-          <div className="relative w-full max-w-xs bg-[#FFFDF7] text-[#173E30] h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
+          <div className="relative w-full max-w-xs bg-white text-[#161514] h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
             {/* Drawer Header with Safe-Area Top Padding */}
             <div
-              className="px-4 pb-4 bg-[#075E54] text-white flex items-center justify-between shadow-sm"
+              className="px-4 pb-4 bg-[#161514] text-white flex items-center justify-between shadow-sm"
               style={{
                 paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)",
               }}
@@ -5128,7 +5128,7 @@ export default function MerchantDashboardClient({
             <div className="p-4 space-y-4 flex-1 overflow-y-auto">
               {/* Navigation Sections */}
               <div className="space-y-1">
-                <p className="text-[11px] font-bold text-[#5F655D] px-2 uppercase tracking-wider">
+                <p className="text-[11px] font-bold text-[#161514]/65 px-2 uppercase tracking-wider">
                   {locale === "ar" ? "الأقسام الرئيسية" : "Sections"}
                 </p>
                 {[
@@ -5151,11 +5151,11 @@ export default function MerchantDashboardClient({
                           setIsMenuDrawerOpen(false);
                         }}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition text-start cursor-pointer ${isActive
-                          ? "bg-[#008069]/10 text-[#008069] border border-[#008069]/20"
-                          : "hover:bg-[#FAF7F2] text-[#173E30]"
+                          ? "bg-[#F85B04]/10 text-[#DA5004] border border-[#F85B04]/25"
+                          : "hover:bg-[#EFEAE4] text-[#161514]"
                           }`}
                       >
-                        <Icon className={`w-4 h-4 ${isActive ? "text-[#008069]" : "text-[#5F655D]"}`} />
+                        <Icon className={`w-4 h-4 ${isActive ? "text-[#DA5004]" : "text-[#161514]/65"}`} />
                         <span className="flex-1">{item.label}</span>
                         {item.id === "settings" && isOwner && hasUnsavedChanges && (
                           <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
@@ -5169,7 +5169,7 @@ export default function MerchantDashboardClient({
 
               {/* Quick Tools & Shortcuts */}
               <div className="space-y-1">
-                <p className="text-[11px] font-bold text-[#5F655D] px-2 uppercase tracking-wider">
+                <p className="text-[11px] font-bold text-[#161514]/65 px-2 uppercase tracking-wider">
                   {locale === "ar" ? "أدوات سريعة" : "Outils rapides"}
                 </p>
 
@@ -5181,7 +5181,7 @@ export default function MerchantDashboardClient({
                       setIsMenuDrawerOpen(false);
                       setIsCreditsOpen(true);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#EFEAE4] text-[#161514] transition text-start cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <Coins className="w-4 h-4 text-amber-500" />
@@ -5200,9 +5200,9 @@ export default function MerchantDashboardClient({
                     setIsMenuDrawerOpen(false);
                     setIsStandOpen(true);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#EFEAE4] text-[#161514] transition text-start cursor-pointer"
                 >
-                  <QrCode className="w-4 h-4 text-[#008069]" />
+                  <QrCode className="w-4 h-4 text-[#DA5004]" />
                   <span>{locale === "ar" ? "ستاند الكاونتر الذكي" : "Stand QR Comptoir"}</span>
                 </button>
 
@@ -5211,9 +5211,9 @@ export default function MerchantDashboardClient({
                   href={getJoinUrl(merchant.slug)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#EFEAE4] text-[#161514] transition text-start"
                 >
-                  <ExternalLink className="w-4 h-4 text-[#008069]" />
+                  <ExternalLink className="w-4 h-4 text-[#DA5004]" />
                   <span>{locale === "ar" ? "صفحة تسجيل العملاء" : "Page d'inscription"}</span>
                 </a>
 
@@ -5225,7 +5225,7 @@ export default function MerchantDashboardClient({
                       setIsMenuDrawerOpen(false);
                       handleInstallApp();
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#FAF7F2] text-[#173E30] transition text-start cursor-pointer"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-[#EFEAE4] text-[#161514] transition text-start cursor-pointer"
                   >
                     <Download className="w-4 h-4 text-emerald-600" />
                     <span>{locale === "ar" ? "تثبيت التطبيق على الهاتف" : "Installer l'application"}</span>
@@ -5237,7 +5237,7 @@ export default function MerchantDashboardClient({
 
               {/* Language Switcher */}
               <div className="p-2 space-y-2">
-                <p className="text-[11px] font-bold text-[#5F655D] uppercase tracking-wider">
+                <p className="text-[11px] font-bold text-[#161514]/65 uppercase tracking-wider">
                   {locale === "ar" ? "اللغة" : "Langue"}
                 </p>
                 <LanguageSwitcher size="sm" variant="light" />
@@ -5245,26 +5245,26 @@ export default function MerchantDashboardClient({
             </div>
 
             {/* Drawer Footer with Role Badge & Account Switcher */}
-            <div className="p-4 border-t border-[#DCE0D4] bg-[#FAF7F2] space-y-2.5">
-              <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-[#FFFDF7] border border-[#DCE0D4]">
+            <div className="p-4 border-t border-[#161514]/10 bg-[#EFEAE4] space-y-2.5">
+              <div className="flex items-center justify-between text-xs p-2 rounded-xl bg-white border border-[#161514]/10">
                 <div className="flex items-center gap-2">
                   <div className={`w-2.5 h-2.5 rounded-full ${isRestrictedStaff ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
                   <div className="text-start">
-                    <span className="font-bold text-[#173E30] block text-xs">
+                    <span className="font-bold text-[#161514] block text-xs">
                       {isRestrictedStaff && liveAuthBranch
                         ? liveAuthBranch.name
                         : isRestrictedStaff
                           ? authStaffName || (locale === "fr" ? "Caissier" : "كاشير")
                           : (locale === "fr" ? "Compte Propriétaire" : locale === "es" ? "Cuenta Propietario" : "صاحب المشروع")}
                     </span>
-                    <span className="text-[10px] text-[#5F655D]">
+                    <span className="text-[10px] text-[#161514]/65">
                       {isRestrictedStaff
                         ? (locale === "fr" ? "Accès succursale" : locale === "es" ? "Acceso sucursal" : "حساب كاشير فرع مستقل")
                         : (locale === "fr" ? "Accès complet multi-succursales" : locale === "es" ? "Acceso global completo" : "صلاحيات شاملة لكل الفروع")}
                     </span>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FAF7F2] text-[#008069] border border-[#DCE0D4]">
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#EFEAE4] text-[#DA5004] border border-[#161514]/10">
                   {isRestrictedStaff ? "STAFF" : "OWNER"}
                 </span>
               </div>
@@ -5272,14 +5272,14 @@ export default function MerchantDashboardClient({
               <button
                 type="button"
                 onClick={handleLogoutOrSwitchAccount}
-                className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-rose-50 active:scale-98 border border-[#DCE0D4] hover:border-rose-200 text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm"
+                className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-rose-50 active:scale-98 border border-[#161514]/10 hover:border-rose-200 text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>{locale === "fr" ? "Changer de compte / Déconnexion" : locale === "es" ? "Cambiar cuenta / Salir" : "تبديل الحساب / قفل اللوحة"}</span>
               </button>
 
               <div className="text-center pt-1">
-                <span className="text-[10px] text-[#5F655D] font-mono">
+                <span className="text-[10px] text-[#161514]/65 font-mono">
                   Walink Engine v3.2 • {merchant.slug}
                 </span>
               </div>
@@ -5298,20 +5298,20 @@ export default function MerchantDashboardClient({
             onClick={() => setIsAddCustomerOpen(false)}
           />
           <div
-            className="relative z-10 bg-[#FFFDF7] border border-[#DCE0D4] rounded-3xl p-5 max-w-sm w-full text-[#173E30] shadow-2xl animate-in zoom-in-95 duration-200"
+            className="relative z-10 bg-white border border-[#161514]/10 rounded-3xl p-5 max-w-sm w-full text-[#161514] shadow-2xl animate-in zoom-in-95 duration-200"
             dir={locale === "ar" ? "rtl" : "ltr"}
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4] mb-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#161514]/10 mb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#008069]/10 text-[#008069] flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-xl bg-[#F85B04]/10 text-[#DA5004] flex items-center justify-center font-bold">
                   <UserPlus className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#173E30]">
+                  <h3 className="font-bold text-sm text-[#161514]">
                     {locale === "ar" ? "إضافة زبون جديد" : "Ajouter un client"}
                   </h3>
-                  <p className="text-[11px] text-[#5F655D]">
+                  <p className="text-[11px] text-[#161514]/65">
                     {locale === "ar" ? "تسجيل فوري وظهور مباشر في اللوحة" : "Enregistrement direct en temps réel"}
                   </p>
                 </div>
@@ -5319,7 +5319,7 @@ export default function MerchantDashboardClient({
               <button
                 type="button"
                 onClick={() => setIsAddCustomerOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-[#FAF7F2] text-[#5F655D] hover:text-[#173E30] transition cursor-pointer"
+                className="p-1.5 rounded-lg hover:bg-[#EFEAE4] text-[#161514]/65 hover:text-[#161514] transition cursor-pointer"
                 aria-label="إغلاق"
               >
                 <X className="w-4 h-4" />
@@ -5330,7 +5330,7 @@ export default function MerchantDashboardClient({
             <form onSubmit={handleAddCustomerSubmit} className="space-y-3.5">
               {/* Name */}
               <div>
-                <label className="block text-xs font-bold text-[#173E30] mb-1">
+                <label className="block text-xs font-bold text-[#161514] mb-1">
                   {locale === "ar" ? "اسم الزبون *" : "Nom du client *"}
                 </label>
                 <input
@@ -5339,13 +5339,13 @@ export default function MerchantDashboardClient({
                   value={newCustName}
                   onChange={(e) => setNewCustName(e.target.value)}
                   placeholder={locale === "ar" ? "مثال: يوسف العلمي" : "Ex: Youssef El Alami"}
-                  className="w-full bg-[#FAF7F2] border-2 border-[#DCE0D4] focus:border-[#008069] rounded-xl px-3.5 py-2 text-xs text-[#173E30] outline-none transition"
+                  className="w-full bg-[#EFEAE4] border-2 border-[#161514]/10 focus:border-[#F85B04] rounded-xl px-3.5 py-2 text-xs text-[#161514] outline-none transition"
                 />
               </div>
 
               {/* Phone */}
               <div>
-                <label className="block text-xs font-bold text-[#173E30] mb-1">
+                <label className="block text-xs font-bold text-[#161514] mb-1">
                   {locale === "ar" ? "رقم الهاتف / الواتساب *" : "Téléphone / WhatsApp *"}
                 </label>
                 <input
@@ -5354,14 +5354,14 @@ export default function MerchantDashboardClient({
                   value={newCustPhone}
                   onChange={(e) => setNewCustPhone(e.target.value)}
                   placeholder="06XXXXXXXX"
-                  className="w-full bg-[#FAF7F2] border-2 border-[#DCE0D4] focus:border-[#008069] rounded-xl px-3.5 py-2 text-xs font-mono text-[#173E30] outline-none transition text-start"
+                  className="w-full bg-[#EFEAE4] border-2 border-[#161514]/10 focus:border-[#F85B04] rounded-xl px-3.5 py-2 text-xs font-mono text-[#161514] outline-none transition text-start"
                   dir="ltr"
                 />
               </div>
 
               {/* Loyalty Type Selector */}
               <div>
-                <label className="block text-xs font-bold text-[#173E30] mb-1">
+                <label className="block text-xs font-bold text-[#161514] mb-1">
                   {locale === "ar" ? "نوع برنامج الولاء" : "Type de fidélité"}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -5369,8 +5369,8 @@ export default function MerchantDashboardClient({
                     type="button"
                     onClick={() => setNewCustLoyaltyType("STAMPS")}
                     className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${newCustLoyaltyType === "STAMPS"
-                      ? "bg-[#008069] text-white border-[#008069] shadow-sm"
-                      : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-[#E8EDE3]"
+                      ? "bg-[#F85B04] text-white border-[#F85B04] shadow-sm"
+                      : "bg-[#EFEAE4] text-[#161514]/65 border-[#161514]/10 hover:bg-[#E8EDE3]"
                       }`}
                   >
                     <Stamp className="w-3.5 h-3.5" />
@@ -5381,7 +5381,7 @@ export default function MerchantDashboardClient({
                     onClick={() => setNewCustLoyaltyType("CASHBACK")}
                     className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${newCustLoyaltyType === "CASHBACK"
                       ? "bg-amber-600 text-white border-amber-600 shadow-sm"
-                      : "bg-[#FAF7F2] text-[#5F655D] border-[#DCE0D4] hover:bg-[#E8EDE3]"
+                      : "bg-[#EFEAE4] text-[#161514]/65 border-[#161514]/10 hover:bg-[#E8EDE3]"
                       }`}
                   >
                     <Coins className="w-3.5 h-3.5" />
@@ -5392,7 +5392,7 @@ export default function MerchantDashboardClient({
 
               {/* Optional PIN */}
               <div>
-                <label className="block text-xs font-bold text-[#173E30] mb-1">
+                <label className="block text-xs font-bold text-[#161514] mb-1">
                   {locale === "ar" ? "رمز PIN (اختياري 4 أرقام)" : "Code PIN (optionnel 4 chiffres)"}
                 </label>
                 <input
@@ -5401,7 +5401,7 @@ export default function MerchantDashboardClient({
                   value={newCustPin}
                   onChange={(e) => setNewCustPin(e.target.value.replace(/\D/g, ""))}
                   placeholder="••••"
-                  className="w-full bg-[#FAF7F2] border-2 border-[#DCE0D4] focus:border-[#008069] rounded-xl px-3.5 py-2 text-center text-sm font-mono tracking-widest text-[#173E30] outline-none transition"
+                  className="w-full bg-[#EFEAE4] border-2 border-[#161514]/10 focus:border-[#F85B04] rounded-xl px-3.5 py-2 text-center text-sm font-mono tracking-widest text-[#161514] outline-none transition"
                 />
               </div>
 
@@ -5416,7 +5416,7 @@ export default function MerchantDashboardClient({
               <button
                 type="submit"
                 disabled={isAddingCustomer}
-                className="w-full py-2.5 rounded-xl bg-[#008069] hover:bg-[#00705a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition disabled:opacity-50 cursor-pointer active:scale-98"
+                className="w-full py-2.5 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition disabled:opacity-50 cursor-pointer active:scale-98"
               >
                 {isAddingCustomer ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

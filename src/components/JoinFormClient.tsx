@@ -328,29 +328,29 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className="w-full max-w-[460px] mx-auto min-h-screen bg-[#FAF7F2] flex flex-col justify-between p-4 sm:p-6 text-[#173E30] selection:bg-[#008069] selection:text-white"
+      className="w-full max-w-[460px] mx-auto min-h-screen bg-[#EFEAE4] flex flex-col justify-between p-4 sm:p-6 text-[#161514] selection:bg-[#F85B04] selection:text-white"
     >
-      <div className="bg-[#FFFDF7] rounded-2xl p-5 sm:p-7 border border-[#DCE0D4] shadow-sm space-y-6">
+      <div className="bg-white rounded-2xl p-5 sm:p-7 border border-[#161514]/10 shadow-sm space-y-6">
         {/* Top Header Badge & Language Pill */}
         <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#E8F5E9] border border-[#A7F3D0] text-[#008069] text-xs font-bold tracking-tight shadow-xs">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[#00A884] to-[#008069] flex items-center justify-center text-white flex-shrink-0 shadow-xs">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F85B04]/10 border border-[#F85B04]/25 text-[#DA5004] text-xs font-bold tracking-tight shadow-xs">
+            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[#F9742A] to-[#F85B04] flex items-center justify-center text-white flex-shrink-0 shadow-xs">
               <Sparkles className="w-2.5 h-2.5" />
             </div>
-            <span dir="ltr" className="font-mono text-[13px] font-extrabold text-[#173E30] tracking-tight">
-              walink<span className="text-[#00A884]">.ma</span>
+            <span dir="ltr" className="font-mono text-[13px] font-extrabold text-[#161514] tracking-tight">
+              walink<span className="text-[#F85B04]">.ma</span>
             </span>
           </div>
 
           {/* Quick Corner Language Selector */}
-          <div className="flex items-center gap-1 bg-[#FAF7F2] border border-[#DCE0D4] rounded-full p-0.5 text-[11px] font-bold">
+          <div className="flex items-center gap-1 bg-[#EFEAE4] border border-[#161514]/10 rounded-full p-0.5 text-[11px] font-bold">
             <button
               type="button"
               onClick={() => changeLocale("ar")}
               className={`px-2.5 py-0.5 rounded-full transition ${
                 locale === "ar"
-                  ? "bg-[#008069] text-white shadow-sm"
-                  : "text-[#5F655D] hover:text-[#173E30]"
+                  ? "bg-[#F85B04] text-white shadow-sm"
+                  : "text-[#161514]/65 hover:text-[#161514]"
               }`}
             >
               عربي
@@ -360,8 +360,8 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               onClick={() => changeLocale("fr")}
               className={`px-2.5 py-0.5 rounded-full transition ${
                 locale === "fr"
-                  ? "bg-[#008069] text-white shadow-sm"
-                  : "text-[#5F655D] hover:text-[#173E30]"
+                  ? "bg-[#F85B04] text-white shadow-sm"
+                  : "text-[#161514]/65 hover:text-[#161514]"
               }`}
             >
               FR
@@ -371,8 +371,8 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               onClick={() => changeLocale("es")}
               className={`px-2.5 py-0.5 rounded-full transition ${
                 locale === "es"
-                  ? "bg-[#008069] text-white shadow-sm"
-                  : "text-[#5F655D] hover:text-[#173E30]"
+                  ? "bg-[#F85B04] text-white shadow-sm"
+                  : "text-[#161514]/65 hover:text-[#161514]"
               }`}
             >
               ES
@@ -388,18 +388,18 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         )}
 
         <div className="text-center space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#173E30] tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#161514] tracking-tight leading-tight">
             {locale === "ar" ? (
               <>
-                احصل على بطاقة ولاء <span className="text-[#008069]">{merchant.name}</span> في ثوانٍ
+                احصل على بطاقة ولاء <span className="text-[#DA5004]">{merchant.name}</span> في ثوانٍ
               </>
             ) : locale === "fr" ? (
               <>
-                Obtenez votre carte <span className="text-[#008069]">{merchant.name}</span> en 5s
+                Obtenez votre carte <span className="text-[#DA5004]">{merchant.name}</span> en 5s
               </>
             ) : (
               <>
-                Obtén tu tarjeta de <span className="text-[#008069]">{merchant.name}</span> en 5s
+                Obtén tu tarjeta de <span className="text-[#DA5004]">{merchant.name}</span> en 5s
               </>
             )}
           </h1>
@@ -429,7 +429,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         {/* Dual Loyalty Program Choice (If merchant has BOTH) */}
         {loyaltyMode === "BOTH" && (
           <div className="space-y-2">
-            <span className="text-xs font-bold text-[#173E30] block">
+            <span className="text-xs font-bold text-[#161514] block">
               {t.onboarding.chooseProgram}
             </span>
             <div className="grid grid-cols-2 gap-2.5">
@@ -438,11 +438,11 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 onClick={() => setSelectedLoyaltyType("STAMPS")}
                 className={`p-3.5 rounded-2xl text-start transition-all border ${
                   selectedLoyaltyType === "STAMPS"
-                    ? "bg-[#E8F5E9] border-[#008069] shadow-sm ring-1 ring-[#008069]"
-                    : "bg-[#FFFDF7] border-[#DCE0D4] hover:bg-[#F7F8FA] text-[#5F655D]"
+                    ? "bg-[#F85B04]/10 border-[#F85B04] shadow-sm ring-1 ring-[#F85B04]"
+                    : "bg-white border-[#161514]/10 hover:bg-[#EFEAE4] text-[#161514]/65"
                 }`}
               >
-                <div className="flex items-center gap-1.5 font-bold text-xs text-[#008069]">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-[#DA5004]">
                   <Gift className="w-4 h-4" />
                   <span>{t.onboarding.stampsProgramTitle}</span>
                 </div>
@@ -454,7 +454,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 className={`p-3.5 rounded-2xl text-start transition-all border ${
                   selectedLoyaltyType === "CASHBACK"
                     ? "bg-[#FFFBEB] border-[#D97706] shadow-sm ring-1 ring-[#D97706]"
-                    : "bg-[#FFFDF7] border-[#DCE0D4] hover:bg-[#F7F8FA] text-[#5F655D]"
+                    : "bg-white border-[#161514]/10 hover:bg-[#EFEAE4] text-[#161514]/65"
                 }`}
               >
                 <div className="flex items-center gap-1.5 font-bold text-xs text-[#B45309]">
@@ -481,7 +481,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#173E30] block">
+            <label className="text-xs font-bold text-[#161514] block">
               {t.onboarding.nameLabel}
             </label>
             <input
@@ -490,12 +490,12 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t.onboarding.namePlaceholder}
-              className="w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-2 border-[#DCE0D4] hover:border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-base font-medium"
+              className="w-full px-4 py-3 rounded-2xl bg-white border-2 border-[#161514]/10 hover:border-[#161514]/15 text-[#161514] placeholder-[#161514]/45 focus:outline-none focus:border-[#F85B04] focus:ring-2 focus:ring-[#F85B04]/20 transition text-base font-medium"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#173E30] block">
+            <label className="text-xs font-bold text-[#161514] block">
               {t.onboarding.phoneLabel}
             </label>
             <div className="relative">
@@ -510,7 +510,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                 onChange={(e) => setPhone(formatPhoneInputValue(e.target.value))}
                 onBlur={() => setPhone((prev) => normalizeMoroccanPhone(prev))}
                 placeholder={t.onboarding.phonePlaceholder}
-                className={`w-full px-4 py-3 rounded-2xl bg-[#FFFDF7] border-2 border-[#DCE0D4] hover:border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-2 focus:ring-[#008069]/20 transition text-base font-mono font-medium ${isRTL ? "text-right" : "text-left"}`}
+                className={`w-full px-4 py-3 rounded-2xl bg-white border-2 border-[#161514]/10 hover:border-[#161514]/15 text-[#161514] placeholder-[#161514]/45 focus:outline-none focus:border-[#F85B04] focus:ring-2 focus:ring-[#F85B04]/20 transition text-base font-mono font-medium ${isRTL ? "text-right" : "text-left"}`}
               />
               <Smartphone className={`w-4 h-4 text-[#8696A0] absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 pointer-events-none`} />
             </div>
@@ -521,7 +521,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
             <button
               type="button"
               onClick={() => setShowPinInput(!showPinInput)}
-              className="text-[11px] font-bold text-[#008069] hover:underline flex items-center gap-1.5 cursor-pointer"
+              className="text-[11px] font-bold text-[#DA5004] hover:underline flex items-center gap-1.5 cursor-pointer"
             >
               <KeyRound className="w-3.5 h-3.5" />
               <span>
@@ -532,10 +532,10 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
             </button>
 
             {showPinInput && (
-              <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-1.5 animate-in fade-in duration-150">
-                <label className="text-[11px] font-bold text-[#173E30] flex items-center justify-between">
+              <div className="p-3 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 space-y-1.5 animate-in fade-in duration-150">
+                <label className="text-[11px] font-bold text-[#161514] flex items-center justify-between">
                   <span>{locale === "ar" ? "رمز أمان البطاقة (4 أرقام):" : locale === "fr" ? "Code PIN de sécurité (4 chiffres):" : "Código PIN de seguridad (4 dígitos):"}</span>
-                  <span className="text-[10px] text-[#5F655D] font-normal">{locale === "ar" ? "اختياري" : "Optionnel"}</span>
+                  <span className="text-[10px] text-[#161514]/65 font-normal">{locale === "ar" ? "اختياري" : "Optionnel"}</span>
                 </label>
                 <div className="relative">
                   <input
@@ -546,11 +546,11 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                     value={customPin}
                     onChange={(e) => setCustomPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
                     placeholder={locale === "ar" ? "مثال: 1234 (الافتراضي كود العضوية)" : "Ex: 1234"}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border-2 border-[#DCE0D4] hover:border-[#C8D1BE] text-[#173E30] placeholder-[#8696A0] focus:outline-none focus:border-[#008069] focus:ring-1 focus:ring-[#008069] text-base font-mono tracking-widest"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border-2 border-[#161514]/10 hover:border-[#161514]/15 text-[#161514] placeholder-[#161514]/45 focus:outline-none focus:border-[#F85B04] focus:ring-1 focus:ring-[#F85B04] text-base font-mono tracking-widest"
                   />
                   <Lock className={`w-3.5 h-3.5 text-[#8696A0] absolute ${isRTL ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 pointer-events-none`} />
                 </div>
-                <p className="text-[10px] text-[#5F655D] leading-snug">
+                <p className="text-[10px] text-[#161514]/65 leading-snug">
                   {locale === "ar"
                     ? "يُستخدم هذا الرمز لحماية رصيدك واسترجاع بطاقتك إذا قمت بحذفها أو غيرت هاتفك. في حال عدم إدخاله، سيكون رمزك هو كود عضويتك."
                     : locale === "fr"
@@ -564,7 +564,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-6 rounded-full font-bold text-sm bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#009071] hover:to-[#006D59] text-white shadow-md shadow-[#008069]/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3.5 px-6 rounded-full font-bold text-sm bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] hover:to-[#E25102] text-white shadow-md shadow-[#F85B04]/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -579,9 +579,9 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
       </div>
 
       {/* Footer Security Badges */}
-      <div className="pt-6 pb-2 text-center space-y-2 text-[11px] text-[#5F655D] font-medium">
+      <div className="pt-6 pb-2 text-center space-y-2 text-[11px] text-[#161514]/65 font-medium">
         <div className="flex items-center justify-center gap-2">
-          <Lock className="w-3.5 h-3.5 text-[#008069]" />
+          <Lock className="w-3.5 h-3.5 text-[#DA5004]" />
           <span>Apple Wallet &amp; Google Wallet • مشفّرة 100%</span>
         </div>
         <p>© {new Date().getFullYear()} {merchant.name}</p>
@@ -592,23 +592,23 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div
             dir={isRTL ? "rtl" : "ltr"}
-            className="relative w-full max-w-sm bg-white border border-[#DCE0D4] rounded-3xl shadow-2xl p-6 text-[#173E30] space-y-4"
+            className="relative w-full max-w-sm bg-white border border-[#161514]/10 rounded-3xl shadow-2xl p-6 text-[#161514] space-y-4"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-[#DCE0D4]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#161514]/10">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#E8F5E9] text-[#008069] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-[#F85B04]/10 text-[#DA5004] flex items-center justify-center">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#173E30]">
+                  <h3 className="font-bold text-sm text-[#161514]">
                     {locale === "ar"
                       ? "استرجاع البطاقة وتأكيد الهوية"
                       : locale === "fr"
                       ? "Récupération sécurisée du pass"
                       : "Recuperación segura de tarjeta"}
                   </h3>
-                  <span className="text-[10px] text-[#5F655D] block">
+                  <span className="text-[10px] text-[#161514]/65 block">
                     {merchant.name} • Walink Security
                   </span>
                 </div>
@@ -622,7 +622,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                     errorMsg: null,
                   })
                 }
-                className="p-1.5 rounded-xl hover:bg-[#FAF7F2] text-[#5F655D]"
+                className="p-1.5 rounded-xl hover:bg-[#EFEAE4] text-[#161514]/65"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -664,17 +664,17 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
             ) : (
               <form onSubmit={handleVerifyPin} className="space-y-4">
                 {/* Masked Customer Identity */}
-                <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-2">
-                  <span className="text-[11px] text-[#5F655D] block">
+                <div className="p-3.5 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 space-y-2">
+                  <span className="text-[11px] text-[#161514]/65 block">
                     {locale === "ar"
                       ? "تم العثور على بطاقة مسجلة بهذا الرقم:"
                       : "Un pass existe déjà pour ce numéro :"}
                   </span>
-                  <div className="flex items-center justify-between text-xs font-bold text-[#173E30]">
+                  <div className="flex items-center justify-between text-xs font-bold text-[#161514]">
                     <span>
                       {locale === "ar" ? "الاسم:" : "Nom :"} {pinModal.maskedName || "••••"}
                     </span>
-                    <span className="font-mono text-[#008069]">
+                    <span className="font-mono text-[#DA5004]">
                       {pinModal.maskedPhone || phone}
                     </span>
                   </div>
@@ -690,7 +690,7 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
 
                 {/* PIN Input */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#173E30] flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#161514] flex items-center justify-between">
                     <span>
                       {locale === "ar"
                         ? "أدخل رمز الأمان (PIN من 4 أرقام):"
@@ -714,12 +714,12 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                       setPinCode(e.target.value.replace(/\D/g, "").slice(0, 4))
                     }
                     placeholder="••••"
-                    className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-2xl bg-white border-2 border-[#DCE0D4] hover:border-[#C8D1BE] focus:border-[#008069] focus:outline-none transition font-bold"
+                    className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-2xl bg-white border-2 border-[#161514]/10 hover:border-[#161514]/15 focus:border-[#F85B04] focus:outline-none transition font-bold"
                   />
                 </div>
 
                 {/* Helpful Hint */}
-                <p className="text-[11px] text-[#5F655D] leading-snug">
+                <p className="text-[11px] text-[#161514]/65 leading-snug">
                   {locale === "ar"
                     ? "💡 رمز الأمان الافتراضي هو كود عضويتك المكون من 4 أرقام (#xxxx) الموجود على بطاقتك السابقة أو إشعار المتجر، أو الرمز المخصص الذي اخترته."
                     : "💡 Le code PIN par défaut est votre code membre (#xxxx) à 4 chiffres."}
@@ -736,14 +736,14 @@ export default function JoinFormClient({ merchant }: JoinFormClientProps) {
                         errorMsg: null,
                       })
                     }
-                    className="flex-1 py-3 px-4 rounded-xl border border-[#C8D1BE] text-xs font-bold text-[#5F655D] hover:bg-[#FAF7F2] transition"
+                    className="flex-1 py-3 px-4 rounded-xl border border-[#161514]/15 text-xs font-bold text-[#161514]/65 hover:bg-[#EFEAE4] transition"
                   >
                     {locale === "ar" ? "إلغاء" : "Annuler"}
                   </button>
                   <button
                     type="submit"
                     disabled={verifyingPin || pinCode.length !== 4}
-                    className="flex-2 py-3 px-5 rounded-xl bg-gradient-to-r from-[#00A884] to-[#008069] hover:from-[#009071] hover:to-[#006D59] text-white text-xs font-bold shadow-md shadow-[#008069]/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-2 py-3 px-5 rounded-xl bg-gradient-to-r from-[#F9742A] to-[#F85B04] hover:from-[#F85B04] hover:to-[#E25102] text-white text-xs font-bold shadow-md shadow-[#F85B04]/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {verifyingPin ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

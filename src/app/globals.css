@@ -174,38 +174,40 @@ label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 12px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 14px;
   border-radius: 99px;
-  background: #F0F2F5;
-  border: 1px solid #D1D7DB;
-  color: #111B21;
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 21, 20, 0.12);
+  color: #161514;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.18s ease;
-  box-shadow: 0 1px 2px rgba(11, 20, 26, 0.04);
+  box-shadow: 0 1px 2px rgba(22, 21, 20, 0.04);
 }
 .walink-lang-dropdown.sm .lang-trigger-btn {
-  height: 32px;
-  padding: 0 10px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 12px;
   font-size: 12px;
   gap: 5px;
 }
 .walink-lang-dropdown .lang-trigger-btn:hover {
-  background: #E9EDEF;
-  border-color: #CBD5E1;
+  background: #EFEAE4;
+  border-color: rgba(22, 21, 20, 0.25);
   transform: translateY(-1px);
 }
 .walink-lang-dropdown .lang-trigger-btn.open {
   background: #FFFFFF;
-  border-color: #008069;
-  box-shadow: 0 0 0 3px rgba(0, 128, 105, 0.15);
+  border-color: #F85B04;
+  box-shadow: 0 0 0 3px rgba(248, 91, 4, 0.16);
 }
 .walink-lang-dropdown .lang-globe-icon {
   display: flex;
   align-items: center;
-  color: #008069;
+  color: #F85B04;
   flex-shrink: 0;
 }
 .walink-lang-dropdown .lang-trigger-flag {
@@ -217,38 +219,38 @@ label {
 }
 .walink-lang-dropdown .lang-trigger-name {
   font-weight: 700;
-  color: #111B21;
+  color: #161514;
   white-space: nowrap;
 }
 .walink-lang-dropdown .lang-trigger-chevron {
   display: flex;
   align-items: center;
-  color: #64748B;
+  color: rgba(22, 21, 20, 0.55);
   transition: transform 0.2s ease;
   margin-inline-start: 2px;
 }
 .walink-lang-dropdown .lang-trigger-btn.open .lang-trigger-chevron {
   transform: rotate(180deg);
-  color: #008069;
+  color: #F85B04;
 }
 
-/* Dark Variant for Dashboard Header */
+/* Dark Variant for Dark Ink Headers */
 .walink-lang-dropdown.dark .lang-trigger-btn {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
   color: #FFFFFF;
 }
 .walink-lang-dropdown.dark .lang-trigger-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.22);
 }
 .walink-lang-dropdown.dark .lang-globe-icon {
-  color: #25D366;
+  color: #FA7F3B;
 }
 .walink-lang-dropdown.dark .lang-trigger-name {
   color: #FFFFFF;
 }
 .walink-lang-dropdown.dark .lang-trigger-chevron {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* Dropdown Menu Popover */
@@ -258,10 +260,10 @@ label {
   inset-inline-end: 0;
   min-width: 190px;
   background: #FFFFFF;
-  border: 1px solid #E9EDEF;
+  border: 1px solid rgba(22, 21, 20, 0.1);
   border-radius: 16px;
   padding: 6px;
-  box-shadow: 0 12px 32px rgba(11, 20, 26, 0.14), 0 2px 6px rgba(11, 20, 26, 0.04);
+  box-shadow: 0 12px 32px rgba(22, 21, 20, 0.14), 0 2px 6px rgba(22, 21, 20, 0.04);
   z-index: 1000;
   animation: langPopoverFade 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   direction: inherit;
@@ -274,8 +276,8 @@ label {
   padding: 6px 10px 4px;
   font-size: 11px;
   font-weight: 700;
-  color: #64748B;
-  border-bottom: 1px solid #F0F2F5;
+  color: rgba(22, 21, 20, 0.55);
+  border-bottom: 1px solid rgba(22, 21, 20, 0.08);
   margin-bottom: 4px;
   text-align: start;
 }
@@ -289,11 +291,12 @@ label {
   align-items: center;
   gap: 10px;
   width: 100%;
+  min-height: 44px;
   padding: 8px 10px;
   border-radius: 10px;
   border: none;
   background: transparent;
-  color: #111B21;
+  color: #161514;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -302,12 +305,12 @@ label {
   user-select: none;
 }
 .walink-lang-dropdown .lang-menu-item:hover {
-  background: #F0F2F5;
-  color: #008069;
+  background: #EFEAE4;
+  color: #DA5004;
 }
 .walink-lang-dropdown .lang-menu-item.active {
-  background: #E8F5E9;
-  color: #008069;
+  background: rgba(248, 91, 4, 0.1);
+  color: #DA5004;
   font-weight: 800;
 }
 .walink-lang-dropdown .lang-item-flag {
@@ -328,13 +331,13 @@ label {
 .walink-lang-dropdown .lang-item-code {
   font-size: 11px;
   font-weight: 600;
-  color: #64748B;
+  color: rgba(22, 21, 20, 0.55);
   font-family: Inter, system-ui, sans-serif;
 }
 .walink-lang-dropdown .lang-item-check {
   display: flex;
   align-items: center;
-  color: #008069;
+  color: #F85B04;
   flex-shrink: 0;
 }
 
@@ -385,4 +388,17 @@ html {
   html {
     scroll-behavior: auto;
   }
+}
+
+/* Global Fidelix Script Font Utility (Caveat for Latin, Aref Ruqaa for Arabic) */
+.font-script {
+  font-family: "Caveat", cursive;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+[dir="rtl"] .font-script {
+  font-family: "Aref Ruqaa", "Alexandria", serif;
+  font-weight: 700;
+  letter-spacing: 0;
 }

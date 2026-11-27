@@ -61,15 +61,15 @@ export default async function StandRedirectPage({ params }: StandPageProps) {
   return (
     <div
       dir="rtl"
-      className="min-h-screen bg-[#FAF7F2] text-[#173E30] flex flex-col justify-between p-4 sm:p-6 selection:bg-[#008069] selection:text-white"
+      className="min-h-screen bg-[#EFEAE4] text-[#161514] flex flex-col justify-between p-4 sm:p-6 selection:bg-[#F85B04] selection:text-white"
     >
-      <div className="my-auto w-full max-w-[430px] mx-auto bg-[#FFFDF7] rounded-3xl p-6 sm:p-8 border border-[#DCE0D4] shadow-sm text-center space-y-5">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00A884] to-[#008069] text-white mx-auto flex items-center justify-center shadow-md shadow-[#008069]/20">
+      <div className="my-auto w-full max-w-[430px] mx-auto bg-white rounded-3xl p-6 sm:p-8 border border-[#161514]/10 shadow-sm text-center space-y-5">
+        <div className="w-16 h-16 rounded-2xl bg-[#F85B04] text-white mx-auto flex items-center justify-center shadow-[0_4px_0_#C14703]">
           <QrCode className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] border border-[#A7F3D0] text-[#008069] text-xs font-bold">
+          <div className="font-script inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#F85B04]/10 border border-[#F85B04]/25 text-[#DA5004] text-base font-bold">
             <Sparkles className="w-3.5 h-3.5" />
             <span>
               {isRegistered
@@ -78,41 +78,41 @@ export default async function StandRedirectPage({ params }: StandPageProps) {
             </span>
           </div>
 
-          <h1 className="text-xl font-extrabold text-[#173E30]">
+          <h1 className="text-xl font-extrabold text-[#161514]">
             {isRegistered
               ? "ستاند الكاونتر الرقمي جاهز للربط"
               : "تعذر العثور على هذا الستاند"}
           </h1>
 
-          <p className="text-xs text-[#5F655D] leading-relaxed">
+          <p className="text-xs text-[#161514]/65 leading-relaxed">
             {isRegistered
               ? "هذا الستاند مهيأ لبطاقات الولاء الرقمية على Apple Wallet و Google Wallet. بمجرد ربطه بالمتجر سيوجه الزبائن تلقائياً لصفحة التسجيل."
               : "يرجى التأكد من صحة رمز الستاند المطبوع أو مسح الكود بشكل واضح."}
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#DCE0D4] space-y-1">
-          <span className="text-[11px] font-semibold text-[#5F655D] block">
+        <div className="p-4 rounded-2xl bg-[#EFEAE4] border border-[#161514]/10 space-y-1">
+          <span className="text-[11px] font-semibold text-[#161514]/65 block">
             الرقم التسلسلي للستاند
           </span>
           <span
             dir="ltr"
-            className="text-xl font-mono font-extrabold tracking-widest text-[#008069] block"
+            className="text-xl font-mono font-extrabold tracking-widest text-[#DA5004] tabular-nums block"
           >
             {normalizedCode}
           </span>
         </div>
 
-        <p className="text-[11px] text-[#5F655D] leading-relaxed">
+        <p className="text-[11px] text-[#161514]/60 leading-relaxed">
           {isRegistered
             ? "لمسؤولي المبيعات: قم بربط هذا الكود بمتجر العميل من لوحة الإدارة ليصبح نشطاً فوراً دون إعادة طباعة."
             : "رمز التعريف الممسوح غير موجود في قاعدة البيانات الحالية."}
         </p>
       </div>
 
-      <footer className="py-4 text-center space-y-1.5 text-[11px] text-[#5F655D] font-medium">
+      <footer className="py-4 text-center space-y-1.5 text-[11px] text-[#161514]/60 font-medium">
         <div className="flex items-center justify-center gap-1.5">
-          <Lock className="w-3.5 h-3.5 text-[#008069]" />
+          <Lock className="w-3.5 h-3.5 text-[#F85B04]" />
           <span>نظام الولاء الذكي • Apple Wallet &amp; Google Wallet</span>
         </div>
       </footer>

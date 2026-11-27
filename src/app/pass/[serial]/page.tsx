@@ -60,13 +60,13 @@ export default async function CustomerPassPage({ params }: PassPageProps) {
 
   if (!customer) {
     return (
-      <div className="min-h-screen bg-[#FAF7F2] text-[#173E30] flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-[#FFFDF7] p-8 rounded-3xl text-center space-y-4 border border-[#DCE0D4] shadow-sm">
+      <div className="min-h-screen bg-[#EFEAE4] text-[#161514] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white p-8 rounded-3xl text-center space-y-4 border border-[#161514]/10 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 mx-auto flex items-center justify-center">
             <AlertCircle className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-bold text-[#173E30]">بطاقة الوفاء غير موجودة</h1>
-          <p className="text-xs text-[#5F655D] leading-relaxed">
+          <h1 className="text-xl font-bold text-[#161514]">بطاقة الوفاء غير موجودة</h1>
+          <p className="text-xs text-[#161514]/65 leading-relaxed">
             تعذر العثور على بطاقة الوفاء المطلوبة. تأكد من صحة الرابط أو قم بالتسجيل من جديد.
           </p>
         </div>
