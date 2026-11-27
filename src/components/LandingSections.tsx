@@ -107,7 +107,7 @@ export default function LandingSections({
       <section className="py-16 md:py-24" id="why">
         <div className="mx-auto max-w-6xl px-5 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-base font-extrabold text-[#DA5004]">{l.painEyebrow}</p>
+            <p className="font-script text-2xl font-bold text-[#DA5004] md:text-3xl">{l.painEyebrow}</p>
             <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-5xl">
               {l.painTitle}
             </h2>
@@ -160,7 +160,7 @@ export default function LandingSections({
       <section className="py-16 md:py-24" id="roi">
         <div className="mx-auto max-w-6xl px-5 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-base font-extrabold text-[#DA5004]">{l.roiEyebrow}</p>
+            <p className="font-script text-2xl font-bold text-[#DA5004] md:text-3xl">{l.roiEyebrow}</p>
             <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-5xl">
               {l.roiTitle}
             </h2>
@@ -327,7 +327,7 @@ export default function LandingSections({
         <section className="bg-[#F85B04] py-14 text-white md:py-20">
           <div className="mx-auto max-w-6xl px-5 sm:px-6">
             <div className="max-w-3xl">
-              <p className="text-base font-extrabold text-white/85">{l.midEyebrow}</p>
+              <p className="font-script text-2xl font-bold text-white/90 md:text-3xl">{l.midEyebrow}</p>
               <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight tracking-tight sm:text-5xl">
                 {l.midTitle}
               </h2>
@@ -363,7 +363,7 @@ export default function LandingSections({
       <section className="py-16 md:py-24" id="features">
         <div className="mx-auto max-w-6xl px-5 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-base font-extrabold text-[#DA5004]">{l.colEyebrow}</p>
+            <p className="font-script text-2xl font-bold text-[#DA5004] md:text-3xl">{l.colEyebrow}</p>
             <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-5xl">
               {l.colTitle}
             </h2>
@@ -372,7 +372,7 @@ export default function LandingSections({
           <div className="mt-12 grid gap-4 lg:grid-cols-3 lg:gap-5">
             {/* Column 1: Lock-Screen Notifications & Wallet */}
             <div className="h-full rounded-[2rem] border border-[#161514]/5 bg-white p-6 md:p-7">
-              <p className="text-xl font-bold text-[#DA5004]">{l.col1Kicker}</p>
+              <p className="font-script text-2xl font-bold text-[#DA5004]">{l.col1Kicker}</p>
               <h3 className="mt-1 text-2xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-3xl">
                 {l.col1Heading}
               </h3>
@@ -404,7 +404,7 @@ export default function LandingSections({
 
             {/* Column 2: Counter Experience */}
             <div className="h-full rounded-[2rem] border border-[#161514]/5 bg-white p-6 md:p-7">
-              <p className="text-xl font-bold text-[#DA5004]">{l.col2Kicker}</p>
+              <p className="font-script text-2xl font-bold text-[#DA5004]">{l.col2Kicker}</p>
               <h3 className="mt-1 text-2xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-3xl">
                 {l.col2Heading}
               </h3>
@@ -436,7 +436,7 @@ export default function LandingSections({
 
             {/* Column 3: Merchant Control */}
             <div className="h-full rounded-[2rem] border border-[#161514]/5 bg-white p-6 md:p-7">
-              <p className="text-xl font-bold text-[#DA5004]">{l.col3Kicker}</p>
+              <p className="font-script text-2xl font-bold text-[#DA5004]">{l.col3Kicker}</p>
               <h3 className="mt-1 text-2xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-3xl">
                 {l.col3Heading}
               </h3>
@@ -473,7 +473,7 @@ export default function LandingSections({
       <section className="py-12 md:py-20" id="steps">
         <div className="mx-auto max-w-6xl px-5 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-base font-extrabold text-[#DA5004]">{l.stepsEyebrow}</p>
+            <p className="font-script text-2xl font-bold text-[#DA5004] md:text-3xl">{l.stepsEyebrow}</p>
             <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-5xl">
               {l.stepsTitle}
             </h2>
@@ -508,7 +508,7 @@ export default function LandingSections({
         <section className="bg-[#161514] py-16 text-white md:py-24">
           <div className="mx-auto max-w-6xl px-5 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <p className="text-base font-extrabold text-[#FA7F3B]">{l.statsEyebrow}</p>
+              <p className="font-script text-2xl font-bold text-[#FA7F3B] md:text-3xl">{l.statsEyebrow}</p>
               <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight tracking-tight sm:text-5xl">
                 {l.statsTitle}
               </h2>
@@ -543,7 +543,7 @@ export default function LandingSections({
       <section className="py-16 md:py-24" id="testimonials">
         <div className="mx-auto max-w-6xl px-5 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-base font-extrabold text-[#DA5004]">{l.testiEyebrow}</p>
+            <p className="font-script text-2xl font-bold text-[#DA5004] md:text-3xl">{l.testiEyebrow}</p>
             <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-5xl">
               {l.testiTitle}
             </h2>
@@ -596,7 +596,7 @@ export default function LandingSections({
       <section className="py-16 md:py-24" id="pricing">
         <div className="mx-auto max-w-6xl px-5 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-base font-extrabold text-[#DA5004]">{l.pricingEyebrow}</p>
+            <p className="font-script text-2xl font-bold text-[#DA5004] md:text-3xl">{l.pricingEyebrow}</p>
             <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-5xl">
               {t.pricing.title}
             </h2>
@@ -828,7 +828,7 @@ export default function LandingSections({
       <section className="py-16 md:py-24" id="faq">
         <div className="mx-auto max-w-3xl px-5 sm:px-6">
           <div className="text-center">
-            <p className="text-base font-extrabold text-[#DA5004]">{l.faqEyebrow}</p>
+            <p className="font-script text-2xl font-bold text-[#DA5004] md:text-3xl">{l.faqEyebrow}</p>
             <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight tracking-tight text-[#161514] sm:text-5xl">
               {t.faq.title}
             </h2>

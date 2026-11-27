@@ -774,14 +774,18 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 sm:px-6 lg:grid-cols-12">
             {/* Hero Copy & Live Store Name Form */}
             <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-3.5 py-1.5 text-xs font-extrabold text-white backdrop-blur-sm">
-                <Sparkles className="h-3.5 w-3.5 text-white" aria-hidden="true" />
+              <div className="font-script inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-4 py-1 text-lg font-bold text-white backdrop-blur-sm">
+                <Sparkles className="h-4 w-4 text-white" aria-hidden="true" />
                 <span>{t.landing.heroEyebrow}</span>
               </div>
 
-              <h1 className="mt-5 text-4xl font-extrabold uppercase leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
+              <h1
+                className={`mt-5 text-4xl font-extrabold uppercase tracking-tight text-white sm:text-5xl lg:text-6xl ${
+                  dir === "rtl" ? "leading-[1.28]" : "leading-[1.08]"
+                }`}
+              >
                 {t.landing.heroTitle1}{" "}
-                <span className="inline-block rounded-2xl bg-[#161514] px-3 py-0.5 text-[#FA7F3B]">
+                <span className="my-1 inline-block rounded-2xl bg-[#161514] px-3.5 py-1 text-[#FA7F3B]">
                   {t.landing.heroTitleAccent}
                 </span>{" "}
                 {t.landing.heroTitle2}
@@ -865,8 +869,23 @@ export default function LandingPage() {
       {/* C. Interactive Live Demo */}
       <section className="sec" id="demo">
         <div className="wrap">
-          <div className="head c">
-            <h2 className="h2 silver">{t.demo.title}</h2>
+          <div className="head c relative mx-auto max-w-4xl">
+            <span
+              aria-hidden="true"
+              className="font-script shadow-sticker absolute -left-24 top-2 hidden -rotate-6 rounded-full bg-white px-4 py-1.5 text-lg font-bold text-[#161514] xl:inline-block"
+            >
+              {locale === "fr" ? "Cartes Wallet" : locale === "es" ? "Tarjetas Wallet" : "بطاقات Wallet"}
+            </span>
+            <span
+              aria-hidden="true"
+              className="font-script shadow-sticker absolute -right-24 top-0 hidden rotate-6 rounded-full bg-[#F85B04] px-4 py-1.5 text-lg font-bold text-white xl:inline-block"
+            >
+              {locale === "fr" ? "Scan comptoir" : locale === "es" ? "Escaneo en caja" : "سكان الكاونتر"}
+            </span>
+            <p className="font-script text-2xl font-bold text-[#DA5004] md:text-3xl">
+              {locale === "fr" ? "Vos clients existent déjà." : locale === "es" ? "Ya tienes clientes." : "زبناؤك موجودون أصلاً."}
+            </p>
+            <h2 className="h2 silver mt-1">{t.demo.title}</h2>
             <p className="lead">{t.demo.subtitle}</p>
           </div>
 

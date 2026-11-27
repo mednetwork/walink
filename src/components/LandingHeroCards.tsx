@@ -69,7 +69,7 @@ export default function LandingHeroCards({
       />
 
       {/* Tilted Top Sticker Badge */}
-      <div className="shadow-sticker absolute top-0 left-2 z-30 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-extrabold text-[#161514] -rotate-6 sm:left-4">
+      <div className="shadow-sticker font-script absolute top-0 left-2 z-30 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-base font-bold text-[#161514] -rotate-6 sm:left-4">
         <Smartphone className="h-3.5 w-3.5 text-[#F85B04]" aria-hidden="true" />
         <span>{stickerLeft}</span>
       </div>
@@ -77,50 +77,54 @@ export default function LandingHeroCards({
       {/* Back Left Card (Forest Emerald Cashback Card) */}
       <div
         aria-hidden="true"
-        className="fan-left shadow-float absolute top-14 -translate-x-20 sm:-translate-x-28 z-10 w-[196px] sm:w-[220px] rounded-[24px] border border-white/15 bg-[#124532] p-4 text-white"
+        className="absolute top-14 z-10 -translate-x-20 sm:-translate-x-28 -rotate-6"
       >
-        <div className="flex items-center justify-between text-[11px] font-bold text-white/80">
-          <span className="truncate">{labels.leftName}</span>
-          <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px]">
-            {labels.leftBadge}
-          </span>
-        </div>
-        <div className="mt-5">
-          <p className="text-[10px] uppercase tracking-wider text-white/60">WALLET PASS</p>
-          <p className="mt-0.5 text-2xl font-extrabold tabular-nums">{labels.leftBalance}</p>
-        </div>
-        <div className="mt-6 flex items-center justify-between border-t border-white/15 pt-3">
-          <span className="text-[10px] text-white/70">NFC • QR</span>
-          <Sparkles className="h-4 w-4 text-[#FA7F3B]" />
+        <div className="fan-left shadow-float w-[196px] sm:w-[220px] rounded-[24px] border border-white/15 bg-[#124532] p-4 text-white">
+          <div className="flex items-center justify-between text-[11px] font-bold text-white/80">
+            <span className="truncate">{labels.leftName}</span>
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px]">
+              {labels.leftBadge}
+            </span>
+          </div>
+          <div className="mt-5">
+            <p className="text-[10px] uppercase tracking-wider text-white/60">WALLET PASS</p>
+            <p className="mt-0.5 text-2xl font-extrabold tabular-nums">{labels.leftBalance}</p>
+          </div>
+          <div className="mt-6 flex items-center justify-between border-t border-white/15 pt-3">
+            <span className="text-[10px] text-white/70">NFC • QR</span>
+            <Sparkles className="h-4 w-4 text-[#FA7F3B]" />
+          </div>
         </div>
       </div>
 
       {/* Back Right Card (Dark Ink VIP Card) */}
       <div
         aria-hidden="true"
-        className="fan-right shadow-float absolute top-14 translate-x-20 sm:translate-x-28 z-10 w-[196px] sm:w-[220px] rounded-[24px] border border-white/10 bg-[#161514] p-4 text-white"
+        className="absolute top-14 z-10 translate-x-20 sm:translate-x-28 rotate-6"
       >
-        <div className="flex items-center justify-between text-[11px] font-bold text-white/80">
-          <span className="truncate">{labels.rightName}</span>
-          <span className="rounded-full bg-[#F85B04] px-2 py-0.5 text-[10px] text-white">
-            {labels.rightBadge}
-          </span>
-        </div>
-        <div className="mt-5 flex items-center gap-1.5">
-          {[1, 2, 3, 4, 5].map((idx) => (
-            <span
-              key={idx}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-[#F85B04] text-[10px] font-bold text-white"
-            >
-              ✓
+        <div className="fan-right shadow-float w-[196px] sm:w-[220px] rounded-[24px] border border-white/10 bg-[#161514] p-4 text-white">
+          <div className="flex items-center justify-between text-[11px] font-bold text-white/80">
+            <span className="truncate">{labels.rightName}</span>
+            <span className="rounded-full bg-[#F85B04] px-2 py-0.5 text-[10px] text-white">
+              {labels.rightBadge}
             </span>
-          ))}
-        </div>
-        <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-3">
-          <span className="text-[10px] text-white/65">Apple & Google</span>
-          <span className="text-xs font-extrabold tabular-nums text-[#FA7F3B]">
-            {labels.rightStamps}
-          </span>
+          </div>
+          <div className="mt-5 flex items-center gap-1.5">
+            {[1, 2, 3, 4, 5].map((idx) => (
+              <span
+                key={idx}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-[#F85B04] text-[10px] font-bold text-white"
+              >
+                ✓
+              </span>
+            ))}
+          </div>
+          <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-3">
+            <span className="text-[10px] text-white/65">Apple & Google</span>
+            <span className="text-xs font-extrabold tabular-nums text-[#FA7F3B]">
+              {labels.rightStamps}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -180,7 +184,7 @@ export default function LandingHeroCards({
       </div>
 
       {/* Tilted Bottom Right Sticker Badge */}
-      <div className="shadow-sticker absolute bottom-2 right-2 z-30 inline-flex items-center gap-1.5 rounded-full bg-[#161514] px-3.5 py-1.5 text-xs font-extrabold text-white rotate-3 sm:right-4">
+      <div className="shadow-sticker font-script absolute bottom-2 right-2 z-30 inline-flex items-center gap-1.5 rounded-full bg-[#161514] px-4 py-1.5 text-base font-bold text-white rotate-3 sm:right-4">
         <span className="h-2 w-2 rounded-full bg-[#F85B04]" />
         <span>{stickerRight}</span>
       </div>
