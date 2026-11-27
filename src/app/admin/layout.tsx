@@ -118,16 +118,16 @@ export default function AdminLayout({
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className="min-h-screen bg-[#EFEAE4] flex font-arabic text-[#161514] antialiased selection:bg-[#F85B04] selection:text-white relative"
+      className="min-h-screen bg-[#EFEAE4] flex font-arabic text-[#161514] antialiased selection:bg-[#F85B04] selection:text-white relative print:block print:bg-white print:min-h-0"
     >
       {/* 1. Desktop Fixed Deep Ink Sidebar */}
-      <aside className="hidden lg:block fixed inset-y-0 start-0 z-30 w-64 xl:w-72 shadow-xl">
+      <aside className="hidden lg:block fixed inset-y-0 start-0 z-30 w-64 xl:w-72 shadow-xl print:hidden">
         <AdminSidebarNav />
       </aside>
 
       {/* 2. Mobile Slide-Over Drawer & Backdrop */}
       {mobileDrawerOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
+        <div className="fixed inset-0 z-50 lg:hidden flex print:hidden">
           {/* Backdrop */}
           <button
             type="button"
@@ -153,9 +153,9 @@ export default function AdminLayout({
       )}
 
       {/* 3. Main Content Viewport */}
-      <div className="flex-1 lg:ps-64 xl:ps-72 flex flex-col min-h-screen w-full">
+      <div className="flex-1 lg:ps-64 xl:ps-72 flex flex-col min-h-screen w-full print:ps-0 print:block print:min-h-0">
         {/* Mobile Sticky Top Header (< lg) */}
-        <header className="sticky top-0 z-20 lg:hidden w-full h-16 bg-[#161514] text-white border-b border-white/10 px-4 flex items-center justify-between shadow-md">
+        <header className="sticky top-0 z-20 lg:hidden w-full h-16 bg-[#161514] text-white border-b border-white/10 px-4 flex items-center justify-between shadow-md print:hidden">
           <div className="flex items-center gap-2.5">
             <button
               type="button"
@@ -195,7 +195,7 @@ export default function AdminLayout({
         </header>
 
         {/* Desktop Sticky Header Bar (lg:) */}
-        <header className="hidden lg:flex sticky top-0 z-20 w-full h-16 bg-white/95 backdrop-blur-md border-b border-[#161514]/10 px-6 lg:px-8 items-center justify-between shadow-sm">
+        <header className="hidden lg:flex sticky top-0 z-20 w-full h-16 bg-white/95 backdrop-blur-md border-b border-[#161514]/10 px-6 lg:px-8 items-center justify-between shadow-sm print:hidden">
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
@@ -227,12 +227,12 @@ export default function AdminLayout({
         </header>
 
         {/* Page Main Content */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24 lg:pb-10">
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24 lg:pb-10 print:p-0 print:m-0 print:max-w-none">
           {children}
         </main>
 
         {/* Desktop Footer */}
-        <footer className="border-t border-[#161514]/10 bg-white py-4 px-6 lg:px-8 text-xs text-[#161514]/65 hidden sm:block">
+        <footer className="border-t border-[#161514]/10 bg-white py-4 px-6 lg:px-8 text-xs text-[#161514]/65 hidden sm:block print:hidden">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <p>© {new Date().getFullYear()} Walink.ma • {t.footer.copyright}</p>
             <div className="flex items-center gap-4 text-[#161514]/65">
@@ -257,7 +257,7 @@ export default function AdminLayout({
 
         {/* 4. Mobile Floating Bottom Navigation Dock (< lg) */}
         <nav
-          className="fixed bottom-0 inset-x-0 z-30 lg:hidden bg-white/95 backdrop-blur-md border-t border-[#161514]/10 shadow-2xl h-16 px-2 flex items-center justify-around"
+          className="fixed bottom-0 inset-x-0 z-30 lg:hidden bg-white/95 backdrop-blur-md border-t border-[#161514]/10 shadow-2xl h-16 px-2 flex items-center justify-around print:hidden"
           aria-label="شريط التنقل السريع للهاتف"
         >
           {bottomNavItems.map((item) => {

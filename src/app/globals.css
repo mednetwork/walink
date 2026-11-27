@@ -402,3 +402,54 @@ html {
   font-weight: 700;
   letter-spacing: 0;
 }
+
+/* ==========================================================================
+   Clean One-Per-Page Print / PDF Styles (Zero Extras, Exact A4 Centering)
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-one-per-page {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 280mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .print-one-per-page:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  .print-one-per-page img.print-poster-img {
+    max-width: 100% !important;
+    max-height: 274mm !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+}

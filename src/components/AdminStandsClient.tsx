@@ -140,6 +140,20 @@ export default function AdminStandsClient({
     });
   }, [stands, filterMode, selectedBatchFilter, searchQuery]);
 
+  const readyPosterCount = useMemo(
+    () => filteredStands.filter((s) => Boolean(posterPreviews[s.code])).length,
+    [filteredStands, posterPreviews]
+  );
+
+  const postersLoading =
+    printSheetMode === "POSTER" && readyPosterCount < filteredStands.length;
+
+  const isPrintDisabled =
+    filteredStands.length === 0 ||
+    postersLoading ||
+    (printSheetMode === "COMPACT" &&
+      filteredStands.some((s) => !qrPreviews[s.code]));
+
   // Generate crisp High-EC QR previews for visible stands
   useEffect(() => {
     let cancelled = false;
@@ -462,7 +476,8 @@ export default function AdminStandsClient({
   };
 
   return (
-    <div dir="rtl" className="space-y-6">
+    <div dir="rtl" className="space-y-6 print:space-y-0">
+      <div className="space-y-6 print:hidden">
       {/* Header & Main Actions */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 print:hidden">
         <div>
@@ -982,24 +997,25 @@ export default function AdminStandsClient({
           })}
         </div>
       )}
+      </div>
 
       {/* Printable A4 Sheet Modal */}
       {showPrintModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-4 print:static print:bg-white print:p-0"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-4 print:static print:inset-auto print:block print:w-full print:h-auto print:max-h-none print:overflow-visible print:bg-white print:p-0 print:m-0"
           style={{
             printColorAdjust: "exact",
             WebkitPrintColorAdjust: "exact",
           }}
         >
-          <div className="max-w-5xl mx-auto bg-white rounded-3xl p-6 space-y-5 print:rounded-none print:p-0 print:shadow-none">
+          <div className="max-w-5xl mx-auto bg-white rounded-3xl p-6 space-y-5 print:max-w-none print:w-full print:rounded-none print:p-0 print:m-0 print:space-y-0 print:shadow-none print:border-0">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#161514]/10 pb-4 print:hidden">
               <div>
                 <h2 className="text-base font-extrabold text-[#161514] tabular-nums">
                   ورقة طباعة ستاندات QR ({filteredStands.length} ستاند)
                 </h2>
                 <p className="text-xs text-[#161514]/65">
-                  مضبوطة بمستوى تصحيح أخطاء عالٍ (Error Correction H) للمتانة على ستاندات الأكريليك وPVC.
+                  عند الطباعة أو الحفظ بصيغة PDF يظهر بوستر واحد فقط في كل صفحة بشكل نقي تماماً بدون أي قوائم أو زوائد.
                 </p>
               </div>
 
@@ -1031,11 +1047,16 @@ export default function AdminStandsClient({
 
                 <button
                   type="button"
+                  disabled={isPrintDisabled}
                   onClick={() => window.print()}
-                  className="px-4 py-2.5 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[44px]"
+                  className="px-4 py-2.5 rounded-xl bg-[#F85B04] hover:bg-[#E25102] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tabular-nums"
                 >
                   <Printer className="w-4 h-4" />
-                  <span>طباعة / حفظ PDF</span>
+                  <span>
+                    {postersLoading
+                      ? `جاري التجهيز (${readyPosterCount} / ${filteredStands.length})...`
+                      : "طباعة / حفظ PDF"}
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -1049,14 +1070,13 @@ export default function AdminStandsClient({
             </div>
 
             {printSheetMode === "POSTER" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 gap-5 print:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 print:block print:space-y-0">
                 {filteredStands.map((stand) => (
                   <div
                     key={stand.id}
-                    className="p-2.5 rounded-2xl border border-dashed border-[#161514]/25 bg-white flex flex-col items-center gap-2 break-inside-avoid"
-                    style={{ breakInside: "avoid" }}
+                    className="p-2.5 rounded-2xl border border-dashed border-[#161514]/25 bg-white flex flex-col items-center gap-2 print-one-per-page"
                   >
-                    <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-[#EFEAE4] flex items-center justify-center">
+                    <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-[#EFEAE4] flex items-center justify-center print:w-full print:h-full print:aspect-auto print:rounded-none print:bg-transparent">
                       {posterPreviews[stand.code] ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1064,16 +1084,16 @@ export default function AdminStandsClient({
                           alt={`Walink Poster ${stand.code}`}
                           width={1024}
                           height={1536}
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-contain print-poster-img"
                         />
                       ) : (
-                        <div className="flex flex-col items-center gap-2 text-xs text-[#161514]/55 p-4 text-center">
+                        <div className="flex flex-col items-center gap-2 text-xs text-[#161514]/55 p-4 text-center print:hidden">
                           <QrCode className="w-8 h-8 text-[#F85B04]/50 animate-pulse" />
                           <span>جاري تجهيز بوستر {stand.code}...</span>
                         </div>
                       )}
                     </div>
-                    <div className="w-full flex items-center justify-between px-1 text-[11px] font-mono text-[#161514]/70 tabular-nums">
+                    <div className="w-full flex items-center justify-between px-1 text-[11px] font-mono text-[#161514]/70 tabular-nums print:hidden">
                       <span dir="ltr" className="font-bold text-[#161514]">
                         {stand.code}
                       </span>
@@ -1085,17 +1105,16 @@ export default function AdminStandsClient({
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 print:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 print:block print:space-y-0">
                 {filteredStands.map((stand) => (
                   <div
                     key={stand.id}
-                    className="p-4 rounded-2xl border-2 border-dashed border-[#161514]/15 flex flex-col items-center justify-center text-center space-y-2 break-inside-avoid"
-                    style={{ breakInside: "avoid" }}
+                    className="p-4 rounded-2xl border-2 border-dashed border-[#161514]/15 flex flex-col items-center justify-center text-center space-y-2 print-one-per-page"
                   >
-                    <span className="text-[11px] font-bold text-[#DA5004]">
+                    <span className="text-[11px] font-bold text-[#DA5004] print:hidden">
                       امسح الكود واحصل على بطاقة الوفاء
                     </span>
-                    <div className="w-40 h-40 p-1 bg-white flex items-center justify-center">
+                    <div className="w-40 h-40 p-1 bg-white flex items-center justify-center print:w-80 print:h-80 print:p-0">
                       {qrPreviews[stand.code] && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1109,7 +1128,7 @@ export default function AdminStandsClient({
                     </div>
                     <div
                       dir="ltr"
-                      className="px-3 py-1 rounded-lg bg-[#161514] text-white font-mono font-extrabold text-sm tracking-widest tabular-nums"
+                      className="px-3 py-1 rounded-lg bg-[#161514] text-white font-mono font-extrabold text-sm tracking-widest tabular-nums print:hidden"
                     >
                       {stand.code}
                     </div>
